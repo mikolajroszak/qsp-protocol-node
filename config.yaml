@@ -1,0 +1,31 @@
+# General configuration structure:
+#
+# <environment type>:
+#   qsp-node:
+#     provider: the type of the node provider
+#     args: 
+#       <any node provider dependent args>
+#
+# Note that the <params> of a qsp-node may differ in name
+# depending on their type
+
+local:
+  eth_node:
+    # provider: !!str "HTTPProvider"
+    # args:
+    #   endpoint_uri: !!str "http://localhost:8545"
+    provider: !!str "TestRPCProvider" # (no args provided)
+  internal_contract_src:
+    uri: !!str "./resources/QuantstampAuditInternal.sol"
+    deploy: !!bool True
+    name: !!str "QuantstampAuditInternal"
+  min_price: !!int 0
+  evt_polling: !!int 5
+  analyzer:
+      output: !!str ${input}.json # either a file name or stdout
+      cmd: !!str "oyente -j -s ${input}"
+      solidity: !!str "0.4.17"
+  account_id: !!int 0
+
+
+  
