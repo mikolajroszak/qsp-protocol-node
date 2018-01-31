@@ -16,7 +16,7 @@ local:
     #   endpoint_uri: !!str "http://localhost:8545"
     provider: !!str "TestRPCProvider" # (no args provided)
   internal_contract_src:
-    uri: !!str "./resources/QuantstampAuditInternal.sol"
+    uri: !!str "tests/resources/QuantstampAuditInternal.sol"
     deploy: !!bool True
     name: !!str "QuantstampAuditInternal"
   min_price: !!int 0
