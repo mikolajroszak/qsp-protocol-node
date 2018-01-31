@@ -16,11 +16,11 @@ contract QuantstampAuditInternal {
   event LogAuditRequested(address requestor, string uri, uint256 price);
   event LogReportSubmitted(address auditor, address requestor, string uri);
 
-  function doAudit(address requestor, string uri, uint256 price) external {
+  function doAudit(address requestor, string uri, uint256 price) public {
     LogAuditRequested(requestor, uri, price);
   }
 
-  function submitReport(address requestor, string uri, string report) external {
+  function submitReport(address requestor, string uri, string report) public {
     // verify that the report hasn't been issued yet
     require(!isAudited(requestor, uri));
     // TODO: use audit id to distinguish requests

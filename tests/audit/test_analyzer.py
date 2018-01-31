@@ -5,6 +5,9 @@ import unittest
 from random import random
 from audit import Analyzer
 
+from utils.io import fetch_file
+from helpers.resource import resource_uri 
+
 class TestAnalyzer(unittest.TestCase):
     """
     Asserts different properties over Analyzer objects.
@@ -15,7 +18,10 @@ class TestAnalyzer(unittest.TestCase):
         on a buggy contract
         """
         analyzer = Analyzer ("oyente -j -s ${input}", "0.4.17")
-        result = analyzer.check("resources/DAOBug.sol", "${input}.json")
+
+        buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
+        result = analyzer.check(buggy_contract, "${input}.json")
+
         self.assertTrue(result)
 
     def test_file_not_found(self):

@@ -49,6 +49,7 @@ def main():
             cfg.analyzer,
             cfg.min_price,
             cfg.evt_polling,
+            cfg.analyzer_output,
         )
 
         # Runs the QSP audit node in a busy loop fashion

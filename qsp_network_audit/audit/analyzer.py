@@ -5,6 +5,7 @@ Provides an interface for invoking the analyzer software.
 import subprocess
 import os
 from utils.io import load_json, has_matching_line
+from utils.args import replace_args
 
 class Analyzer:
 
@@ -16,15 +17,6 @@ class Analyzer:
         self.__cmd_template = cmd_template
         self.__locked_version = locked_version
     
-    def __inject_args(self, entry, input_args):
-        """
-        Injects a set of input arguments into the command template, returning a 
-        command instance.
-        """
-        for name in input_args:
-            entry = entry.replace(name, input_args[name])
-        return entry     
-    
     def __supports_target_solidity_version(self, contract):
         """
         Verifies whether the target Solidity version in a contract is supported or not.
@@ -35,7 +27,7 @@ class Analyzer:
 
         return has_matching_line(contract, pragma_regex)
 
-    def check(self, contract, output):
+    def check(self, contract, output_name_template):
         """
         Checks for potential vulnerabilities in a target contract writen in a given 
         version of Solidity, writing the corresponding results in the provided output.
@@ -47,15 +39,19 @@ class Analyzer:
                 )
             )
 
-        output_args = { "${input}": contract}
-        injected_output = self.__inject_args(output, output_args)
-
-        cmd_args = {
+        injected_output = replace_args(output_name_template, 
+            {"${input}": contract}
+        )
+        injected_cmd = replace_args(self.__cmd_template, {
             "${input}": contract,
             "${solidity_version}": self.__locked_version,
-            "${output}": output,
-        }
-        injected_cmd = self.__inject_args(self.__cmd_template, cmd_args)
+            "${output}": injected_output,
+        })
+
+        print("===> INSIDE  CHECK")
+        print("   contract " + str(contract))
+        print("   injected_output " + str(injected_output))
+        print("   injected_cmd " + str(injected_cmd))
 
         # NOTE: in some occasions, oyenete sucessfully runs, but
         # still returns a non-zero status. Consequently, 'check'
@@ -68,13 +64,25 @@ class Analyzer:
         if os.path.isfile(injected_output):
             os.remove(injected_output)
 
-        analyzer_tool = subprocess.run(injected_cmd, shell=True)
+        print("===> CALLING SUBPROCESS")
+
+        # TODO Add timeout parameter based on a configuration parameter
+        subprocess.run(injected_cmd, shell=True)
+
+        print("===> DONE CALLING SUBPROCESS")
 
         if os.path.isfile(injected_output):
+
+            print("===> RESULT FOUND")
+
             result = load_json(injected_output)
+
+            print("===> RESULT IS " + str(result))
+
             os.remove(injected_output)
 
             if result is not None and result:
+                print("===> SUCCESSFULLY GOT RESULT")
                 return result
         
         raise Exception("Failed in running analyzer. Skipping...")

@@ -2,15 +2,13 @@
 Provides the configuration for executing a QSP Audit node, 
 as loaded from an input YAML file.
 """
-import re
-from web3 import Web3, TestRPCProvider, HTTPProvider, IPCProvider
-
-from web3.providers.eth_tester import EthereumTesterProvider
-from eth_tester import EthereumTester
-import yaml
+from web3 import Web3, TestRPCProvider, HTTPProvider, IPCProvider, EthereumTesterProvider
 from dpath.util import get
-import utils.io as io_utils
 from solc import compile_files
+
+import yaml
+import re
+import utils.io as io_utils
 
 from audit import Analyzer
 
@@ -120,8 +118,21 @@ class Config:
             return
             
         if self.__eth_provider == "EthereumTesterProvider":
-            eth_tester = EthereumTester()
-            self.__eth_provider = EthereumTesterProvider(eth_tester)
+            # NOTE: currently relies on the legacy EthereumTesterProvider,
+            # instead of having something like
+            #
+            # from web3 import Web3
+            # from web3.providers.eth_tester import EthereumTesterProvider
+            # from eth_tester import EthereumTester
+            # eth_tester = EthereumTester()
+            # provider = EthereumTesterProvider(eth_tester))
+            #
+            # The reason of that relies on bugs related to 
+            # how keys are stored in events (given as dictionaries).
+            #
+            # See https://github.com/ethereum/web3.py/issues/503
+            # for further information.
+            self.__eth_provider = EthereumTesterProvider()
             return
 
         if self.__eth_provider == "TestRPCProvider":
@@ -194,16 +205,18 @@ class Config:
             self.supported_solidity_version
         )
         
-    def __init__(self, env, config_file):
+    def __init__(self, env, config_file_uri):
         """
         Builds a Config object from a target environment (e.g., test) and an input YAML configuration file. 
         """
+        config_file = io_utils.fetch_file(config_file_uri)
+
         with open(config_file) as yaml_file:
-            c = yaml.load(yaml_file)[env]
+            cfg = yaml.load(yaml_file)[env]
 
         try:
             # Setup followed by verification
-            self.__setup_values(c)
+            self.__setup_values(cfg)
             self.__check_values()
 
             # Creation of internal components

@@ -4,8 +4,11 @@ Provides utilitiy methods for performing I/O-related tasks.
 from urllib.parse import urlparse
 from urllib import request
 from json import load
+from hashlib import sha256
 import os
 import re
+
+__regex_file_uri = re.compile("^file://")
 
 def fetch_file(uri):
     """
@@ -14,16 +17,9 @@ def fetch_file(uri):
     if urlparse(uri).scheme not in ('file'):
         local_file, _ = request.urlretrieve(uri)
     else:
-        local_file = uri
-
+        local_file = __regex_file_uri.sub("", uri, 1)
 
     return local_file
-
-def resource_path(name):
-    """
-    Returns the filesystem path of a given resource.
-    """
-    return "/{0}/../../resources/{1}".format(os.path.dirname(__file__), name)
 
 def load_json(json_file_path):
     """
@@ -40,5 +36,11 @@ def has_matching_line(file, regex):
             if re.match(regex, line):
                 return True
 
-    return False   
+    return False
+
+def digest(file, charset="utf-8"):
+    with open(file) as stream:
+        in_memory_str = stream.read()
+
+    return sha256(in_memory_str.encode(charset)).hexdigest()
 

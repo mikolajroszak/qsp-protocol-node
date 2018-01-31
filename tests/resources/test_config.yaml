@@ -2,7 +2,7 @@ test:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
   internal_contract_src: 
-    uri: !!str "./resources/QuantstampAuditInternal.sol"
+    uri: !!str "./tests/resources/QuantstampAuditInternal.sol"
     deploy: !!bool true
     name: !!str "QuantstampAuditInternal"
   min_price: !!int 0
