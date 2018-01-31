@@ -1,0 +1,5 @@
+web3
+pyyaml
+dpath
+py-solc
+eth-testrpc

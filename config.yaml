@@ -26,6 +26,3 @@ local:
       cmd: !!str "oyente -j -s ${input}"
       solidity: !!str "0.4.17"
   account_id: !!int 0
-
-
-  
