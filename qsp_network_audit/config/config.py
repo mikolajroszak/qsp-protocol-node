@@ -12,6 +12,7 @@ import utils.io as io_utils
 
 from audit import Analyzer
 
+
 def config_value(cfg, path, default=None, accept_none=True):
     """
     Extracts a configuration entry from a given configuration dictionary.
@@ -47,7 +48,7 @@ class Config:
         self.__eth_provider = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
         self.__min_price = config_value(cfg, '/min_price', accept_none=False)
-        self.__evt_polling = config_value(cfg, '/evt_polling', accept_none=False)
+        self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
         self.__analyzer_output = config_value(cfg, '/analyzer/output', accept_none=False)
         self.__analyzer_cmd = config_value(cfg, '/analyzer/cmd', accept_none=False)
         self.__account_id = config_value(cfg, '/account_id', accept_none=False)
@@ -261,12 +262,12 @@ class Config:
         """
         Returns the polling for audit requests frequency (given in seconds).
         """
-        return self.__evt_polling
+        return self.__evt_polling_sec
 
     @property
     def analyzer_output(self):
         """
-        Returns the output of the analyzer (either 'stdout' or a filename).
+        Returns the output of the analyzer (either 'stdout' or a filename template).
         """
         return self.__analyzer_output
 
