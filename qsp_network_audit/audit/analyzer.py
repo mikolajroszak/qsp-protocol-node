@@ -4,6 +4,8 @@ Provides an interface for invoking the analyzer software.
 
 import subprocess
 import os
+import logging 
+
 from utils.io import load_json, has_matching_line
 from utils.args import replace_args
 
@@ -48,10 +50,9 @@ class Analyzer:
             "${output}": injected_output,
         })
 
-        print("===> INSIDE  CHECK")
-        print("   contract " + str(contract))
-        print("   injected_output " + str(injected_output))
-        print("   injected_cmd " + str(injected_cmd))
+        logging.info("Executing check on contract {0}".format(contract))
+        logging.debug("Output set to {0}".format(injected_output))
+        logging.debug("Analyzer command set to {0}".format(injected_cmd))
 
         # NOTE: in some occasions, oyenete sucessfully runs, but
         # still returns a non-zero status. Consequently, 'check'
@@ -64,25 +65,23 @@ class Analyzer:
         if os.path.isfile(injected_output):
             os.remove(injected_output)
 
-        print("===> CALLING SUBPROCESS")
+        logging.debug("Invoking analyzer tool as a subprocess")
 
         # TODO Add timeout parameter based on a configuration parameter
         subprocess.run(injected_cmd, shell=True)
 
-        print("===> DONE CALLING SUBPROCESS")
+        logging.debug("Done running analyzer process")
 
         if os.path.isfile(injected_output):
 
-            print("===> RESULT FOUND")
-
+            logging.debug("Loading result from {0}".format(injected_output))
+            
             result = load_json(injected_output)
-
-            print("===> RESULT IS " + str(result))
 
             os.remove(injected_output)
 
             if result is not None and result:
-                print("===> SUCCESSFULLY GOT RESULT")
+                logging.debug("Analysis result is {0}".format(str(result)))
                 return result
         
         raise Exception("Failed in running analyzer. Skipping...")

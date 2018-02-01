@@ -1,4 +1,3 @@
-* Add logging support
 * Write unit tests
 * Select license (see LICENSE.md)
 * Write setup instructions (see README.md)

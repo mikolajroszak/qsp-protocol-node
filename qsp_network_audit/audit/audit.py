@@ -7,6 +7,7 @@ from tempfile import mkstemp
 from time import sleep
 import os
 import json
+import logging
 
 from utils.io import fetch_file, digest
 from utils.args import replace_args
@@ -44,28 +45,29 @@ class QSPAuditNode:
                 sleep(self.__polling)
                 continue
 
-            print("===> GOT REQUESTS: " + str(requests))
+            logging.debug("Found incomming audit requests: {0}".format(
+                str(requests)
+            ))
 
             # Process all incoming requests
             for audit_request in requests:
-
-                print("===> RECEIVED AUDIT REQUEST")
                 price = audit_request['args']['price']
-
-                print("===> PRICE IS " + str(price))
 
                 # Accepts all requests whose reward is at least as
                 # high as given by min_reward
                 if price >= self.__min_price:
+                    logging.debug("Accepted processing audit request: {0}".format(
+                        str(audit_request)
+                    ))
                     try:
                         requestor = audit_request['args']['requestor']
                         contract_uri = audit_request['args']['uri']
 
                         report = json.dumps(self.audit(requestor, contract_uri))
 
-                        print("===> GENERATED REPORT IS " + str(report))
-
+                        logging.debug("Generated report is {0}. Submitting".format(str(report)))
                         self.__submitReport(requestor, contract_uri, report)
+                        logging.debug("Report is sucessfully submitted")
 
                     except Exception as e:
                         import traceback
@@ -79,7 +81,12 @@ class QSPAuditNode:
 
 
                 else:
-                    print("===> REJECTING AUDIT")
+                    logging.debug(
+                        "Declinin processing audit request: {0}. Not enough incentive".format(
+                            str(audit_request)
+                        )
+                    )
+                    
 
 
     def stop(self):
@@ -93,25 +100,14 @@ class QSPAuditNode:
         Audits a target contract.
         """
 
-        print("===> INSIDE AUDIT")
+        logging.info("Executing audit on contract at {0}".format(uri))
 
         target_contract = fetch_file(uri)
-
-        print("===> FETCHED URL")
-
-        print("===> INSIDE AUDIT")
-        print("===>   requestor is " + str(requestor))
-        print("===>   uri is " + str(uri))
-        print("===>   output_file template is " + str(self.__analyzer_output))
-        print("===>   target file is  " + str(target_contract))
 
         report = self.__analyzer.check(
             target_contract, 
             self.__analyzer_output,
         )
-
-        print("===> ABOUT TO PRODUCE REPORT")
-        print("===> PRODUCING AUGMENTED RESULT")
 
         return {
             'auditor': self.__auditor_address,
@@ -127,8 +123,6 @@ class QSPAuditNode:
         Submits the audit report to the entire QSP network.
         """
 
-        print("===> REQUESTOR is " + requestor)
-        print("===> URI is " + contract_uri)
 
         self.__internal_contract.transact(
             {'from': self.__auditor_address}).submitReport(

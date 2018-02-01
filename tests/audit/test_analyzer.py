@@ -35,6 +35,6 @@ class TestAnalyzer(unittest.TestCase):
         with self.assertRaises(Exception):
             analyzer.check(inexistent_file, "${input}.json")
 
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
 

@@ -2,17 +2,21 @@
 Provides the main entry for executing a QSP audit node.
 """
 import argparse
-import traceback
-import sys
+import logging
 
 from audit import QSPAuditNode
 from config import Config
+
+def config_logging(verbose):
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.ERROR,
+        format='%(levelname)s[%(threadName)s] %(message)s',
+    )
 
 def main():
     """
     Main function.
     """
-    verbose = False
     try:
         # Sets the program's arguments
         parser = argparse.ArgumentParser(description='QSP Audit Node')
@@ -30,16 +34,20 @@ def main():
         parser.add_argument(
             "-v", "--verbose", 
             help="increase output verbosity",
-            action="store_true" 
+            action="store_true",
+            default=False,
         )
 
         # Validates input arguments
         args = parser.parse_args()
-        verbose = args.verbose
+            
+        config_logging(args.verbose)
 
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
         cfg = Config(args.environment, args.config_yaml)
+
+        logging.info("Initializing QSP Audit Node")
 
         # Based on the provided configuration, instantiates a new
         # QSP audit node
@@ -52,13 +60,12 @@ def main():
             cfg.analyzer_output,
         )
 
+        logging.info("Running QSP audit node")
+
         # Runs the QSP audit node in a busy loop fashion
         audit_node.run()
-    except Exception as e:
-        if verbose:
-            traceback.print_exc()
-        else:
-            print(str(e), sys.stderr) 
+    except Exception:
+        logging.exception("Unexpected error")
         
 
 if __name__ == "__main__":
