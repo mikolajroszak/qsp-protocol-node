@@ -69,16 +69,9 @@ class QSPAuditNode:
                         self.__submitReport(requestor, contract_uri, report)
                         logging.debug("Report is sucessfully submitted")
 
-                    except Exception as e:
-                        import traceback
-                        traceback.print_exc()
-
+                    except Exception:
+                        logging.exception("Unexpected error when performing audit")
                         pass
-                        # TODO 
-                        # log expcetion but allow node to proceed with
-                        # audits. When that happens, nothing
-                        # should be recorded on the blockchain
-
 
                 else:
                     logging.debug(
