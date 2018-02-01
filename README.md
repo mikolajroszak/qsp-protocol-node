@@ -17,18 +17,18 @@ pip install -r requirements.txt
 ## Development hierarchy 
 
 `qsp_network_audit.py`
-  target environment is defined in config.yml
+  target environments are defined in config.yaml
     QSPAuditNode gets params from YAML
     config.py
     audit.py
-      everything is in the run() method
-      some logic for distributed audit computation
+      main loop is in the run() method
+      logic for audit computation
       report is JSON and posted to the private blockchain
     analyzer.py
       abstracts an analyzer tool
-      need to accept parameters in a better way
+      needs to accept parameters in a better way
   security constraints
-    network audit service has a threat of price forgery
+    network audit service might have a threat of price forgery (must check)
     need to control the state of this service
       uptime monitoring
       metrics
