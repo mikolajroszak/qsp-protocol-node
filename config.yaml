@@ -20,7 +20,7 @@ local:
     deploy: !!bool True
     name: !!str "QuantstampAuditInternal"
   min_price: !!int 0
-  evt_polling: !!int 5
+  evt_polling_sec: !!int 5
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "oyente -j -s ${input}"

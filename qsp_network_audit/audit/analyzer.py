@@ -50,7 +50,7 @@ class Analyzer:
             "${output}": injected_output,
         })
 
-        logging.info("Executing check on contract {0}".format(contract))
+        logging.debug("Executing check on contract {0}".format(contract))
         logging.debug("Output set to {0}".format(injected_output))
         logging.debug("Analyzer command set to {0}".format(injected_cmd))
 
