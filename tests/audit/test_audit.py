@@ -29,7 +29,6 @@ class TestQSPAuditNode(unittest.TestCase):
         )
 
         def exec():
-            
             self.__audit_node.run()
 
         # Starts the execution of the QSP audit node
@@ -61,7 +60,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(evts[0]['args']['auditor'], self.__account)
 
 
-    def __requestAudit(self, contract_name, price=100):
+    def __requestAudit(self, contract_uri, price=100):
         """
         Submits a request for audit of a given target contract.
         """
@@ -70,7 +69,7 @@ class TestQSPAuditNode(unittest.TestCase):
         # Submits a request for auditing a smart contract
         self.__cfg.internal_contract.transact({"from": self.__account}).doAudit(
             self.__account,
-            contract_name,
+            contract_uri,
             price,    
         )
 

@@ -4,8 +4,8 @@ local:
     args:
       endpoint_uri: !!str "http://ec2-52-91-149-89.compute-1.amazonaws.com:8545"
   internal_contract_abi:
-    uri: !!str "https://s3.amazonaws.com/qsp-network-contract-abi-dev/QuantstampInterface.abi.json"
-    address: !!str "0xb72eea639165925938d3eed55d29c4a8d4d2c64b"
+    uri: !!str "https://s3.amazonaws.com/qsp-network-contract-abi-dev/QuantstampInternal.abi.json"
+    address: !!str "0x3851eec0057109a75de3b281b1d67f798537a282"
     name: !!str "QuantstampAuditInternal"
   min_price: !!int 0
   evt_polling_sec: !!int 5
