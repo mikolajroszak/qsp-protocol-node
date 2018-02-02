@@ -12,6 +12,17 @@ pyenv virtualenv env
 pip install -r requirements.txt
 ```
 
+## Docker image build
+
+`docker build -t qsp-network-audit .`
+`docker run qsp-network-audit`
+
+## Deployment
+
+1. Checkout a branch off `develop`
+1. Make changes, open a pull request from your branch into `develop`
+1. On merge into `develop`, a new Docker image is built and tagged with `develop`. Previous versions are available when referenced as `466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-analyzer-oyente:<commit-id>`
+
 ## Development hierarchy 
 
 * Main file: `qsp_network_audit.py`

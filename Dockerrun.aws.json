@@ -18,7 +18,7 @@
     {
       "name": "audit",
       "image": "466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit:develop",
-      "command": ["python", "hello.py"],
+      "command": ["make", "run"],
       "essential": false,
       "memory": 1024,
       "links": [
