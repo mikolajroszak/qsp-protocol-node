@@ -4,7 +4,7 @@
     {
       "name": "qsp-network-geth",
       "host": {
-        "sourcePath": "/var/qsp-network-geth-5"
+        "sourcePath": "/var/qsp-network-geth"
       }
     },
     {
