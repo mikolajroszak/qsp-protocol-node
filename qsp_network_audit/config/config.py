@@ -40,18 +40,21 @@ class Config:
         self.__internal_contract_name = config_value(cfg, '/internal_contract_abi/name')
         self.__has_internal_contract_abi = bool(self.__internal_contract_abi_uri)
 
+        self.__internal_contract = None
         self.__internal_contract_src_uri = config_value(cfg, '/internal_contract_src/uri')
         self.__internal_contract_src_deploy = config_value(cfg, '/internal_contract_src/deploy', False)
         self.__internal_contract_name = config_value(cfg, '/internal_contract_src/name')
         self.__has_internal_contract_src = bool(self.__internal_contract_src_uri)
 
-        self.__eth_provider = config_value(cfg, '/eth_node/provider', accept_none=False)
+        self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
+        self.__eth_provider = None
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
         self.__min_price = config_value(cfg, '/min_price', accept_none=False)
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
         self.__analyzer_output = config_value(cfg, '/analyzer/output', accept_none=False)
         self.__analyzer_cmd = config_value(cfg, '/analyzer/cmd', accept_none=False)
-        self.__account_id = config_value(cfg, '/account_id', accept_none=False)
+        self.__account_id = config_value(cfg, '/account/id', accept_none=False)
+        self.__account_ttl = config_value(cfg, '/account/ttl', 600)
         self.__solidity_version = config_value(cfg, '/analyzer/solidity', accept_none=False)
 
     def __check_values(self):
@@ -88,6 +91,9 @@ class Config:
         else:
             self.__raise_err(msg="Missing the internal contract source or its ABI")
 
+        if self.internal_contract_src_deploy and self.env != "test":
+            self.__raise_err(msg="Contract deployment is only allowed in testing environment")
+
     def __check_solidity_version(self):
             """
             Checks the format of the supported solidity version.
@@ -110,15 +116,15 @@ class Config:
         #
         # See: http://web3py.readthedocs.io/en/stable/providers.html
 
-        if self.__eth_provider == "HTTPProvider":
+        if self.__eth_provider_name == "HTTPProvider":
             self.__eth_provider = HTTPProvider(**self.__eth_provider_args)
             return
 
-        if self.__eth_provider == "IPCProvider":
+        if self.__eth_provider_name == "IPCProvider":
             self.__eth_provider = IPCProvider(**self.__eth_provider_args)
             return
             
-        if self.__eth_provider == "EthereumTesterProvider":
+        if self.__eth_provider_name == "EthereumTesterProvider":
             # NOTE: currently relies on the legacy EthereumTesterProvider,
             # instead of having something like
             #
@@ -136,7 +142,7 @@ class Config:
             self.__eth_provider = EthereumTesterProvider()
             return
 
-        if self.__eth_provider == "TestRPCProvider":
+        if self.__eth_provider_name == "TestRPCProvider":
             self.__eth_provider = TestRPCProvider(**self.__eth_provider_args)
             return
 
@@ -147,6 +153,22 @@ class Config:
         Creates a Web3 client from the already set Ethereum provider.
         """
         self.__web3_client = Web3(self.eth_provider)
+        self.__account = self.__web3_client.eth.accounts[self.__account_id]
+
+        # Test-based providers do not need account unlocking. If that is the
+        # case, nothing else to do
+        if self.__eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
+            return
+
+        # Proceed to unlock the wallet account
+        unlocked = self.__web3_client.personal.unlockAccount(
+            self.__account,
+            self.__account_passwd,
+            self.__account_ttl,
+        )
+
+        if not unlocked:
+            raise Exception("Cannot unlock account {0}.".format(self.__account))
 
     def __load_contract_from_src(self):
         """
@@ -165,7 +187,10 @@ class Config:
         contract_interface = contract_dict[contract_id]
 
         # Instantiate the contract
-        contract = self.web3_client.eth.contract(abi = contract_interface['abi'], bytecode = contract_interface['bin'])
+        contract = self.web3_client.eth.contract(
+            abi = contract_interface['abi'],
+            bytecode = contract_interface['bin']
+        )
         account = self.web3_client.eth.accounts[self.__account_id]
         
         # Deploy the contract
@@ -206,12 +231,14 @@ class Config:
             self.supported_solidity_version
         )
         
-    def __init__(self, env, config_file_uri):
+    def __init__(self, env, config_file_uri, account_passwd=""):
         """
         Builds a Config object from a target environment (e.g., test) and an input YAML configuration file. 
         """
-        config_file = io_utils.fetch_file(config_file_uri)
+        self.__env = env
+        self.__account_passwd = account_passwd
 
+        config_file = io_utils.fetch_file(config_file_uri)
         with open(config_file) as yaml_file:
             cfg = yaml.load(yaml_file)[env]
 
@@ -242,6 +269,20 @@ class Config:
         Returns the Ethereum provider object.
         """
         return self.__eth_provider
+
+    @property
+    def eth_provider_name(self):
+        """
+        Returns the Ethereum provider name.
+        """
+        return self.__eth_provider_name
+
+    @property
+    def eth_provider_args(self):
+        """
+        Returns the arguments required for instantiating the target Ethereum provider.
+        """
+        return self.__eth_provider_args
         
     @property
     def internal_contract_address(self):
@@ -291,6 +332,20 @@ class Config:
         Returns the account numeric identifier to sign reports.
         """
         return self.__account_id
+
+    @property
+    def account_ttl(self):
+        """
+        Returns the account TTL.
+        """
+        return self.__account_ttl
+
+    @property
+    def account_passwd(self):
+        """
+        Returns the account associated password.
+        """
+        return self.__account_passwd
 
     @property
     def internal_contract_abi_uri(self):
@@ -357,11 +412,18 @@ class Config:
         return self.__analyzer
 
     @property
-    def eth_provider_args(self):
+    def env(self):
         """
-        Returns the arguments required for instantiating the target Ethereum provider.
+        Returns the target environment to which the settings refer to.
         """
-        return self.__eth_provider_args
+        return self.__env
+
+    @property
+    def account(self):
+        """
+        Returns an account object from the given settings.
+        """
+        return self.__account
 
 
     

@@ -11,4 +11,6 @@ test:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "oyente -j -s ${input}"
       solidity: !!str "0.4.17" 
-  account_id: !!int 0
+  account:
+    id: !!int 0
+    ttl: 600

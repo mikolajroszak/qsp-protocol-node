@@ -32,6 +32,11 @@ def main():
             help='yaml configuration file path'
         )
         parser.add_argument(
+            '-p', '--password',
+            type=str, default='',
+            help='password for unlocking wallet account',
+        )
+        parser.add_argument(
             "-v", "--verbose", 
             help="increase output verbosity",
             action="store_true",
@@ -45,7 +50,7 @@ def main():
 
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
-        cfg = Config(args.environment, args.config_yaml)
+        cfg = Config(args.environment, args.config_yaml, args.password)
 
         logging.info("Initializing QSP Audit Node")
 

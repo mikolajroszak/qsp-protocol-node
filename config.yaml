@@ -1,23 +1,11 @@
-# General configuration structure:
-#
-# <environment type>:
-#   qsp-node:
-#     provider: the type of the node provider
-#     args: 
-#       <any node provider dependent args>
-#
-# Note that the <params> of a qsp-node may differ in name
-# depending on their type
-
 local:
   eth_node:
-    # provider: !!str "HTTPProvider"
-    # args:
-    #   endpoint_uri: !!str "http://localhost:8545"
-    provider: !!str "TestRPCProvider" # (no args provided)
-  internal_contract_src:
-    uri: !!str "tests/resources/QuantstampAuditInternal.sol"
-    deploy: !!bool True
+    provider: !!str "HTTPProvider"
+    args:
+      endpoint_uri: !!str "http://ec2-52-91-149-89.compute-1.amazonaws.com:8545"
+  internal_contract_abi:
+    uri: !!str "https://s3.amazonaws.com/qsp-network-contract-abi-dev/QuantstampInterface.abi.json"
+    address: !!str "0xb72eea639165925938d3eed55d29c4a8d4d2c64b"
     name: !!str "QuantstampAuditInternal"
   min_price: !!int 0
   evt_polling_sec: !!int 5
@@ -25,4 +13,7 @@ local:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "oyente -j -s ${input}"
       solidity: !!str "0.4.17"
-  account_id: !!int 0
+  account:
+    id: !!int 2
+    ttl: 600
+

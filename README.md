@@ -37,7 +37,8 @@ pip install -r requirements.txt
 
 ## Running the node
 
-After meeting required dependencies, one can run the node with
+Before running the node one must set the password for unlocking the target wallet account. That is given by the `QSP_PASSWD` environment variable.
+With that, the node is launched by running
 
 ```
 make run
