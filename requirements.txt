@@ -1,0 +1,9 @@
+web3
+pyyaml
+dpath
+py-solc
+eth-testrpc
+timeout-decorator
+six
+z3-solver
+requests
