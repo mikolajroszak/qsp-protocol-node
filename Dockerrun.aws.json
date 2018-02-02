@@ -1,0 +1,52 @@
+{
+  "AWSEBDockerrunVersion": "2",
+  "volumes": [
+    {
+      "name": "qsp-network-geth",
+      "host": {
+        "sourcePath": "/var/qsp-network-geth-5"
+      }
+    },
+    {
+      "name": "qsp-network-keystore",
+      "host": {
+        "sourcePath": "/var/qsp-network-keystore"
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "audit",
+      "image": "466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit:develop",
+      "command": ["python", "hello.py"],
+      "essential": false,
+      "memory": 1024,
+      "links": [
+        "geth-qsp"
+      ]
+    },
+    {
+      "name": "geth-qsp",
+      "image": "466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-geth-qsp-fullnode:develop",
+      "command": [
+        "--networkid=19876", "--datadir=./qspdata",
+        "--rpc", "--rpcapi", "\"db,personal,eth,net,web3\"",
+        "--rpcport", "8545", "--rpcaddr", "0.0.0.0", "--rpccorsdomain=*",
+        "--ws", "--wsport", "8546", "--wsaddr", "0.0.0.0", "--wsorigins=*"
+      ],
+      "essential": true,
+      "memory": 2048,
+      "mountPoints": [
+        {
+          "sourceVolume": "qsp-network-geth",
+          "containerPath": "/myapp/qspdata/geth"
+        },
+        {
+          "sourceVolume": "qsp-network-keystore",
+          "containerPath": "/myapp/qspdata/keystore",
+          "readOnly": true
+        }
+      ]
+    }
+  ]
+}
