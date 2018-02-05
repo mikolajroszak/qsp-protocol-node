@@ -9,8 +9,9 @@ from config import Config
 
 def config_logging(verbose):
     logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.ERROR,
-        format='%(levelname)s[%(threadName)s] %(message)s',
+        level=logging.DEBUG if verbose else logging.INFO,
+        datefmt='%m/%d/%Y %I:%M:%S',
+        format='[%(asctime)s] %(levelname)s[%(threadName)s] %(message)s',
     )
 
 def main():
