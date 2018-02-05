@@ -12,6 +12,12 @@
       "host": {
         "sourcePath": "/var/qsp-network-keystore"
       }
+    },
+    {
+      "name": "qsp-network-geth-config",
+      "host": {
+        "sourcePath": "/var/qsp-network-geth-config"
+      }
     }
   ],
   "containerDefinitions": [
@@ -28,14 +34,20 @@
     {
       "name": "geth-qsp",
       "image": "466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-geth-qsp-fullnode:develop",
-      "command": [
-        "--networkid=19876", "--datadir=./qspdata",
-        "--rpc", "--rpcapi", "\"db,personal,eth,net,web3\"",
-        "--rpcport", "8545", "--rpcaddr", "0.0.0.0", "--rpccorsdomain=*",
-        "--ws", "--wsport", "8546", "--wsaddr", "0.0.0.0", "--wsorigins=*"
-      ],
+      "command": ["--config=qspdata/geth-config/audit-fullnode.toml"],
       "essential": true,
       "memory": 2048,
+      "portMappings": [
+        {
+          "hostPort": 30303,
+          "containerPort": 30303
+        },
+        {
+          "hostPort": 30303,
+          "containerPort": 30303,
+          "protocol": "udp"
+        }
+      ],
       "mountPoints": [
         {
           "sourceVolume": "qsp-network-geth",
@@ -44,6 +56,11 @@
         {
           "sourceVolume": "qsp-network-keystore",
           "containerPath": "/myapp/qspdata/keystore",
+          "readOnly": true
+        },
+        {
+          "sourceVolume": "qsp-network-geth-config",
+          "containerPath": "/myapp/qspdata/geth-config",
           "readOnly": true
         }
       ]
