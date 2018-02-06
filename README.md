@@ -14,8 +14,13 @@ pip install -r requirements.txt
 
 ## Docker image build
 
-`docker build -t qsp-network-audit .`
-`docker run qsp-network-audit`
+```
+docker build -t qsp-network-audit
+docker run -e QSP_PASSWD=<passwd> qsp-network-audit 
+```
+
+where `passwd` is the password to unlock the wallet account configured in
+the `config.yaml` file.
 
 ## Deployment
 
