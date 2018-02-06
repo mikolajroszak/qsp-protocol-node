@@ -34,17 +34,33 @@ class Config:
     """
     Provides a set of methods for accessing configuration parameters.
     """
+    def __fetch_internal_contract_metadata(self, cfg):
+        metadata_uri = config_value(cfg, '/internal_contract_abi/metadata')
+        if metadata_uri is not None:
+            return io_utils.load_json(
+                io_utils.fetch_file(metadata_uri)
+            )
+
+        metadata_uri = config_value(cfg, '/internal_contract_src/metadata')
+        if metadata_uri is not None:
+            return io_utils.load_json(
+                io_utils.fetch_file(metadata_uri)
+            )
+
+        raise Exception("Missing internal contract metadata")
+
     def __setup_values(self, cfg):
-        self.__internal_contract_abi_uri = config_value(cfg, '/internal_contract_abi/uri')
-        self.__internal_contract_address = config_value(cfg, '/internal_contract_abi/address')
-        self.__internal_contract_name = config_value(cfg, '/internal_contract_abi/name')
-        self.__has_internal_contract_abi = bool(self.__internal_contract_abi_uri)
+        metadata = self.__fetch_internal_contract_metadata(cfg)
+        self.__internal_contract_name = config_value(metadata, '/name')
+        self.__internal_contract_address = config_value(metadata, '/address')
 
         self.__internal_contract = None
+
         self.__internal_contract_src_uri = config_value(cfg, '/internal_contract_src/uri')
-        self.__internal_contract_src_deploy = config_value(cfg, '/internal_contract_src/deploy', False)
-        self.__internal_contract_name = config_value(cfg, '/internal_contract_src/name')
         self.__has_internal_contract_src = bool(self.__internal_contract_src_uri)
+
+        self.__internal_contract_abi_uri = config_value(cfg, '/internal_contract_abi/uri')
+        self.__has_internal_contract_abi = bool(self.__internal_contract_abi_uri)
 
         self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
@@ -83,16 +99,13 @@ class Config:
 
         elif self.__has_internal_contract_src:
             has_uri = bool(self.__internal_contract_src_uri)
-            deploy = bool(self.__internal_contract_src_deploy)
             self.__raise_err(
-                not (deploy or has_uri),  
-                "Missing internal contract source deploy flag and its URI", 
+                not has_uri,
+                "Missing internal contract source URI"
             )
         else:
             self.__raise_err(msg="Missing the internal contract source or its ABI")
 
-        if self.internal_contract_src_deploy and self.env != "test":
-            self.__raise_err(msg="Contract deployment is only allowed in testing environment")
 
     def __check_solidity_version(self):
             """
@@ -174,7 +187,7 @@ class Config:
         """
         Loads the internal contract from source code (useful for testing purposes).
         """
-        # Compile the source
+        # Compiles the source
         src_contract = io_utils.fetch_file(self.__internal_contract_src_uri)
         contract_dict = compile_files([src_contract])
 
@@ -183,17 +196,17 @@ class Config:
             self.__internal_contract_name,
         )
         
-        # Get the contract interface
+        # Gets the contract interface
         contract_interface = contract_dict[contract_id]
 
-        # Instantiate the contract
+        # Instantiates the contract
         contract = self.web3_client.eth.contract(
             abi = contract_interface['abi'],
             bytecode = contract_interface['bin']
         )
         account = self.web3_client.eth.accounts[self.__account_id]
         
-        # Deploy the contract
+        # Deploys the contract
         transaction_hash = contract.deploy(transaction = {'from': account})
 
         receipt = self.web3_client.eth.getTransactionReceipt(transaction_hash)
@@ -209,7 +222,7 @@ class Config:
         self.__internal_contract = None
 
         if self.__has_internal_contract_abi:
-            # Create contract from ABI settings
+            # Creates contract from ABI settings
 
             abi_file = io_utils.fetch_file(self.internal_contract_abi_uri)
             abi_json = io_utils.load_json(abi_file)
