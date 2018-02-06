@@ -51,8 +51,8 @@ class Config:
 
     def __setup_values(self, cfg):
         metadata = self.__fetch_internal_contract_metadata(cfg)
-        self.__internal_contract_name = config_value(metadata, '/name')
-        self.__internal_contract_address = config_value(metadata, '/address')
+        self.__internal_contract_name = config_value(metadata, '/contractName')
+        self.__internal_contract_address = config_value(metadata, '/contractAddress')
 
         self.__internal_contract = None
 
