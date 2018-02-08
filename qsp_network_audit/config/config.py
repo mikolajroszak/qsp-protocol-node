@@ -69,7 +69,7 @@ class Config:
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
         self.__analyzer_output = config_value(cfg, '/analyzer/output', accept_none=False)
         self.__analyzer_cmd = config_value(cfg, '/analyzer/cmd', accept_none=False)
-        self.__account_id = config_value(cfg, '/account/id', accept_none=False)
+        self.__account = config_value(cfg, '/account/id')
         self.__account_ttl = config_value(cfg, '/account/ttl', 600)
         self.__solidity_version = config_value(cfg, '/analyzer/solidity', accept_none=False)
 
@@ -166,7 +166,12 @@ class Config:
         Creates a Web3 client from the already set Ethereum provider.
         """
         self.__web3_client = Web3(self.eth_provider)
-        self.__account = self.__web3_client.eth.accounts[self.__account_id]
+
+        # It could be the case that account is not setup, which may happen for
+        # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
+
+        if self.__account is None:
+            self.__account = self.__web3_client.eth.accounts[0]
 
         # Test-based providers do not need account unlocking. If that is the
         # case, nothing else to do
@@ -204,10 +209,9 @@ class Config:
             abi = contract_interface['abi'],
             bytecode = contract_interface['bin']
         )
-        account = self.web3_client.eth.accounts[self.__account_id]
         
         # Deploys the contract
-        transaction_hash = contract.deploy(transaction = {'from': account})
+        transaction_hash = contract.deploy(transaction = {'from': self.__account})
 
         receipt = self.web3_client.eth.getTransactionReceipt(transaction_hash)
         self.__internal_contract_address = receipt['contractAddress']
@@ -340,11 +344,11 @@ class Config:
         return self.__solidity_version
 
     @property
-    def account_id(self):
+    def account(self):
         """
         Returns the account numeric identifier to sign reports.
         """
-        return self.__account_id
+        return self.__account
 
     @property
     def account_ttl(self):
@@ -430,13 +434,6 @@ class Config:
         Returns the target environment to which the settings refer to.
         """
         return self.__env
-
-    @property
-    def account(self):
-        """
-        Returns an account object from the given settings.
-        """
-        return self.__account
 
 
     

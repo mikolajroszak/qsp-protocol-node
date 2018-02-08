@@ -11,5 +11,5 @@ test:
       cmd: !!str "oyente -j -s ${input}"
       solidity: !!str "0.4.17" 
   account:
-    id: !!int 0
+    # No provided account hex (use the first one by default)
     ttl: 600

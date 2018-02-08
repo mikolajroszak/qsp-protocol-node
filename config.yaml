@@ -13,7 +13,7 @@ local:
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
       solidity: !!str "0.4.17"
   account:
-    id: !!int 2
+    id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
     ttl: 600
 
 dev:
@@ -31,5 +31,5 @@ dev:
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
       solidity: !!str "0.4.17"
   account:
-    id: !!int 2
+    id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
     ttl: 600

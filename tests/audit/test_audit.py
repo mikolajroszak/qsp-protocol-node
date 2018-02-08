@@ -18,9 +18,8 @@ class TestQSPAuditNode(unittest.TestCase):
         Starts the execution of the QSP audit node as a separate thread.
         """
         self.__cfg = Config("test", resource_uri("test_config.yaml"))
-        self.__account = self.__cfg.web3_client.eth.accounts[self.__cfg.account_id]
         self.__audit_node = QSPAuditNode(
-            self.__account,
+            self.__cfg.account,
             self.__cfg.internal_contract, 
             self.__cfg.analyzer,
             self.__cfg.min_price,
@@ -57,7 +56,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertTrue(len(evts) == 1)
         self.assertEqual(evts[0]['event'], "LogReportSubmitted")
         self.assertEqual(evts[0]['args']['uri'], buggy_contract)
-        self.assertEqual(evts[0]['args']['auditor'], self.__account)
+        self.assertEqual(evts[0]['args']['auditor'], self.__cfg.account)
 
 
     def __requestAudit(self, contract_uri, price=100):
@@ -67,8 +66,8 @@ class TestQSPAuditNode(unittest.TestCase):
         from web3 import Web3
 
         # Submits a request for auditing a smart contract
-        self.__cfg.internal_contract.transact({"from": self.__account}).doAudit(
-            self.__account,
+        self.__cfg.internal_contract.transact({"from": self.__cfg.account}).doAudit(
+            self.__cfg.account,
             contract_uri,
             price,    
         )
