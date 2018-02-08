@@ -54,11 +54,17 @@ def main():
         cfg = Config(args.environment, args.config_yaml, args.password)
 
         logging.info("Initializing QSP Audit Node")
+        logging.debug("account: {0}".format(str(cfg.account)))
+        logging.debug("internal contract: {0}".format(str(cfg.internal_contract)))
+        logging.debug("analyzer: {0}".format(str(cfg.analyzer)))
+        logging.debug("min_price: {0}".format(str(cfg.min_price)))
+        logging.debug("evt_polling: {0}".format(str(cfg.evt_polling)))
+        logging.debug("analyzer_output: {0}".format(str(cfg.evt_polling)))
 
         # Based on the provided configuration, instantiates a new
         # QSP audit node
         audit_node = QSPAuditNode(
-            cfg.web3_client.eth.accounts[cfg.account_id],
+            cfg.account,
             cfg.internal_contract, 
             cfg.analyzer,
             cfg.min_price,
