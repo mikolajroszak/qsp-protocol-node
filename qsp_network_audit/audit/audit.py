@@ -116,12 +116,19 @@ class QSPAuditNode:
         Submits the audit report to the entire QSP network.
         """
 
+        # TODO: This is currently a workaround. Replace it 
+        # with dynamic yaml configuration.
+        # See issue: https://github.com/quantstamp/qsp-network-audit/issues/22
+        gas = os.environ.get('QSP_GAS_PRICE')
+        if gas is None:
+            args = {'from': self.__auditor_address}
+        else:
+            args = {'from': self.__auditor_address, 'gas': gas}
 
-        self.__internal_contract.transact(
-            {'from': self.__auditor_address}).submitReport(
-                requestor,
-                contract_uri,
-                report,
+        self.__internal_contract.transact(args).submitReport(
+            requestor,
+            contract_uri,
+            report,
         )
 
         
