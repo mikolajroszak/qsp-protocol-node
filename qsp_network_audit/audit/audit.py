@@ -122,7 +122,7 @@ class QSPAuditNode:
         if gas is None:
             args = {'from': self.__auditor_address}
         else:
-            args = {'from': self.__auditor_address, 'gas': gas}
+            args = {'from': self.__auditor_address, 'gas': int(gas)}
 
         self.__internal_contract.transact(args).submitReport(
             requestor,
