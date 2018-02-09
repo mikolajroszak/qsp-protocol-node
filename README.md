@@ -3,24 +3,34 @@ Implements the QSP audit node in the Quantstamp network.
 
 ## Development setup
 
-```
-brew install pyenv
-brew install pyenv-virtualenv
-pyenv install 3.6.4
-echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\neval "$(pyenv virtualenv-init -)"\nfi' >> ~/.bash_profile
-pyenv virtualenv env
-pip install -r requirements.txt
-```
+1. Clone the repo
+1. `git submodule init`
+1. `git submodule update`
+1. Run the following instructions:
+  ```
+  brew install pyenv
+  brew install pyenv-virtualenv
+  pyenv install 3.6.4
+  echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\neval "$(pyenv virtualenv-init -)"\nfi' >> ~/.bash_profile
+  pyenv virtualenv env
+  pip install -r requirements.txt
+  ```
 
 ## Docker image build
 
+**Note:** double-check the path of Oyente as it may be not consistent if
+running as container or without it.
+
 ```
-docker build -t qsp-network-audit
-docker run -e QSP_PASSWD=<passwd> qsp-network-audit 
+docker build -t qsp-network-audit .
+docker run -i -t -e QSP_PASSWD=<passwd> qsp-network-audit
 ```
 
 where `passwd` is the password to unlock the wallet account configured in
 the `config.yaml` file.
+
+To run a Bash shell inside the container, run it as: `docker run <other args> qsp-network-audit bash`
+
 
 ## Deployment
 
