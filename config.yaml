@@ -22,7 +22,7 @@ dev:
     args:
       endpoint_uri: !!str "http://geth-qsp:8545"
   internal_contract_abi:
-    uri: !!str "https://s3.amazonaws.com/qsp-network-contract-abi-dev/QuantstampInterface.abi.json"
+    uri: !!str "https://s3.amazonaws.com/qsp-network-contract-abi-dev/QuantstampInternal.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-network-contract-abi-dev/QuantstampInternal.meta.json"
   min_price: !!int 0
   evt_polling_sec: !!int 5
