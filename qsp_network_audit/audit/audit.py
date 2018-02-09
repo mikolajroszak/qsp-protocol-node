@@ -92,7 +92,6 @@ class QSPAuditNode:
         """
         Audits a target contract.
         """
-
         logging.info("Executing audit on contract at {0}".format(uri))
 
         target_contract = fetch_file(uri)

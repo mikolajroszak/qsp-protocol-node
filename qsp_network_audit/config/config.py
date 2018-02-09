@@ -212,7 +212,7 @@ class Config:
         )
         
         # Deploys the contract
-        transaction_hash = contract.deploy(transaction = {'from': self.__account})
+        transaction_hash = contract.deploy(transaction = {'from': self.__account, 'gas': 300000})
 
         receipt = self.web3_client.eth.getTransactionReceipt(transaction_hash)
         self.__internal_contract_address = receipt['contractAddress']
