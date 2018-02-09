@@ -92,7 +92,6 @@ class QSPAuditNode:
         """
         Audits a target contract.
         """
-
         logging.info("Executing audit on contract at {0}".format(uri))
 
         target_contract = fetch_file(uri)
@@ -115,10 +114,8 @@ class QSPAuditNode:
         """
         Submits the audit report to the entire QSP network.
         """
-
-
         self.__internal_contract.transact(
-            {'from': self.__auditor_address}).submitReport(
+            {'from': self.__auditor_address, 'gas': 300000}).submitReport(
                 requestor,
                 contract_uri,
                 report,
