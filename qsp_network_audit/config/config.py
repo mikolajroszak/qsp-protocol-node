@@ -8,6 +8,7 @@ from solc import compile_files
 
 import yaml
 import re
+import os
 import utils.io as io_utils
 
 from audit import Analyzer
@@ -434,6 +435,7 @@ class Config:
         Returns the target environment to which the settings refer to.
         """
         return self.__env
+        
 
 
     
