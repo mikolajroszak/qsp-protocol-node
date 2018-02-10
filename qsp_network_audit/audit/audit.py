@@ -66,8 +66,8 @@ class QSPAuditNode:
                         report = json.dumps(self.audit(requestor, contract_uri))
 
                         logging.debug("Generated report is {0}. Submitting".format(str(report)))
-                        self.__submitReport(requestor, contract_uri, report)
-                        logging.debug("Report is sucessfully submitted")
+                        tx = self.__submitReport(requestor, contract_uri, report)
+                        logging.debug("Report is sucessfully submitted: Hash is {0}".format(str(tx)))
 
                     except Exception:
                         logging.exception("Unexpected error when performing audit")
@@ -105,9 +105,10 @@ class QSPAuditNode:
             'auditor': self.__auditor_address,
             'requestor': str(requestor),
             'contract_uri': str(uri),
-            'contract_sha256': str(digest(target_contract)),
-            'report': json.dumps(report),
-            'timestamp': str(datetime.utcnow()),
+            #'contract_sha256': str(digest(target_contract)),
+            #'report': json.dumps(report),
+            'report': 'test',
+            #'timestamp': str(datetime.utcnow()),
         }
 
     def __submitReport(self, requestor, contract_uri, report):
@@ -124,7 +125,7 @@ class QSPAuditNode:
         else:
             args = {'from': self.__auditor_address, 'gas': int(gas)}
 
-        self.__internal_contract.transact(args).submitReport(
+        return self.__internal_contract.transact(args).submitReport(
             requestor,
             contract_uri,
             report,
