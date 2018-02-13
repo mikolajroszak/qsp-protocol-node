@@ -25,7 +25,7 @@
       "name": "audit",
       "image": "466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit:develop",
       "command": ["make", "run"],
-      "essential": false,
+      "essential": true,
       "memory": 1024,
       "links": [
         "geth-qsp"
