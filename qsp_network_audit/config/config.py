@@ -162,10 +162,10 @@ class Config:
 
         raise Exception("Unknown/Unsupported provider: {0}".format(self.eth_provider))
 
-    def unlockAccount(self):        
+    def unlock_account(self):        
         # Proceed to unlock the wallet account
 
-        unlocked = self.__web3_client.personal.unlockAccount(
+        unlocked = self.__web3_client.personal.unlock_account(
             self.__account,
             self.__account_passwd,
             self.__account_ttl,

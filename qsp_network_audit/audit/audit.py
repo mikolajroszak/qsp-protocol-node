@@ -115,7 +115,7 @@ class QSPAuditNode:
             args = {'from': self.__config.account, 'gas': int(gas)}
             
         # TODO: Only attempt unlocking unless unlocked
-        self.__config.unlockAccount();
+        self.__config.unlock_account();
 
         return self.__config.internal_contract.transact(args).submitReport(
             requestor,
