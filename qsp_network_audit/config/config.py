@@ -162,6 +162,18 @@ class Config:
 
         raise Exception("Unknown/Unsupported provider: {0}".format(self.eth_provider))
 
+    def unlockAccount(self):        
+        # Proceed to unlock the wallet account
+
+        unlocked = self.__web3_client.personal.unlockAccount(
+            self.__account,
+            self.__account_passwd,
+            self.__account_ttl,
+        )
+        
+        if not unlocked:
+            raise Exception("Cannot unlock account {0}.".format(self.__account))
+
     def __create_web3_client(self):
         """
         Creates a Web3 client from the already set Ethereum provider.
@@ -178,16 +190,9 @@ class Config:
         # case, nothing else to do
         if self.__eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
             return
-
-        # Proceed to unlock the wallet account
-        unlocked = self.__web3_client.personal.unlockAccount(
-            self.__account,
-            self.__account_passwd,
-            self.__account_ttl,
-        )
-
-        if not unlocked:
-            raise Exception("Cannot unlock account {0}.".format(self.__account))
+        
+        self.unlockAccount(); # initial unlocking to fail-fast in case password
+        # is incorrect in the first place
 
     def __load_contract_from_src(self):
         """
@@ -436,11 +441,3 @@ class Config:
         """
         return self.__env
         
-
-
-    
-        
-
-
-
-            
