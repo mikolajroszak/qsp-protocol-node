@@ -14,24 +14,13 @@ from utils.args import replace_args
 
 class QSPAuditNode:
 
-    def __init__(self, 
-                auditor_address,
-                internal_contract,
-                analyzer, 
-                min_price,  
-                polling,
-                analyzer_output):
+    def __init__(self, config):
         """
         Builds a QSPAuditNode object from the given input parameters.
         """
-        self.__auditor_address = auditor_address
-        self.__internal_contract = internal_contract
-        self.__filter = internal_contract.on("LogAuditRequested")
-        self.__analyzer = analyzer
-        self.__min_price = min_price
-        self.__polling = polling
+        self.__config = config
+        self.__filter = self.__config.internal_contract.on("LogAuditRequested")
         self.__exec = False
-        self.__analyzer_output = analyzer_output
 
     def run(self):
         """
@@ -42,7 +31,7 @@ class QSPAuditNode:
             requests = self.__filter.get()
 
             if requests == []:
-                sleep(self.__polling)
+                sleep(self.__config.evt_polling)
                 continue
 
             logging.debug("Found incomming audit requests: {0}".format(
@@ -55,7 +44,7 @@ class QSPAuditNode:
 
                 # Accepts all requests whose reward is at least as
                 # high as given by min_reward
-                if price >= self.__min_price:
+                if price >= self.__config.min_price:
                     logging.debug("Accepted processing audit request: {0}".format(
                         str(audit_request)
                     ))
@@ -96,13 +85,13 @@ class QSPAuditNode:
 
         target_contract = fetch_file(uri)
 
-        report = self.__analyzer.check(
+        report = self.__config.analyzer.check(
             target_contract, 
-            self.__analyzer_output,
+            self.__config.analyzer_output,
         )
 
         return {
-            'auditor': self.__auditor_address,
+            'auditor': self.__config.account,
             'requestor': str(requestor),
             'contract_uri': str(uri),
             #'contract_sha256': str(digest(target_contract)),
@@ -121,14 +110,15 @@ class QSPAuditNode:
         # See issue: https://github.com/quantstamp/qsp-network-audit/issues/22
         gas = os.environ.get('QSP_GAS_PRICE')
         if gas is None:
-            args = {'from': self.__auditor_address}
+            args = {'from': self.__config.account}
         else:
-            args = {'from': self.__auditor_address, 'gas': int(gas)}
+            args = {'from': self.__config.account, 'gas': int(gas)}
+            
+        # TODO: Only attempt unlocking unless unlocked
+        self.__config.unlock_account();
 
-        return self.__internal_contract.transact(args).submitReport(
+        return self.__config.internal_contract.transact(args).submitReport(
             requestor,
             contract_uri,
             report,
         )
-
-        

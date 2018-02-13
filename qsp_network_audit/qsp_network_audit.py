@@ -63,14 +63,7 @@ def main():
 
         # Based on the provided configuration, instantiates a new
         # QSP audit node
-        audit_node = QSPAuditNode(
-            cfg.account,
-            cfg.internal_contract, 
-            cfg.analyzer,
-            cfg.min_price,
-            cfg.evt_polling,
-            cfg.analyzer_output,
-        )
+        audit_node = QSPAuditNode(cfg)
 
         logging.info("Running QSP audit node")
 
