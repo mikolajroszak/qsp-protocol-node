@@ -165,7 +165,7 @@ class Config:
     def unlock_account(self):        
         # Proceed to unlock the wallet account
 
-        unlocked = self.__web3_client.personal.unlock_account(
+        unlocked = self.__web3_client.personal.unlockAccount(
             self.__account,
             self.__account_passwd,
             self.__account_ttl,
@@ -191,7 +191,7 @@ class Config:
         if self.__eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
             return
         
-        self.unlockAccount(); # initial unlocking to fail-fast in case password
+        self.unlock_account(); # initial unlocking to fail-fast in case password
         # is incorrect in the first place
 
     def __load_contract_from_src(self):
