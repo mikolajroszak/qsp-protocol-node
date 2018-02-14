@@ -12,7 +12,7 @@ import os
 import utils.io as io_utils
 
 from audit import Analyzer
-from utils.wallet_session_manager import WalletSessionManager
+from utils.wallet_session_manager import WalletSessionManager, DummyWalletSessionManager
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -259,8 +259,11 @@ class Config:
         )
 
     def __create_wallet_session_manager(self):
-        self.__wallet_session_manager = WalletSessionManager(
-            self.__web3_client, self.__account, self.__account_passwd)
+        if self.eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
+            self.__wallet_session_manager = DummyWalletSessionManager()
+        else:
+            self.__wallet_session_manager = WalletSessionManager(
+                self.__web3_client, self.__account, self.__account_passwd)
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """

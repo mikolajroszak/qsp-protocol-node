@@ -1,3 +1,11 @@
+class DummyWalletSessionManager:
+    def unlock(self, ttl):
+        pass
+
+    def lock(self):
+        pass
+
+
 class WalletSessionManager:
     def __init__(self, web3_client, account, passwd):
         self.__web3_client = web3_client
