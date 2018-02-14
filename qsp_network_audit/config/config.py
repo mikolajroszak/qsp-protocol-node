@@ -9,6 +9,8 @@ from solc import compile_files
 import yaml
 import re
 import os
+import hashlib
+import logging
 import utils.io as io_utils
 
 from audit import Analyzer
@@ -31,10 +33,12 @@ def config_value(cfg, path, default=None, accept_none=True):
 
     return value
 
+
 class Config:
     """
     Provides a set of methods for accessing configuration parameters.
     """
+
     def __fetch_internal_contract_metadata(self, cfg):
         metadata_uri = config_value(cfg, '/internal_contract_abi/metadata')
         if metadata_uri is not None:
@@ -53,26 +57,38 @@ class Config:
     def __setup_values(self, cfg):
         metadata = self.__fetch_internal_contract_metadata(cfg)
         self.__internal_contract_name = config_value(metadata, '/contractName')
-        self.__internal_contract_address = config_value(metadata, '/contractAddress')
+        self.__internal_contract_address = config_value(
+            metadata, '/contractAddress')
 
         self.__internal_contract = None
 
-        self.__internal_contract_src_uri = config_value(cfg, '/internal_contract_src/uri')
-        self.__has_internal_contract_src = bool(self.__internal_contract_src_uri)
+        self.__internal_contract_src_uri = config_value(
+            cfg, '/internal_contract_src/uri')
+        self.__has_internal_contract_src = bool(
+            self.__internal_contract_src_uri)
 
-        self.__internal_contract_abi_uri = config_value(cfg, '/internal_contract_abi/uri')
-        self.__has_internal_contract_abi = bool(self.__internal_contract_abi_uri)
+        self.__internal_contract_abi_uri = config_value(
+            cfg, '/internal_contract_abi/uri')
+        self.__has_internal_contract_abi = bool(
+            self.__internal_contract_abi_uri)
 
-        self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
+        self.__eth_provider_name = config_value(
+            cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
         self.__min_price = config_value(cfg, '/min_price', accept_none=False)
-        self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
-        self.__analyzer_output = config_value(cfg, '/analyzer/output', accept_none=False)
-        self.__analyzer_cmd = config_value(cfg, '/analyzer/cmd', accept_none=False)
+        self.__evt_polling_sec = config_value(
+            cfg, '/evt_polling_sec', accept_none=False)
+        self.__analyzer_output = config_value(
+            cfg, '/analyzer/output', accept_none=False)
+        self.__analyzer_cmd = config_value(
+            cfg, '/analyzer/cmd', accept_none=False)
         self.__account = config_value(cfg, '/account/id')
         self.__account_ttl = config_value(cfg, '/account/ttl', 600)
-        self.__solidity_version = config_value(cfg, '/analyzer/solidity', accept_none=False)
+        self.__solidity_version = config_value(
+            cfg, '/analyzer/solidity', accept_none=False)
+
+        self.__default_gas = config_value(cfg, '/default_gas')
 
     def __check_values(self):
         """
@@ -86,7 +102,7 @@ class Config:
         Checks the settings w.r.t. the internal contract.
         """
         self.__raise_err(
-            self.__has_internal_contract_abi and self.__has_internal_contract_src, 
+            self.__has_internal_contract_abi and self.__has_internal_contract_src,
             "Settings must include internal contract ABI or source, but not both",
         )
 
@@ -94,7 +110,7 @@ class Config:
             has_uri = bool(self.__internal_contract_abi_uri)
             has_addr = bool(self.__internal_contract_address)
             self.__raise_err(
-                not (has_uri and has_addr), 
+                not (has_uri and has_addr),
                 "Missing internal contract ABI URI and address",
             )
 
@@ -105,17 +121,18 @@ class Config:
                 "Missing internal contract source URI"
             )
         else:
-            self.__raise_err(msg="Missing the internal contract source or its ABI")
-
+            self.__raise_err(
+                msg="Missing the internal contract source or its ABI")
 
     def __check_solidity_version(self):
-            """
-            Checks the format of the supported solidity version.
-            """
-            self.__raise_err(
-                 not bool(re.match("[0-9]+\.[0-9]+\.[0-9]+", self.__solidity_version)),
-                "Solidity version is not correct",
-            )
+        """
+        Checks the format of the supported solidity version.
+        """
+        self.__raise_err(
+            not bool(re.match("[0-9]+\.[0-9]+\.[0-9]+",
+                              self.__solidity_version)),
+            "Solidity version is not correct",
+        )
 
     def __create_eth_provider(self):
         """
@@ -137,7 +154,7 @@ class Config:
         if self.__eth_provider_name == "IPCProvider":
             self.__eth_provider = IPCProvider(**self.__eth_provider_args)
             return
-            
+
         if self.__eth_provider_name == "EthereumTesterProvider":
             # NOTE: currently relies on the legacy EthereumTesterProvider,
             # instead of having something like
@@ -148,7 +165,7 @@ class Config:
             # eth_tester = EthereumTester()
             # provider = EthereumTesterProvider(eth_tester))
             #
-            # The reason of that relies on bugs related to 
+            # The reason of that relies on bugs related to
             # how keys are stored in events (given as dictionaries).
             #
             # See https://github.com/ethereum/web3.py/issues/503
@@ -160,9 +177,10 @@ class Config:
             self.__eth_provider = TestRPCProvider(**self.__eth_provider_args)
             return
 
-        raise Exception("Unknown/Unsupported provider: {0}".format(self.eth_provider))
+        raise Exception(
+            "Unknown/Unsupported provider: {0}".format(self.eth_provider))
 
-    def unlock_account(self):        
+    def unlock_account(self):
         # Proceed to unlock the wallet account
 
         unlocked = self.__web3_client.personal.unlockAccount(
@@ -170,9 +188,10 @@ class Config:
             self.__account_passwd,
             self.__account_ttl,
         )
-        
+
         if not unlocked:
-            raise Exception("Cannot unlock account {0}.".format(self.__account))
+            raise Exception(
+                "Cannot unlock account {0}.".format(self.__account))
 
     def __create_web3_client(self):
         """
@@ -190,9 +209,10 @@ class Config:
         # case, nothing else to do
         if self.__eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
             return
-        
-        self.unlock_account(); # initial unlocking to fail-fast in case password
+
+        # Initial unlocking to fail-fast in case password
         # is incorrect in the first place
+        self.unlock_account()
 
     def __load_contract_from_src(self):
         """
@@ -206,25 +226,26 @@ class Config:
             self.__internal_contract_src_uri,
             self.__internal_contract_name,
         )
-        
+
         # Gets the contract interface
         contract_interface = contract_dict[contract_id]
 
         # Instantiates the contract
         contract = self.web3_client.eth.contract(
-            abi = contract_interface['abi'],
-            bytecode = contract_interface['bin']
+            abi=contract_interface['abi'],
+            bytecode=contract_interface['bin']
         )
-        
+
         # Deploys the contract
-        transaction_hash = contract.deploy(transaction = {'from': self.__account})
+        transaction_hash = contract.deploy(
+            transaction={'from': self.__account})
 
         receipt = self.web3_client.eth.getTransactionReceipt(transaction_hash)
         self.__internal_contract_address = receipt['contractAddress']
 
         # Creates the contract object
         return self.web3_client.eth.contract(contract_interface['abi'], self.__internal_contract_address)
-    
+
     def __create_internal_contract(self):
         """
         Creates the internal contract either from its ABI or from its source code (whichever is available).
@@ -238,10 +259,10 @@ class Config:
             abi_json = io_utils.load_json(abi_file)
 
             self.__internal_contract = self.web3_client.eth.contract(
-                abi_json, 
+                abi_json,
                 self.internal_contract_address,
             )
-            
+
         else:
             self.__internal_contract = self.__load_contract_from_src()
 
@@ -253,44 +274,91 @@ class Config:
             self.analyzer_cmd,
             self.supported_solidity_version
         )
-        
+
+    def __create_components(self, cfg):
+        # Setup followed by verification
+        self.__setup_values(cfg)
+        self.__check_values()
+
+        # Creation of internal components
+        self.__create_eth_provider()
+        self.__create_web3_client()
+        self.__create_internal_contract()
+        self.__create_analyzer()
+
+    def __load_config(self):
+        config_file = io_utils.fetch_file(self.config_file_uri)
+        logging.debug("Loading configuration from {0}".format(
+            str(self.config_file_uri)))
+
+        with open(config_file) as yaml_file:
+            new_cfg_dict = yaml.load(yaml_file)[self.env]
+
+        current_digest = hashlib.sha256(
+            str(new_cfg_dict).encode("utf-8")
+        ).hexdigest()
+
+        logging.debug("Configuration digest is {0}".format(
+            str(current_digest)))
+
+        # Use the digest as a means to detect whether or not
+        # the content of the configuration has changed. If not,
+        # just skip.
+
+        if current_digest == self.__hex_digest:
+            logging.debug("Configuration has not changed. Skipping")
+            return
+
+        # If the configuration has changed, then reload it
+        # and verify values.
+
+        self.__hex_digest = current_digest
+
+        try:
+            logging.debug("Creating components from configuration")
+            self.__create_components(new_cfg_dict)
+            logging.debug("Components successfully created")
+            self.__cfg_dict = new_cfg_dict
+
+        except KeyError as missing_config:
+
+            # If this is the first time the loading is happening,
+            # nothing to be done except report an exception
+            if self.__cfg_dict is None:
+                raise Exception(
+                    "Incorrect configuration. Missing entry {0}".format(missing_config))
+
+            # Otherwise, the a load happened in the past, and one can
+            # revert state to that
+            else:
+                # Revert configuration as a means to prevent crashes
+                logging.debug("Configuration error. Reverting changes....")
+                self.__create_components(self.__cfg_dict)
+                logging.debug("Successfully reverted changes")
+
     def __init__(self, env, config_file_uri, account_passwd=""):
         """
         Builds a Config object from a target environment (e.g., test) and an input YAML configuration file. 
         """
         self.__env = env
+        self.__cfg_dict = None
         self.__account_passwd = account_passwd
+        self.__hex_digest = None
+        self.__config_file_uri = config_file_uri
 
-        config_file = io_utils.fetch_file(config_file_uri)
-        with open(config_file) as yaml_file:
-            cfg = yaml.load(yaml_file)[env]
-
-        try:
-            # Setup followed by verification
-            self.__setup_values(cfg)
-            self.__check_values()
-
-            # Creation of internal components
-            self.__create_eth_provider()
-            self.__create_web3_client()
-            self.__create_internal_contract()
-            self.__create_analyzer()
-        
-        except KeyError as missing_config:
-            raise Exception("Incorrect configuration. Missing entry {0}".format(missing_config))
-
-    def __raise_err(self, cond = True, msg = ""):
+    def __raise_err(self, cond=True, msg=""):
         """
         Raises an exception if the given condition holds.
         """
         if cond:
             raise Exception("Cannot initialize QSP node. {0}".format(msg))
-    
+
     @property
     def eth_provider(self):
         """
         Returns the Ethereum provider object.
         """
+        self.__load_config()
         return self.__eth_provider
 
     @property
@@ -298,6 +366,7 @@ class Config:
         """
         Returns the Ethereum provider name.
         """
+        self.__load_config()
         return self.__eth_provider_name
 
     @property
@@ -305,13 +374,15 @@ class Config:
         """
         Returns the arguments required for instantiating the target Ethereum provider.
         """
+        self.__load_config()
         return self.__eth_provider_args
-        
+
     @property
     def internal_contract_address(self):
         """
         Returns the internal QSP contract address.
         """
+        self.__load_config()
         return self.__internal_contract_address
 
     @property
@@ -319,6 +390,7 @@ class Config:
         """
         Return the minimum QSP price for accepting an audit.
         """
+        self.__load_config()
         return self.__min_price
 
     @property
@@ -326,6 +398,7 @@ class Config:
         """
         Returns the polling for audit requests frequency (given in seconds).
         """
+        self.__load_config()
         return self.__evt_polling_sec
 
     @property
@@ -333,6 +406,7 @@ class Config:
         """
         Returns the output of the analyzer (either 'stdout' or a filename template).
         """
+        self.__load_config()
         return self.__analyzer_output
 
     @property
@@ -340,6 +414,7 @@ class Config:
         """
         Returns the analyzer command template."
         """
+        self.__load_config()
         return self.__analyzer_cmd
 
     @property
@@ -347,6 +422,7 @@ class Config:
         """
         Returns the Solidity version supported by the current QSP audit node."
         """
+        self.__load_config()
         return self.__solidity_version
 
     @property
@@ -354,6 +430,7 @@ class Config:
         """
         Returns the account numeric identifier to sign reports.
         """
+        self.__load_config()
         return self.__account
 
     @property
@@ -361,6 +438,7 @@ class Config:
         """
         Returns the account TTL.
         """
+        self.__load_config()
         return self.__account_ttl
 
     @property
@@ -368,6 +446,7 @@ class Config:
         """
         Returns the account associated password.
         """
+        self.__load_config()
         return self.__account_passwd
 
     @property
@@ -375,13 +454,15 @@ class Config:
         """
         Returns the internal contract ABI URI.
         """
+        self.__load_config()
         return self.__internal_contract_abi_uri
-    
+
     @property
     def internal_contract_src_uri(self):
         """"
         Returns the internal contract source URI.
         """
+        self.__load_config()
         return self.__internal_contract_src_uri
 
     @property
@@ -390,6 +471,7 @@ class Config:
         Returns whether the internal contract source code, once compiled, should
         be deployed on the target network.
         """
+        self.__load_config()
         return self.__internal_contract_src_deploy
 
     @property
@@ -397,6 +479,7 @@ class Config:
         """
         Returns whether the internal contract has been made available.
         """
+        self.__load_config()
         return self.__has_internal_contract_src
 
     @property
@@ -404,6 +487,7 @@ class Config:
         """
         Returns whether the internal contract ABI has been made available.
         """
+        self.__load_config()
         return self.__has_internal_contract_abi
 
     @property
@@ -411,6 +495,7 @@ class Config:
         """ 
         Returns the Web3 client object built from the given YAML configuration file.
         """
+        self.__load_config()
         return self.__web3_client
 
     @property
@@ -418,6 +503,7 @@ class Config:
         """
         Returns the internal contract object built from the given YAML configuration file.
         """
+        self.__load_config()
         return self.__internal_contract
 
     @property
@@ -425,6 +511,7 @@ class Config:
         """
         Returns the name of the internal contract.
         """
+        self.__load_config()
         return self.__internal_contract_name
 
     @property
@@ -432,6 +519,7 @@ class Config:
         """
         Returns the analyzer object built from the given YAML configuration file.
         """
+        self.__load_config()
         return self.__analyzer
 
     @property
@@ -440,4 +528,24 @@ class Config:
         Returns the target environment to which the settings refer to.
         """
         return self.__env
-        
+
+    @property
+    def default_gas(self):
+        """
+        Returns a fixed amount of gas to be used when interacting with the internal contract.
+        """
+        return self.__default_gas
+
+    @property
+    def hex_digest(self):
+        """"
+        Returns the sha256 hash digest (as a hexadecimal string) from the configuration file.
+        """
+        return self.__hex_digest
+
+    @property
+    def config_file_uri(self):
+        """
+        Returns the configuration file URI.
+        """
+        return self.__config_file_uri

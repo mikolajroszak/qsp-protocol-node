@@ -12,6 +12,7 @@ import logging
 from utils.io import fetch_file, digest
 from utils.args import replace_args
 
+
 class QSPAuditNode:
 
     def __init__(self, config):
@@ -52,14 +53,19 @@ class QSPAuditNode:
                         requestor = audit_request['args']['requestor']
                         contract_uri = audit_request['args']['uri']
 
-                        report = json.dumps(self.audit(requestor, contract_uri))
+                        report = json.dumps(
+                            self.audit(requestor, contract_uri))
 
-                        logging.debug("Generated report is {0}. Submitting".format(str(report)))
-                        tx = self.__submitReport(requestor, contract_uri, report)
-                        logging.debug("Report is sucessfully submitted: Hash is {0}".format(str(tx)))
+                        logging.debug(
+                            "Generated report is {0}. Submitting".format(str(report)))
+                        tx = self.__submitReport(
+                            requestor, contract_uri, report)
+                        logging.debug(
+                            "Report is sucessfully submitted: Hash is {0}".format(str(tx)))
 
                     except Exception:
-                        logging.exception("Unexpected error when performing audit")
+                        logging.exception(
+                            "Unexpected error when performing audit")
                         pass
 
                 else:
@@ -68,15 +74,13 @@ class QSPAuditNode:
                             str(audit_request)
                         )
                     )
-                    
-
 
     def stop(self):
         """
         Signals to the executing QSP audit node that is should stop the execution of the node.
         """
         self.__exec = False
-    
+
     def audit(self, requestor, uri):
         """
         Audits a target contract.
@@ -86,7 +90,7 @@ class QSPAuditNode:
         target_contract = fetch_file(uri)
 
         report = self.__config.analyzer.check(
-            target_contract, 
+            target_contract,
             self.__config.analyzer_output,
         )
 
@@ -104,18 +108,14 @@ class QSPAuditNode:
         """
         Submits the audit report to the entire QSP network.
         """
-
-        # TODO: This is currently a workaround. Replace it 
-        # with dynamic yaml configuration.
-        # See issue: https://github.com/quantstamp/qsp-network-audit/issues/22
-        gas = os.environ.get('QSP_GAS_PRICE')
+        gas = self.__config.default_gas
         if gas is None:
             args = {'from': self.__config.account}
         else:
             args = {'from': self.__config.account, 'gas': int(gas)}
-            
+
         # TODO: Only attempt unlocking unless unlocked
-        self.__config.unlock_account();
+        self.__config.unlock_account()
 
         return self.__config.internal_contract.transact(args).submitReport(
             requestor,
