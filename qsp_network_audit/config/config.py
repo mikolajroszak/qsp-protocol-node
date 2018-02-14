@@ -1,5 +1,5 @@
 """
-Provides the configuration for executing a QSP Audit node, 
+Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file.
 """
 from web3 import Web3, TestRPCProvider, HTTPProvider, IPCProvider, EthereumTesterProvider
@@ -14,6 +14,7 @@ import logging
 import utils.io as io_utils
 
 from audit import Analyzer
+from utils.wallet_session_manager import WalletSessionManager, DummyWalletSessionManager
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -87,7 +88,6 @@ class Config:
         self.__account_ttl = config_value(cfg, '/account/ttl', 600)
         self.__solidity_version = config_value(
             cfg, '/analyzer/solidity', accept_none=False)
-
         self.__default_gas = config_value(cfg, '/default_gas')
 
     def __check_values(self):
@@ -180,19 +180,6 @@ class Config:
         raise Exception(
             "Unknown/Unsupported provider: {0}".format(self.eth_provider))
 
-    def unlock_account(self):
-        # Proceed to unlock the wallet account
-
-        unlocked = self.__web3_client.personal.unlockAccount(
-            self.__account,
-            self.__account_passwd,
-            self.__account_ttl,
-        )
-
-        if not unlocked:
-            raise Exception(
-                "Cannot unlock account {0}.".format(self.__account))
-
     def __create_web3_client(self):
         """
         Creates a Web3 client from the already set Ethereum provider.
@@ -204,15 +191,6 @@ class Config:
 
         if self.__account is None:
             self.__account = self.__web3_client.eth.accounts[0]
-
-        # Test-based providers do not need account unlocking. If that is the
-        # case, nothing else to do
-        if self.__eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
-            return
-
-        # Initial unlocking to fail-fast in case password
-        # is incorrect in the first place
-        self.unlock_account()
 
     def __load_contract_from_src(self):
         """
@@ -275,6 +253,13 @@ class Config:
             self.supported_solidity_version
         )
 
+    def __create_wallet_session_manager(self):
+        if self.eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
+            self.__wallet_session_manager = DummyWalletSessionManager()
+        else:
+            self.__wallet_session_manager = WalletSessionManager(
+                self.__web3_client, self.__account, self.__account_passwd)
+
     def __create_components(self, cfg):
         # Setup followed by verification
         self.__setup_values(cfg)
@@ -285,6 +270,7 @@ class Config:
         self.__create_web3_client()
         self.__create_internal_contract()
         self.__create_analyzer()
+        self.__create_wallet_session_manager()
 
     def __load_config(self):
         config_file = io_utils.fetch_file(self.config_file_uri)
@@ -521,6 +507,11 @@ class Config:
         """
         self.__load_config()
         return self.__analyzer
+
+    @property
+    def wallet_session_manager(self):
+        self.__load_config()
+        return self.__wallet_session_manager
 
     @property
     def env(self):

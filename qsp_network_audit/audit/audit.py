@@ -109,14 +109,13 @@ class QSPAuditNode:
         Submits the audit report to the entire QSP network.
         """
         gas = self.__config.default_gas
+
         if gas is None:
             args = {'from': self.__config.account}
         else:
             args = {'from': self.__config.account, 'gas': int(gas)}
 
-        # TODO: Only attempt unlocking unless unlocked
-        self.__config.unlock_account()
-
+        self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
         return self.__config.internal_contract.transact(args).submitReport(
             requestor,
             contract_uri,

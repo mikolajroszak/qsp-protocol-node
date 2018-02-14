@@ -4,10 +4,11 @@ Provides an interface for invoking the analyzer software.
 
 import subprocess
 import os
-import logging 
+import logging
 
 from utils.io import load_json, has_matching_line
 from utils.args import replace_args
+
 
 class Analyzer:
 
@@ -18,7 +19,7 @@ class Analyzer:
         """
         self.__cmd_template = cmd_template
         self.__locked_version = locked_version
-    
+
     def __supports_target_solidity_version(self, contract):
         """
         Verifies whether the target Solidity version in a contract is supported or not.
@@ -41,9 +42,9 @@ class Analyzer:
                 )
             )
 
-        injected_output = replace_args(output_name_template, 
-            {"${input}": contract}
-        )
+        injected_output = replace_args(output_name_template,
+                                       {"${input}": contract}
+                                       )
         injected_cmd = replace_args(self.__cmd_template, {
             "${input}": contract,
             "${solidity_version}": self.__locked_version,
@@ -75,7 +76,7 @@ class Analyzer:
         if os.path.isfile(injected_output):
 
             logging.debug("Loading result from {0}".format(injected_output))
-            
+
             result = load_json(injected_output)
 
             os.remove(injected_output)
@@ -83,10 +84,5 @@ class Analyzer:
             if result is not None and result:
                 logging.debug("Analysis result is {0}".format(str(result)))
                 return result
-        
+
         raise Exception("Failed in running analyzer. Skipping...")
-
-        
-
-
-
