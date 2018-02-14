@@ -87,6 +87,8 @@ class Config:
         self.__solidity_version = config_value(
             cfg, '/analyzer/solidity', accept_none=False)
 
+        self.__default_gas = config_value(cfg, '/default_gas')
+
     def __check_values(self):
         """
         Checks the configuration values provided in the YAML configuration file.
@@ -177,6 +179,19 @@ class Config:
         raise Exception(
             "Unknown/Unsupported provider: {0}".format(self.eth_provider))
 
+    def unlock_account(self):
+        # Proceed to unlock the wallet account
+
+        unlocked = self.__web3_client.personal.unlockAccount(
+            self.__account,
+            self.__account_passwd,
+            self.__account_ttl,
+        )
+
+        if not unlocked:
+            raise Exception(
+                "Cannot unlock account {0}.".format(self.__account))
+
     def __create_web3_client(self):
         """
         Creates a Web3 client from the already set Ethereum provider.
@@ -194,16 +209,9 @@ class Config:
         if self.__eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
             return
 
-        # Proceed to unlock the wallet account
-        unlocked = self.__web3_client.personal.unlockAccount(
-            self.__account,
-            self.__account_passwd,
-            self.__account_ttl,
-        )
-
-        if not unlocked:
-            raise Exception(
-                "Cannot unlock account {0}.".format(self.__account))
+        # Initial unlocking to fail-fast in case password
+        # is incorrect in the first place
+        self.unlock_account()
 
     def __load_contract_from_src(self):
         """
@@ -493,6 +501,13 @@ class Config:
         Returns the target environment to which the settings refer to.
         """
         return self.__env
+
+    @property
+    def default_gas(self):
+        """
+        Returns a fixed amount of gas to be used when interacting with the internal contract.
+        """
+        return self.__default_gas
 
     @property
     def hex_digest(self):

@@ -32,4 +32,5 @@ dev:
       solidity: !!str "0.4.17"
   account:
     id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
-    ttl: 259200
+    ttl: 600
+  default_gas: !!int 300000

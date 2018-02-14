@@ -19,12 +19,7 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         self.__cfg = Config("test", resource_uri("test_config.yaml"))
         self.__audit_node = QSPAuditNode(
-            self.__cfg.account,
-            self.__cfg.internal_contract, 
-            self.__cfg.analyzer,
-            self.__cfg.min_price,
-            self.__cfg.evt_polling,
-            self.__cfg.analyzer_output,
+            self.__cfg
         )
 
         def exec():
@@ -80,4 +75,3 @@ class TestQSPAuditNode(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
