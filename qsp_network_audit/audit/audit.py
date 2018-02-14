@@ -108,18 +108,14 @@ class QSPAuditNode:
         """
         Submits the audit report to the entire QSP network.
         """
+        gas = self.__config.default_gas
 
-        # TODO: This is currently a workaround. Replace it
-        # with dynamic yaml configuration.
-        # See issue: https://github.com/quantstamp/qsp-network-audit/issues/22
-        gas = os.environ.get('QSP_GAS_PRICE')
         if gas is None:
             args = {'from': self.__config.account}
         else:
             args = {'from': self.__config.account, 'gas': int(gas)}
 
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
-
         return self.__config.internal_contract.transact(args).submitReport(
             requestor,
             contract_uri,
