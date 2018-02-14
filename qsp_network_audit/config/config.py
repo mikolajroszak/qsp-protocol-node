@@ -10,6 +10,7 @@ import yaml
 import re
 import os
 import hashlib
+import logging
 import utils.io as io_utils
 
 from audit import Analyzer
@@ -274,47 +275,73 @@ class Config:
             self.supported_solidity_version
         )
 
+    def __create_components(self, cfg):
+        # Setup followed by verification
+        self.__setup_values(cfg)
+        self.__check_values()
+
+        # Creation of internal components
+        self.__create_eth_provider()
+        self.__create_web3_client()
+        self.__create_internal_contract()
+        self.__create_analyzer()
+
     def __load_config(self):
         config_file = io_utils.fetch_file(self.config_file_uri)
+        logging.debug("Loading configuration from {0}".format(
+            str(self.config_file_uri)))
 
         with open(config_file) as yaml_file:
-            cfg = yaml.load(yaml_file)[self.env]
+            new_cfg_dict = yaml.load(yaml_file)[self.env]
 
         current_digest = hashlib.sha256(
-            str(cfg).encode("utf-8")
+            str(new_cfg_dict).encode("utf-8")
         ).hexdigest()
+
+        logging.debug("Configuration digest is {0}".format(
+            str(current_digest)))
 
         # Use the digest as a means to detect whether or not
         # the content of the configuration has changed. If not,
         # just skip.
 
         if current_digest == self.__hex_digest:
+            logging.debug("Configuration has not changed. Skipping")
             return
 
         # If the configuration has changed, then reload it
         # and verify values.
+
         self.__hex_digest = current_digest
 
         try:
-            # Setup followed by verification
-            self.__setup_values(cfg)
-            self.__check_values()
-
-            # Creation of internal components
-            self.__create_eth_provider()
-            self.__create_web3_client()
-            self.__create_internal_contract()
-            self.__create_analyzer()
+            logging.debug("Creating components from configuration")
+            self.__create_components(new_cfg_dict)
+            logging.debug("Components successfully created")
+            self.__cfg_dict = new_cfg_dict
 
         except KeyError as missing_config:
-            raise Exception(
-                "Incorrect configuration. Missing entry {0}".format(missing_config))
+
+            # If this is the first time the loading is happening,
+            # nothing to be done except report an exception
+            if self.__cfg_dict is None:
+                raise Exception(
+                    "Incorrect configuration. Missing entry {0}".format(missing_config))
+
+            # Otherwise, the a load happened in the past, and one can
+            # revert state to that
+            else:
+                # Revert configuration as a means to prevent crashes
+                logging.debug("Configuration error. Reverting changes....")
+                self.__create_components(self.__cfg_dict)
+                logging.debug("Successfully reverted changes")
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """
         Builds a Config object from a target environment (e.g., test) and an input YAML configuration file. 
         """
         self.__env = env
+        self.__cfg_dict = None
         self.__account_passwd = account_passwd
         self.__hex_digest = None
         self.__config_file_uri = config_file_uri
