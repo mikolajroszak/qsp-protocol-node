@@ -1,4 +1,7 @@
 # qsp-network-audit
+
+![Build status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUmNIbFJiY0FVOUVmdWJ2TTlyNEVRU2p2TWZ1LzhUa0o4dE9TQUFkbkhZM0FvRFRhZ0lhSzFQYXRSd3hlZEVkQWRJSFBZSFdNaHV6SnBwZEtGUXhVOTJVPSIsIml2UGFyYW1ldGVyU3BlYyI6InhWa2lSWmhmZHJkejRYWnoiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop)
+
 Implements the QSP audit node in the Quantstamp network.
 
 ## Development setup
