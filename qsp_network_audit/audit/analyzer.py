@@ -8,7 +8,8 @@ import logging
 
 from utils.io import load_json, has_matching_line
 from utils.args import replace_args
-from solc import compile_files, ContractsNotFound, SolcError
+from solc import compile_files
+from solc.exceptions import ContractsNotFound, SolcError
 
 
 class Analyzer:
