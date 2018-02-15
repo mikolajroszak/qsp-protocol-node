@@ -70,7 +70,7 @@ class QSPAuditNode:
 
                 else:
                     logging.debug(
-                        "Declinin processing audit request: {0}. Not enough incentive".format(
+                        "Declining processing audit request: {0}. Not enough incentive".format(
                             str(audit_request)
                         )
                     )
