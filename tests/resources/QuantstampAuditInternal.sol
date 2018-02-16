@@ -16,7 +16,7 @@ contract QuantstampAuditInternal {
   event LogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price);
   event LogReportSubmitted(uint256 requestId, address auditor, address requestor, string uri);
 
-  function doAudit(uint256 requestId, address requestor, string uri, uint256 price) external {
+  function doAudit(uint256 requestId, address requestor, string uri, uint256 price) public {
     LogAuditRequested(requestId, requestor, uri, price);
   }
 
