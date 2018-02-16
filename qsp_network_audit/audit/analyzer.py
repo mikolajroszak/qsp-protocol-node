@@ -110,7 +110,7 @@ class Analyzer:
             # Unknown error. Report it as such
             raise Exception("Failed in running analyzer. Skipping...")
 
-        except ContractNotFound as error:
+        except ContractsNotFound as error:
             return self.__create_err_result(str(error.stderr_data))
 
         except SolcError as error:

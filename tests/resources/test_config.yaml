@@ -8,7 +8,7 @@ test:
   evt_polling_sec: !!int 5
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "oyente -j -s ${input}"
+      cmd: !!str "./oyente/oyente/oyente.py -j -s ${input}"
       solidity: !!str "0.4.17" 
   account:
     # No provided account hex (use the first one by default)
