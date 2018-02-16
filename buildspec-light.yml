@@ -6,6 +6,7 @@ phases:
   build:
     commands:
       - make test
+
   post_build:
     commands:
       - echo Build completed on `date`

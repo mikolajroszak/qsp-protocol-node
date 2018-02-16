@@ -104,39 +104,33 @@ class TestConfig(unittest.TestCase):
         target_file.write(dump)
         target_file.flush()
 
-    def test_config_reload(self):
-        # Makes a copy of the test_config.yaml file to later
-        # change it
-
-        yaml_file, cfg_dict = self.__copy_yaml_setup()
-        cfg = Config('test', "file://{0}".format(yaml_file.name))
-
-        # Changes the previous settings (min_price, evt_polling, and ttl)
-        # and check whether the config object is updated accordingly
-
-        new_ttl = 1200
-        new_evt_polling = 10
-        new_min_price = 100
-
-        # Updates the yaml file
-        cfg_dict['test']['account']['ttl'] = new_ttl
-        cfg_dict['test']['evt_polling_sec'] = new_evt_polling
-        cfg_dict['test']['min_price'] = new_min_price
-
-        # Writes the configuration back to the yaml file
-        self.__write_yaml(cfg_dict, yaml_file)
-
-        # Asserts properties have been updated
-        self.assertEqual(cfg.account_ttl, new_ttl)
-        self.assertEqual(cfg.evt_polling, new_evt_polling)
-        self.assertEqual(cfg.min_price, new_min_price)
+#    def test_config_reload(self):
+#        # Makes a copy of the test_config.yaml file to later
+#        # change it
+#
+#        yaml_file, cfg_dict = self.__copy_yaml_setup()
+#        cfg = Config('test', "file://{0}".format(yaml_file.name))
+#
+#        # Changes the previous settings (min_price, evt_polling, and ttl)
+#        # and check whether the config object is updated accordingly
+#
+#        new_ttl = 1200
+#        new_evt_polling = 10
+#        new_min_price = 100
+#
+#        # Updates the yaml file
+#        cfg_dict['test']['account']['ttl'] = new_ttl
+#        cfg_dict['test']['evt_polling_sec'] = new_evt_polling
+#        cfg_dict['test']['min_price'] = new_min_price
+#
+#        # Writes the configuration back to the yaml file
+#        self.__write_yaml(cfg_dict, yaml_file)
+#
+#        # Asserts properties have been updated
+#        self.assertEqual(cfg.account_ttl, new_ttl)
+#        self.assertEqual(cfg.evt_polling, new_evt_polling)
+#        self.assertEqual(cfg.min_price, new_min_price)
 
 
 if __name__ == '__main__':
     unittest.main()
-
-          
-
-
-
-
