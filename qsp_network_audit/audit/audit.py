@@ -42,12 +42,13 @@ class QSPAuditNode:
             # Process all incoming requests
             for audit_request in requests:
                 price = audit_request['args']['price']
+                request_id = audit_request['args']['requestId']
 
                 # Accepts all requests whose reward is at least as
                 # high as given by min_reward
                 if price >= self.__config.min_price:
-                    logging.debug("Accepted processing audit request: {0}".format(
-                        str(audit_request)
+                    logging.debug("{0} Accepted processing audit request: {1}".format(
+                        str(request_id), str(audit_request)
                     ))
                     try:
                         requestor = audit_request['args']['requestor']
@@ -57,21 +58,21 @@ class QSPAuditNode:
                             self.audit(requestor, contract_uri))
 
                         logging.debug(
-                            "Generated report is {0}. Submitting".format(str(report)))
+                            "{0} Generated report is {1}. Submitting".format(str(request_id), str(report)))
                         tx = self.__submitReport(
-                            requestor, contract_uri, report)
+                            request_id, requestor, contract_uri, report)
                         logging.debug(
-                            "Report is sucessfully submitted: Hash is {0}".format(str(tx)))
+                            "{0} Report is sucessfully submitted: Hash is {1}".format(str(request_id), str(tx)))
 
                     except Exception:
                         logging.exception(
-                            "Unexpected error when performing audit")
+                            "{0} Unexpected error when performing audit".format(str(request_id)))
                         pass
 
                 else:
                     logging.debug(
-                        "Declining processing audit request: {0}. Not enough incentive".format(
-                            str(audit_request)
+                        "{0} Declining processing audit request: {1}. Not enough incentive".format(
+                            str(request_id), str(audit_request)
                         )
                     )
 
@@ -104,7 +105,7 @@ class QSPAuditNode:
             #'timestamp': str(datetime.utcnow()),
         }
 
-    def __submitReport(self, requestor, contract_uri, report):
+    def __submitReport(self, request_id, requestor, contract_uri, report):
         """
         Submits the audit report to the entire QSP network.
         """
@@ -117,6 +118,7 @@ class QSPAuditNode:
 
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
         return self.__config.internal_contract.transact(args).submitReport(
+            request_id,
             requestor,
             contract_uri,
             report,

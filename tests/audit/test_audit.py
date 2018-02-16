@@ -38,6 +38,7 @@ class TestQSPAuditNode(unittest.TestCase):
         # Sets a filter for report submission events
         evt_filter = self.__cfg.internal_contract.on("LogReportSubmitted")
         evts = []
+        request_id = 123
 
         buggy_contract = resource_uri("DAOBug.sol")
 
@@ -51,6 +52,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertTrue(len(evts) == 1)
         self.assertEqual(evts[0]['event'], "LogReportSubmitted")
         self.assertEqual(evts[0]['args']['uri'], buggy_contract)
+        self.assertEqual(evts[0]['args']['requestId'], request_id)
         self.assertEqual(evts[0]['args']['auditor'], self.__cfg.account)
 
     def __requestAudit(self, contract_uri, price=100):
