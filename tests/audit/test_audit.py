@@ -22,6 +22,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node = QSPAuditNode(
             self.__cfg
         )
+        self.__request_id = 123;
 
         def exec():
             self.__audit_node.run()
@@ -51,6 +52,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertTrue(len(evts) == 1)
         self.assertEqual(evts[0]['event'], "LogReportSubmitted")
         self.assertEqual(evts[0]['args']['uri'], buggy_contract)
+        self.assertEqual(evts[0]['args']['requestId'], self.__request_id)
         self.assertEqual(evts[0]['args']['auditor'], self.__cfg.account)
 
     def __requestAudit(self, contract_uri, price=100):
@@ -61,6 +63,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
         # Submits a request for auditing a smart contract
         self.__cfg.internal_contract.transact({"from": self.__cfg.account}).doAudit(
+            self.__request_id,
             self.__cfg.account,
             contract_uri,
             price,

@@ -5,6 +5,7 @@ contract QuantstampAuditInternal {
     * @dev Audit report contains the auditor address and the actual report
     */
   struct AuditReport {
+    uint256 requestId;
     address auditor;
     string report;
   }
@@ -12,19 +13,19 @@ contract QuantstampAuditInternal {
   // keeps track of audits
   mapping(address => mapping(string => AuditReport)) private auditReports;
 
-  event LogAuditRequested(address requestor, string uri, uint256 price);
-  event LogReportSubmitted(address auditor, address requestor, string uri);
+  event LogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price);
+  event LogReportSubmitted(uint256 requestId, address auditor, address requestor, string uri);
 
-  function doAudit(address requestor, string uri, uint256 price) public {
-    LogAuditRequested(requestor, uri, price);
+  function doAudit(uint256 requestId, address requestor, string uri, uint256 price) public {
+    LogAuditRequested(requestId, requestor, uri, price);
   }
 
-  function submitReport(address requestor, string uri, string report) public {
+  function submitReport(uint256 requestId, address requestor, string uri, string report) public {
     // verify that the report hasn't been issued yet
     require(!isAudited(requestor, uri));
     // TODO: use audit id to distinguish requests
-    auditReports[requestor][uri] = AuditReport(msg.sender, report);
-    LogReportSubmitted(msg.sender, requestor, uri);
+    auditReports[requestor][uri] = AuditReport(requestId, msg.sender, report);
+    LogReportSubmitted(requestId, msg.sender, requestor, uri);
   }
 
   function isAudited(address requestor, string uri) public constant returns(bool) {
