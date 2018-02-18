@@ -12,6 +12,10 @@ local:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
       solidity: !!str "0.4.17"
+  report_uploader:
+      provider: !!str "S3Uploader"
+      args:
+        bucket_name: "qsp-network-reports-dev"
   account:
     id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
     ttl: 600
@@ -30,6 +34,10 @@ dev:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
       solidity: !!str "0.4.17"
+  report_uploader:
+      provider: !!str "S3Provider"
+      args:
+        bucket_name: "qsp-network-reports-dev"
   account:
     id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
     ttl: 600
