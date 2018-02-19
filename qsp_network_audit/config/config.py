@@ -10,7 +10,9 @@ import yaml
 import re
 import os
 import hashlib
-import logging
+import utils.logging as logging_utils
+logging = logging_utils.getLogging()
+
 import utils.io as io_utils
 
 from audit import Analyzer

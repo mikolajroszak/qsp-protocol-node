@@ -2,19 +2,11 @@
 Provides the main entry for executing a QSP audit node.
 """
 import argparse
-import logging
+import utils.logging as logging_utils
+logging = logging_utils.getLogging()
 
 from audit import QSPAuditNode
 from config import Config
-
-
-def config_logging(verbose):
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
-        datefmt='%Y-%m-%d %H:%M:%S',
-        format='[%(asctime)s] %(levelname)s[%(threadName)s] %(message)s',
-    )
-
 
 def main():
     """
@@ -50,7 +42,7 @@ def main():
         # Validates input arguments
         args = parser.parse_args()
 
-        config_logging(args.verbose)
+        logging_utils.config_logging(args.verbose)
 
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
