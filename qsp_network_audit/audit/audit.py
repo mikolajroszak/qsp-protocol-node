@@ -13,6 +13,7 @@ logging = logging_utils.getLogging()
 from utils.io import fetch_file, digest
 from utils.args import replace_args
 
+from hashlib import sha256
 
 class QSPAuditNode:
 
@@ -55,13 +56,18 @@ class QSPAuditNode:
                         requestor = audit_request['args']['requestor']
                         contract_uri = audit_request['args']['uri']
 
-                        report = json.dumps(
-                            self.audit(requestor, contract_uri))
+                        report = self.audit(requestor, contract_uri, request_id)
 
+                        if report is None:
+                          logging.exception(
+                              "{0} Could not generate report".format(str(request_id)))
+                          pass
+                        
+                        report_json = json.dumps(report)
                         logging.debug(
-                            "Generated report is {0}. Submitting".format(str(report)), requestId=str(request_id))
+                            "Generated report is {0}. Submitting".format(str(report_json)), requestId=str(request_id))
                         tx = self.__submitReport(
-                            request_id, requestor, contract_uri, report)
+                            request_id, requestor, contract_uri, report_json)
                         logging.debug(
                             "Report is sucessfully submitted: Hash is {0}".format(str(tx)), requestId=str(request_id))
 
@@ -82,11 +88,11 @@ class QSPAuditNode:
         """
         self.__exec = False
 
-    def audit(self, requestor, uri):
+    def audit(self, requestor, uri, request_id):
         """
         Audits a target contract.
         """
-        logging.info("Executing audit on contract at {0}".format(uri))
+        logging.info("{0} Executing audit on contract at {1}".format(request_id, uri))
 
         target_contract = fetch_file(uri)
 
@@ -94,15 +100,26 @@ class QSPAuditNode:
             target_contract,
             self.__config.analyzer_output,
         )
+        
+        report_as_string = str(json.dumps(report));
+        
+        upload_result = self.__config.report_uploader.upload(report_as_string);
+        logging.info(
+            "{0} Report upload result: {1}".format(request_id, upload_result))
+        
+        if (upload_result['success'] is False):
+          logging.exception(
+              "{0} Unexpected error when uploading report: {1}".format(request_id, json.dumps(upload_result)))
+          return None
 
         return {
             'auditor': self.__config.account,
             'requestor': str(requestor),
             'contract_uri': str(uri),
-            #'contract_sha256': str(digest(target_contract)),
-            #'report': json.dumps(report),
-            'report': 'test',
-            #'timestamp': str(datetime.utcnow()),
+            'contract_sha256': str(digest(target_contract)),
+            'report_uri': upload_result['url'],
+            'report_sha256': sha256(report_as_string.encode()).hexdigest(),
+            'timestamp': str(datetime.utcnow()),
         }
 
     def __submitReport(self, request_id, requestor, contract_uri, report):

@@ -14,7 +14,7 @@ contract QuantstampAuditInternal {
   mapping(address => mapping(string => AuditReport)) private auditReports;
 
   event LogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price);
-  event LogReportSubmitted(uint256 requestId, address auditor, address requestor, string uri);
+  event LogReportSubmitted(uint256 requestId, address auditor, address requestor, string uri, string report);
 
   function doAudit(uint256 requestId, address requestor, string uri, uint256 price) public {
     LogAuditRequested(requestId, requestor, uri, price);
@@ -25,7 +25,7 @@ contract QuantstampAuditInternal {
     require(!isAudited(requestor, uri));
     // TODO: use audit id to distinguish requests
     auditReports[requestor][uri] = AuditReport(requestId, msg.sender, report);
-    LogReportSubmitted(requestId, msg.sender, requestor, uri);
+    LogReportSubmitted(requestId, msg.sender, requestor, uri, report);
   }
 
   function isAudited(address requestor, string uri) public constant returns(bool) {
