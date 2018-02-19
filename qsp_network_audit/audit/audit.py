@@ -44,14 +44,14 @@ class QSPAuditNode:
             # Process all incoming requests
             for audit_request in requests:
                 price = audit_request['args']['price']
-                request_id = audit_request['args']['requestId']
+                request_id = str(audit_request['args']['requestId'])
 
                 # Accepts all requests whose reward is at least as
                 # high as given by min_reward
                 if price >= self.__config.min_price:
                     logging.debug("Accepted processing audit request: {0}".format(
                         str(audit_request)
-                    ), requestId=str(request_id))
+                    ), requestId=request_id)
                     try:
                         requestor = audit_request['args']['requestor']
                         contract_uri = audit_request['args']['uri']
@@ -60,26 +60,26 @@ class QSPAuditNode:
 
                         if report is None:
                           logging.exception(
-                              "{0} Could not generate report".format(str(request_id)))
+                              "Could not generate report", requestId=request_id)
                           pass
                         
                         report_json = json.dumps(report)
                         logging.debug(
-                            "Generated report is {0}. Submitting".format(str(report_json)), requestId=str(request_id))
+                            "Generated report is {0}. Submitting".format(str(report_json)), requestId=request_id)
                         tx = self.__submitReport(
-                            request_id, requestor, contract_uri, report_json)
+                            audit_request['args']['requestId'], requestor, contract_uri, report_json)
                         logging.debug(
-                            "Report is sucessfully submitted: Hash is {0}".format(str(tx)), requestId=str(request_id))
+                            "Report is sucessfully submitted: Hash is {0}".format(str(tx)), requestId=request_id)
 
                     except Exception:
-                        logging.exception("Unexpected error when performing audit", requestId=str(request_id))
+                        logging.exception("Unexpected error when performing audit", requestId=request_id)
                         pass
 
                 else:
                     logging.debug(
                         "Declining processing audit request: {0}. Not enough incentive".format(
                             str(audit_request)
-                        ), requestId=str(request_id)
+                        ), requestId=request_id
                     )
 
     def stop(self):
@@ -92,24 +92,25 @@ class QSPAuditNode:
         """
         Audits a target contract.
         """
-        logging.info("{0} Executing audit on contract at {1}".format(request_id, uri))
+        logging.info("Executing audit on contract at {0}".format(uri), requestId=request_id)
 
         target_contract = fetch_file(uri)
 
         report = self.__config.analyzer.check(
             target_contract,
             self.__config.analyzer_output,
+            request_id
         )
         
         report_as_string = str(json.dumps(report));
         
         upload_result = self.__config.report_uploader.upload(report_as_string);
         logging.info(
-            "{0} Report upload result: {1}".format(request_id, upload_result))
+            "Report upload result: {0}".format(upload_result), requestId=request_id)
         
         if (upload_result['success'] is False):
           logging.exception(
-              "{0} Unexpected error when uploading report: {1}".format(request_id, json.dumps(upload_result)))
+              "Unexpected error when uploading report: {0}".format(json.dumps(upload_result)), requestId=request_id)
           return None
 
         return {
