@@ -43,4 +43,3 @@ def digest(file, charset="utf-8"):
         in_memory_str = stream.read()
 
     return sha256(in_memory_str.encode(charset)).hexdigest()
-

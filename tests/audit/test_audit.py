@@ -4,6 +4,7 @@ their flow within the QSP audit node
 """
 import os
 import unittest
+import json
 from timeout_decorator import timeout
 from threading import Thread
 
@@ -11,6 +12,7 @@ from audit import QSPAuditNode
 from config import Config
 from helpers.resource import resource_uri
 
+from utils.io import fetch_file, digest
 
 class TestQSPAuditNode(unittest.TestCase):
 
@@ -54,6 +56,11 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(evts[0]['args']['uri'], buggy_contract)
         self.assertEqual(evts[0]['args']['requestId'], self.__request_id)
         self.assertEqual(evts[0]['args']['auditor'], self.__cfg.account)
+        
+        report = json.loads(evts[0]['args']['report']);
+        print (report['report_uri'])
+        report_file = fetch_file(report['report_uri'])
+        self.assertEqual(digest(report_file), report['report_sha256']);
 
     def __requestAudit(self, contract_uri, price=100):
         """
