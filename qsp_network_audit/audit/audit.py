@@ -7,7 +7,8 @@ from tempfile import mkstemp
 from time import sleep
 import os
 import json
-import logging
+import utils.logging as logging_utils
+logging = logging_utils.getLogging()
 
 from utils.io import fetch_file, digest
 from utils.args import replace_args
@@ -48,9 +49,9 @@ class QSPAuditNode:
                 # Accepts all requests whose reward is at least as
                 # high as given by min_reward
                 if price >= self.__config.min_price:
-                    logging.debug("{0} Accepted processing audit request: {1}".format(
-                        str(request_id), str(audit_request)
-                    ))
+                    logging.debug("Accepted processing audit request: {0}".format(
+                        str(audit_request)
+                    ), requestId=str(request_id))
                     try:
                         requestor = audit_request['args']['requestor']
                         contract_uri = audit_request['args']['uri']
@@ -64,22 +65,21 @@ class QSPAuditNode:
                         
                         report_json = json.dumps(report)
                         logging.debug(
-                            "{0} Generated report is {1}. Submitting".format(str(request_id), str(report_json)))
+                            "Generated report is {0}. Submitting".format(str(report_json)), requestId=str(request_id))
                         tx = self.__submitReport(
                             request_id, requestor, contract_uri, report_json)
                         logging.debug(
-                            "{0} Report is sucessfully submitted: Hash is {1}".format(str(request_id), str(tx)))
+                            "Report is sucessfully submitted: Hash is {0}".format(str(tx)), requestId=str(request_id))
 
                     except Exception:
-                        logging.exception(
-                            "{0} Unexpected error when performing audit".format(str(request_id)))
+                        logging.exception("Unexpected error when performing audit", requestId=str(request_id))
                         pass
 
                 else:
                     logging.debug(
-                        "{0} Declining processing audit request: {1}. Not enough incentive".format(
-                            str(request_id), str(audit_request)
-                        )
+                        "Declining processing audit request: {0}. Not enough incentive".format(
+                            str(audit_request)
+                        ), requestId=str(request_id)
                     )
 
     def stop(self):

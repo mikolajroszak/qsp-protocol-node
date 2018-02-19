@@ -4,7 +4,8 @@ Provides an interface for invoking the analyzer software.
 
 import subprocess
 import os
-import logging
+import utils.logging as logging_utils
+logging = logging_utils.getLogging()
 
 from utils.io import load_json, has_matching_line
 from utils.args import replace_args
