@@ -22,7 +22,7 @@ class TestAnalyzer(unittest.TestCase):
         analyzer = Analyzer("./oyente/oyente/oyente.py -j -s ${input}", "0.4.17")
 
         buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
-        report = analyzer.check(buggy_contract, "${input}.json")
+        report = analyzer.check(buggy_contract, "${input}.json", "123")
 
         # Asserts some result produced
         self.assertTrue(report)
