@@ -17,8 +17,6 @@ class EventPoolManager:
         with open(query_path) as query_stream:
             query = query_stream.read()
 
-        print("===> Executing query \n" + query)
-
         if multiple_stmts:
             cursor.executescript(query)
         else:
