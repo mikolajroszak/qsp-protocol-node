@@ -1,3 +1,3 @@
 update evt 
-set evt_status = 'DN'
+set fk_status = 'DN'
 where id = ?

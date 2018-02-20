@@ -17,6 +17,8 @@ class EventPoolManager:
         with open(query_path) as query_stream:
             query = query_stream.read()
 
+        print("===> Executing query \n" + query)
+
         if multiple_stmts:
             cursor.executescript(query)
         else:
@@ -101,7 +103,7 @@ class EventPoolManager:
 
     def process_events_to_be_submitted(self, process_fct):
         self.__process_evt_with_new_status(
-            'set_events_to_be_submitted',
+            'get_events_to_be_submitted',
             (self.max_submission_attempts,),
             process_fct
         )
@@ -113,7 +115,7 @@ class EventPoolManager:
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_be_submitted',
-                (evt['id'],)
+                (evt['tx_hash'], evt['audit_report'], evt['id'],)
             )
             self.connection.commit()
         except sqlite3.Error:
