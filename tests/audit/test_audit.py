@@ -48,6 +48,8 @@ class TestQSPAuditNode(unittest.TestCase):
         while evts == []:
             evts = evt_filter.get()
 
+        print("===> events: " + str(evts))
+
         self.assertTrue(len(evts) == 1)
         self.assertEqual(evts[0]['event'], "LogReportSubmitted")
         self.assertEqual(evts[0]['args']['uri'], buggy_contract)

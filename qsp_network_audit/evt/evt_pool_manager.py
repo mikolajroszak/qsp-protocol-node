@@ -49,7 +49,7 @@ class EventPoolManager:
         self.__exec_sql_script(cursor, 'get_latest_beep')
         row = cursor.fetchone()
         cursor.close()
-        return row['current_beep']
+        return row['beep']
 
     def get_next_beep(self):
         return self.get_latest_beep() + 1
@@ -113,7 +113,23 @@ class EventPoolManager:
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_be_submitted',
-                (evt['tx_hash'], evt['audit_report'], evt['id'],)
+                (evt['audit_report'], evt['id'],)
+            )
+            self.connection.commit()
+        except sqlite3.Error:
+            self.connection.rollback()
+        finally:
+            if cursor is not None:
+                cursor.close()
+
+    def record_submission(self, evt):
+        cursor = None
+        try:
+            cursor = self.connection.cursor()
+            self.__exec_sql_script(
+                cursor,
+                'set_submission',
+                (evt['tx_hash'], evt['id'],)
             )
             self.connection.commit()
         except sqlite3.Error:
@@ -129,6 +145,22 @@ class EventPoolManager:
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_done',
+                (evt['id'],)
+            )
+            self.connection.commit()
+        except sqlite3.Error:
+            self.connection.rollback()
+        finally:
+            if cursor is not None:
+                cursor.close()
+
+    def set_evt_to_error(self, evt):
+        cursor = None
+        try:
+            cursor = self.connection.cursor()
+            self.__exec_sql_script(
+                cursor,
+                'set_evt_to_err',
                 (evt['id'],)
             )
             self.connection.commit()

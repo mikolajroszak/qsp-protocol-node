@@ -571,6 +571,7 @@ class Config:
         self.__load_config()
         return self.__max_submission_attempts
 
+    @property
     def event_pool_manager(self):
         """
         Returns the event pool manager.

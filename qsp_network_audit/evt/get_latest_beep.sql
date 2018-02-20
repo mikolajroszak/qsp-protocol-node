@@ -1,2 +1,2 @@
-select coalesce(max(beep), -1) as current_beep
-from evt
+select coalesce(max(beep), -1) as beep
+from audit_evt
