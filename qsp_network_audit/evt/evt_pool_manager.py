@@ -44,16 +44,6 @@ class EventPoolManager:
             if cursor is not None:
                 cursor.close()
 
-    def get_latest_beep(self):
-        cursor = self.connection.cursor()
-        self.__exec_sql_script(cursor, 'get_latest_beep')
-        row = cursor.fetchone()
-        cursor.close()
-        return row['beep']
-
-    def get_next_beep(self):
-        return self.get_latest_beep() + 1
-
     def get_latest_block_number(self):
         cursor = self.connection.cursor()
         self.__exec_sql_script(cursor, 'get_current_block_number')
@@ -113,7 +103,7 @@ class EventPoolManager:
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_be_submitted',
-                (evt['audit_report'], evt['id'],)
+                (evt['status_info'], evt['audit_report'], evt['id'],)
             )
             self.connection.commit()
         except sqlite3.Error:
@@ -122,7 +112,7 @@ class EventPoolManager:
             if cursor is not None:
                 cursor.close()
 
-    def record_submission(self, evt):
+    def set_evt_to_submitted(self, evt):
         cursor = None
         try:
             cursor = self.connection.cursor()

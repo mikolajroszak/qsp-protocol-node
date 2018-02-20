@@ -563,8 +563,9 @@ class Config:
         self.__load_config()
         return self.__evt_db_path
 
+    # FIXME
     @property
-    def max_submission_attempts(self):
+    def submission_timeout_limit(self):
         """
         Returns the event pool database path.
         """
