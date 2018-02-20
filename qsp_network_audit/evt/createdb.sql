@@ -26,5 +26,5 @@ create table if not exists evt (
     submission_attempts smallint not null default 0,
     is_persisted        boolean not null default false,
     audit_report        text default null,
-    foreign key(kf_status) references evt_status(id) 
+    foreign key(fk_status) references evt_status(id) 
 );
