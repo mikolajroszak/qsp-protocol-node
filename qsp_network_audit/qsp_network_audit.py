@@ -6,6 +6,7 @@ import logging
 
 from audit import QSPAuditNode
 from config import Config
+from tendo.singleton import SingleInstance
 
 
 def config_logging(verbose):
@@ -16,11 +17,17 @@ def config_logging(verbose):
     )
 
 
+def check_single_instance():
+    _ = SingleInstance()
+
+
 def main():
     """
     Main function.
     """
     cfg = None
+    check_single_instance()
+
     try:
         # Sets the program's arguments
         parser = argparse.ArgumentParser(description='QSP Audit Node')

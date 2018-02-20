@@ -5,6 +5,7 @@ as loaded from an input YAML file.
 from web3 import Web3, TestRPCProvider, HTTPProvider, IPCProvider, EthereumTesterProvider
 from dpath.util import get
 from solc import compile_files
+from os.path import expanduser
 
 import yaml
 import re
@@ -15,6 +16,7 @@ import utils.io as io_utils
 
 from audit import Analyzer
 from utils.wallet_session_manager import WalletSessionManager, DummyWalletSessionManager
+from evt import EventPoolManager
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -89,6 +91,10 @@ class Config:
         self.__solidity_version = config_value(
             cfg, '/analyzer/solidity', accept_none=False)
         self.__default_gas = config_value(cfg, '/default_gas')
+        self.__evt_db_path = config_value(
+            cfg, '/evt_db_path', expanduser("~") + "/" + ".audit_node.db")
+        self.__max_submission_attempts = config_value(
+            cfg, '/max_submission_attempts', 3)
 
     def __check_values(self):
         """
@@ -260,6 +266,12 @@ class Config:
             self.__wallet_session_manager = WalletSessionManager(
                 self.__web3_client, self.__account, self.__account_passwd)
 
+    def __create_event_pool_manager(self):
+        self.__event_pool_manager = EventPoolManager(
+            self.evt_db_path,
+            self.max_submission_attempts
+        )
+
     def __create_components(self, cfg):
         # Setup followed by verification
         self.__setup_values(cfg)
@@ -271,6 +283,7 @@ class Config:
         self.__create_internal_contract()
         self.__create_analyzer()
         self.__create_wallet_session_manager()
+        self.__create_event_pool_manager()
 
     def __load_config(self):
         config_file = io_utils.fetch_file(self.config_file_uri)
@@ -525,6 +538,7 @@ class Config:
         """
         Returns a fixed amount of gas to be used when interacting with the internal contract.
         """
+        self.__load_config()
         return self.__default_gas
 
     @property
@@ -540,3 +554,26 @@ class Config:
         Returns the configuration file URI.
         """
         return self.__config_file_uri
+
+    @property
+    def evt_db_path(self):
+        """
+        Returns the event pool database path.
+        """
+        self.__load_config()
+        return self.__evt_db_path
+
+    @property
+    def max_submission_attempts(self):
+        """
+        Returns the event pool database path.
+        """
+        self.__load_config()
+        return self.__max_submission_attempts
+
+    def event_pool_manager(self):
+        """
+        Returns the event pool manager.
+        """
+        self.__load_config()
+        return self.__event_pool_manager
