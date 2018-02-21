@@ -27,23 +27,28 @@ class EventPoolManager:
         # Must be explicitly closed by calling `close` on the same
         # EventPool object. The connection is created with autocommit
         # mode on
-        self.connection = sqlite3.connect(db_path, check_same_thread=False)
-        self.connection.isolation_level = None
-        self.connection.row_factory = sqlite3.Row
 
         cursor = None
         try:
-            cursor = self.connection.cursor()
+            self.__connection = sqlite3.connect(db_path, check_same_thread=False, isolation_level=None)
+            self.__connection.row_factory = sqlite3.Row
+
+            cursor = self.__connection.cursor()
+
             self.__exec_sql_script(cursor, 'createdb', multiple_stmts=True)
-            self.connection.commit()
-        except sqlite3.Error:
-            self.connection.rollback()
+            self.__connection.commit()
+
+        except Exception:
+            if self.__connection is not None:
+                self.__connection.close()
+                raise      
+        
         finally:
             if cursor is not None:
                 cursor.close()
 
     def get_latest_block_number(self):
-        cursor = self.connection.cursor()
+        cursor = self.__connection.cursor()
         self.__exec_sql_script(cursor, 'get_current_block_number')
         row = cursor.fetchone()
         cursor.close()
@@ -55,15 +60,24 @@ class EventPoolManager:
     def add_evt_to_be_processed(self, evt):
         cursor = None
         try:
-            cursor = self.connection.cursor()
+            cursor = self.__connection.cursor()
             self.__exec_sql_script(
                 cursor,
                 'add_evt_to_be_processed',
-                (evt['evt_name'], evt['block_nbr'],)
+                query_params=(
+                    evt['request_id'], 
+                    evt['requestor'], 
+                    evt['contract_uri'], 
+                    evt['evt_name'], 
+                    evt['block_nbr'],
+                )
             )
-            self.connection.commit()
+            self.__connection.commit()
+
         except sqlite3.Error:
-            self.connection.rollback()
+            self.__connection.rollback()
+            raise
+
         finally:
             if cursor is not None:
                 cursor.close()
@@ -71,20 +85,23 @@ class EventPoolManager:
     def __process_evt_with_status(self, query_name, fct, query_params=(), fct_kwargs={}):
         cursor = None
         try:
-            cursor = self.connection.cursor()
+            cursor = self.__connection.cursor()
             self.__exec_sql_script(cursor, query_name, query_params)
             for evt in cursor:
                 fct(evt, **fct_kwargs)
-            self.connection.commit()
+            self.__connection.commit()
+
         except sqlite3.Error:
-            self.connection.rollback()
+            self.__connection.rollback()
+            raise
+
         finally:
             if cursor is not None:
                 cursor.close()
 
     def process_incoming_events(self, process_fct):
         self.__process_evt_with_status(
-            'get_events_to_be_processed', 
+            'get_events_to_be_processed',
             process_fct,
         )
 
@@ -105,15 +122,18 @@ class EventPoolManager:
     def set_evt_to_be_submitted(self, evt):
         cursor = None
         try:
-            cursor = self.connection.cursor()
+            cursor = self.__connection.cursor()
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_be_submitted',
                 (evt['status_info'], evt['audit_report'], evt['id'],)
             )
-            self.connection.commit()
+            self.__connection.commit()
+
         except sqlite3.Error:
-            self.connection.rollback()
+            self.__connection.rollback()
+            raise
+
         finally:
             if cursor is not None:
                 cursor.close()
@@ -121,15 +141,18 @@ class EventPoolManager:
     def set_evt_to_submitted(self, evt):
         cursor = None
         try:
-            cursor = self.connection.cursor()
+            cursor = self.__connection.cursor()
             self.__exec_sql_script(
                 cursor,
                 'set_submission',
                 (evt['tx_hash'], evt['id'],)
             )
-            self.connection.commit()
-        except sqlite3.Error:
-            self.connection.rollback()
+            self.__connection.commit()
+
+        except sqlite3.Error as error:
+            self.__connection.rollback()
+            raise error
+
         finally:
             if cursor is not None:
                 cursor.close()
@@ -137,15 +160,18 @@ class EventPoolManager:
     def set_evt_to_done(self, evt):
         cursor = None
         try:
-            cursor = self.connection.cursor()
+            cursor = self.__connection.cursor()
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_done',
                 (evt['id'],)
             )
-            self.connection.commit()
+            self.__connection.commit()
+
         except sqlite3.Error:
-            self.connection.rollback()
+            self.__connection.rollback()
+            raise
+
         finally:
             if cursor is not None:
                 cursor.close()
@@ -153,18 +179,21 @@ class EventPoolManager:
     def set_evt_to_error(self, evt):
         cursor = None
         try:
-            cursor = self.connection.cursor()
+            cursor = self.__connection.cursor()
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_err',
                 (evt['id'],)
             )
-            self.connection.commit()
-        except sqlite3.Error:
-            self.connection.rollback()
+            self.__connection.commit()
+
+        except sqlite3.Error as error:
+            self.__connection.rollback()
+            raise error 
+
         finally:
             if cursor is not None:
                 cursor.close()
 
     def close(self):
-        self.connection.close()
+        self.__connection.close()

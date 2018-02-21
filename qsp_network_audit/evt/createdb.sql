@@ -22,14 +22,13 @@ insert or ignore into evt_status values (
 
 create table if not exists audit_evt (
     id                  integer primary key,
-    request_id          text not null,
+    request_id          text unique not null,
     requestor           text not null,
     contract_uri        text not null,
-    beep                integer not null,
     evt_name            varchar(100) not null,
     block_nbr           bigint not null,
     fk_status           char(2) not null,
-    status_info         varchar(300) not null, 
+    status_info         varchar(300), 
     tx_hash             varchar(100) default null,
     submission_attempts smallint not null default -1,
     is_persisted        boolean not null default false,

@@ -42,9 +42,9 @@ class QSPAuditNode:
         """
         self.__exec = True
         self.__run_polling_thread()
-        self.__run_audit_thread()
-        self.__run_submission_thread()
-        self.__run_monitor_submisson_thread()
+        #self.__run_audit_thread()
+        #self.__run_submission_thread()
+        #self.__run_monitor_submisson_thread()
 
     def __run_polling_thread(self):
         def exec():
@@ -80,6 +80,8 @@ class QSPAuditNode:
                             'block_nbr': evt['blockNumber'],
                         }
 
+                        print("===> created audit event as " + str(audit_evt))
+
                         self.__config.event_pool_manager.add_evt_to_be_processed(
                             audit_evt)
                     else:
@@ -89,8 +91,9 @@ class QSPAuditNode:
                             ), requestId=request_id
                         )
 
-        polling_thread = Thread(target=exec, name="QSP_audit_node: polling_thread").start()
+        polling_thread = Thread(target=exec, name="QSP_audit_node: polling_thread")
         self.__threads.append(polling_thread)
+        polling_thread.start()
 
     def __run_audit_thread(self):
         def process_audit_request(evt):
@@ -128,8 +131,9 @@ class QSPAuditNode:
                 )
                 sleep(self.__config.evt_polling)
 
-        audit_thread = Thread(target=exec, name="QSP_audit_node: audit thread").start()
+        audit_thread = Thread(target=exec, name="QSP_audit_node: audit thread")
         self.__threads.append(audit_thread)
+        audit_thread.start()
 
     def __run_submission_thread(self):
         def process_submission_request(evt):
@@ -153,8 +157,9 @@ class QSPAuditNode:
 
                 sleep(self.__config.evt_polling)
 
-        submission_thread = Thread(target=exec, name="QSP_audit_node: submission thread").start()
+        submission_thread = Thread(target=exec, name="QSP_audit_node: submission thread")
         self.__threads.append(submission_thread)
+        submission_thread.start()
 
 
     def __run_monitor_submisson_thread(self):
@@ -187,8 +192,9 @@ class QSPAuditNode:
 
                 sleep(self.__config.evt_polling)
 
-        monitor_thread = Thread(target=exec, name="QSP_audit_node: monitor thread").start()
+        monitor_thread = Thread(target=exec, name="QSP_audit_node: monitor thread")
         self.__threads.append(monitor_thread)
+        monitor_thread.start()
 
     def stop(self):
         """

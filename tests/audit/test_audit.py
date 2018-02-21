@@ -38,7 +38,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__env = "test"
         self.__config_file_uri = resource_uri("test_config.yaml")
 
-        self.__clean_up_pool_db()
+        #self.__clean_up_pool_db()
 
         self.__cfg = Config(self.__env, self.__config_file_uri)
         self.__audit_node = QSPAuditNode(
@@ -101,7 +101,7 @@ class TestQSPAuditNode(unittest.TestCase):
         Stops the execution of the current QSP audit node.
         """
         self.__audit_node.stop()
-        self.__clean_up_pool_db()
+        #self.__clean_up_pool_db()
 
 
 if __name__ == '__main__':
