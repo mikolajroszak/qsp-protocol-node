@@ -86,8 +86,11 @@ class QSPAuditNode:
                                 'block_nbr': evt['blockNumber'],
                             }
 
+                            print("===> inserting audit_evt: " + str(audit_evt))
+
                             self.__config.event_pool_manager.add_evt_to_be_processed(
-                                audit_evt)
+                                audit_evt
+                            )
                         else:
                             logging.debug(
                                 "Declining processing audit request: {0}. Not enough incentive".format(

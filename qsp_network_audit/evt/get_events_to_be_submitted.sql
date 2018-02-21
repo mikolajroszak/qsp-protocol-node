@@ -1,3 +1,3 @@
 select *
 from audit_evt
-where status = 'TS'
+where fk_status = 'TS'
