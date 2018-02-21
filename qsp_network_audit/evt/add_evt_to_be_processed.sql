@@ -4,7 +4,8 @@ audit_evt(
     requestor,
     contract_uri,
     evt_name, 
-    block_nbr, 
+    block_nbr,
+    status_info,
     fk_status
 )
-values(?, ?, ?, ?, ?, 'RV')
+values(?, ?, ?, ?, ?, ?, 'RV')

@@ -42,7 +42,7 @@ class QSPAuditNode:
         """
         self.__exec = True
         self.__run_polling_thread()
-        #self.__run_audit_thread()
+        self.__run_audit_thread()
         #self.__run_submission_thread()
         #self.__run_monitor_submisson_thread()
 
@@ -84,9 +84,8 @@ class QSPAuditNode:
                                 'contract_uri': str(evt['args']['uri']),
                                 'evt_name': self.__evt_audit_request,
                                 'block_nbr': evt['blockNumber'],
+                                'status_info': "Audit request received",
                             }
-
-                            print("===> inserting audit_evt: " + str(audit_evt))
 
                             self.__config.event_pool_manager.add_evt_to_be_processed(
                                 audit_evt

@@ -70,6 +70,7 @@ class EventPoolManager:
                     evt['contract_uri'], 
                     evt['evt_name'], 
                     evt['block_nbr'],
+                    evt['status_info'],
                 )
             )
             self.__connection.commit()
