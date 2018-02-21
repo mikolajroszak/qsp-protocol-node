@@ -49,47 +49,58 @@ class QSPAuditNode:
     def __run_polling_thread(self):
         def exec():
             while self.__exec:
-                evts = self.__filter_audit_requests.get()
+                try:
+                    evts = self.__filter_audit_requests.get()
 
-                if evts == []:
-                    sleep(self.__config.evt_polling)
-                    continue
+                    if evts == []:
+                        sleep(self.__config.evt_polling)
+                        continue
 
-                logging.debug("Found incomming audit events: {0}".format(
-                    str(evts)
-                ))
+                    logging.debug("Found incomming audit events: {0}".format(
+                        str(evts)
+                    ))
+                except Exception as e:
+                    logging.exception(
+                        "Unexpected error when performing polling: {0}".format(str(e))
+                    )
+                    pass
 
                 # Process all incoming events
                 for evt in evts:
+                    try:
+                        # Accepts all events whose audit reward is at least as
+                        # high as given by min_reward
+                        price = evt['args']['price']
+                        request_id = str(evt['args']['requestId'])
 
-                    # Accepts all events whose audit reward is at least as
-                    # high as given by min_reward
-                    price = evt['args']['price']
-                    request_id = str(evt['args']['requestId'])
-
-                    if price >= self.__config.min_price:
-                        logging.debug("Accepted processing audit event: {0}".format(
-                            str(evt)
-                        ))
-
-                        audit_evt = {
-                            'request_id': request_id,
-                            'requestor': str(evt['args']['requestor']),
-                            'contract_uri': str(evt['args']['uri']),
-                            'evt_name': self.__evt_audit_request,
-                            'block_nbr': evt['blockNumber'],
-                        }
-
-                        print("===> created audit event as " + str(audit_evt))
-
-                        self.__config.event_pool_manager.add_evt_to_be_processed(
-                            audit_evt)
-                    else:
-                        logging.debug(
-                            "Declining processing audit request: {0}. Not enough incentive".format(
+                        if price >= self.__config.min_price:
+                            logging.debug("Accepted processing audit event: {0}".format(
                                 str(evt)
-                            ), requestId=request_id
+                            ))
+
+                            audit_evt = {
+                                'request_id': request_id,
+                                'requestor': str(evt['args']['requestor']),
+                                'contract_uri': str(evt['args']['uri']),
+                                'evt_name': self.__evt_audit_request,
+                                'block_nbr': evt['blockNumber'],
+                            }
+
+                            self.__config.event_pool_manager.add_evt_to_be_processed(
+                                audit_evt)
+                        else:
+                            logging.debug(
+                                "Declining processing audit request: {0}. Not enough incentive".format(
+                                    str(evt)
+                                ), 
+                                requestId=request_id,
+                            )
+                    except Exception:
+                        logging.exception(
+                            "Unexpected error when receiving event {0}".format(str(evt)), 
+                            requestId=request_id,
                         )
+                        pass
 
         polling_thread = Thread(target=exec, name="QSP_audit_node: polling_thread")
         self.__threads.append(polling_thread)
