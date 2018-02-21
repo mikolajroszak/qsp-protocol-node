@@ -26,14 +26,15 @@ class QSPAuditNode:
         start_block = self.__config.event_pool_manager.get_next_block_number()
         self.__evt_audit_request = "LogAuditRequested"
         self.__filter_audit_requests = self.__config.internal_contract.on(
-            self.__evt_audit_requests,
+            self.__evt_audit_request,
             filter_params={'fromBlock': start_block},
         )
-        self.__evt_audit_submission = "LogAuditSubmitted"
+        self.__evt_audit_submission = "LogReportSubmitted"
         self.__filter_audit_submissions = self.__config.internal_contract.on(
-            self.__evt_audit_submissions,
+            self.__evt_audit_submission,
             filter_params={'fromBlock': start_block},
         )
+        self.__threads = []
 
     def run(self):
         """
@@ -76,7 +77,7 @@ class QSPAuditNode:
                             'requestor': str(evt['args']['requestor']),
                             'contract_uri': str(evt['args']['uri']),
                             'evt_name': self.__evt_audit_request,
-                            'block_number': evt['blockNumber'],
+                            'block_nbr': evt['blockNumber'],
                         }
 
                         self.__config.event_pool_manager.add_evt_to_be_processed(
@@ -88,7 +89,8 @@ class QSPAuditNode:
                             ), requestId=request_id
                         )
 
-        Thread(target=exec, name="QSP_audit_node: polling_thread").start()
+        polling_thread = Thread(target=exec, name="QSP_audit_node: polling_thread").start()
+        self.__threads.append(polling_thread)
 
     def __run_audit_thread(self):
         def process_audit_request(evt):
@@ -99,16 +101,20 @@ class QSPAuditNode:
                 report = self.audit(requestor, contract_uri, request_id)
 
                 if report is None:
-                    evt['status_info'] = "Could not generate report"
+                    error = "Could not generate report"
+                    evt['status_info'] = error
                     logging.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
                     evt['report'] = json.dumps(report)
                     evt['status_info'] = "Sucessfully generated report"
                     logging.debug(
-                        "Generated report is {0}. Saving it in the internal database".format(str(evt['report']),
-                        requestId=request_id)
-                self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
+                        "Generated report is {0}. Saving it in the internal database".format(
+                            str(evt['report']),
+                            requestId=request_id
+                        )
+                    )
+                    self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except Exception:
                 logging.exception(
                     "Unexpected error when performing audit", requestId=request_id)
@@ -122,7 +128,8 @@ class QSPAuditNode:
                 )
                 sleep(self.__config.evt_polling)
 
-        Thread(target=exec, name="QSP_audit_node: audit thread").start()
+        audit_thread = Thread(target=exec, name="QSP_audit_node: audit thread").start()
+        self.__threads.append(audit_thread)
 
     def __run_submission_thread(self):
         def process_submission_request(evt):
@@ -146,14 +153,15 @@ class QSPAuditNode:
 
                 sleep(self.__config.evt_polling)
 
-        Thread(target=exec, name="QSP_audit_node: submission thread").start()
+        submission_thread = Thread(target=exec, name="QSP_audit_node: submission thread").start()
+        self.__threads.append(submission_thread)
 
 
     def __run_monitor_submisson_thread(self):
         timeout_limit=self.__config.submission_timeout_limit
 
         def monitor_evt(evt, current_block):
-            if (current_block - evt['block_number']) > timeout_limit:
+            if (current_block - evt['block_nbr']) > timeout_limit:
                 self.__config.event_pool_manager.set_evt_to_error(evt)
 
         def exec():
@@ -168,24 +176,29 @@ class QSPAuditNode:
                             request_id)
                         if audit_evt is not None:
                             self.__config.event_pool_manager.set_evt_as_submitted(
-                                audit_event
+                                audit_evt
                             )
                 else:
                     # If there are no events, then check for a potential timeout
-                    block = self.__config.web3client.eth.blockNumber
+                    block = self.__config.web3_client.eth.blockNumber
                     self.__config.event_pool_manager.process_events_to_be_monitored(
                         monitor_evt, block
                     )
 
                 sleep(self.__config.evt_polling)
 
-        Thread(target=exec, name="QSP_audit_node: monitor thread").start()
+        monitor_thread = Thread(target=exec, name="QSP_audit_node: monitor thread").start()
+        self.__threads.append(monitor_thread)
 
     def stop(self):
         """
         Signals to the executing QSP audit node that is should stop the execution of the node.
         """
-        self.__exec=False
+        self.__exec = False
+        for thread in self.__threads:
+            thread.join()
+
+        self.__threads = []
 
     def audit(self, requestor, uri, request_id):
         """

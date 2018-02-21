@@ -4,7 +4,7 @@ import os
 
 class EventPoolManager:
 
-    def __exec_sql_script(self, cursor, query, query_params={}, multiple_stmts=False):
+    def __exec_sql_script(self, cursor, query, query_params=(), multiple_stmts=False):
         if query_params and multiple_stmts:
             raise Exception(
                 "query_params should not be used in queries with multiple statements")
@@ -22,14 +22,12 @@ class EventPoolManager:
         else:
             cursor.execute(query, query_params)
 
-    def __init__(self, db_path, max_submission_attempts):
+    def __init__(self, db_path):
         # Gets a connection with the SQL3Lite server
         # Must be explicitly closed by calling `close` on the same
         # EventPool object. The connection is created with autocommit
         # mode on
-        self.connection = sqlite3.connect(db_path)
-
-        self.max_submission_attempts = max_submission_attempts
+        self.connection = sqlite3.connect(db_path, check_same_thread=False)
         self.connection.isolation_level = None
         self.connection.row_factory = sqlite3.Row
 
@@ -61,7 +59,7 @@ class EventPoolManager:
             self.__exec_sql_script(
                 cursor,
                 'add_evt_to_be_processed',
-                (evt['beep'], evt['evt_name'], evt['block_nbr'],)
+                (evt['evt_name'], evt['block_nbr'],)
             )
             self.connection.commit()
         except sqlite3.Error:
@@ -70,13 +68,13 @@ class EventPoolManager:
             if cursor is not None:
                 cursor.close()
 
-    def __process_evt_with_new_status(self, query_name, query_params, fct):
+    def __process_evt_with_status(self, query_name, fct, query_params=(), fct_kwargs={}):
         cursor = None
         try:
             cursor = self.connection.cursor()
             self.__exec_sql_script(cursor, query_name, query_params)
             for evt in cursor:
-                fct(evt)
+                fct(evt, **fct_kwargs)
             self.connection.commit()
         except sqlite3.Error:
             self.connection.rollback()
@@ -84,16 +82,24 @@ class EventPoolManager:
             if cursor is not None:
                 cursor.close()
 
-    def process_incoming_events(self, beep, process_fct):
-        self.__process_evt_with_new_status(
-            'get_events_to_be_processed', (beep,), process_fct
+    def process_incoming_events(self, process_fct):
+        self.__process_evt_with_status(
+            'get_events_to_be_processed', 
+            process_fct,
         )
 
     def process_events_to_be_submitted(self, process_fct):
-        self.__process_evt_with_new_status(
+        self.__process_evt_with_status(
             'get_events_to_be_submitted',
-            (self.max_submission_attempts,),
-            process_fct
+            process_fct,
+        )
+
+    def process_events_to_be_monitored(self, monitor_fct, current_block):
+        kw_args = {'current_block': current_block}
+        self.__process_evt_with_status(
+            'get_events_to_be_monitored',
+            monitor_fct,
+            fct_kwargs=kw_args,
         )
 
     def set_evt_to_be_submitted(self, evt):

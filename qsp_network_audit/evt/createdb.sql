@@ -11,7 +11,7 @@ insert or ignore into evt_status values (
     'TS', 'To be submitted'
 );
 insert or ignore into evt_status values (
-    'ST', 'Submitted'
+    'SB', 'Submitted'
 );
 insert or ignore into evt_status values (
     'DN', 'Done'
