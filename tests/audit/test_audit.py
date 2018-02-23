@@ -51,7 +51,7 @@ class TestQSPAuditNode(unittest.TestCase):
         # Starts the execution of the QSP audit node
         Thread(target=exec, name="QSP_audit_node_thread").start()
 
-    @timeout(30, timeout_exception=StopIteration)
+    @timeout(60, timeout_exception=StopIteration)
     def test_contract_audit_request(self):
         """
         Tests the entire flow of an audit request, from a request
@@ -67,7 +67,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__requestAudit(buggy_contract, request_id)
 
         # Busy waits on receiving events up to the configured
-        # timeout (30s)
+        # timeout (60s)
         while evts == []:
             evts = evt_filter.get()
 

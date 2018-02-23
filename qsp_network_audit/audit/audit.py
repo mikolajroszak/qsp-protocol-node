@@ -208,13 +208,13 @@ class QSPAuditNode:
                             self.__config.event_pool_manager.set_evt_as_submitted(
                                 audit_evt
                             )
-                else:
-                    # If there are no events, then check for a potential timeout
-                    block = self.__config.web3_client.eth.blockNumber
-                    self.__config.event_pool_manager.process_submission_events(
-                        monitor_submission_timeout,
-                        block,
-                    )
+
+                # Checks for a potential timeouts
+                block = self.__config.web3_client.eth.blockNumber
+                self.__config.event_pool_manager.process_submission_events(
+                    monitor_submission_timeout,
+                    block,
+                )
 
                 sleep(self.__config.evt_polling)
 
