@@ -9,3 +9,4 @@ requests==2.18.4
 structlog==18.1.0
 python-json-logger==0.1.8
 boto3==1.5.31
+tendo==0.2.8
