@@ -13,7 +13,7 @@ local:
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
       solidity: !!str "0.4.17"
   report_uploader:
-      provider: !!str "S3Uploader"
+      provider: !!str "S3Provider"
       args:
         bucket_name: "qsp-network-reports-dev"
   account:
