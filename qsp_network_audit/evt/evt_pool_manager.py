@@ -61,7 +61,7 @@ class EventPoolManager:
 
     def get_latest_block_number(self):
         cursor = self.__connection.cursor()
-        self.__exec_sql_script(cursor, 'get_current_block_number')
+        self.__exec_sql_script(cursor, 'get_latest_block_number')
         row = cursor.fetchone()
         cursor.close()
         return row['block_nbr']
