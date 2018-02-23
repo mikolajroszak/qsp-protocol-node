@@ -186,7 +186,7 @@ class QSPAuditNode:
     def __run_monitor_submisson_thread(self):
         timeout_limit=self.__config.submission_timeout_limit
 
-        def monitor_evt(evt, current_block):
+        def monitor_submission_timeout(evt, current_block):
             if (current_block - evt['block_nbr']) > timeout_limit:
                 evt['status_info'] = "Submission timeout"
                 self.__config.event_pool_manager.set_evt_to_error(evt)
@@ -211,8 +211,8 @@ class QSPAuditNode:
                 else:
                     # If there are no events, then check for a potential timeout
                     block = self.__config.web3_client.eth.blockNumber
-                    self.__config.event_pool_manager.process_events_to_be_monitored(
-                        monitor_evt, 
+                    self.__config.event_pool_manager.process_submission_events(
+                        monitor_submission_timeout,
                         block,
                     )
 

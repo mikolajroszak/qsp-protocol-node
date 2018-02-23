@@ -124,7 +124,7 @@ class EventPoolManager:
             process_fct,
         )
 
-    def process_events_to_be_monitored(self, monitor_fct, current_block):
+    def process_submission_events(self, monitor_fct, current_block):
         kw_args = {'current_block': current_block}
         self.__process_evt_with_status(
             'get_events_to_be_monitored',
