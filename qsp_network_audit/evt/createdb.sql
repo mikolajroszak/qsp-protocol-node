@@ -22,7 +22,7 @@ insert or ignore into evt_status values (
 
 create table if not exists audit_evt (
     id                  integer primary key,
-    request_id          bigint unique not null,
+    request_id          string unique not null,
     requestor           text not null,
     contract_uri        text not null,
     evt_name            varchar(100) not null,

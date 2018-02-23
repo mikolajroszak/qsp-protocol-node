@@ -98,12 +98,12 @@ class QSPAuditNode:
                                 "Declining processing audit request: {0}. Not enough incentive".format(
                                     str(evt)
                                 ), 
-                                requestId=str(request_id),
+                                requestId=request_id,
                             )
                     except Exception:
                         logging.exception(
                             "Unexpected error when receiving event {0}".format(str(evt)), 
-                            requestId=str(request_id),
+                            requestId=request_id,
                         )
                         pass
 
@@ -122,7 +122,7 @@ class QSPAuditNode:
                 if report is None:
                     error = "Could not generate report"
                     evt['status_info'] = error
-                    logging.exception(error, requestId=str(request_id))
+                    logging.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
                     evt['report'] = json.dumps(report)
@@ -130,14 +130,14 @@ class QSPAuditNode:
                     logging.debug(
                         "Generated report is {0}. Saving it in the internal database".format(
                             str(evt['report']),
-                            requestId=str(request_id),
+                            requestId=request_id,
                         )
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except Exception:
                 logging.exception(
                     "Unexpected error when performing audit", 
-                    requestId=str(request_id),
+                    requestId=request_id,
                 )
                 evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
@@ -158,7 +158,7 @@ class QSPAuditNode:
         def process_submission_request(evt):
             try:
                 tx_hash = self.__submitReport(
-                    evt['request_id'],
+                    int(evt['request_id']),
                     evt['requestor'],
                     evt['contract_uri'],
                     evt['report'],
@@ -200,7 +200,7 @@ class QSPAuditNode:
                 # Processes the current event batch
                 if evts != []:
                     for evt in evts:
-                        request_id = str(evt['args']['requestId'])
+                        request_id = evt['args']['requestId']
                         audit_evt = self.__config.event_pool_manager.fetch_evt(
                             request_id
                         )
@@ -238,7 +238,7 @@ class QSPAuditNode:
         """
         logging.info(
             "Executing audit on contract at {0}".format(uri), 
-            requestId=str(request_id),
+            requestId=request_id,
         )
 
         target_contract = fetch_file(uri)
@@ -253,7 +253,7 @@ class QSPAuditNode:
         
         upload_result = self.__config.report_uploader.upload(report_as_string)
         logging.info(
-            "Report upload result: {0}".format(upload_result), requestId=str(request_id))
+            "Report upload result: {0}".format(upload_result), requestId=request_id)
         
         if (upload_result['success'] is False):
           raise Exception("Unexpected error when uploading report: {0}".format(json.dumps(upload_result)), requestId=request_id)
@@ -264,7 +264,7 @@ class QSPAuditNode:
 
         logging.info(
             "Report upload result: {0}".format(upload_result), 
-            requestId=str(request_id),
+            requestId=request_id,
         )
 
         if not upload_result['success']:
