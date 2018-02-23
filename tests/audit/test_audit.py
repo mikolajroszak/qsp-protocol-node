@@ -67,7 +67,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__requestAudit(buggy_contract, request_id)
 
         # Busy waits on receiving events up to the configured
-        # timeout (15s)
+        # timeout (30s)
         while evts == []:
             evts = evt_filter.get()
 
