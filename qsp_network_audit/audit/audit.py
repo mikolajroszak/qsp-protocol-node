@@ -106,7 +106,7 @@ class QSPAuditNode:
                         )
                         pass
 
-        polling_thread = Thread(target=exec, name="QSP_audit_node: polling_thread")
+        polling_thread = Thread(target=exec, name="polling thread")
         self.__threads.append(polling_thread)
         polling_thread.start()
 
@@ -149,7 +149,7 @@ class QSPAuditNode:
                 )
                 sleep(self.__config.evt_polling)
 
-        audit_thread = Thread(target=exec, name="QSP_audit_node: audit thread")
+        audit_thread = Thread(target=exec, name="audit thread")
         self.__threads.append(audit_thread)
         audit_thread.start()
 
@@ -177,7 +177,7 @@ class QSPAuditNode:
 
                 sleep(self.__config.evt_polling)
 
-        submission_thread = Thread(target=exec, name="QSP_audit_node: submission thread")
+        submission_thread = Thread(target=exec, name="submission thread")
         self.__threads.append(submission_thread)
         submission_thread.start()
 
@@ -217,7 +217,7 @@ class QSPAuditNode:
 
                 sleep(self.__config.evt_polling)
 
-        monitor_thread = Thread(target=exec, name="QSP_audit_node: monitor thread")
+        monitor_thread = Thread(target=exec, name="monitor thread")
         self.__threads.append(monitor_thread)
         monitor_thread.start()
 
