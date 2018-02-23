@@ -42,5 +42,5 @@ dev:
     id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
     ttl: 600
   default_gas: !!int 600000
-  evt_db_path: "/db/audit_node.db"
+  evt_db_path: "/myapp/db/audit_node.db"
   submission_timeout_limit_blocks: 10

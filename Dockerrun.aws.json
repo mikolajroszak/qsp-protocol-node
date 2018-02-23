@@ -18,6 +18,12 @@
       "host": {
         "sourcePath": "/var/qsp-network-geth-config"
       }
+    },
+    {
+      "name": "db",
+      "host": {
+        "sourcePath": "/var/db"
+      }
     }
   ],
   "containerDefinitions": [
@@ -52,6 +58,10 @@
         {
           "sourceVolume": "qsp-network-geth",
           "containerPath": "/myapp/qspdata/geth"
+        },
+        {
+          "sourceVolume": "db",
+          "containerPath": "/myapp/db"
         },
         {
           "sourceVolume": "qsp-network-keystore",
