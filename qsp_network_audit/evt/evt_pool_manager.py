@@ -4,6 +4,9 @@ import os
 
 class EventPoolManager:
 
+    def __row_to_dict(self, row):
+        return dict(zip(row.keys(), row)) 
+
     def __exec_sql_script(self, cursor, query, query_params=(), multiple_stmts=False):
         if query_params and multiple_stmts:
             raise Exception(
@@ -89,7 +92,7 @@ class EventPoolManager:
             cursor = self.__connection.cursor()
             self.__exec_sql_script(cursor, query_name, query_params)
             for evt in cursor:
-                fct(evt, **fct_kwargs)
+                fct(self.__row_to_dict(evt), **fct_kwargs)
             self.__connection.commit()
 
         except sqlite3.Error:
@@ -127,7 +130,7 @@ class EventPoolManager:
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_be_submitted',
-                (evt['status_info'], evt['audit_report'], evt['id'],)
+                (evt['status_info'], evt['report'], evt['id'],)
             )
             self.__connection.commit()
 
@@ -145,8 +148,8 @@ class EventPoolManager:
             cursor = self.__connection.cursor()
             self.__exec_sql_script(
                 cursor,
-                'set_submission',
-                (evt['tx_hash'], evt['id'],)
+                'set_evt_to_submitted',
+                (evt['tx_hash'], evt['status_info'], evt['report'], evt['id'],)
             )
             self.__connection.commit()
 
@@ -183,8 +186,8 @@ class EventPoolManager:
             cursor = self.__connection.cursor()
             self.__exec_sql_script(
                 cursor,
-                'set_evt_to_err',
-                (evt['id'],)
+                'set_evt_to_error',
+                (evt['status_info'], evt['id'],)
             )
             self.__connection.commit()
 

@@ -1,7 +1,6 @@
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
 contract QuantstampAuditInternal {
-
   /**
     * @dev Audit report contains the auditor address and the actual report
     */
@@ -15,22 +14,18 @@ contract QuantstampAuditInternal {
   mapping(address => mapping(string => AuditReport)) private auditReports;
 
   event LogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price);
-  event LogReportSubmitted(uint256 requestId, address auditor, address requestor, string uri);
+  event LogReportSubmitted(uint256 requestId, address auditor, address requestor, string uri, string report);
 
-  event LogErrorAlreadyAudited(uint256 requestId, address requestor, string uri);
   function doAudit(uint256 requestId, address requestor, string uri, uint256 price) public {
     LogAuditRequested(requestId, requestor, uri, price);
   }
 
   function submitReport(uint256 requestId, address requestor, string uri, string report) public {
     // verify that the report hasn't been issued yet
-    if(isAudited(requestor, uri)){
-      LogErrorAlreadyAudited(requestId, requestor, uri);
-      return;
-    }
+    require(!isAudited(requestor, uri));
     // TODO: use audit id to distinguish requests
     auditReports[requestor][uri] = AuditReport(requestId, msg.sender, report);
-    LogReportSubmitted(requestId, msg.sender, requestor, uri);
+    LogReportSubmitted(requestId, msg.sender, requestor, uri, report);
   }
 
   function isAudited(address requestor, string uri) public constant returns(bool) {

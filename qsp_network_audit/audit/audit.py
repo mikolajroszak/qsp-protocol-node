@@ -7,12 +7,14 @@ from tempfile import mkstemp
 from time import sleep
 import os
 import json
-import logging
+import utils.logging as logging_utils
+logging = logging_utils.getLogging()
 
 from utils.io import fetch_file, digest
 from utils.args import replace_args
 from threading import Thread
 
+from hashlib import sha256
 
 class QSPAuditNode:
 
@@ -43,8 +45,8 @@ class QSPAuditNode:
         self.__exec = True
         self.__run_polling_thread()
         self.__run_audit_thread()
-        #self.__run_submission_thread()
-        #self.__run_monitor_submisson_thread()
+        self.__run_submission_thread()
+        self.__run_monitor_submisson_thread()
 
     def __run_polling_thread(self):
         def exec():
@@ -71,7 +73,7 @@ class QSPAuditNode:
                         # Accepts all events whose audit reward is at least as
                         # high as given by min_reward
                         price = evt['args']['price']
-                        request_id = str(evt['args']['requestId'])
+                        request_id = evt['args']['requestId']
 
                         if price >= self.__config.min_price:
                             logging.debug("Accepted processing audit event: {0}".format(
@@ -95,12 +97,12 @@ class QSPAuditNode:
                                 "Declining processing audit request: {0}. Not enough incentive".format(
                                     str(evt)
                                 ), 
-                                requestId=request_id,
+                                requestId=str(request_id),
                             )
                     except Exception:
                         logging.exception(
                             "Unexpected error when receiving event {0}".format(str(evt)), 
-                            requestId=request_id,
+                            requestId=str(request_id),
                         )
                         pass
 
@@ -119,7 +121,7 @@ class QSPAuditNode:
                 if report is None:
                     error = "Could not generate report"
                     evt['status_info'] = error
-                    logging.exception(error, requestId=request_id)
+                    logging.exception(error, requestId=str(request_id))
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
                     evt['report'] = json.dumps(report)
@@ -127,13 +129,16 @@ class QSPAuditNode:
                     logging.debug(
                         "Generated report is {0}. Saving it in the internal database".format(
                             str(evt['report']),
-                            requestId=request_id
+                            requestId=str(request_id),
                         )
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
-            except Exception:
+            except Exception as error:
                 logging.exception(
-                    "Unexpected error when performing audit", requestId=request_id)
+                    "Unexpected error when performing audit", 
+                    requestId=str(request_id),
+                )
+                evt['status_info'] = str(error)
                 self.__config.event_pool_manager.set_evt_to_error(evt)
                 pass
 
@@ -158,15 +163,17 @@ class QSPAuditNode:
                     evt['report'],
                 )
                 evt['tx_hash'] = tx_hash
-                self.__config.set_evt_to_submitted(evt)
-            except Exception as e:
-                evt['status_info'] = str(e)
-                self.__config.set_evt_to_error(evt)
+                evt['status_info'] = 'Report successfully submitted'
+                self.__config.event_pool_manager.set_evt_to_submitted(evt)
+            except Exception as error:
+                evt['status_info'] = str(error)
+                self.__config.event_pool_manager.set_evt_to_error(evt)
 
         def exec():
             while self.__exec:
                 self.__config.event_pool_manager.process_events_to_be_submitted(
-                    process_submission_request)
+                    process_submission_request
+                )
 
                 sleep(self.__config.evt_polling)
 
@@ -180,7 +187,10 @@ class QSPAuditNode:
 
         def monitor_evt(evt, current_block):
             if (current_block - evt['block_nbr']) > timeout_limit:
+                evt['status_info'] = "Submission timeout"
                 self.__config.event_pool_manager.set_evt_to_error(evt)
+
+            # TODO How to inform the network of a submission timeout?
 
         def exec():
             while self.__exec:
@@ -191,7 +201,8 @@ class QSPAuditNode:
                     for evt in evts:
                         request_id = str(evt['args']['requestId'])
                         audit_evt = self.__config.event_pool_manager.fetch_evt(
-                            request_id)
+                            request_id
+                        )
                         if audit_evt is not None:
                             self.__config.event_pool_manager.set_evt_as_submitted(
                                 audit_evt
@@ -200,7 +211,8 @@ class QSPAuditNode:
                     # If there are no events, then check for a potential timeout
                     block = self.__config.web3_client.eth.blockNumber
                     self.__config.event_pool_manager.process_events_to_be_monitored(
-                        monitor_evt, block
+                        monitor_evt, 
+                        block,
                     )
 
                 sleep(self.__config.evt_polling)
@@ -223,27 +235,39 @@ class QSPAuditNode:
         """
         Audits a target contract.
         """
-        logging.info("Executing audit on contract at {0}".format(
-            uri), requestId=request_id)
-
-        target_contract=fetch_file(uri)
-
-        report=self.__config.analyzer.check(
-            target_contract,
-            self.__config.analyzer_output,
-            request_id
+        logging.info(
+            "Executing audit on contract at {0}".format(uri), 
+            requestId=str(request_id),
         )
 
-        report_as_string=str(json.dumps(report))
+        target_contract = fetch_file(uri)
 
-        upload_result=self.__config.report_uploader.upload(report_as_string)
+        report = self.__config.analyzer.check(
+            target_contract,
+            self.__config.analyzer_output,
+            request_id,
+        )
+        
+        report_as_string = str(json.dumps(report))
+        
+        upload_result = self.__config.report_uploader.upload(report_as_string)
         logging.info(
-            "Report upload result: {0}".format(upload_result), requestId=request_id)
+            "Report upload result: {0}".format(upload_result), requestId=str(request_id))
+        
+        if (upload_result['success'] is False):
+          raise Exception("Unexpected error when uploading report: {0}".format(json.dumps(upload_result)), requestId=request_id)
+
+        report_as_string = str(json.dumps(report))
+
+        upload_result = self.__config.report_uploader.upload(report_as_string)
+
+        logging.info(
+            "Report upload result: {0}".format(upload_result), 
+            requestId=str(request_id),
+        )
 
         if not upload_result['success']:
-            logging.exception(
-                "Unexpected error when uploading report: {0}".format(json.dumps(upload_result)), requestId=request_id)
-            return None
+            raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
         return {
             'auditor': self.__config.account,
@@ -255,11 +279,11 @@ class QSPAuditNode:
             'timestamp': str(datetime.utcnow()),
         }
 
-    def __submitReport(self, requestor, contract_uri, report):
+    def __submitReport(self, request_id, requestor, contract_uri, report):
         """
         Submits the audit report to the entire QSP network.
         """
-        gas=self.__config.default_gas
+        gas = self.__config.default_gas
 
         if gas is None:
             args={'from': self.__config.account}
@@ -268,6 +292,7 @@ class QSPAuditNode:
 
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
         return self.__config.internal_contract.transact(args).submitReport(
+            request_id,
             requestor,
             contract_uri,
             report,

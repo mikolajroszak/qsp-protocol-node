@@ -6,3 +6,6 @@ eth-testrpc==1.3.3
 timeout-decorator==0.4.0
 six==1.11.0
 requests==2.18.4
+structlog==18.1.0
+python-json-logger==0.1.8
+boto3==1.5.31

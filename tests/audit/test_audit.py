@@ -38,7 +38,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__env = "test"
         self.__config_file_uri = resource_uri("test_config.yaml")
 
-        #self.__clean_up_pool_db()
+        self.__clean_up_pool_db()
 
         self.__cfg = Config(self.__env, self.__config_file_uri)
         self.__audit_node = QSPAuditNode(
@@ -51,7 +51,7 @@ class TestQSPAuditNode(unittest.TestCase):
         # Starts the execution of the QSP audit node
         Thread(target=exec, name="QSP_audit_node_thread").start()
 
-    @timeout(15, timeout_exception=StopIteration)
+    @timeout(30, timeout_exception=StopIteration)
     def test_contract_audit_request(self):
         """
         Tests the entire flow of an audit request, from a request
@@ -76,6 +76,11 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(evts[0]['args']['uri'], buggy_contract)
         self.assertEqual(evts[0]['args']['requestId'], request_id)
         self.assertEqual(evts[0]['args']['auditor'], self.__cfg.account)
+        
+        report = json.loads(evts[0]['args']['report']);
+        print (report['report_uri'])
+        report_file = fetch_file(report['report_uri'])
+        self.assertEqual(digest(report_file), report['report_sha256']);
 
         report = json.loads(evts[0]['args']['report'])
         print (report['report_uri'])
@@ -101,7 +106,7 @@ class TestQSPAuditNode(unittest.TestCase):
         Stops the execution of the current QSP audit node.
         """
         self.__audit_node.stop()
-        #self.__clean_up_pool_db()
+        self.__clean_up_pool_db()
 
 
 if __name__ == '__main__':

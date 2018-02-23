@@ -3,6 +3,7 @@ Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file.
 """
 from web3 import Web3, TestRPCProvider, HTTPProvider, IPCProvider, EthereumTesterProvider
+from upload import S3Provider
 from dpath.util import get
 from solc import compile_files
 from os.path import expanduser
@@ -11,7 +12,9 @@ import yaml
 import re
 import os
 import hashlib
-import logging
+import utils.logging as logging_utils
+logging = logging_utils.getLogging()
+
 import utils.io as io_utils
 
 from audit import Analyzer
@@ -145,6 +148,19 @@ class Config:
             '/submission_timeout_limit',
             10,
         )
+        self.__default_gas = config_value(
+            cfg,
+            '/default_gas',
+        )
+        self.__report_uploader_provider_name = config_value(
+            cfg,
+            '/report_uploader/provider',
+        )
+        self.__report_uploader_provider_args = config_value(
+            cfg,
+            '/report_uploader/args',
+            {}
+        )
 
     def __check_values(self):
         """
@@ -235,6 +251,21 @@ class Config:
 
         raise Exception(
             "Unknown/Unsupported provider: {0}".format(self.eth_provider))
+
+    def __create_report_uploader_provider(self):
+        """
+        Creates a report uploader provider.
+        """
+        # Supported providers:
+        #
+        # S3Provider
+
+        if self.__report_uploader_provider_name == "S3Provider":
+            self.__report_uploader = S3Provider(**self.__report_uploader_provider_args)
+            return
+
+        raise Exception(
+            "Unknown/Unsupported provider: {0}".format(self.__report_uploader_provider_name))
 
     def __create_web3_client(self):
         """
@@ -331,6 +362,7 @@ class Config:
         self.__create_analyzer()
         self.__create_wallet_session_manager()
         self.__create_event_pool_manager()
+        self.__create_report_uploader_provider()
 
     def __load_config(self):
         config_file = io_utils.fetch_file(self.config_file_uri)
@@ -462,6 +494,14 @@ class Config:
         """
         self.__load_config()
         return self.__analyzer_cmd
+
+    @property
+    def report_uploader(self):
+        """
+        Returns report uploader."
+        """
+        self.__load_config()
+        return self.__report_uploader
 
     @property
     def supported_solidity_version(self):

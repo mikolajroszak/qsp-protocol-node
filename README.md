@@ -66,7 +66,13 @@ To run a Bash shell inside the container, run it as: `docker run <other args> qs
 
 ## Running the node
 
-Before running the node one must set the password for unlocking the target wallet account. That is given by the `QSP_PASSWD` environment variable.
+Before running the node one must:
+
+1. Set the password for unlocking the target wallet account. That is given by the `QSP_PASSWD` environment variable.
+2. Configure AWS credentials to allow write access to the reports bucket on S3. On AWS, the instance's IAM role has the necessary
+policies attached thus does not require to specify any credentials (recommended approach). On a local machine, use `aws configure` to provide 
+AWS access keys.
+
 With that, the node is launched by running
 
 ```
