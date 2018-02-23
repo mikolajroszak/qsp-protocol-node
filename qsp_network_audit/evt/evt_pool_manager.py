@@ -41,12 +41,22 @@ class EventPoolManager:
             self.__exec_sql_script(cursor, 'createdb', multiple_stmts=True)
             self.__connection.commit()
         
-        finally:
+        except Exception:
+            # Exception occurred. Close first the cursor, followed
+            # by the connection.
             if cursor is not None:
                 cursor.close()
+                cursor = None
 
             if self.__connection is not None:
                 self.__connection.close()
+
+            raise
+        
+        finally:
+            # Cursor should be closed only if still opened.
+            if cursor is not None:
+                cursor.close()
 
 
     def get_latest_block_number(self):

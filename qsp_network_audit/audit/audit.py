@@ -1,20 +1,21 @@
 """
 Provides the QSP Audit node implementation.
 """
+import os
+import json
+import utils.logging as logging_utils
+import traceback
+
 from queue import Queue
 from datetime import datetime
 from tempfile import mkstemp
 from time import sleep
-import os
-import json
-import utils.logging as logging_utils
-logging = logging_utils.getLogging()
-
+from hashlib import sha256
 from utils.io import fetch_file, digest
 from utils.args import replace_args
 from threading import Thread
 
-from hashlib import sha256
+logging = logging_utils.getLogging()
 
 class QSPAuditNode:
 
@@ -133,12 +134,12 @@ class QSPAuditNode:
                         )
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
-            except Exception as error:
+            except Exception:
                 logging.exception(
                     "Unexpected error when performing audit", 
                     requestId=str(request_id),
                 )
-                evt['status_info'] = str(error)
+                evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
                 pass
 
@@ -165,8 +166,8 @@ class QSPAuditNode:
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report successfully submitted'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
-            except Exception as error:
-                evt['status_info'] = str(error)
+            except Exception:
+                evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
 
         def exec():
