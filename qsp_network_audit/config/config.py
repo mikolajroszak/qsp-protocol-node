@@ -143,9 +143,9 @@ class Config:
             '/evt_db_path',
             expanduser("~") + "/" + ".audit_node.db",
         )
-        self.__submission_timeout_limit = config_value(
+        self.__submission_timeout_limit_blocks = config_value(
             cfg,
-            '/submission_timeout_limit',
+            '/submission_timeout_limit_blocks',
             10,
         )
         self.__default_gas = config_value(
@@ -651,12 +651,12 @@ class Config:
         return self.__evt_db_path
 
     @property
-    def submission_timeout_limit(self):
+    def submission_timeout_limit_blocks(self):
         """
         Returns the event pool database path.
         """
         self.__load_config()
-        return self.__submission_timeout_limit
+        return self.__submission_timeout_limit_blocks
 
     @property
     def event_pool_manager(self):

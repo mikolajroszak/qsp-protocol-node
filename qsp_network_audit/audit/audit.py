@@ -184,7 +184,7 @@ class QSPAuditNode:
 
 
     def __run_monitor_submisson_thread(self):
-        timeout_limit=self.__config.submission_timeout_limit
+        timeout_limit=self.__config.submission_timeout_limit_blocks
 
         def monitor_submission_timeout(evt, current_block):
             if (current_block - evt['block_nbr']) > timeout_limit:
