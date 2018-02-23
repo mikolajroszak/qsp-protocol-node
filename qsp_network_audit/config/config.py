@@ -6,6 +6,7 @@ from web3 import Web3, TestRPCProvider, HTTPProvider, IPCProvider, EthereumTeste
 from upload import S3Provider
 from dpath.util import get
 from solc import compile_files
+from os.path import expanduser
 
 import yaml
 import re
@@ -18,6 +19,7 @@ import utils.io as io_utils
 
 from audit import Analyzer
 from utils.wallet_session_manager import WalletSessionManager, DummyWalletSessionManager
+from evt import EventPoolManager
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -60,40 +62,105 @@ class Config:
 
     def __setup_values(self, cfg):
         metadata = self.__fetch_internal_contract_metadata(cfg)
-        self.__internal_contract_name = config_value(metadata, '/contractName')
+        self.__internal_contract_name = config_value(
+            metadata,
+            '/contractName',
+        )
         self.__internal_contract_address = config_value(
-            metadata, '/contractAddress')
+            metadata,
+            '/contractAddress',
+        )
 
         self.__internal_contract = None
 
         self.__internal_contract_src_uri = config_value(
-            cfg, '/internal_contract_src/uri')
+            cfg,
+            '/internal_contract_src/uri',
+        )
         self.__has_internal_contract_src = bool(
-            self.__internal_contract_src_uri)
+            self.__internal_contract_src_uri
+        )
 
         self.__internal_contract_abi_uri = config_value(
-            cfg, '/internal_contract_abi/uri')
+            cfg,
+            '/internal_contract_abi/uri',
+        )
         self.__has_internal_contract_abi = bool(
-            self.__internal_contract_abi_uri)
+            self.__internal_contract_abi_uri
+        )
 
         self.__eth_provider_name = config_value(
-            cfg, '/eth_node/provider', accept_none=False)
+            cfg,
+            '/eth_node/provider',
+            accept_none=False,
+        )
         self.__eth_provider = None
-        self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
-        self.__min_price = config_value(cfg, '/min_price', accept_none=False)
+        self.__eth_provider_args = config_value(
+            cfg,
+            '/eth_node/args',
+            {},
+        )
+        self.__min_price = config_value(
+            cfg,
+            '/min_price',
+            accept_none=False,
+        )
         self.__evt_polling_sec = config_value(
-            cfg, '/evt_polling_sec', accept_none=False)
+            cfg,
+            '/evt_polling_sec',
+            accept_none=False,
+        )
         self.__analyzer_output = config_value(
-            cfg, '/analyzer/output', accept_none=False)
+            cfg,
+            '/analyzer/output',
+            accept_none=False,
+        )
         self.__analyzer_cmd = config_value(
-            cfg, '/analyzer/cmd', accept_none=False)
-        self.__account = config_value(cfg, '/account/id')
-        self.__account_ttl = config_value(cfg, '/account/ttl', 600)
+            cfg,
+            '/analyzer/cmd',
+            accept_none=False,
+        )
+        self.__account = config_value(
+            cfg,
+            '/account/id',
+        )
+        self.__account_ttl = config_value(
+            cfg, 
+            '/account/ttl',
+            600,
+        )
         self.__solidity_version = config_value(
-            cfg, '/analyzer/solidity', accept_none=False)
-        self.__default_gas = config_value(cfg, '/default_gas')
-        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider')
-        self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
+            cfg,
+            '/analyzer/solidity',
+            accept_none=False,
+        )
+        self.__default_gas = config_value(
+            cfg,
+            '/default_gas'
+        )
+        self.__evt_db_path = config_value(
+            cfg,
+            '/evt_db_path',
+            expanduser("~") + "/" + ".audit_node.db",
+        )
+        self.__submission_timeout_limit_blocks = config_value(
+            cfg,
+            '/submission_timeout_limit_blocks',
+            10,
+        )
+        self.__default_gas = config_value(
+            cfg,
+            '/default_gas',
+        )
+        self.__report_uploader_provider_name = config_value(
+            cfg,
+            '/report_uploader/provider',
+        )
+        self.__report_uploader_provider_args = config_value(
+            cfg,
+            '/report_uploader/args',
+            {}
+        )
 
     def __check_values(self):
         """
@@ -280,6 +347,9 @@ class Config:
             self.__wallet_session_manager = WalletSessionManager(
                 self.__web3_client, self.__account, self.__account_passwd)
 
+    def __create_event_pool_manager(self):
+        self.__event_pool_manager = EventPoolManager(self.evt_db_path)
+
     def __create_components(self, cfg):
         # Setup followed by verification
         self.__setup_values(cfg)
@@ -291,6 +361,7 @@ class Config:
         self.__create_internal_contract()
         self.__create_analyzer()
         self.__create_wallet_session_manager()
+        self.__create_event_pool_manager()
         self.__create_report_uploader_provider()
 
     def __load_config(self):
@@ -554,6 +625,7 @@ class Config:
         """
         Returns a fixed amount of gas to be used when interacting with the internal contract.
         """
+        self.__load_config()
         return self.__default_gas
 
     @property
@@ -569,3 +641,27 @@ class Config:
         Returns the configuration file URI.
         """
         return self.__config_file_uri
+
+    @property
+    def evt_db_path(self):
+        """
+        Returns the event pool database path.
+        """
+        self.__load_config()
+        return self.__evt_db_path
+
+    @property
+    def submission_timeout_limit_blocks(self):
+        """
+        Returns the event pool database path.
+        """
+        self.__load_config()
+        return self.__submission_timeout_limit_blocks
+
+    @property
+    def event_pool_manager(self):
+        """
+        Returns the event pool manager.
+        """
+        self.__load_config()
+        return self.__event_pool_manager

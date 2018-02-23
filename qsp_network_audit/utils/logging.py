@@ -1,8 +1,7 @@
 import logging.config
 import structlog
 
-from structlog import configure, processors, stdlib, threadlocal
-import structlog
+from structlog import configure, getLogger, processors, stdlib, threadlocal
 
 def config_logging(verbose):  
   logging.config.dictConfig({
@@ -45,4 +44,4 @@ def config_logging(verbose):
   )
 
 def getLogging():
-  return structlog.getLogger("audit")
+  return getLogger("audit")

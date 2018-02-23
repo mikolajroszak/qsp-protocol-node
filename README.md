@@ -26,7 +26,7 @@ running as container or without it.
 
 ```
 docker build -t qsp-network-audit .
-docker run -i -t -e QSP_PASSWD=<passwd> qsp-network-audit
+docker run -i -t -e QSP_PASSWORD=<passwd> qsp-network-audit
 ```
 
 where `passwd` is the password to unlock the wallet account configured in
@@ -68,7 +68,7 @@ To run a Bash shell inside the container, run it as: `docker run <other args> qs
 
 Before running the node one must:
 
-1. Set the password for unlocking the target wallet account. That is given by the `QSP_PASSWD` environment variable.
+1. Set the password for unlocking the target wallet account. That is given by the `QSP_PASSWORD` environment variable.
 2. Configure AWS credentials to allow write access to the reports bucket on S3. On AWS, the instance's IAM role has the necessary
 policies attached thus does not require to specify any credentials (recommended approach). On a local machine, use `aws configure` to provide 
 AWS access keys.
