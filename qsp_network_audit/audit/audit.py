@@ -74,7 +74,10 @@ class QSPAuditNode:
                         # Accepts all events whose audit reward is at least as
                         # high as given by min_reward
                         price = evt['args']['price']
-                        request_id = evt['args']['requestId']
+
+                        # Tries to make the audit node oblivious of whatever
+                        # data format requestId is currently encoded
+                        request_id = str(evt['args']['requestId'])
 
                         if price >= self.__config.min_price:
                             logging.debug("Accepted processing audit event: {0}".format(
