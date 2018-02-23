@@ -61,7 +61,7 @@
         },
         {
           "sourceVolume": "audit-db",
-          "containerPath": "/myapp/audit-db"
+          "containerPath": "/analyzer/audit-db"
         },
         {
           "sourceVolume": "qsp-network-keystore",
