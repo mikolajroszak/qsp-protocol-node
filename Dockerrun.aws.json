@@ -35,6 +35,12 @@
       "memory": 1024,
       "links": [
         "geth-qsp"
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "audit-db",
+          "containerPath": "/analyzer/audit-db"
+        }
       ]
     },
     {
@@ -58,10 +64,6 @@
         {
           "sourceVolume": "qsp-network-geth",
           "containerPath": "/myapp/qspdata/geth"
-        },
-        {
-          "sourceVolume": "audit-db",
-          "containerPath": "/analyzer/audit-db"
         },
         {
           "sourceVolume": "qsp-network-keystore",
