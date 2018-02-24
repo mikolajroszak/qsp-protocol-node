@@ -55,34 +55,53 @@ class TestQSPAuditNode(unittest.TestCase):
     def test_contract_audit_request(self):
         """
         Tests the entire flow of an audit request, from a request
-        to the production of a report back in the blockchain.
+        to the production of a report and its submission.
         """
-        # Sets a filter for report submission events
-        evt_filter = self.__cfg.internal_contract.on("LogReportSubmitted")
-        evts = []
-
         buggy_contract = resource_uri("DAOBug.sol")
 
         request_id = randint(0, 1000)
         self.__requestAudit(buggy_contract, request_id)
 
-        # Busy waits on receiving events up to the configured
-        # timeout (60s)
-        while evts == []:
-            evts = evt_filter.get()
+        # Creates a db connection to assure a record with
+        # a 'DN' status gets saved
+        cursor = None
+        try:
+            connection = sqlite3.connect(
+                self.__cfg.evt_db_path,
+                check_same_thread=False,
+                isolation_level=None,
+            )
+            connection.row_factory = sqlite3.Row
 
-        self.assertTrue(len(evts) == 1)
-        self.assertEqual(evts[0]['event'], "LogReportSubmitted")
-        self.assertEqual(evts[0]['args']['uri'], buggy_contract)
-        self.assertEqual(evts[0]['args']['requestId'], request_id)
-        self.assertEqual(evts[0]['args']['auditor'], self.__cfg.account)
+            # Busy waits on receiving events up to the configured
+            # timeout (60s)
+            while True:
+                cursor = connection.cursor()
+                cursor.execute("select * from audit_evt where fk_status = 'DN'")
+                row = cursor.fetchone()
+                if row is not None:
+                    break
+        except Exception:
+            if cursor is not None:
+                cursor.close()
+            raise
+
+        finally:
+            if cursor is not None:
+                cursor.close()
+
+            if connection is not None:
+                connection.close()
+
+        self.assertEqual(row['evt_name'], "LogAuditRequested")
+        self.assertTrue(row['block_nbr'] > 0)
+        self.assertEqual(row['submission_attempts'], 1)
+        self.assertEqual(row['is_persisted'], True)
+
+        self.assertTrue(row['tx_hash'] is not None)
+        self.assertTrue(row['contract_uri'] is not None)
         
-        report = json.loads(evts[0]['args']['report']);
-        print (report['report_uri'])
-        report_file = fetch_file(report['report_uri'])
-        self.assertEqual(digest(report_file), report['report_sha256']);
-
-        report = json.loads(evts[0]['args']['report'])
+        report = json.loads(row['report'])
         print (report['report_uri'])
         report_file = fetch_file(report['report_uri'])
         self.assertEqual(digest(report_file), report['report_sha256'])

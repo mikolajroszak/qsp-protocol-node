@@ -30,7 +30,7 @@ create table if not exists audit_evt (
     fk_status           char(2) not null,
     status_info         varchar(300), 
     tx_hash             varchar(100) default null,
-    submission_attempts smallint not null default -1,
+    submission_attempts smallint not null default 0,
     is_persisted        boolean not null default false,
     report              text default null,
     foreign key(fk_status) references evt_status(id)

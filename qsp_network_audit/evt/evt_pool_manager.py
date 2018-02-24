@@ -60,11 +60,16 @@ class EventPoolManager:
 
 
     def get_latest_block_number(self):
-        cursor = self.__connection.cursor()
-        self.__exec_sql_script(cursor, 'get_latest_block_number')
-        row = cursor.fetchone()
-        cursor.close()
-        return row['block_nbr']
+        try:
+            cursor = self.__connection.cursor()
+            self.__exec_sql_script(cursor, 'get_latest_block_number')
+            row = cursor.fetchone()
+            return row['block_nbr']
+        finally:
+            if cursor is not None:
+                cursor.close()
+
+        return None
 
     def get_next_block_number(self):
         return self.get_latest_block_number() + 1
@@ -112,6 +117,18 @@ class EventPoolManager:
             if cursor is not None:
                 cursor.close()
 
+    def get_event_by_request_id(self, request_id):
+        try:
+            cursor = self.__connection.cursor()
+            self.__exec_sql_script(cursor, 'get_event_by_request_id', (request_id,))
+            row = cursor.fetchone()
+            return self.__row_to_dict(row)
+        finally:
+            if cursor is not None:
+                cursor.close()
+
+        return None
+
     def process_incoming_events(self, process_fct):
         self.__process_evt_with_status(
             'get_events_to_be_processed',
@@ -139,7 +156,10 @@ class EventPoolManager:
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_be_submitted',
-                (evt['status_info'], evt['report'], evt['id'],)
+                (evt['status_info'],
+                 evt['tx_hash'],
+                 evt['report'],
+                 evt['id'],)
             )
             self.__connection.commit()
 
@@ -177,7 +197,7 @@ class EventPoolManager:
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_done',
-                (evt['id'],)
+                (evt['status_info'], evt['id'],)
             )
             self.__connection.commit()
 
