@@ -51,7 +51,7 @@ class TestQSPAuditNode(unittest.TestCase):
         # Starts the execution of the QSP audit node
         Thread(target=exec, name="QSP_audit_node_thread").start()
 
-    @timeout(120, timeout_exception=StopIteration)
+    @timeout(60, timeout_exception=StopIteration)
     def test_contract_audit_request(self):
         """
         Tests the entire flow of an audit request, from a request
