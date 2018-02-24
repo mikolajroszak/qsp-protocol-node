@@ -167,7 +167,7 @@ class QSPAuditNode:
                     evt['report'],
                 )
                 evt['tx_hash'] = tx_hash
-                evt['status_info'] = 'Report successfully submitted'
+                evt['status_info'] = 'Report submitted (waiting for confirmation)'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
             except Exception:
                 evt['status_info'] = traceback.format_exc()
@@ -187,7 +187,7 @@ class QSPAuditNode:
 
 
     def __run_monitor_submisson_thread(self):
-        timeout_limit=self.__config.submission_timeout_limit_blocks
+        timeout_limit = self.__config.submission_timeout_limit_blocks
 
         def monitor_submission_timeout(evt, current_block):
             if (current_block - evt['block_nbr']) > timeout_limit:
@@ -203,12 +203,13 @@ class QSPAuditNode:
                 # Processes the current event batch
                 if evts != []:
                     for evt in evts:
-                        request_id = evt['args']['requestId']
-                        audit_evt = self.__config.event_pool_manager.fetch_evt(
+                        request_id = str(evt['args']['requestId'])
+                        audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
                             request_id
                         )
                         if audit_evt is not None:
-                            self.__config.event_pool_manager.set_evt_as_submitted(
+                            audit_evt['status_info'] = 'Report successfully submitted'
+                            self.__config.event_pool_manager.set_evt_to_done(
                                 audit_evt
                             )
 
