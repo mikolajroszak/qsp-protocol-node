@@ -54,7 +54,7 @@ class AuditEventFilter:
 
             # If an audit request is not targeted to the 
             # running audit node, just disconsider it
-            if target_auditor != self.__config.account:
+            if target_auditor.lower() != self.__config.account.lower():
                 logging.debug(
                     "Ignoring audit request (not directed at current node): {0}".format(
                         str(evt)

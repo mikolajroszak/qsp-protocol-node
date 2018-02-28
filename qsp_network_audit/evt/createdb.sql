@@ -28,7 +28,7 @@ create table if not exists audit_evt (
     evt_name            varchar(100) not null,
     block_nbr           bigint not null,
     fk_status           char(2) not null,
-    price               integer not null,
+    price               bigint not null,
     status_info         varchar(300), 
     tx_hash             varchar(100) default null,
     submission_attempts smallint not null default 0,
