@@ -88,6 +88,7 @@ class EventPoolManager:
                     evt['evt_name'], 
                     evt['block_nbr'],
                     evt['status_info'],
+                    evt['price'],
                 )
             )
             self.__connection.commit()
