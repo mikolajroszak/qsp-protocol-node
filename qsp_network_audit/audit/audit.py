@@ -14,6 +14,7 @@ from hashlib import sha256
 from utils.io import fetch_file, digest
 from utils.tx import mk_args
 from threading import Thread
+from retrying import retry
 
 from .evt_filter import AuditEventFilter
 
@@ -24,13 +25,8 @@ class QSPAuditNode:
 
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
 
-    def __init__(self, config):
-        """
-        Builds a QSPAuditNode object from the given input parameters.
-        """
-        self.__config = config
-        self.__exec = False
-
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
+    def __configure_submission_filter(self):
         start_block = self.__config.event_pool_manager.get_next_block_number()
 
         self.__filter_audit_submissions = self.__config.internal_contract.on(
@@ -38,7 +34,15 @@ class QSPAuditNode:
             filter_params={'fromBlock': start_block},
         )
 
+    def __init__(self, config):
+        """
+        Builds a QSPAuditNode object from the given input parameters.
+        """
+        self.__config = config
+        self.__exec = False
+        self.__configure_submission_filter()
         self.__threads = []
+
         AuditEventFilter(self.__config)        
 
 
