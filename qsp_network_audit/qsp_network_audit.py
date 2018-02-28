@@ -71,8 +71,10 @@ def main():
 
         # Runs the QSP audit node in a busy loop fashion
         audit_node.run()
-    except Exception:
-        logging.exception("Unexpected error. Exitting...")
+    except Exception as error:
+        logging.exception("Cannot start audit node. {0}".format(
+            str(error))
+        )
     finally:
         if cfg is not None:
             cfg.wallet_session_manager.lock()
