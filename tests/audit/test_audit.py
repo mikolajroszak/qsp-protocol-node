@@ -93,7 +93,7 @@ class TestQSPAuditNode(unittest.TestCase):
             if connection is not None:
                 connection.close()
 
-        self.assertEqual(row['evt_name'], "LogAuditRequested")
+        self.assertEqual(row['evt_name'], "LogAuditRequestAssigned")
         self.assertTrue(row['block_nbr'] > 0)
         self.assertEqual(row['submission_attempts'], 1)
         self.assertEqual(row['is_persisted'], True)
