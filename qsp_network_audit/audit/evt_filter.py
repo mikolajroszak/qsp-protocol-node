@@ -29,7 +29,8 @@ class AuditEventFilter:
 
             if price >= self.__config.min_price:
                 logging.debug("Accepted processing audit event: {0}. Bidding for it".format(
-                    str(evt)
+                    str(evt),
+                    requestId=request_id,
                 ))
                 self.__get_next_audit_request()
 
@@ -54,6 +55,12 @@ class AuditEventFilter:
             # If an audit request is not targeted to the 
             # running audit node, just disconsider it
             if target_auditor != self.__config.account:
+                logging.debug(
+                    "Ignoring audit request (not directed at current node): {0}".format(
+                        str(evt)
+                    ),
+                    requestId=request_id,
+                )
                 pass
 
             # Otherwise, the audit request must be processed
