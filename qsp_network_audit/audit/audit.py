@@ -12,12 +12,17 @@ from tempfile import mkstemp
 from time import sleep
 from hashlib import sha256
 from utils.io import fetch_file, digest
-from utils.args import replace_args
+from utils.tx import mk_args
 from threading import Thread
+
+from .evt_filter import AuditEventFilter
 
 logging = logging_utils.getLogging()
 
+
 class QSPAuditNode:
+
+    __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
 
     def __init__(self, config):
         """
@@ -27,92 +32,24 @@ class QSPAuditNode:
         self.__exec = False
 
         start_block = self.__config.event_pool_manager.get_next_block_number()
-        self.__evt_audit_request = "LogAuditRequested"
-        self.__filter_audit_requests = self.__config.internal_contract.on(
-            self.__evt_audit_request,
-            filter_params={'fromBlock': start_block},
-        )
-        self.__evt_audit_submission = "LogReportSubmitted"
+
         self.__filter_audit_submissions = self.__config.internal_contract.on(
-            self.__evt_audit_submission,
+            QSPAuditNode.__EVT_REPORT_SUBMITTED,
             filter_params={'fromBlock': start_block},
         )
+
         self.__threads = []
+        AuditEventFilter(self.__config)        
+
 
     def run(self):
         """
         Starts all the threads processing different stages of a given event.
         """
         self.__exec = True
-        self.__run_polling_thread()
         self.__run_audit_thread()
         self.__run_submission_thread()
         self.__run_monitor_submisson_thread()
-
-    def __run_polling_thread(self):
-        def exec():
-            while self.__exec:
-                try:
-                    evts = self.__filter_audit_requests.get()
-
-                    if evts == []:
-                        sleep(self.__config.evt_polling)
-                        continue
-
-                    logging.debug("Found incomming audit events: {0}".format(
-                        str(evts)
-                    ))
-                except Exception as e:
-                    logging.exception(
-                        "Unexpected error when performing polling: {0}".format(str(e))
-                    )
-                    pass
-
-                # Process all incoming events
-                for evt in evts:
-                    try:
-                        # Accepts all events whose audit reward is at least as
-                        # high as given by min_reward
-                        price = evt['args']['price']
-
-                        # Tries to make the audit node oblivious of whatever
-                        # data format requestId is currently encoded
-                        request_id = str(evt['args']['requestId'])
-
-                        if price >= self.__config.min_price:
-                            logging.debug("Accepted processing audit event: {0}".format(
-                                str(evt)
-                            ))
-
-                            audit_evt = {
-                                'request_id': request_id,
-                                'requestor': str(evt['args']['requestor']),
-                                'contract_uri': str(evt['args']['uri']),
-                                'evt_name': self.__evt_audit_request,
-                                'block_nbr': evt['blockNumber'],
-                                'status_info': "Audit request received",
-                            }
-
-                            self.__config.event_pool_manager.add_evt_to_be_processed(
-                                audit_evt
-                            )
-                        else:
-                            logging.debug(
-                                "Declining processing audit request: {0}. Not enough incentive".format(
-                                    str(evt)
-                                ), 
-                                requestId=request_id,
-                            )
-                    except Exception:
-                        logging.exception(
-                            "Unexpected error when receiving event {0}".format(str(evt)), 
-                            requestId=request_id,
-                        )
-                        pass
-
-        polling_thread = Thread(target=exec, name="polling thread")
-        self.__threads.append(polling_thread)
-        polling_thread.start()
 
     def __run_audit_thread(self):
         def process_audit_request(evt):
@@ -160,7 +97,7 @@ class QSPAuditNode:
     def __run_submission_thread(self):
         def process_submission_request(evt):
             try:
-                tx_hash = self.__submitReport(
+                tx_hash = self.__submit_report(
                     int(evt['request_id']),
                     evt['requestor'],
                     evt['contract_uri'],
@@ -187,7 +124,7 @@ class QSPAuditNode:
 
 
     def __run_monitor_submisson_thread(self):
-        timeout_limit=self.__config.submission_timeout_limit_blocks
+        timeout_limit = self.__config.submission_timeout_limit_blocks
 
         def monitor_submission_timeout(evt, current_block):
             if (current_block - evt['block_nbr']) > timeout_limit:
@@ -256,10 +193,15 @@ class QSPAuditNode:
         
         upload_result = self.__config.report_uploader.upload(report_as_string)
         logging.info(
-            "Report upload result: {0}".format(upload_result), requestId=request_id)
+            "Report upload result: {0}".format(upload_result),
+            requestId=request_id,
+        )
         
         if (upload_result['success'] is False):
-          raise Exception("Unexpected error when uploading report: {0}".format(json.dumps(upload_result)), requestId=request_id)
+          raise Exception("Unexpected error when uploading report: {0}".format(
+              json.dumps(upload_result)),
+              requestId=request_id,
+            )
 
         report_as_string = str(json.dumps(report))
 
@@ -283,19 +225,13 @@ class QSPAuditNode:
             'timestamp': str(datetime.utcnow()),
         }
 
-    def __submitReport(self, request_id, requestor, contract_uri, report):
+    def __submit_report(self, request_id, requestor, contract_uri, report):
         """
         Submits the audit report to the entire QSP network.
         """
-        gas = self.__config.default_gas
-
-        if gas is None:
-            args={'from': self.__config.account}
-        else:
-            args={'from': self.__config.account, 'gas': int(gas)}
-
+        tx_args = mk_args(self.__config)
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
-        return self.__config.internal_contract.transact(args).submitReport(
+        return self.__config.internal_contract.transact(tx_args).submitReport(
             request_id,
             requestor,
             contract_uri,
