@@ -3,8 +3,28 @@ import os
 
 
 class EventPoolManager:
+    @staticmethod
+    def __encode(dict):
+        new_dict = {}
+        for key in dict.keys():
+            if key == "price" or key == "block_nbr":
+                new_dict[key] = str(dict[key])
+            else:
+                new_dict[key] = dict[key]
+        return new_dict
 
-    def __row_to_dict(self, row):
+    @staticmethod
+    def __decode(dict):
+        new_dict = {}
+        for key in dict.keys():
+            if key == "price" or key == "block_nbr":
+                new_dict[key] = int(dict[key])
+            else:
+                new_dict[key] = dict[key]
+        return new_dict
+
+    @staticmethod
+    def __row_to_dict(row):
         return dict(zip(row.keys(), row)) 
 
     def __exec_sql_script(self, cursor, query, query_params=(), multiple_stmts=False):
@@ -63,7 +83,9 @@ class EventPoolManager:
         try:
             cursor = self.__connection.cursor()
             self.__exec_sql_script(cursor, 'get_latest_block_number')
-            row = cursor.fetchone()
+            row = EventPoolManager.__decode(
+                EventPoolManager.__row_to_dict(cursor.fetchone())
+            )
             return row['block_nbr']
         finally:
             if cursor is not None:
@@ -76,19 +98,20 @@ class EventPoolManager:
 
     def add_evt_to_be_processed(self, evt):
         cursor = None
+        encoded_evt = EventPoolManager.__encode(evt)
         try:
             cursor = self.__connection.cursor()
             self.__exec_sql_script(
                 cursor,
                 'add_evt_to_be_processed',
                 query_params=(
-                    evt['request_id'], 
-                    evt['requestor'], 
-                    evt['contract_uri'], 
-                    evt['evt_name'], 
-                    evt['block_nbr'],
-                    evt['status_info'],
-                    evt['price'],
+                    encoded_evt['request_id'],
+                    encoded_evt['requestor'],
+                    encoded_evt['contract_uri'],
+                    encoded_evt['evt_name'],
+                    encoded_evt['block_nbr'],
+                    encoded_evt['status_info'],
+                    encoded_evt['price'],
                 )
             )
             self.__connection.commit()
@@ -107,7 +130,10 @@ class EventPoolManager:
             cursor = self.__connection.cursor()
             self.__exec_sql_script(cursor, query_name, query_params)
             for evt in cursor:
-                fct(self.__row_to_dict(evt), **fct_kwargs)
+                decoded_evt = EventPoolManager.__decode(
+                    EventPoolManager.__row_to_dict(evt)
+                )
+                fct(decoded_evt, **fct_kwargs)
             self.__connection.commit()
 
         except sqlite3.Error:
@@ -122,8 +148,10 @@ class EventPoolManager:
         try:
             cursor = self.__connection.cursor()
             self.__exec_sql_script(cursor, 'get_event_by_request_id', (request_id,))
-            row = cursor.fetchone()
-            return self.__row_to_dict(row)
+            row = EventPoolManager.__decode(
+                EventPoolManager.__row_to_dict(cursor.fetchone())
+            )
+            return row
         finally:
             if cursor is not None:
                 cursor.close()
@@ -154,13 +182,15 @@ class EventPoolManager:
         cursor = None
         try:
             cursor = self.__connection.cursor()
+            encoded_evt = EventPoolManager.__encode(evt)
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_be_submitted',
-                (evt['status_info'],
-                 evt['tx_hash'],
-                 evt['report'],
-                 evt['id'],)
+                (encoded_evt['status_info'],
+                 encoded_evt['tx_hash'],
+                 encoded_evt['report'],
+                 encoded_evt['id'],
+                )
             )
             self.__connection.commit()
 
@@ -176,10 +206,15 @@ class EventPoolManager:
         cursor = None
         try:
             cursor = self.__connection.cursor()
+            encoded_evt = EventPoolManager.__encode(evt)
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_submitted',
-                (evt['tx_hash'], evt['status_info'], evt['report'], evt['id'],)
+                (encoded_evt['tx_hash'],
+                 encoded_evt['status_info'],
+                 encoded_evt['report'],
+                 encoded_evt['id'],
+                )
             )
             self.__connection.commit()
 
@@ -195,10 +230,11 @@ class EventPoolManager:
         cursor = None
         try:
             cursor = self.__connection.cursor()
+            encoded_evt = EventPoolManager.__encode(evt)
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_done',
-                (evt['status_info'], evt['id'],)
+                (encoded_evt['status_info'], encoded_evt['id'],)
             )
             self.__connection.commit()
 
@@ -214,10 +250,11 @@ class EventPoolManager:
         cursor = None
         try:
             cursor = self.__connection.cursor()
+            encoded_evt = EventPoolManager.__encode(evt)
             self.__exec_sql_script(
                 cursor,
                 'set_evt_to_error',
-                (evt['status_info'], evt['id'],)
+                (encoded_evt['status_info'], encoded_evt['id'],)
             )
             self.__connection.commit()
 
