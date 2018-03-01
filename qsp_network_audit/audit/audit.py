@@ -25,7 +25,7 @@ class QSPAuditNode:
 
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
 
-    #@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
     def __configure_submission_filter(self):
         start_block = self.__config.event_pool_manager.get_next_block_number()
 
