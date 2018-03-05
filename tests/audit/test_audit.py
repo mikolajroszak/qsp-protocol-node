@@ -60,7 +60,7 @@ class TestQSPAuditNode(unittest.TestCase):
         buggy_contract = resource_uri("DAOBug.sol")
 
         request_id = randint(0, 1000)
-        self.__requestAudit(buggy_contract, request_id)
+        self.__requestAudit(buggy_contract, request_id, 100)
 
         # Creates a db connection to assure a record with
         # a 'DN' status gets saved
@@ -94,7 +94,8 @@ class TestQSPAuditNode(unittest.TestCase):
                 connection.close()
 
         self.assertEqual(row['evt_name'], "LogAuditRequestAssigned")
-        self.assertTrue(row['block_nbr'] > 0)
+        self.assertTrue(int(row['block_nbr']) > 0)
+        self.assertEqual(int(row['price']), 100)
         self.assertEqual(row['submission_attempts'], 1)
         self.assertEqual(row['is_persisted'], True)
 
@@ -106,7 +107,7 @@ class TestQSPAuditNode(unittest.TestCase):
         report_file = fetch_file(report['report_uri'])
         self.assertEqual(digest(report_file), report['report_sha256'])
 
-    def __requestAudit(self, contract_uri, request_id, price=100):
+    def __requestAudit(self, contract_uri, request_id, price):
         """
         Submits a request for audit of a given target contract.
         """
