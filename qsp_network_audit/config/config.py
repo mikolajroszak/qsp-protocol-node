@@ -7,6 +7,7 @@ from upload import S3Provider
 from dpath.util import get
 from solc import compile_files
 from os.path import expanduser
+from time import sleep
 
 import yaml
 import re
@@ -255,12 +256,29 @@ class Config:
         max_attempts = 3
         attempts = 0
 
+        # Default policy for creating a provider is as follows:
+        # 
+        # 1) Creates a given provider and checks if it is connected or not
+        # 2) If connected, nothing else to do
+        # 3) Otherwise, check if the provider has been successfully created
+        #    If so, check its connection status. If connected, nothing else to do
+        #    Otherwise, keep trying at most max_attempts, waiting 5s per each iteration
+        # 6) If the provided has not been successfully created, keep trying at most max_attempts, 
+        #    waiting 5s per each iteration
+
         self.__eth_provider = None
-        while not connected and attempts < max_attempts:
-            self.__eth_provider = Config.__new_provider(self.__eth_provider_name, self.__eth_provider_args)
+        while attempts < max_attempts:
+
+            if self.__eth_provider is not None:
+                if self.__eth_provider.isConnected():
+                    connected = True
+                    break
+
+            else:
+                self.__eth_provider = Config.__new_provider(self.__eth_provider_name, self.__eth_provider_args)
+            
             attempts = attempts + 1
-            if self.__eth_provider is not None and self.__eth_provider.isConnected():
-                connected = True
+            sleep(5)
 
         if self.__eth_provider == None:
             raise Exception(
