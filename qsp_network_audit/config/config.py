@@ -7,6 +7,7 @@ from upload import S3Provider
 from dpath.util import get
 from solc import compile_files
 from os.path import expanduser
+from time import sleep
 
 import yaml
 import re
@@ -206,28 +207,15 @@ class Config:
             "Solidity version is not correct",
         )
 
-    def __create_eth_provider(self):
-        """
-        Creates an Ethereum provider.
-        """
-        # Known providers according to Web3
-        #
-        # HTTPProvider
-        # IPCProvider
-        # EthereumTesterProvider
-        # TestRPCProvider
-        #
-        # See: http://web3py.readthedocs.io/en/stable/providers.html
+    @staticmethod
+    def __new_provider(provider, args):
+        if provider == "HTTPProvider":
+            return HTTPProvider(**args)
 
-        if self.__eth_provider_name == "HTTPProvider":
-            self.__eth_provider = HTTPProvider(**self.__eth_provider_args)
-            return
+        if provider == "IPCProvider":
+            return IPCProvider(**args)
 
-        if self.__eth_provider_name == "IPCProvider":
-            self.__eth_provider = IPCProvider(**self.__eth_provider_args)
-            return
-
-        if self.__eth_provider_name == "EthereumTesterProvider":
+        if provider == "EthereumTesterProvider":
             # NOTE: currently relies on the legacy EthereumTesterProvider,
             # instead of having something like
             #
@@ -242,15 +230,62 @@ class Config:
             #
             # See https://github.com/ethereum/web3.py/issues/503
             # for further information.
-            self.__eth_provider = EthereumTesterProvider()
-            return
+            return EthereumTesterProvider()
 
-        if self.__eth_provider_name == "TestRPCProvider":
-            self.__eth_provider = TestRPCProvider(**self.__eth_provider_args)
-            return
+        if provider == "TestRPCProvider":
+            return TestRPCProvider(**args)
 
         raise Exception(
-            "Unknown/Unsupported provider: {0}".format(self.eth_provider))
+            "Unknown/Unsupported provider: {0}".format(provider)
+        )
+
+    def __create_eth_provider(self):
+        """
+        Creates an Ethereum provider.
+        """
+        # Known providers according to Web3
+        #
+        # HTTPProvider
+        # IPCProvider
+        # EthereumTesterProvider
+        # TestRPCProvider
+        #
+        # See: http://web3py.readthedocs.io/en/stable/providers.html
+
+        connected = False
+        max_attempts = 3
+        attempts = 0
+
+        # Default policy for creating a provider is as follows:
+        # 
+        # 1) Creates a given provider and checks if it is connected or not
+        # 2) If connected, nothing else to do
+        # 3) Otherwise, check if the provider has been successfully created
+        #    If so, check its connection status. If connected, nothing else to do
+        #    Otherwise, keep trying at most max_attempts, waiting 5s per each iteration
+        # 6) If the provided has not been successfully created, keep trying at most max_attempts, 
+        #    waiting 5s per each iteration
+
+        self.__eth_provider = None
+        while attempts < max_attempts:
+
+            if self.__eth_provider is not None:
+                if self.__eth_provider.isConnected():
+                    connected = True
+                    break
+
+            else:
+                self.__eth_provider = Config.__new_provider(self.__eth_provider_name, self.__eth_provider_args)
+            
+            attempts = attempts + 1
+            sleep(5)
+
+        if self.__eth_provider == None:
+            raise Exception(
+                "Could not connect to ethereum node (time out after {0} attempts).".format(
+                    max_attempts
+                )
+            )
 
     def __create_report_uploader_provider(self):
         """
