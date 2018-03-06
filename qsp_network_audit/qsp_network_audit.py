@@ -2,6 +2,7 @@
 Provides the main entry for executing a QSP audit node.
 """
 import argparse
+import signal
 import utils.logging as logging_utils
 logging = logging_utils.getLogging()
 
@@ -9,18 +10,42 @@ from audit import QSPAuditNode
 from config import Config
 from tendo.singleton import SingleInstance
 
+import faulthandler
+faulthandler.enable()
+
+done = False
+audit_node = None
+
+def stop_audit_node():
+    global done
+    global audit_node
+
+    logging.info("Stopping QSP Audit Node")
+
+    if audit_node is None or done:
+        return
+
+    audit_node.stop()
+    done = True
+    logging.info("Stopping QSP Audit Node")
 
 def check_single_instance():
     _ = SingleInstance()
+
+def handle_kill_signal(signal, frame):
+    stop_audit_node()
+
 
 def main():
     """
     Main function.
     """
-    cfg = None
-
+    global audit_node
     try:
         check_single_instance()
+
+        signal.signal(signal.SIGTERM, handle_kill_signal)
+        signal.signal(signal.SIGINT, handle_kill_signal)
 
         # Sets the program's arguments
         parser = argparse.ArgumentParser(description='QSP Audit Node')
@@ -63,7 +88,6 @@ def main():
         logging.debug("analyzer: {0}".format(str(cfg.analyzer)))
         logging.debug("min_price: {0}".format(str(cfg.min_price)))
         logging.debug("evt_polling: {0}".format(str(cfg.evt_polling)))
-        logging.debug("analyzer_output: {0}".format(str(cfg.evt_polling)))
 
         # Based on the provided configuration, instantiates a new
         # QSP audit node
@@ -74,12 +98,15 @@ def main():
         # Runs the QSP audit node in a busy loop fashion
         audit_node.run()
     except Exception as error:
-        logging.exception("Cannot start audit node. {0}".format(
-            str(error))
+        logging.exception(
+            "Cannot start audit node. {0}".format(
+                str(error)
+            )
         )
+        import traceback, sys
+        traceback.print_exc(file=sys.stdout)
     finally:
-        if cfg is not None:
-            cfg.wallet_session_manager.lock()
+        stop_audit_node()
 
 
 if __name__ == "__main__":
