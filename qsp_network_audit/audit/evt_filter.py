@@ -2,7 +2,7 @@ from utils.tx import mk_args
 import utils.logging as logging_utils
 
 
-logging = logging_utils.getLogging()
+logger = logging_utils.get_logger()
 
 class AuditEventFilter:
 
@@ -28,21 +28,21 @@ class AuditEventFilter:
             request_id = str(evt['args']['requestId'])
 
             if price >= self.__config.min_price:
-                logging.debug("Accepted processing audit event: {0}. Bidding for it".format(
+                logger.debug("Accepted processing audit event: {0}. Bidding for it".format(
                     str(evt),
                     requestId=request_id,
                 ))
                 self.__get_next_audit_request()
 
             else:
-                logging.debug(
+                logger.debug(
                     "Declining processing audit request: {0}. Not enough incentive".format(
                         str(evt)
                     ), 
                     requestId=request_id,
                 )
         except Exception as error:
-            logging.exception(
+            logger.exception(
                 "Error when bidding for request {0}: {1}".format(str(evt), str(error)), 
                 requestId=request_id,
             )
@@ -55,7 +55,7 @@ class AuditEventFilter:
             # If an audit request is not targeted to the 
             # running audit node, just disconsider it
             if target_auditor.lower() != self.__config.account.lower():
-                logging.debug(
+                logger.debug(
                     "Ignoring audit request (not directed at current node): {0}".format(
                         str(evt)
                     ),
@@ -81,7 +81,7 @@ class AuditEventFilter:
                 audit_evt
             )
         except Exception as error:
-            logging.exception(
+            logger.exception(
                 "Error when processing event {0}: {1}".format(str(evt), str(error)), 
                 requestId=request_id,
             )

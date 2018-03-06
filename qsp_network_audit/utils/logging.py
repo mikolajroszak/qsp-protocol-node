@@ -43,5 +43,5 @@ def config_logging(verbose):
           stdlib.render_to_log_kwargs]
   )
 
-def getLogging():
-  return getLogger("audit")
+def get_logger(name="audit"):
+  return getLogger(name)
