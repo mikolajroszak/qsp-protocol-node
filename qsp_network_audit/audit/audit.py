@@ -17,7 +17,7 @@ from threading import Thread
 
 from .evt_filter import AuditEventFilter
 
-logging = logging_utils.getLogging()
+logger = logging_utils.get_logger()
 
 
 class QSPAuditNode:
@@ -69,12 +69,12 @@ class QSPAuditNode:
                 if report is None:
                     error = "Could not generate report"
                     evt['status_info'] = error
-                    logging.exception(error, requestId=request_id)
+                    logger.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
                     evt['report'] = json.dumps(report)
                     evt['status_info'] = "Sucessfully generated report"
-                    logging.debug(
+                    logger.debug(
                         "Generated report is {0}. Saving it in the internal database".format(
                             str(evt['report']),
                             requestId=request_id,
@@ -82,7 +82,7 @@ class QSPAuditNode:
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except Exception:
-                logging.exception(
+                logger.exception(
                     "Unexpected error when performing audit", 
                     requestId=request_id,
                 )
@@ -188,7 +188,7 @@ class QSPAuditNode:
         """
         Audits a target contract.
         """
-        logging.info(
+        logger.info(
             "Executing audit on contract at {0}".format(uri), 
             requestId=request_id,
         )
@@ -204,7 +204,7 @@ class QSPAuditNode:
         report_as_string = str(json.dumps(report))
         
         upload_result = self.__config.report_uploader.upload(report_as_string)
-        logging.info(
+        logger.info(
             "Report upload result: {0}".format(upload_result),
             requestId=request_id,
         )
@@ -219,7 +219,7 @@ class QSPAuditNode:
 
         upload_result = self.__config.report_uploader.upload(report_as_string)
 
-        logging.info(
+        logger.info(
             "Report upload result: {0}".format(upload_result), 
             requestId=request_id,
         )
