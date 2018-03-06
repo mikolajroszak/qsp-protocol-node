@@ -37,7 +37,6 @@ def check_single_instance():
 def handle_kill_signal(signal, frame):
     stop_audit_node()
 
-
 def main():
     """
     Main function.
