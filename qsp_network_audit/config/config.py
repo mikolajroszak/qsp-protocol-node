@@ -401,8 +401,6 @@ class Config:
 
     def __load_config(self):
         config_file = io_utils.fetch_file(self.config_file_uri)
-        logging.debug("Loading configuration from {0}".format(
-            str(self.config_file_uri)))
 
         with open(config_file) as yaml_file:
             new_cfg_dict = yaml.load(yaml_file)[self.env]
@@ -411,15 +409,11 @@ class Config:
             str(new_cfg_dict).encode("utf-8")
         ).hexdigest()
 
-        logging.debug("Configuration digest is {0}".format(
-            str(current_digest)))
-
         # Use the digest as a means to detect whether or not
         # the content of the configuration has changed. If not,
         # just skip.
 
         if current_digest == self.__hex_digest:
-            logging.debug("Configuration has not changed. Skipping")
             return
 
         # If the configuration has changed, then reload it
@@ -439,7 +433,8 @@ class Config:
             # nothing to be done except report an exception
             if self.__cfg_dict is None:
                 raise Exception(
-                    "Incorrect configuration. Missing entry {0}".format(missing_config))
+                    "Incorrect configuration. Missing entry {0}".format(missing_config)
+                )
 
             # Otherwise, the a load happened in the past, and one can
             # revert state to that

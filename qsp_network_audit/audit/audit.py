@@ -42,6 +42,10 @@ class QSPAuditNode:
         AuditEventFilter(self.__config)        
 
 
+    @property
+    def config(self):
+        return self.__config
+
     def run(self):
         """
         Starts all the threads processing different stages of a given event.
@@ -175,6 +179,10 @@ class QSPAuditNode:
             thread.join()
 
         self.__threads = []
+
+        # Close resources
+        self.__config.wallet_session_manager.lock()
+        self.__config.event_pool_manager.close()
 
     def audit(self, requestor, uri, request_id):
         """

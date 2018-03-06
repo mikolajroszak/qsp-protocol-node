@@ -1,6 +1,7 @@
 import sqlite3
 import os
 
+from pathlib import Path
 
 class EventPoolManager:
     @staticmethod
@@ -52,14 +53,23 @@ class EventPoolManager:
         # mode on
 
         cursor = None
+        db_existed = False
+        db_created = False
+
         try:
+            db_file = Path(db_path)
+
+            if db_file.is_file():
+                db_existed = True
+
             self.__connection = sqlite3.connect(db_path, check_same_thread=False, isolation_level=None)
+            db_created = True
             self.__connection.row_factory = sqlite3.Row
 
-            cursor = self.__connection.cursor()
-
-            self.__exec_sql_script(cursor, 'createdb', multiple_stmts=True)
-            self.__connection.commit()
+            if not db_existed:
+                cursor = self.__connection.cursor()
+                self.__exec_sql_script(cursor, 'createdb', multiple_stmts=True)
+                self.__connection.commit()
         
         except Exception:
             # Exception occurred. Close first the cursor, followed
@@ -70,6 +80,9 @@ class EventPoolManager:
 
             if self.__connection is not None:
                 self.__connection.close()
+
+            if not db_existed and db_created:
+                db_file.unlink()
 
             raise
         
