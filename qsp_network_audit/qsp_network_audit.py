@@ -3,7 +3,9 @@ Provides the main entry for executing a QSP audit node.
 """
 import argparse
 import signal
+import traceback, sys
 import utils.logging as logging_utils
+
 logging = logging_utils.getLogging()
 
 from audit import QSPAuditNode
@@ -103,7 +105,6 @@ def main():
                 str(error)
             )
         )
-        import traceback, sys
         traceback.print_exc(file=sys.stdout)
     finally:
         stop_audit_node()
