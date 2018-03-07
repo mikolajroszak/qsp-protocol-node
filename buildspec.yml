@@ -10,10 +10,14 @@ phases:
       - echo Pulling the base image...
       - docker pull 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit-base:latest
       - echo Building the Docker image...
+      - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
       - docker build -t qsp-network-audit .
+      - docker tag qsp-network-audit 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit:$CODEBUILD_RESOLVED_SOURCE_VERSION
       - docker tag qsp-network-audit 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit:develop
       - echo Pushing the Docker image...
+      - docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit:$CODEBUILD_RESOLVED_SOURCE_VERSION
       - docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit:develop
+      - sed -i -e "s/<tag>/$CODEBUILD_RESOLVED_SOURCE_VERSION/g" Dockerrun.aws.json
   post_build:
     commands:
       - echo Build completed on `date`
