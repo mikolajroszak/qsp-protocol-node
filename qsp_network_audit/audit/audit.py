@@ -76,9 +76,8 @@ class QSPAuditNode:
                     evt['status_info'] = "Sucessfully generated report"
                     logger.debug(
                         "Generated report is {0}. Saving it in the internal database".format(
-                            str(evt['report']),
-                            requestId=request_id,
-                        )
+                            str(evt['report'])
+                        ), requestId=request_id
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except Exception:
