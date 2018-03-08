@@ -4,4 +4,4 @@ set fk_status = 'TS',
     tx_hash = ?,
     report = ?,
     submission_attempts = audit_evt.submission_attempts + 1
-where id = ?
+where request_id = ?

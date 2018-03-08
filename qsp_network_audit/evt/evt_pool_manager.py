@@ -1,50 +1,49 @@
-import sqlite3
+import apsw
 import os
 
 from pathlib import Path
+from utils.db import Sqlite3Worker, get_first
 
-class EventPoolManager:
+class EventPoolManager:    
     @staticmethod
     def __encode(dict):
+        if dict is None:
+            return None
+
         new_dict = {}
         for key in dict.keys():
             if key == "price" or key == "block_nbr":
                 new_dict[key] = str(dict[key])
             else:
                 new_dict[key] = dict[key]
+
         return new_dict
 
     @staticmethod
     def __decode(dict):
+        if dict is None:
+            return None
+
         new_dict = {}
         for key in dict.keys():
             if key == "price" or key == "block_nbr":
                 new_dict[key] = int(dict[key])
             else:
                 new_dict[key] = dict[key]
+
         return new_dict
 
     @staticmethod
-    def __row_to_dict(row):
-        return dict(zip(row.keys(), row)) 
-
-    def __exec_sql_script(self, cursor, query, query_params=(), multiple_stmts=False):
-        if query_params and multiple_stmts:
-            raise Exception(
-                "query_params should not be used in queries with multiple statements")
-
-        query_path = "{0}/{1}.sql".format(
+    def __query_path(query):
+        return "{0}/{1}.sql".format(
             os.path.dirname(os.path.abspath(__file__)),
             query,
         )
 
-        with open(query_path) as query_stream:
-            query = query_stream.read()
-
-        if multiple_stmts:
-            cursor.executescript(query)
-        else:
-            cursor.execute(query, query_params)
+    @staticmethod
+    def __exec_sql(worker, query, values=()):
+        query_file = EventPoolManager.__query_path(query)
+        return worker.execute_script(query_file, values)
 
     def __init__(self, db_path):
         # Gets a connection with the SQL3Lite server
@@ -52,124 +51,80 @@ class EventPoolManager:
         # EventPool object. The connection is created with autocommit
         # mode on
 
-        cursor = None
         db_existed = False
         db_created = False
+        error = False
 
+        self.__sqlworker = None
         try:
             db_file = Path(db_path)
-
             if db_file.is_file():
                 db_existed = True
 
-            self.__connection = sqlite3.connect(db_path, check_same_thread=False, isolation_level=None)
+            self.__sqlworker = Sqlite3Worker(file_name=db_path, max_queue_size=10000)
             db_created = True
-            self.__connection.row_factory = sqlite3.Row
 
             if not db_existed:
-                cursor = self.__connection.cursor()
-                self.__exec_sql_script(cursor, 'createdb', multiple_stmts=True)
-                self.__connection.commit()
+                EventPoolManager.__exec_sql(self.__sqlworker, 'createdb')
         
         except Exception:
-            # Exception occurred. Close first the cursor, followed
-            # by the connection.
-            if cursor is not None:
-                cursor.close()
-                cursor = None
-
-            if self.__connection is not None:
-                self.__connection.close()
-
-            if not db_existed and db_created:
-                db_file.unlink()
-
+            error = True
             raise
         
         finally:
-            # Cursor should be closed only if still opened.
-            if cursor is not None:
-                cursor.close()
+            if error:
+                if self.__sqlworker is not None:
+                    self.__sqlworker.close()
 
+                if not db_existed and db_created:
+                    db_file.unlink()
+
+    @property
+    def sql3lite_worker(self):
+        return self.__sqlworker
 
     def get_latest_block_number(self):
-        try:
-            cursor = self.__connection.cursor()
-            self.__exec_sql_script(cursor, 'get_latest_block_number')
-            row = EventPoolManager.__decode(
-                EventPoolManager.__row_to_dict(cursor.fetchone())
-            )
-            return row['block_nbr']
-        finally:
-            if cursor is not None:
-                cursor.close()
+        row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_latest_block_number'))
+        return EventPoolManager.__decode(row).get('block_nbr')
 
-        return None
+    def is_request_processed(self, request_id):
+        row = self.get_event_by_request_id(request_id)
+        return not(row is None or row == {})
 
     def get_next_block_number(self):
-        return self.get_latest_block_number() + 1
+        current = self.get_latest_block_number()
+        if current < 0 or current is None:
+            return 0
+        return current + 1
+
+    def get_latest_request_id(self):
+        row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_latest_request_id'))
+        return EventPoolManager.__decode(row).get('request_id')
 
     def add_evt_to_be_processed(self, evt):
-        cursor = None
         encoded_evt = EventPoolManager.__encode(evt)
-        try:
-            cursor = self.__connection.cursor()
-            self.__exec_sql_script(
-                cursor,
-                'add_evt_to_be_processed',
-                query_params=(
-                    encoded_evt['request_id'],
-                    encoded_evt['requestor'],
-                    encoded_evt['contract_uri'],
-                    encoded_evt['evt_name'],
-                    encoded_evt['block_nbr'],
-                    encoded_evt['status_info'],
-                    encoded_evt['price'],
-                )
+        EventPoolManager.__exec_sql(
+            self.__sqlworker,
+            'add_evt_to_be_processed',
+            values=(
+                encoded_evt['request_id'],
+                encoded_evt['requestor'],
+                encoded_evt['contract_uri'],
+                encoded_evt['evt_name'],
+                encoded_evt['block_nbr'],
+                encoded_evt['status_info'],
+                encoded_evt['price'],
             )
-            self.__connection.commit()
+        )
 
-        except sqlite3.Error:
-            self.__connection.rollback()
-            raise
-
-        finally:
-            if cursor is not None:
-                cursor.close()
-
-    def __process_evt_with_status(self, query_name, fct, query_params=(), fct_kwargs={}):
-        cursor = None
-        try:
-            cursor = self.__connection.cursor()
-            self.__exec_sql_script(cursor, query_name, query_params)
-            for evt in cursor:
-                decoded_evt = EventPoolManager.__decode(
-                    EventPoolManager.__row_to_dict(evt)
-                )
-                fct(decoded_evt, **fct_kwargs)
-            self.__connection.commit()
-
-        except sqlite3.Error:
-            self.__connection.rollback()
-            raise
-
-        finally:
-            if cursor is not None:
-                cursor.close()
+    def __process_evt_with_status(self, query_name, fct, values=(), fct_kwargs={}):
+        for evt in EventPoolManager.__exec_sql(self.__sqlworker, query_name, values):
+            decoded_evt = EventPoolManager.__decode(evt)
+            fct(decoded_evt, **fct_kwargs)
 
     def get_event_by_request_id(self, request_id):
-        try:
-            cursor = self.__connection.cursor()
-            self.__exec_sql_script(cursor, 'get_event_by_request_id', (request_id,))
-            row = EventPoolManager.__decode(
-                EventPoolManager.__row_to_dict(cursor.fetchone())
-            )
-            return row
-        finally:
-            if cursor is not None:
-                cursor.close()
-
-        return None
+        row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_event_by_request_id', (request_id,)))
+        return EventPoolManager.__decode(row)
 
     def process_incoming_events(self, process_fct):
         self.__process_evt_with_status(
@@ -192,92 +147,44 @@ class EventPoolManager:
         )
 
     def set_evt_to_be_submitted(self, evt):
-        cursor = None
-        try:
-            cursor = self.__connection.cursor()
-            encoded_evt = EventPoolManager.__encode(evt)
-            self.__exec_sql_script(
-                cursor,
-                'set_evt_to_be_submitted',
-                (encoded_evt['status_info'],
-                 encoded_evt['tx_hash'],
-                 encoded_evt['report'],
-                 encoded_evt['id'],
-                )
-            )
-            self.__connection.commit()
-
-        except sqlite3.Error:
-            self.__connection.rollback()
-            raise
-
-        finally:
-            if cursor is not None:
-                cursor.close()
+        encoded_evt = EventPoolManager.__encode(evt)
+        EventPoolManager.__exec_sql(
+            self.__sqlworker,
+            'set_evt_to_be_submitted',
+            (encoded_evt['status_info'],
+                encoded_evt['tx_hash'],
+                encoded_evt['report'],
+                encoded_evt['request_id'],
+            ),
+        )
 
     def set_evt_to_submitted(self, evt):
-        cursor = None
-        try:
-            cursor = self.__connection.cursor()
-            encoded_evt = EventPoolManager.__encode(evt)
-            self.__exec_sql_script(
-                cursor,
-                'set_evt_to_submitted',
-                (encoded_evt['tx_hash'],
-                 encoded_evt['status_info'],
-                 encoded_evt['report'],
-                 encoded_evt['id'],
-                )
-            )
-            self.__connection.commit()
-
-        except sqlite3.Error as error:
-            self.__connection.rollback()
-            raise error
-
-        finally:
-            if cursor is not None:
-                cursor.close()
+        encoded_evt = EventPoolManager.__encode(evt)
+        EventPoolManager.__exec_sql(
+            self.__sqlworker,
+            'set_evt_to_submitted',
+            (encoded_evt['tx_hash'],
+                encoded_evt['status_info'],
+                encoded_evt['report'],
+                encoded_evt['request_id'],
+            ),
+        )
 
     def set_evt_to_done(self, evt):
-        cursor = None
-        try:
-            cursor = self.__connection.cursor()
-            encoded_evt = EventPoolManager.__encode(evt)
-            self.__exec_sql_script(
-                cursor,
-                'set_evt_to_done',
-                (encoded_evt['status_info'], encoded_evt['id'],)
-            )
-            self.__connection.commit()
-
-        except sqlite3.Error:
-            self.__connection.rollback()
-            raise
-
-        finally:
-            if cursor is not None:
-                cursor.close()
+        encoded_evt = EventPoolManager.__encode(evt)
+        EventPoolManager.__exec_sql(
+            self.__sqlworker,
+           'set_evt_to_done',
+            (encoded_evt['status_info'], encoded_evt['request_id'],),
+        )
 
     def set_evt_to_error(self, evt):
-        cursor = None
-        try:
-            cursor = self.__connection.cursor()
-            encoded_evt = EventPoolManager.__encode(evt)
-            self.__exec_sql_script(
-                cursor,
-                'set_evt_to_error',
-                (encoded_evt['status_info'], encoded_evt['id'],)
-            )
-            self.__connection.commit()
-
-        except sqlite3.Error as error:
-            self.__connection.rollback()
-            raise error 
-
-        finally:
-            if cursor is not None:
-                cursor.close()
+        encoded_evt = EventPoolManager.__encode(evt)
+        EventPoolManager.__exec_sql(
+            self.__sqlworker,
+            'set_evt_to_error',
+            (encoded_evt['status_info'], encoded_evt['request_id'],),
+        )
 
     def close(self):
-        self.__connection.close()
+        self.__sqlworker.close()

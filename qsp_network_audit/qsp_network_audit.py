@@ -6,7 +6,7 @@ import signal
 import traceback, sys
 import utils.logging as logging_utils
 
-logging = logging_utils.getLogging()
+logging = logging_utils.get_logger()
 
 from audit import QSPAuditNode
 from config import Config
@@ -22,14 +22,13 @@ def stop_audit_node():
     global done
     global audit_node
 
-    logging.info("Stopping QSP Audit Node")
-
     if audit_node is None or done:
         return
 
+    logging.info("Stopping QSP Audit Node")
+
     audit_node.stop()
     done = True
-    logging.info("Stopping QSP Audit Node")
 
 def check_single_instance():
     _ = SingleInstance()
@@ -37,17 +36,15 @@ def check_single_instance():
 def handle_kill_signal(signal, frame):
     stop_audit_node()
 
+signal.signal(signal.SIGTERM, handle_stop_signal)
+signal.signal(signal.SIGINT, handle_stop_signal)
+
 def main():
     """
     Main function.
     """
     global audit_node
     try:
-        check_single_instance()
-
-        signal.signal(signal.SIGTERM, handle_kill_signal)
-        signal.signal(signal.SIGINT, handle_kill_signal)
-
         # Sets the program's arguments
         parser = argparse.ArgumentParser(description='QSP Audit Node')
 
