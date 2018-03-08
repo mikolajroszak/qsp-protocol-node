@@ -36,7 +36,7 @@ class QSPAuditNode:
         if start_block == -1:
             start_block = 0
 
-        logger.debug(" Filtering events from block # {0}".format(str(start_block)))
+        logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
         self.__filter_audit_requests = self.__config.internal_contract.on(
             QSPAuditNode.__EVT_AUDIT_REQUESTED,
@@ -73,22 +73,19 @@ class QSPAuditNode:
         self.__run_submission_thread()
         self.__run_monitor_submisson_thread()
 
+        while self.__exec:
+            sleep(2)
+
     def __run_filter_polling(self, thread_name, filter, process_evt, only_changes=False):
         def exec():
-            logger.debug("Started polling")
+            logger.debug("{0} started polling".format(thread_name))
 
             while self.__exec:
                 evts = filter.get(only_changes)
                 for evt in evts:
                     request_id = int(evt['args']['requestId'])
 
-                    if self.__config.event_pool_manager.is_request_processed(request_id):
-                        logger.debug(
-                            "Ignoring request {0} (already processed).".format(
-                                str(request_id)
-                            )
-                        )
-                    else:
+                    if not self.__config.event_pool_manager.is_request_processed(request_id):
                         process_evt(evt)
 
                 sleep(self.__config.evt_polling)
@@ -132,7 +129,6 @@ class QSPAuditNode:
             "bidding thread",
             self.__filter_audit_requests,
             bid_for_audit_request,
-            self.__latest_request_id,
         )
 
     def __run_audit_assignment_thread(self):
@@ -186,7 +182,6 @@ class QSPAuditNode:
             "filter assignments thread",
             self.__filter_audit_assignments,
             process_audit_assignment,
-            self.__latest_request_id,
         )
 
     def __run_perform_audit_thread(self):

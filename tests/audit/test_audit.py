@@ -40,14 +40,18 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__env = "test"
         self.__config_file_uri = resource_uri("test_config.yaml")
 
-        #self.__clean_up_pool_db()
+        self.__clean_up_pool_db()
 
         self.__cfg = Config(self.__env, self.__config_file_uri)
         self.__audit_node = QSPAuditNode(
             self.__cfg
         )
 
-        self.__audit_node.run()
+        def exec():
+            self.__audit_node.run()
+
+        audit_node_thread = Thread(target=exec, name="Audit node")
+        audit_node_thread.start()
 
     @timeout(60, timeout_exception=StopIteration)
     def test_contract_audit_request(self):
@@ -60,8 +64,6 @@ class TestQSPAuditNode(unittest.TestCase):
         request_id = randint(0, 1000)
         self.__requestAudit(buggy_contract, request_id, 100)
 
-        # Creates a db connection to assure a record with
-        # a 'DN' status gets saved
         sql3lite_worker = self.__cfg.event_pool_manager.sql3lite_worker
 
         # Busy waits on receiving events up to the configured
@@ -107,7 +109,7 @@ class TestQSPAuditNode(unittest.TestCase):
         Stops the execution of the current QSP audit node.
         """
         self.__audit_node.stop()
-        #self.__clean_up_pool_db()
+        self.__clean_up_pool_db()
 
 
 if __name__ == '__main__':
