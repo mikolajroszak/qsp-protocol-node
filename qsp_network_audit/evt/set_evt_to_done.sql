@@ -2,4 +2,4 @@ update audit_evt
 set fk_status = 'DN',
     status_info = ?,
     is_persisted = 1
-where id = ?
+where request_id = ?

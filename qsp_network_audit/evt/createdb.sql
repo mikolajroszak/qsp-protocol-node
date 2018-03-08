@@ -21,8 +21,7 @@ insert into evt_status values (
 );
 
 create table audit_evt (
-    id                  integer primary key,
-    request_id          string unique not null,
+    request_id          string primary key,
     requestor           text not null,
     contract_uri        text not null,
     evt_name            varchar(100) not null,

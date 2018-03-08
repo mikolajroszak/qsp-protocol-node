@@ -20,7 +20,7 @@ logger = logging_utils.get_logger()
 import utils.io as io_utils
 
 from audit import Analyzer
-from utils.wallet_session_manager import WalletSessionManager, DummyWalletSessionManager
+from utils.eth import WalletSessionManager, DummyWalletSessionManager
 from evt import EventPoolManager
 
 

@@ -6,17 +6,19 @@ import contextlib
 import os
 import unittest
 import json
-import sqlite3
+import apsw
 import yaml
 import os
 from random import randint
 from timeout_decorator import timeout
 from threading import Thread
+from time import sleep
 
 from audit import QSPAuditNode
 from config import Config
 from helpers.resource import resource_uri
 from utils.io import fetch_file, digest
+from utils.db import get_first
 
 class TestQSPAuditNode(unittest.TestCase):
 
@@ -48,8 +50,8 @@ class TestQSPAuditNode(unittest.TestCase):
         def exec():
             self.__audit_node.run()
 
-        # Starts the execution of the QSP audit node
-        Thread(target=exec, name="QSP_audit_node_thread").start()
+        audit_node_thread = Thread(target=exec, name="Audit node")
+        audit_node_thread.start()
 
     @timeout(60, timeout_exception=StopIteration)
     def test_contract_audit_request(self):
@@ -62,36 +64,17 @@ class TestQSPAuditNode(unittest.TestCase):
         request_id = randint(0, 1000)
         self.__requestAudit(buggy_contract, request_id, 100)
 
-        # Creates a db connection to assure a record with
-        # a 'DN' status gets saved
-        cursor = None
-        try:
-            connection = sqlite3.connect(
-                self.__cfg.evt_db_path,
-                check_same_thread=False,
-                isolation_level=None,
-            )
-            connection.row_factory = sqlite3.Row
+        sql3lite_worker = self.__cfg.event_pool_manager.sql3lite_worker
 
-            # Busy waits on receiving events up to the configured
-            # timeout (60s)
-            while True:
-                cursor = connection.cursor()
-                cursor.execute("select * from audit_evt where fk_status = 'DN'")
-                row = cursor.fetchone()
-                if row is not None:
-                    break
-        except Exception:
-            if cursor is not None:
-                cursor.close()
-            raise
-
-        finally:
-            if cursor is not None:
-                cursor.close()
-
-            if connection is not None:
-                connection.close()
+        # Busy waits on receiving events up to the configured
+        # timeout (60s)
+        row = None
+        while True:
+            row = get_first(sql3lite_worker.execute("select * from audit_evt where fk_status = 'DN'"))
+            if row != {}:
+                break
+            else:
+                sleep(5)
 
         self.assertEqual(row['evt_name'], "LogAuditRequestAssigned")
         self.assertTrue(int(row['block_nbr']) > 0)

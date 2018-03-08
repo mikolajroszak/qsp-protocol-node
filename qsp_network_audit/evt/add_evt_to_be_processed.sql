@@ -1,4 +1,4 @@
-insert or ignore into 
+insert into 
 audit_evt(
     request_id,
     requestor,
