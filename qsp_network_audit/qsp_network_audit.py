@@ -6,7 +6,8 @@ import signal
 import traceback, sys
 import utils.logging as logging_utils
 
-logging = logging_utils.get_logger()
+import logging
+logger = logging_utils.get_logger()
 
 from audit import QSPAuditNode
 from config import Config
@@ -30,10 +31,13 @@ def stop_audit_node():
     audit_node.stop()
     done = True
 
-def check_single_instance():
-    _ = SingleInstance()
+def configure_logging(verbose_level):
+    logging_utils.config_logging(verbose_level)
 
-def handle_kill_signal(signal, frame):
+    logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+    logging.getLogger('botocore').setLevel(logging.CRITICAL)
+
+def handle_stop_signal(signal, frame):
     stop_audit_node()
 
 signal.signal(signal.SIGTERM, handle_stop_signal)
@@ -73,7 +77,7 @@ def main():
         # Validates input arguments
         args = parser.parse_args()
 
-        logging_utils.config_logging(args.verbose)
+        configure_logging(args.verbose)
 
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)

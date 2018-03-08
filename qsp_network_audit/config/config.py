@@ -13,8 +13,9 @@ import yaml
 import re
 import os
 import hashlib
+
 import utils.logging as logging_utils
-logging = logging_utils.get_logger()
+logger = logging_utils.get_logger()
 
 import utils.io as io_utils
 
@@ -422,9 +423,9 @@ class Config:
         self.__hex_digest = current_digest
 
         try:
-            logging.debug("Creating components from configuration")
+            logger.debug("Creating components from configuration")
             self.__create_components(new_cfg_dict)
-            logging.debug("Components successfully created")
+            logger.debug("Components successfully created")
             self.__cfg_dict = new_cfg_dict
 
         except KeyError as missing_config:
@@ -440,9 +441,9 @@ class Config:
             # revert state to that
             else:
                 # Revert configuration as a means to prevent crashes
-                logging.debug("Configuration error. Reverting changes....")
+                logger.debug("Configuration error. Reverting changes....")
                 self.__create_components(self.__cfg_dict)
-                logging.debug("Successfully reverted changes")
+                logger.debug("Successfully reverted changes")
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """

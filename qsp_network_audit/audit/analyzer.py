@@ -5,7 +5,7 @@ Provides an interface for invoking the analyzer software.
 import subprocess
 import os
 import utils.logging as logging_utils
-logging = logging_utils.get_logger()
+logger = logging_utils.get_logger()
 
 from utils.io import load_json, has_matching_line
 from utils.args import replace_args
@@ -73,9 +73,9 @@ class Analyzer:
                 "${output}": injected_output,
             })
 
-            logging.debug("Executing check on contract {0}".format(contract), requestId=request_id)
-            logging.debug("Output set to {0}".format(injected_output), requestId=request_id)
-            logging.debug("Analyzer command set to {0}".format(injected_cmd), requestId=request_id)
+            logger.debug("Executing check on contract {0}".format(contract), requestId=request_id)
+            logger.debug("Output set to {0}".format(injected_output), requestId=request_id)
+            logger.debug("Analyzer command set to {0}".format(injected_cmd), requestId=request_id)
 
             # NOTE: in some occasions, oyenete sucessfully runs, but
             # still returns a non-zero status. Consequently, 'check'
@@ -88,16 +88,16 @@ class Analyzer:
             if os.path.isfile(injected_output):
                 os.remove(injected_output)
 
-            logging.debug("Invoking analyzer tool as a subprocess", requestId=request_id)
+            logger.debug("Invoking analyzer tool as a subprocess", requestId=request_id)
 
             # TODO Add timeout parameter based on a configuration parameter
             subprocess.run(injected_cmd, shell=True)
 
-            logging.debug("Done running analyzer process", requestId=request_id)
+            logger.debug("Done running analyzer process", requestId=request_id)
 
             if os.path.isfile(injected_output):
 
-                logging.debug(
+                logger.debug(
                     "Loading result from {0}".format(injected_output), requestId=request_id)
 
                 result = load_json(injected_output)
@@ -105,7 +105,7 @@ class Analyzer:
                 os.remove(injected_output)
 
                 if result is not None and result:
-                    logging.debug("Analysis result is {0}".format(str(result)), requestId=request_id)
+                    logger.debug("Analysis result is {0}".format(str(result)), requestId=request_id)
                     return self.__create_succ_result(result)
 
             # Unknown error. Report it as such
