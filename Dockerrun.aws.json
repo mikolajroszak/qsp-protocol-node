@@ -75,6 +75,18 @@
           "readOnly": true
         }
       ]
+    },
+    {
+      "name": "ping",
+      "image": "nginx",
+      "essential": true,
+      "memory": 128,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "containerPort": 80
+        }
+      ]
     }
   ]
 }
