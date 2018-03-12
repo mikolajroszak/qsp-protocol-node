@@ -39,7 +39,6 @@ dev:
       args:
         bucket_name: "qsp-network-reports-dev"
   account:
-    id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
     ttl: 600
   default_gas: !!int 600000
   evt_db_path: "/analyzer/audit-db/audit_node.db"
@@ -64,7 +63,6 @@ prod:
       args:
         bucket_name: "qsp-network-reports-prod"
   account:
-    id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
     ttl: 600
   default_gas: !!int 600000
   evt_db_path: "/analyzer/audit-db/audit_node.db"
