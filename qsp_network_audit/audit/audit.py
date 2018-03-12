@@ -39,7 +39,7 @@ class QSPAuditNode:
 
         logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
-        # There are some important invariants that are be respected at all
+        # There are some important invariants that are to be respected at all
         # times when the audit node (re-)processes events (see associated queries):
         #
         # 1) An audit event is never saved twice in the node's internal database
@@ -96,6 +96,8 @@ class QSPAuditNode:
         # audit node. Checking whether a thread is alive or not does
         # not account for pastEvent threads, which necessarily die
         # after processing them all.
+
+        health_check_interval_sec = 2
         while self.__exec:
             # Checking if all threads are still alive
             for thread in (self.__internal_threads + FilterThreads.list()):
@@ -110,7 +112,7 @@ class QSPAuditNode:
                     logger.debug("Cannot proceed execution. At least one filter id was lost")
                     self.stop()
 
-            sleep(2)
+            sleep(health_check_interval_sec)
 
 
     def __on_audit_requested(self, evt):
