@@ -39,10 +39,11 @@ class QSPAuditNode:
 
         logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
-        # There are two important invariants that are be respect at all
+        # There are some important invariants that are be respected at all
         # times when the audit node (re-)processes events (see associated queries):
         #
         # 1) An audit event is never saved twice in the node's internal database
+        #
         # 2) If an event has been given a certain status, it is never
         #    updated with a status lower in ranking
         #    The current ranking is given by:
@@ -54,7 +55,7 @@ class QSPAuditNode:
         #    the event never leaves that state
         #
         # 4) At all times, there is at most one writer thread executing. Stated otherwise,
-        #    concurrent writes never occur
+        #    concurrent writes never occurs
         #
         # 5) At all times, the audit node only accounts for the health of threads
         #    processing new events. Old ones necessarily cause the underlying
