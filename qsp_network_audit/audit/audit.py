@@ -61,47 +61,18 @@ class QSPAuditNode:
         #    processing new events. Old ones necessarily cause the underlying
         #    thread to complete execution and eventually dying
 
-        self.__config.internal_contract.pastEvents(
-            QSPAuditNode.__EVT_AUDIT_REQUESTED,
-            {'fromBlock': start_block},
-            self.__on_audit_requested,
-        )
-        FilterThreads.register(
-            self.__config.internal_contract.on(
-                QSPAuditNode.__EVT_AUDIT_REQUESTED,
-                {'fromBlock': start_block},
-                self.__on_audit_requested,
-            )
-        )
+        params = {'fromBlock': start_block}
 
-        self.__config.internal_contract.pastEvents(
-            QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
-            {'fromBlock': start_block},
-            self.__on_audit_assigned,
-        )
-        FilterThreads.register(
-        self.__config.internal_contract.on(
-                QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
-                {'fromBlock': start_block},
-                self.__on_audit_assigned,
-            )
-        )
-
-        self.__config.internal_contract.pastEvents(
-            QSPAuditNode.__EVT_REPORT_SUBMITTED,
-            {'fromBlock': start_block},
-            self.__on_report_submitted,
-        )
-        FilterThreads.register(
-            self.__config.internal_contract.on(
-                QSPAuditNode.__EVT_REPORT_SUBMITTED,
-                {'fromBlock': start_block},
-                self.__on_report_submitted,
-            )
-        )
+        self.__set_filter(QSPAuditNode.__EVT_AUDIT_REQUESTED, params, self.__on_audit_requested)
+        self.__set_filter(QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED, params, self.__on_audit_assigned)
+        self.__set_filter(QSPAuditNode.__EVT_REPORT_SUBMITTED, params, self.__on_report_submitted)
 
         self.__latest_request_id = self.__config.event_pool_manager.get_latest_request_id()
         self.__internal_threads = []
+
+    def __set_filter(self, evt_name, params, callback):
+        self.__config.internal_contract.pastEvents(evt_name, params, callback)
+        FilterThreads.register(self.__config.internal_contract.on(evt_name, params, callback))
 
     @property
     def config(self):
