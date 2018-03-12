@@ -14,7 +14,7 @@ class FilterThreads:
     def is_alive(filter_thread):
     # it's a wicked way of detecting whether a web3.py filter is still working
     # but unfortunately I wasn't able to find any other one
-        return hasattr(filter_thread, '_args') and hasattr(filter_thread, '_kwargs') or (not filter_thread.running)
+        return hasattr(filter_thread, '_args') and hasattr(filter_thread, '_kwargs')
 
     @staticmethod
     def list():

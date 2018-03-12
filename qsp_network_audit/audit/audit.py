@@ -39,12 +39,31 @@ class QSPAuditNode:
 
         logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
-        FilterThreads.register(
-            self.__config.internal_contract.pastEvents(
-                QSPAuditNode.__EVT_AUDIT_REQUESTED,
-                {'fromBlock': start_block},
-                self.__on_audit_requested,
-            )
+        # There are two important invariants that are be respect at all
+        # times when the audit node (re-)processes events (see associated queries):
+        #
+        # 1) An audit event is never saved twice in the node's internal database
+        # 2) If an event has been given a certain status, it is never
+        #    updated with a status lower in ranking
+        #    The current ranking is given by:
+        #   
+        #    RV (Received) < TS (To be submitted) < SB (submitted) < DN (done)
+        #
+        # 3) Errors are currently not recoverable, i.e., if an audit event reaches
+        #    an error state in the finite automata internally captured by the audit node,
+        #    the event never leaves that state
+        #
+        # 4) At all times, there is at most one writer thread executing. Stated otherwise,
+        #    concurrent writes never occur
+        #
+        # 5) At all times, the audit node only accounts for the health of threads
+        #    processing new events. Old ones necessarily cause the underlying
+        #    thread to complete execution and eventually dying
+
+        self.__config.internal_contract.pastEvents(
+            QSPAuditNode.__EVT_AUDIT_REQUESTED,
+            {'fromBlock': start_block},
+            self.__on_audit_requested,
         )
         FilterThreads.register(
             self.__config.internal_contract.on(
@@ -54,27 +73,23 @@ class QSPAuditNode:
             )
         )
 
-        FilterThreads.register(
-            self.__config.internal_contract.pastEvents(
-                QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
-                {'fromBlock': start_block},
-                self.__on_audit_assigned,
-            )
+        self.__config.internal_contract.pastEvents(
+            QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
+            {'fromBlock': start_block},
+            self.__on_audit_assigned,
         )
         FilterThreads.register(
-            self.__config.internal_contract.on(
+        self.__config.internal_contract.on(
                 QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
                 {'fromBlock': start_block},
                 self.__on_audit_assigned,
             )
         )
 
-        FilterThreads.register(
-            self.__config.internal_contract.pastEvents(
-                QSPAuditNode.__EVT_REPORT_SUBMITTED,
-                {'fromBlock': start_block},
-                self.__on_report_submitted,
-            )
+        self.__config.internal_contract.pastEvents(
+            QSPAuditNode.__EVT_REPORT_SUBMITTED,
+            {'fromBlock': start_block},
+            self.__on_report_submitted,
         )
         FilterThreads.register(
             self.__config.internal_contract.on(
@@ -106,17 +121,21 @@ class QSPAuditNode:
         self.__internal_threads.append(self.__run_submission_thread())
 
         # Monitors the state of each thread. Upon error, terminate the
-        # audit node
+        # audit node. Checking whether a thread is alive or not does
+        # not account for pastEvent threads, which necessarily die
+        # after processing them all.
         while self.__exec:
             # Checking if all threads are still alive
             for thread in (self.__internal_threads + FilterThreads.list()):
                 if not thread.is_alive():
+                    logger.debug("Cannot proceed execution. At least one internal thread is lost")
                     self.stop()
 
             # Specifically check the state of filter threads
             # (may be executing, but not able to filter anything)
             for filter_thread in FilterThreads.list():
                 if not FilterThreads.is_alive(filter_thread):
+                    logger.debug("Cannot proceed execution. At least one filter id was lost")
                     self.stop()
 
             sleep(2)
@@ -132,9 +151,8 @@ class QSPAuditNode:
             price = evt['args']['price']
             request_id = str(evt['args']['requestId'])
 
-            if (price >= self.__config.min_price and
-                not self.__config.event_pool_manager.is_request_processed(request_id)):
-                logger.debug("Accepted processing audit event: {0}. Bidding for it".format(
+            if (price >= self.__config.min_price):
+                logger.debug("Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
                     str(evt),
                     requestId=request_id,
                 ))
@@ -171,7 +189,7 @@ class QSPAuditNode:
                 pass
 
             logger.debug(
-                "Saving audit request for processing: {0}".format(
+                "Saving audit request for processing (if new): {0}".format(
                     str(evt)
                 ),
                 requestId=request_id,
@@ -229,7 +247,7 @@ class QSPAuditNode:
                     evt['report'] = json.dumps(report)
                     evt['status_info'] = "Sucessfully generated report"
                     logger.debug(
-                        "Generated report is {0}. Saving it in the internal database".format(
+                        "Generated report is {0}. Saving it in the internal database (if not previously saved)".format(
                             str(evt['report'])
                         ), requestId=request_id
                     )
