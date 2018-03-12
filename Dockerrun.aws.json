@@ -46,7 +46,7 @@
     {
       "name": "geth-qsp",
       "image": "466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-geth-qsp-fullnode:develop-legacy",
-      "command": ["--config=qspdata/geth-config/audit-fullnode.toml"],
+      "command": ["--config=qspdata/geth-config/audit-fullnode.toml", "--gasprice=0"],
       "essential": true,
       "memory": 2048,
       "portMappings": [
