@@ -75,6 +75,17 @@
           "readOnly": true
         }
       ]
+    },
+    {
+      "name": "health_check_nginx",
+      "image": "equivalent/health_check_nginx",
+      "essential": true,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "containerPort": 80
+        }
+      ]
     }
   ]
 }
