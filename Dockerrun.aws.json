@@ -68,7 +68,6 @@
         {
           "sourceVolume": "qsp-network-keystore",
           "containerPath": "/myapp/qspdata/keystore",
-          "readOnly": true
         },
         {
           "sourceVolume": "qsp-network-geth-config",

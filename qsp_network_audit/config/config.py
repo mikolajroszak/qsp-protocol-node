@@ -313,7 +313,12 @@ class Config:
         # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
 
         if self.__account is None:
-            self.__account = self.__web3_client.eth.accounts[0]
+            if len(self.__web3_client.eth.accounts) == 0:
+                self.__account = self.__web3_client.personal.newAccount(self.__account_passwd)
+                logger.debug("No account was provided, using a newly created one", account=self.__account)
+            else:
+                self.__account = self.__web3_client.eth.accounts[0]
+                logger.debug("No account was provided, using the account at index [0]", account=self.__account)
 
     def __load_contract_from_src(self):
         """
