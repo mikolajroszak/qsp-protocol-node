@@ -13,6 +13,7 @@ from hashlib import sha256
 from utils.io import fetch_file, digest
 from utils.eth import mk_args
 from threading import Thread
+from utils.eth import FilterThreads
 
 logger = logging_utils.get_logger()
 
@@ -38,24 +39,40 @@ class QSPAuditNode:
 
         logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
-        self.__filter_audit_requests = self.__config.internal_contract.on(
-            QSPAuditNode.__EVT_AUDIT_REQUESTED,
-            filter_params={'fromBlock': start_block},
-        )
+        # There are some important invariants that are to be respected at all
+        # times when the audit node (re-)processes events (see associated queries):
+        #
+        # 1) An audit event is never saved twice in the node's internal database
+        #
+        # 2) If an event has been given a certain status, it is never
+        #    updated with a status lower in ranking
+        #    The current ranking is given by:
+        #   
+        #    RV (Received) < TS (To be submitted) < SB (submitted) < DN (done)
+        #
+        # 3) Errors are currently not recoverable, i.e., if an audit event reaches
+        #    an error state in the finite automata internally captured by the audit node,
+        #    the event never leaves that state
+        #
+        # 4) At all times, there is at most one writer thread executing. Stated otherwise,
+        #    concurrent writes never occurs
+        #
+        # 5) At all times, the audit node only accounts for the health of threads
+        #    processing new events. Old ones necessarily cause the underlying
+        #    thread to complete execution and eventually dying
 
-        self.__filter_audit_assignments = self.__config.internal_contract.on(
-            QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
-            filter_params={'fromBlock': start_block},
-        )
+        params = {'fromBlock': start_block}
 
-        self.__filter_audit_submissions = self.__config.internal_contract.on(
-            QSPAuditNode.__EVT_REPORT_SUBMITTED,
-            filter_params={'fromBlock': start_block},
-        )
+        self.__set_filter(QSPAuditNode.__EVT_AUDIT_REQUESTED, params, self.__on_audit_requested)
+        self.__set_filter(QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED, params, self.__on_audit_assigned)
+        self.__set_filter(QSPAuditNode.__EVT_REPORT_SUBMITTED, params, self.__on_report_submitted)
 
         self.__latest_request_id = self.__config.event_pool_manager.get_latest_request_id()
+        self.__internal_threads = []
 
-        self.__threads = []
+    def __set_filter(self, evt_name, params, callback):
+        self.__config.internal_contract.pastEvents(evt_name, params, callback)
+        FilterThreads.register(self.__config.internal_contract.on(evt_name, params, callback))
 
     @property
     def config(self):
@@ -65,124 +82,127 @@ class QSPAuditNode:
         """
         Starts all the threads processing different stages of a given event.
         """
+        if self.__exec:
+            raise Exception("Cannot run audit node thread due to an existing one")
+
         self.__exec = True
 
-        self.__run_audit_bid_thread()
-        self.__run_audit_assignment_thread()
-        self.__run_perform_audit_thread()
-        self.__run_submission_thread()
-        self.__run_monitor_submisson_thread()
+        # Starts two additional threads for performing audits
+        # and eventually submitting results
+        self.__internal_threads.append(self.__run_perform_audit_thread())
+        self.__internal_threads.append(self.__run_submission_thread())
 
+        # Monitors the state of each thread. Upon error, terminate the
+        # audit node. Checking whether a thread is alive or not does
+        # not account for pastEvent threads, which necessarily die
+        # after processing them all.
+
+        health_check_interval_sec = 2
         while self.__exec:
-            sleep(2)
+            # Checking if all threads are still alive
+            for thread in (self.__internal_threads + FilterThreads.list()):
+                if not thread.is_alive():
+                    logger.debug("Cannot proceed execution. At least one internal thread is lost")
+                    self.stop()
 
-    def __run_filter_polling(self, thread_name, filter, process_evt, only_changes=False):
-        def exec():
-            logger.debug("{0} started polling".format(thread_name))
+            # Specifically check the state of filter threads
+            # (may be executing, but not able to filter anything)
+            for filter_thread in FilterThreads.list():
+                if not FilterThreads.is_alive(filter_thread):
+                    logger.debug("Cannot proceed execution. At least one filter id was lost")
+                    self.stop()
 
-            while self.__exec:
-                evts = filter.get(only_changes)
-                for evt in evts:
-                    request_id = int(evt['args']['requestId'])
+            sleep(health_check_interval_sec)
 
-                    if not self.__config.event_pool_manager.is_request_processed(request_id):
-                        process_evt(evt)
 
-                sleep(self.__config.evt_polling)
-
-        polling_thread = Thread(target=exec, name=thread_name)
-        self.__threads.append(polling_thread)
-        polling_thread.start()
-
-    def __run_audit_bid_thread(self):
-        def bid_for_audit_request(evt):
-            """
-            Bids for an audit upon an audit request event.
-            """
-            try:
-                # Bids for audit requests whose reward is at least as
-                # high as given by the configured min_price
-                price = evt['args']['price']
-                request_id = str(evt['args']['requestId'])
-
-                if price >= self.__config.min_price:
-                    logger.debug("Accepted processing audit event: {0}. Bidding for it".format(
-                        str(evt),
-                        requestId=request_id,
-                    ))
-                    self.__get_next_audit_request()
-
-                else:
-                    logger.debug(
-                        "Declining processing audit request: {0}. Not enough incentive".format(
-                            str(evt)
-                        ),
-                        requestId=request_id,
-                    )
-            except Exception as error:
-                logger.exception(
-                    "Error when bidding for request {0}: {1}".format(str(evt), str(error)), 
-                    requestId=request_id,
-                )
-
-        self.__run_filter_polling(
-            "bidding thread",
-            self.__filter_audit_requests,
-            bid_for_audit_request,
-        )
-
-    def __run_audit_assignment_thread(self):
-        def process_audit_assignment(evt):
+    def __on_audit_requested(self, evt):
+        """
+        Bids for an audit upon an audit request event.
+        """
+        try:
+            # Bids for audit requests whose reward is at least as
+            # high as given by the configured min_price
+            price = evt['args']['price']
             request_id = str(evt['args']['requestId'])
-            try:
-                target_auditor = evt['args']['auditor']
 
-                # If an audit request is not targeted to the
-                # running audit node, just disconsider it
-                if target_auditor.lower() != self.__config.account.lower():
-                    logger.debug(
-                        "Ignoring audit request (not directed at current node): {0}".format(
-                            str(evt)
-                        ),
-                        requestId=request_id,
-                    )
-                    pass
+            if (price >= self.__config.min_price):
+                logger.debug("Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
+                    str(evt),
+                    requestId=request_id,
+                ))
+                self.__get_next_audit_request()
 
+            else:
                 logger.debug(
-                    "Saving audit request for processing: {0}".format(
+                    "Declining processing audit request: {0}. Not enough incentive".format(
                         str(evt)
                     ),
                     requestId=request_id,
                 )
+        except Exception as error:
+            logger.exception(
+                "Error when bidding for request {0}: {1}".format(str(evt), str(error)), 
+                requestId=request_id,
+            )
+            raise
 
-                # Otherwise, the audit request must be processed
-                # throught its different stages. As such, save it
-                # in the internal database, marking it as RECEIVED
+    def __on_audit_assigned(self, evt):
+        request_id = str(evt['args']['requestId'])
+        try:
+            target_auditor = evt['args']['auditor']
 
-                audit_evt = {
-                    'request_id': request_id,
-                    'requestor': str(evt['args']['requestor']),
-                    'contract_uri': str(evt['args']['uri']),
-                    'evt_name':  QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
-                    'block_nbr': evt['blockNumber'],
-                    'price': evt['args']['price'],
-                    'status_info': "Audit request received",
-                }
-
-                self.__config.event_pool_manager.add_evt_to_be_processed(
-                    audit_evt
-                )
-            except Exception as error:
-                logger.exception(
-                    "Error when processing event {0}: {1}".format(str(evt), str(error)), 
+            # If an audit request is not targeted to the
+            # running audit node, just disconsider it
+            if target_auditor.lower() != self.__config.account.lower():
+                logger.debug(
+                    "Ignoring audit request (not directed at current node): {0}".format(
+                        str(evt)
+                    ),
                     requestId=request_id,
                 )
+                pass
 
-        self.__run_filter_polling(
-            "filter assignments thread",
-            self.__filter_audit_assignments,
-            process_audit_assignment,
+            logger.debug(
+                "Saving audit request for processing (if new): {0}".format(
+                    str(evt)
+                ),
+                requestId=request_id,
+            )
+
+            # Otherwise, the audit request must be processed
+            # throught its different stages. As such, save it
+            # in the internal database, marking it as RECEIVED
+
+            audit_evt = {
+                'request_id': request_id,
+                'requestor': str(evt['args']['requestor']),
+                'contract_uri': str(evt['args']['uri']),
+                'evt_name':  QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
+                'block_nbr': evt['blockNumber'],
+                'price': evt['args']['price'],
+                'status_info': "Audit request received",
+            }
+
+            self.__config.event_pool_manager.add_evt_to_be_processed(
+                audit_evt
+            )
+        except Exception as error:
+            logger.exception(
+                "Error when processing event {0}: {1}".format(str(evt), str(error)),
+                requestId=request_id,
+            )
+            raise
+
+    def __on_report_submitted(self, evt):
+        request_id = str(evt['args']['requestId'])
+        audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
+            request_id
         )
+        if audit_evt is not None:
+            audit_evt['status_info'] = 'Report successfully submitted'
+            self.__config.event_pool_manager.set_evt_to_done(
+                audit_evt
+            )
 
     def __run_perform_audit_thread(self):
         def process_audit_request(evt):
@@ -201,7 +221,7 @@ class QSPAuditNode:
                     evt['report'] = json.dumps(report)
                     evt['status_info'] = "Sucessfully generated report"
                     logger.debug(
-                        "Generated report is {0}. Saving it in the internal database".format(
+                        "Generated report is {0}. Saving it in the internal database (if not previously saved)".format(
                             str(evt['report'])
                         ), requestId=request_id
                     )
@@ -223,8 +243,10 @@ class QSPAuditNode:
                 sleep(self.__config.evt_polling)
 
         audit_thread = Thread(target=exec, name="audit thread")
-        self.__threads.append(audit_thread)
+        self.__internal_threads.append(audit_thread)
         audit_thread.start()
+
+        return audit_thread
 
     def __run_submission_thread(self):
         def process_submission_request(evt):
@@ -251,9 +273,10 @@ class QSPAuditNode:
                 sleep(self.__config.evt_polling)
 
         submission_thread = Thread(target=exec, name="submission thread")
-        self.__threads.append(submission_thread)
+        self.__internal_threads.append(submission_thread)
         submission_thread.start()
 
+        return submission_thread
 
     def __run_monitor_submisson_thread(self):
         timeout_limit = self.__config.submission_timeout_limit_blocks
@@ -267,21 +290,6 @@ class QSPAuditNode:
 
         def exec():
             while self.__exec:
-                evts = self.__filter_audit_submissions.get()
-
-                # Processes the current event batch
-                if evts != []:
-                    for evt in evts:
-                        request_id = str(evt['args']['requestId'])
-                        audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
-                            request_id
-                        )
-                        if audit_evt is not None:
-                            audit_evt['status_info'] = 'Report successfully submitted'
-                            self.__config.event_pool_manager.set_evt_to_done(
-                                audit_evt
-                            )
-
                 # Checks for a potential timeouts
                 block = self.__config.web3_client.eth.blockNumber
                 self.__config.event_pool_manager.process_submission_events(
@@ -292,7 +300,7 @@ class QSPAuditNode:
                 sleep(self.__config.evt_polling)
 
         monitor_thread = Thread(target=exec, name="monitor thread")
-        self.__threads.append(monitor_thread)
+        self.__internal_threads.append(monitor_thread)
         monitor_thread.start()
 
     def stop(self):
@@ -300,10 +308,10 @@ class QSPAuditNode:
         Signals to the executing QSP audit node that is should stop the execution of the node.
         """
         self.__exec = False
-        for thread in self.__threads:
-            thread.join()
 
-        self.__threads = []
+        for internal_thread in self.__internal_threads:
+            internal_thread.join()
+        self.__internal_threads = []
 
         # Close resources
         self.__config.wallet_session_manager.lock()

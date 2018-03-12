@@ -365,8 +365,8 @@ class Config:
             abi_json = io_utils.load_json(abi_file)
 
             self.__internal_contract = self.web3_client.eth.contract(
-                abi_json,
-                self.internal_contract_address,
+                address=self.internal_contract_address,
+                abi=abi_json,
             )
 
         else:

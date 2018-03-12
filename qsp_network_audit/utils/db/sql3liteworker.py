@@ -151,12 +151,12 @@ class Sqlite3Worker(threading.Thread):
                 if not select:
                     self.sqlite3_cursor.execute("rollback")
 
-                # logger.error(
-                #     "Query returned error: %s: %s: %s", 
-                #     query, 
-                #     values, 
-                #     err,
-                # )
+                logger.error(
+                    "Query returned error: %s: %s: %s",
+                    query,
+                    values,
+                    err,
+                )
 
     def close(self):
         """Close down the thread and close the sqlite3 database file."""
