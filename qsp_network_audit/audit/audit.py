@@ -83,7 +83,7 @@ class QSPAuditNode:
         Starts all the threads processing different stages of a given event.
         """
         if self.__exec:
-            raise Exception("Cannot run audit node thread due to an existing one")
+            raise Exception("Cannot run audit node thread due to another audit node instance")
 
         self.__exec = True
 
@@ -141,10 +141,9 @@ class QSPAuditNode:
                 )
         except Exception as error:
             logger.exception(
-                "Error when bidding for request {0}: {1}".format(str(evt), str(error)), 
+                "Error when processing audit request event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
-            raise
 
     def __on_audit_assigned(self, evt):
         request_id = str(evt['args']['requestId'])
@@ -160,7 +159,7 @@ class QSPAuditNode:
                     ),
                     requestId=request_id,
                 )
-                pass
+                return
 
             logger.debug(
                 "Saving audit request for processing (if new): {0}".format(
@@ -188,20 +187,25 @@ class QSPAuditNode:
             )
         except Exception as error:
             logger.exception(
-                "Error when processing event {0}: {1}".format(str(evt), str(error)),
+                "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
-            raise
 
     def __on_report_submitted(self, evt):
-        request_id = str(evt['args']['requestId'])
-        audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
-            request_id
-        )
-        if audit_evt is not None:
-            audit_evt['status_info'] = 'Report successfully submitted'
-            self.__config.event_pool_manager.set_evt_to_done(
-                audit_evt
+        try:
+            request_id = str(evt['args']['requestId'])
+            audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
+                request_id
+            )
+            if audit_evt is not None:
+                audit_evt['status_info'] = 'Report successfully submitted'
+                self.__config.event_pool_manager.set_evt_to_done(
+                    audit_evt
+                )
+        except Exception as error:
+            logger.exception(
+                "Error when processing submission event {0}: {1}".format(str(evt), str(error)),
+                requestId=request_id,
             )
 
     def __run_perform_audit_thread(self):
@@ -226,14 +230,13 @@ class QSPAuditNode:
                         ), requestId=request_id
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
-            except Exception:
+            except Exception as error:
                 logger.exception(
-                    "Unexpected error when performing audit", 
+                    "Error when performing audit for request event {0}: {1}".format(str(evt), str(error)),
                     requestId=request_id,
                 )
                 evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
-                pass
 
         def exec():
             while self.__exec:
@@ -282,11 +285,14 @@ class QSPAuditNode:
         timeout_limit = self.__config.submission_timeout_limit_blocks
 
         def monitor_submission_timeout(evt, current_block):
-            if (current_block - evt['block_nbr']) > timeout_limit:
-                evt['status_info'] = "Submission timeout"
-                self.__config.event_pool_manager.set_evt_to_error(evt)
+            try:
+                if (current_block - evt['block_nbr']) > timeout_limit:
+                    evt['status_info'] = "Submission timeout"
+                    self.__config.event_pool_manager.set_evt_to_error(evt)
 
-            # TODO How to inform the network of a submission timeout?
+                # TODO How to inform the network of a submission timeout?
+            except Exception as error:
+                logger.exception("Unexpected error when monitoring timeout")
 
         def exec():
             while self.__exec:
