@@ -80,6 +80,7 @@
       "name": "health_check_nginx",
       "image": "equivalent/health_check_nginx",
       "essential": true,
+      "memory": 128,
       "portMappings": [
         {
           "hostPort": 80,
