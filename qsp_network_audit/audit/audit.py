@@ -194,10 +194,23 @@ class QSPAuditNode:
     def __on_report_submitted(self, evt):
         try:
             request_id = str(evt['args']['requestId'])
+            target_auditor = evt['args']['auditor']
+
+            # If an audit request is not targeted to the
+            # running audit node, just disconsider it
+            if target_auditor.lower() != self.__config.account.lower():
+                logger.debug(
+                    "Ignoring submission event (not directed at current node): {0}".format(
+                        str(evt)
+                    ),
+                    requestId=request_id,
+                )
+                return
+
             audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
                 request_id
             )
-            if audit_evt is not None:
+            if audit_evt != {}:
                 audit_evt['status_info'] = 'Report successfully submitted'
                 self.__config.event_pool_manager.set_evt_to_done(
                     audit_evt
