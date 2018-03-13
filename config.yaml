@@ -33,7 +33,6 @@ local_docker:
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
-      solidity: !!str "0.4.17"
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -55,7 +54,6 @@ dev:
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
-      solidity: !!str "0.4.17"
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -79,7 +77,6 @@ prod:
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
-      solidity: !!str "0.4.17"
   report_uploader:
       provider: !!str "S3Provider"
       args:
