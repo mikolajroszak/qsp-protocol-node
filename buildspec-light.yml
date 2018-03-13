@@ -5,8 +5,8 @@ phases:
       - pip install -r requirements.txt
   build:
     commands:
+      - export ENV=local_docker
       - make test
-
   post_build:
     commands:
       - echo Build completed on `date`
