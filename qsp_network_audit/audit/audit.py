@@ -204,7 +204,11 @@ class QSPAuditNode:
                 )
         except Exception as error:
             logger.exception(
-                "Error when processing submission event {0}: {1}".format(str(evt), str(error)),
+                "Error when processing submission event {0}: {1}. Audit event is {2}".format(
+                    str(evt),
+                    str(error),
+                    str(audit_evt),
+                ),
                 requestId=request_id,
             )
 
