@@ -88,7 +88,7 @@ class TestQSPAuditNode(unittest.TestCase):
         report_uri = row['report_uri']
         print (report_uri)
         report_file = fetch_file(report_uri)
-#        self.assertEqual(digest(report_file), report['report_sha256'])
+        self.assertEqual(digest(report_file), row['report_hash'])
 
     def __requestAudit(self, contract_uri, request_id, price):
         """
