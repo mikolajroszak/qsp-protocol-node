@@ -1,10 +1,12 @@
 # qsp-network-audit
 
-![Build status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUmNIbFJiY0FVOUVmdWJ2TTlyNEVRU2p2TWZ1LzhUa0o4dE9TQUFkbkhZM0FvRFRhZ0lhSzFQYXRSd3hlZEVkQWRJSFBZSFdNaHV6SnBwZEtGUXhVOTJVPSIsIml2UGFyYW1ldGVyU3BlYyI6InhWa2lSWmhmZHJkejRYWnoiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop)
+![Build status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiRGFyS3IwWW9yVlRPcFFHOUJiYldNWjJuVi9JRmx1VUMwSUhpaGlDcmtQTnpYdThvcVRUNVQ0QktZakl6MlZYcWoveURQSkE4YThjYVdDY2lla0k3R1hvPSIsIml2UGFyYW1ldGVyU3BlYyI6ImFMMmtlWTRQdWl6Q2c3UksiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop)
 
 Implements the QSP audit node in the Quantstamp network.
 
 ## Development setup
+
+All instructions must be run from the project's root folder.
 
 1. Clone the repo
 1. `git submodule init`
@@ -18,28 +20,32 @@ Implements the QSP audit node in the Quantstamp network.
   pyenv virtualenv env
   pip install -r requirements.txt
   ```
+1. Acquire AWS credentials for accessing S3 and Docker repository
+1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)
 
-## Docker image build
+## Run tests locally
 
-**Note:** double-check the path of Oyente as it may be not consistent if
-running as container or without it.
+1. Run `make test`
 
-```
-docker build -t qsp-network-audit .
-docker run -i -t -e QSP_PASSWORD=<passwd> qsp-network-audit
-```
+## Run in regular mode
 
-where `passwd` is the password to unlock the wallet account configured in
-the `config.yaml` file.
+1. Acquire a passphase of a QSP network account and set environment variable `QSP_PASSWORD` to it.
+1. `make run`
+
+## Run in container mode
+
+1. `$(aws ecr get-login --region us-east-1 --no-include-email)`
+1. `docker build -t qsp-network-audit .`
+1. Acquire a passphase of a QSP network account
+1. `docker run -i -t -e ENV=local_docker -e QSP_PASSWORD=passphrase-from-the-last-step qsp-network-audit`
 
 To run a Bash shell inside the container, run it as: `docker run <other args> qsp-network-audit bash`
 
-
-## Deployment
+## Contribute 
 
 1. Checkout a branch off `develop`
 1. Make changes, open a pull request from your branch into `develop`
-1. On merge into `develop`, a new Docker image is built and tagged with `develop`. Previous versions are available when referenced as `466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-analyzer-oyente:<commit-id>`
+1. On merge into `develop`, a new Docker image is built and tagged with the commit id. 
 
 ## Development hierarchy 
 
@@ -64,19 +70,3 @@ To run a Bash shell inside the container, run it as: `docker run <other args> qs
       - uptime monitoring
       - metrics
 
-## Running the node
-
-Before running the node one must:
-
-1. Set the password for unlocking the target wallet account. That is given by the `QSP_PASSWORD` environment variable.
-2. Configure AWS credentials to allow write access to the reports bucket on S3. On AWS, the instance's IAM role has the necessary
-policies attached thus does not require to specify any credentials (recommended approach). On a local machine, use `aws configure` to provide 
-AWS access keys.
-
-With that, the node is launched by running
-
-```
-make run
-```
-
-To run the unit tests, type `make test`. 
