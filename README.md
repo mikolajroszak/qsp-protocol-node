@@ -85,5 +85,10 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing t
 ## Contribute 
 
 1. Checkout a branch off `develop`
-1. Make changes, open a pull request from your branch into `develop`
+1. Make changes
+1. Run `make test`. Fix any issues or update the tests if applicable
+1. Run the node [in regular mode](#run-in-regular-mode) and check if there are any issues
+1. In case of significant changes, run the node [in container mode](#run-in-container-mode) and check if there are any issues
+1. Open a pull request from your branch into `develop`
+1. Wait for CI tests to finish
 1. On merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS](https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-network-audit&environmentId=e-c2cqj8usi7)
