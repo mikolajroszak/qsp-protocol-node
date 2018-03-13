@@ -358,21 +358,6 @@ class QSPAuditNode:
         )
         
         report_as_string = str(json.dumps(report))
-        
-        upload_result = self.__config.report_uploader.upload(report_as_string)
-        logger.info(
-            "Report upload result: {0}".format(upload_result),
-            requestId=request_id,
-        )
-        
-        if (upload_result['success'] is False):
-          raise Exception("Unexpected error when uploading report: {0}".format(
-              json.dumps(upload_result)),
-              requestId=request_id,
-            )
-
-        report_as_string = str(json.dumps(report))
-
         upload_result = self.__config.report_uploader.upload(report_as_string)
 
         logger.info(
