@@ -20,9 +20,10 @@ logger = logging_utils.get_logger()
 
 class QSPAuditNode:
 
-    __EVT_AUDIT_REQUESTED = "LogAuditRequested"
+    __EVT_AUDIT_REQUESTED = "LogAuditQueued"
     __EVT_AUDIT_REQUEST_ASSIGNED = "LogAuditRequestAssigned"
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
+    __AUDIT_STATE_SUCCESS = 5
 
     def __init__(self, config):
         """
@@ -229,19 +230,21 @@ class QSPAuditNode:
                 requestor = evt['requestor']
                 request_id = evt['request_id']
                 contract_uri = evt['contract_uri']
-                report = self.audit(requestor, contract_uri, request_id)
+                audit_result = self.audit(requestor, contract_uri, request_id)
 
-                if report is None:
+                if audit_result is None:
                     error = "Could not generate report"
                     evt['status_info'] = error
                     logger.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
-                    evt['report'] = json.dumps(report)
+                    evt['report_uri'] = audit_result['report_uri']
+                    evt['report_hash'] = audit_result['report_hash']
+                    evt['audit_state'] = audit_result['audit_state']
                     evt['status_info'] = "Sucessfully generated report"
                     logger.debug(
-                        "Generated report is {0}. Saving it in the internal database (if not previously saved)".format(
-                            str(evt['report'])
+                        "Generated report URI is {0}. Saving it in the internal database (if not previously saved)".format(
+                            str(evt['report_uri'])
                         ), requestId=request_id
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
@@ -271,9 +274,9 @@ class QSPAuditNode:
             try:
                 tx_hash = self.__submit_report(
                     int(evt['request_id']),
-                    evt['requestor'],
-                    evt['contract_uri'],
-                    evt['report'],
+                    evt['audit_state'],
+                    evt['report_uri'],
+                    evt['report_hash']
                 )
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
@@ -349,13 +352,23 @@ class QSPAuditNode:
 
         target_contract = fetch_file(uri)
 
-        report = self.__config.analyzer.check(
+        analyzer_report = self.__config.analyzer.check(
             target_contract,
             self.__config.analyzer_output,
             request_id,
         )
         
-        report_as_string = str(json.dumps(report))
+        full_report = {
+          'auditor': self.__config.account,
+          'requestor': str(requestor),
+          'contract_uri': str(uri),
+          'contract_sha256': str(digest(target_contract)),
+          'analyzer_report': str(json.dumps(analyzer_report)),
+          'timestamp': str(datetime.utcnow()),
+        }
+
+        report_as_string = str(json.dumps(full_report))        
+        report_hash = sha256(report_as_string.encode()).hexdigest(),
         upload_result = self.__config.report_uploader.upload(report_as_string)
 
         logger.info(
@@ -367,13 +380,9 @@ class QSPAuditNode:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
         return {
-            'auditor': self.__config.account,
-            'requestor': str(requestor),
-            'contract_uri': str(uri),
-            'contract_sha256': str(digest(target_contract)),
+            'audit_state': QSPAuditNode.__AUDIT_STATE_SUCCESS,
             'report_uri': upload_result['url'],
-            'report_sha256': sha256(report_as_string.encode()).hexdigest(),
-            'timestamp': str(datetime.utcnow()),
+            'report_hash': report_hash
         }
 
     def __get_next_audit_request(self):
@@ -384,7 +393,7 @@ class QSPAuditNode:
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
         return self.__config.internal_contract.transact(tx_args).getNextAuditRequest() 
 
-    def __submit_report(self, request_id, requestor, contract_uri, report):
+    def __submit_report(self, request_id, audit_state, report_uri, report_hash):
         """
         Submits the audit report to the entire QSP network.
         """
@@ -392,7 +401,7 @@ class QSPAuditNode:
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
         return self.__config.internal_contract.transact(tx_args).submitReport(
             request_id,
-            requestor,
-            contract_uri,
-            report,
+            audit_state,
+            report_uri,
+            report_hash
         )

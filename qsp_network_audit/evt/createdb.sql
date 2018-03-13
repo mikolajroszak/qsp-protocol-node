@@ -32,6 +32,7 @@ create table audit_evt (
     tx_hash             text default null,
     submission_attempts smallint not null default 0,
     is_persisted        boolean not null default false,
-    report              text default null,
+    report_uri          text default null,
+    report_hash         text default null,
     foreign key(fk_status) references evt_status(id)
 );
