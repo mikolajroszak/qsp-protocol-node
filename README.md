@@ -20,7 +20,7 @@ All instructions must be run from the project's root folder.
   pyenv virtualenv env
   pip install -r requirements.txt
   ```
-1. Acquire AWS credentials for accessing S3 and Docker repository
+1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#ops` Slack channel.
 1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)
 
 ## Run tests locally
@@ -34,18 +34,30 @@ All instructions must be run from the project's root folder.
 
 ## Run in container mode
 
-1. `$(aws ecr get-login --region us-east-1 --no-include-email)`
-1. `docker build -t qsp-network-audit .`
+1. Login to be able to acquire the base image: `$(aws ecr get-login --region us-east-1 --no-include-email)`
+1. Build the image: `docker build -t qsp-network-audit .`
 1. Acquire a passphase of a QSP network account
 1. `docker run -i -t -e ENV=local_docker -e QSP_PASSWORD=passphrase-from-the-last-step qsp-network-audit`
 
 To run a Bash shell inside the container, run it as: `docker run <other args> qsp-network-audit bash`
 
-## Contribute 
+## CI and deployment pipeline
 
-1. Checkout a branch off `develop`
-1. Make changes, open a pull request from your branch into `develop`
-1. On merge into `develop`, a new Docker image is built and tagged with the commit id. 
+1. On every push to the repository, `buildspec-light.yml` is activated.
+The build environment is based on the Oyente's image (`qsp-analyzer-oyente`).
+The script runs `make test` and reports the status back to AWS CodeBuild.
+
+1. On every merge into `develop`, `buildspec.yml` is activated. It builds the image,
+pushes it to AWS Docker repository, creates a build artifact (a ZIP containing the 
+`Dockerrun.aws.json` file and the `.ebextensions` folder) and deploys it toa dev environment on AWS using
+[AWS CodePipeline](https://console.aws.amazon.com/codepipeline/home?region=us-east-1#/view/qsp-network-audit-dev).
+
+1. To promote a dev environment to production, go to [Application versions](https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/application/versions?applicationName=qsp-network-audit), select the desired artifact, click `Deploy`, and select `qsp-network-audit-prod` in the dropdown.
+
+## Infrastructure
+
+1. The current infrastructure is based on Elastic Beanstalk and described in [this repository](https://github.com/quantstamp/qsp-network-genesis) using [Terraform](https://www.terraform.io/).
+1. The next-generation infrastructure based on Kubernetes is described in [this repository](https://github.com/quantstamp/qsp-network-kubernetes).
 
 ## Development hierarchy 
 
@@ -69,4 +81,9 @@ To run a Bash shell inside the container, run it as: `docker run <other args> qs
     - need to control the state of this service
       - uptime monitoring
       - metrics
+      
+## Contribute 
 
+1. Checkout a branch off `develop`
+1. Make changes, open a pull request from your branch into `develop`
+1. On merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS](https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-network-audit&environmentId=e-c2cqj8usi7)
