@@ -245,7 +245,7 @@ class QSPAuditNode:
                     logger.debug(
                         "Generated report URI is {0}. Saving it in the internal database (if not previously saved)".format(
                             str(evt['report_uri'])
-                        ), requestId=request_id
+                        ), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except Exception as error:
@@ -368,7 +368,7 @@ class QSPAuditNode:
         }
 
         report_as_string = str(json.dumps(full_report))        
-        report_hash = sha256(report_as_string.encode()).hexdigest(),
+        report_hash = str(sha256(report_as_string.encode()).hexdigest())
         upload_result = self.__config.report_uploader.upload(report_as_string)
 
         logger.info(
