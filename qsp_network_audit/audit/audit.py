@@ -127,9 +127,7 @@ class QSPAuditNode:
 
             if (price >= self.__config.min_price):
                 logger.debug("Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
-                    str(evt),
-                    requestId=request_id,
-                ))
+                    str(evt)), requestId=request_id)
                 self.__get_next_audit_request()
 
             else:
