@@ -153,7 +153,9 @@ class EventPoolManager:
             'set_evt_to_be_submitted',
             (encoded_evt['status_info'],
                 encoded_evt['tx_hash'],
-                encoded_evt['report'],
+                encoded_evt['report_uri'],
+                encoded_evt['report_hash'],
+                encoded_evt['audit_state'],
                 encoded_evt['request_id'],
             ),
         )
@@ -165,7 +167,9 @@ class EventPoolManager:
             'set_evt_to_submitted',
             (encoded_evt['tx_hash'],
                 encoded_evt['status_info'],
-                encoded_evt['report'],
+                encoded_evt['report_uri'],
+                encoded_evt['report_hash'],
+                encoded_evt['audit_state'],
                 encoded_evt['request_id'],
             ),
         )
