@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
 ////////////////////////////////////////////////////////////
 // Based on: https://github.com/chriseth/solidity-examples/blob/master/queue.sol
