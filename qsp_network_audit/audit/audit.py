@@ -276,7 +276,7 @@ class QSPAuditNode:
                     int(evt['request_id']),
                     evt['audit_state'],
                     evt['report_uri'],
-                    evt['report_hash']
+                    evt['report_hash'],
                 )
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
