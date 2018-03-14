@@ -131,11 +131,6 @@ class Config:
             '/account/ttl',
             600,
         )
-        self.__solidity_version = config_value(
-            cfg,
-            '/analyzer/solidity',
-            accept_none=False,
-        )
         self.__default_gas = config_value(
             cfg,
             '/default_gas'
@@ -169,7 +164,6 @@ class Config:
         Checks the configuration values provided in the YAML configuration file.
         """
         self.__check_internal_contract_settings()
-        self.__check_solidity_version()
 
     def __check_internal_contract_settings(self):
         """
@@ -197,16 +191,6 @@ class Config:
         else:
             self.__raise_err(
                 msg="Missing the internal contract source or its ABI")
-
-    def __check_solidity_version(self):
-        """
-        Checks the format of the supported solidity version.
-        """
-        self.__raise_err(
-            not bool(re.match("[0-9]+\.[0-9]+\.[0-9]+",
-                              self.__solidity_version)),
-            "Solidity version is not correct",
-        )
 
     @staticmethod
     def __new_provider(provider, args):
@@ -376,10 +360,7 @@ class Config:
         """
         Creates an instance of the the target analyzer that verifies a given contract.
         """
-        self.__analyzer = Analyzer(
-            self.analyzer_cmd,
-            self.supported_solidity_version
-        )
+        self.__analyzer = Analyzer(self.analyzer_cmd)
 
     def __create_wallet_session_manager(self):
         if self.eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
@@ -538,15 +519,6 @@ class Config:
         """
         self.__load_config()
         return self.__report_uploader
-
-    @property
-    def supported_solidity_version(self):
-        """
-        Returns the Solidity version supported by the current QSP audit node."
-        """
-        self.__load_config()
-        return self.__solidity_version
-
     @property
     def account(self):
         """
