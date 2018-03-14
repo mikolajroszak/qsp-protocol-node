@@ -237,8 +237,7 @@ class Config:
         #
         # See: http://web3py.readthedocs.io/en/stable/providers.html
 
-        connected = False
-        max_attempts = 3
+        max_attempts = 6
         attempts = 0
 
         # Default policy for creating a provider is as follows:
@@ -256,7 +255,6 @@ class Config:
 
             if self.__eth_provider is not None:
                 if self.__eth_provider.isConnected():
-                    connected = True
                     break
 
             else:
