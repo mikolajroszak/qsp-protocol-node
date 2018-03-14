@@ -58,7 +58,21 @@ class TestAnalyzer(unittest.TestCase):
         report = analyzer.check(old_contract, "${input}.json", "123")
 
         self.assertTrue(report['status'], 'error')
-        print("===> report is " + str(report))
+        self.assertTrue(report['result'] is not None)
+
+    def test_old_pragma_with_carot(self):
+        """
+        Tests whether an exception is raised upon calling the analyzer
+        with a contract locking an old version of Solidity.
+        """
+
+        old_contract = fetch_file(resource_uri("DAOBugOld-Caret.sol"))
+        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE)
+
+        report = analyzer.check(old_contract, "${input}.json", "123")
+
+        self.assertTrue(report['status'], 'success')
+        self.assertTrue(report['result'] is not None)
 
 
 if __name__ == '__main__':
