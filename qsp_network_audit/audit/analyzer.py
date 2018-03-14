@@ -95,7 +95,6 @@ class Analyzer:
                     "Loading result from {0}".format(injected_output), requestId=request_id)
 
                 result = load_json(injected_output)
-
                 os.remove(injected_output)
 
                 if result is not None and result:
@@ -106,13 +105,17 @@ class Analyzer:
             raise AnalyzerRunException("Failed in running analyzer", analyzer_result.stdout)
 
         except ContractsNotFound as error:
+            logger.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
             return self.__create_err_result(str(error.stderr_data))
 
         except SolcError as error:
+            logger.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
             return self.__create_err_result(str(error.stderr_data))
 
         except AnalyzerRunException as error:
+            logger.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
             return self.__create_err_result(str(error.output))
 
         except Exception as error:
+            logger.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
             return self.__create_err_result(str(error))
