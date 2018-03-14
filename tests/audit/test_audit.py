@@ -85,10 +85,10 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertTrue(row['tx_hash'] is not None)
         self.assertTrue(row['contract_uri'] is not None)
         
-        report = json.loads(row['report'])
-        print (report['report_uri'])
-        report_file = fetch_file(report['report_uri'])
-        self.assertEqual(digest(report_file), report['report_sha256'])
+        report_uri = row['report_uri']
+        print (report_uri)
+        report_file = fetch_file(report_uri)
+        self.assertEqual(digest(report_file), row['report_hash'])
 
     def __requestAudit(self, contract_uri, request_id, price):
         """
@@ -97,7 +97,7 @@ class TestQSPAuditNode(unittest.TestCase):
         from web3 import Web3
 
         # Submits a request for auditing a smart contract
-        self.__cfg.internal_contract.transact({"from": self.__cfg.account}).doAudit(
+        self.__cfg.internal_contract.transact({"from": self.__cfg.account}).queueAudit(
             request_id,
             self.__cfg.account,
             contract_uri,
