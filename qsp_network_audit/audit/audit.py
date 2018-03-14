@@ -23,7 +23,7 @@ class QSPAuditNode:
     __EVT_AUDIT_REQUESTED = "LogAuditQueued"
     __EVT_AUDIT_REQUEST_ASSIGNED = "LogAuditRequestAssigned"
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
-    __AUDIT_STATE_SUCCESS = 5
+    __AUDIT_STATE_SUCCESS = 4 # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
 
     def __init__(self, config):
         """
