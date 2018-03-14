@@ -58,6 +58,7 @@ class TestAnalyzer(unittest.TestCase):
         report = analyzer.check(old_contract, "${input}.json", "123")
 
         self.assertTrue(report['status'], 'error')
+        print("===> report is " + str(report))
 
 
 if __name__ == '__main__':
