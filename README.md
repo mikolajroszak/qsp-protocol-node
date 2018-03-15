@@ -59,6 +59,14 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing t
 1. The current infrastructure is based on Elastic Beanstalk and described in [this repository](https://github.com/quantstamp/qsp-network-genesis) using [Terraform](https://www.terraform.io/).
 1. The next-generation infrastructure based on Kubernetes is described in [this repository](https://github.com/quantstamp/qsp-network-kubernetes).
 
+## SSH to instance and container
+1. Go [EC2 Dashboard](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#Instances:sort=tag:Name)
+1. Look for one of the instances named `qsp-network-audit-{stage}`
+1. Click `Connect` and provide the corresponding key
+1. `sudo su`
+1. `docker ps`, locate the image `466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit` and record its id, e.g., `e237a5cf55f2`
+1. `docker exec -i -t e237a5cf55f2 bash`
+
 ## Development hierarchy 
 
 * Main file: `qsp_network_audit.py`
