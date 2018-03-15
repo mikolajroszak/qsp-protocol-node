@@ -59,7 +59,7 @@ dev:
         bucket_name: "qsp-network-reports-dev"
   account:
     ttl: 600
-  default_gas: !!int 600000
+  default_gas: !!int 700000
   evt_db_path: "/analyzer/audit-db/audit_node.db"
   submission_timeout_limit_blocks: 10
 
@@ -82,6 +82,6 @@ prod:
         bucket_name: "qsp-network-reports-prod"
   account:
     ttl: 600
-  default_gas: !!int 600000
+  default_gas: !!int 700000
   evt_db_path: "/analyzer/audit-db/audit_node.db"
   submission_timeout_limit_blocks: 10
