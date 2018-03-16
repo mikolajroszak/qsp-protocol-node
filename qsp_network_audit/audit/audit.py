@@ -367,7 +367,7 @@ class QSPAuditNode:
           'timestamp': str(datetime.utcnow()),
         }
 
-        report_as_string = str(json.dumps(full_report))        
+        report_as_string = str(json.dumps(full_report, indent=2))
         report_hash = str(sha256(report_as_string.encode()).hexdigest())
         upload_result = self.__config.report_uploader.upload(report_as_string)
 
