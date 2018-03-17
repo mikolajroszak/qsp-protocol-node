@@ -39,9 +39,11 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
-        self.__env = "test"
-        self.__config_file_uri = resource_uri("test_config.yaml")
+        self.__env = os.environ["ENV"] if "ENV" in os.environ else "local"
+        print("CONFIG_SELECTED")
+        print(self.__env)
 
+        self.__config_file_uri = resource_uri("test_config.yaml")
         self.__clean_up_pool_db()
 
         self.__cfg = Config(self.__env, self.__config_file_uri)
