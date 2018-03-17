@@ -24,6 +24,7 @@ class QSPAuditNode:
     __EVT_AUDIT_REQUEST_ASSIGNED = "LogAuditRequestAssigned"
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
     __AUDIT_STATE_SUCCESS = 4 # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
+    __AUDIT_STATE_ERROR = 5 # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
 
     def __init__(self, config):
         """
@@ -358,6 +359,12 @@ class QSPAuditNode:
             request_id,
         )
         
+        logger.info(
+            "Analyzer report contents",
+            requestId=request_id,
+            contents = analyzer_report,
+        )
+        
         full_report = {
           'auditor': self.__config.account,
           'requestor': str(requestor),
@@ -379,8 +386,10 @@ class QSPAuditNode:
         if not upload_result['success']:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
+        audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS if analyzer_report['status'] == 'success' else QSPAuditNode.__AUDIT_STATE_ERROR;
+
         return {
-            'audit_state': QSPAuditNode.__AUDIT_STATE_SUCCESS,
+            'audit_state': audit_state,
             'report_uri': upload_result['url'],
             'report_hash': report_hash
         }

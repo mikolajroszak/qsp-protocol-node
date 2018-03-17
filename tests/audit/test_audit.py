@@ -21,6 +21,8 @@ from utils.io import fetch_file, digest
 from utils.db import get_first
 
 class TestQSPAuditNode(unittest.TestCase):
+    __AUDIT_STATE_SUCCESS = 4
+    __AUDIT_STATE_ERROR = 5
 
     def __clean_up_pool_db(self):
         config_file = fetch_file(self.__config_file_uri)
@@ -37,9 +39,11 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
-        self.__env = "test"
-        self.__config_file_uri = resource_uri("test_config.yaml")
+        self.__env = os.environ["ENV"] if "ENV" in os.environ else "local"
+        print("CONFIG_SELECTED")
+        print(self.__env)
 
+        self.__config_file_uri = resource_uri("test_config.yaml")
         self.__clean_up_pool_db()
 
         self.__cfg = Config(self.__env, self.__config_file_uri)
@@ -53,17 +57,7 @@ class TestQSPAuditNode(unittest.TestCase):
         audit_node_thread = Thread(target=exec, name="Audit node")
         audit_node_thread.start()
 
-    @timeout(60, timeout_exception=StopIteration)
-    def test_contract_audit_request(self):
-        """
-        Tests the entire flow of an audit request, from a request
-        to the production of a report and its submission.
-        """
-        buggy_contract = resource_uri("DAOBug.sol")
-
-        request_id = randint(0, 1000)
-        self.__requestAudit(buggy_contract, request_id, 100)
-
+    def __assert_audit_request_state(self, request_id, expected_audit_state):
         sql3lite_worker = self.__cfg.event_pool_manager.sql3lite_worker
 
         # Busy waits on receiving events up to the configured
@@ -71,7 +65,7 @@ class TestQSPAuditNode(unittest.TestCase):
         row = None
         while True:
             row = get_first(sql3lite_worker.execute("select * from audit_evt where fk_status = 'DN'"))
-            if row != {}:
+            if row != {} and row['request_id'] == request_id:
                 break
             else:
                 sleep(5)
@@ -87,8 +81,35 @@ class TestQSPAuditNode(unittest.TestCase):
         
         report_uri = row['report_uri']
         print (report_uri)
+        audit_state = row['audit_state']
+        print (audit_state)
         report_file = fetch_file(report_uri)
         self.assertEqual(digest(report_file), row['report_hash'])
+        self.assertEqual(audit_state, expected_audit_state)
+
+    @timeout(60, timeout_exception=StopIteration)
+    def test_contract_audit_request(self):
+        """
+        Tests the entire flow of a successful audit request, from a request
+        to the production of a report and its submission.
+        """
+        buggy_contract = resource_uri("DAOBug.sol")
+
+        request_id = randint(0, 10000)
+        self.__requestAudit(buggy_contract, request_id, 100)
+        self.__assert_audit_request_state(request_id, self.__AUDIT_STATE_SUCCESS)
+
+    @timeout(60, timeout_exception=StopIteration)
+    def test_contract_audit_request_with_compilation_error(self):
+        """
+        Tests the entire flow of an erroneous audit request, from a request
+        to the production of a report and its submission.
+        """
+        buggy_contract = resource_uri("BasicToken.sol")
+
+        request_id = randint(0, 10000)
+        self.__requestAudit(buggy_contract, request_id, 100)
+        self.__assert_audit_request_state(request_id, self.__AUDIT_STATE_ERROR)
 
     def __requestAudit(self, contract_uri, request_id, price):
         """
