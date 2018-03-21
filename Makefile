@@ -6,7 +6,7 @@ run: # printing "date" is important so Cloud Watch can distinguish log files
 	date; python  -W ignore::DeprecationWarning qsp_network_audit/qsp_network_audit.py -v -p $(QSP_PASSWORD) $(ENV) $(CONFIG)
 
 test:
-	find tests | egrep "^.*/test_.*.py$$" | xargs python -m unittest
+	PYTHONPATH=./tests:./qsp_network_audit pytest --cov=qsp_network_audit -s --disable-pytest-warnings --cov-report term-missing --cov-report html tests/
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc)$$" | xargs rm -rf
