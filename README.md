@@ -80,3 +80,5 @@ make run
 ```
 
 To run the unit tests, type `make test`. 
+
+To access the HTML coverage report, after running tests, open `htmlcov/index.html`.

@@ -87,7 +87,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(digest(report_file), row['report_hash'])
         self.assertEqual(audit_state, expected_audit_state)
 
-    @timeout(60, timeout_exception=StopIteration)
+    @timeout(80, timeout_exception=StopIteration)
     def test_contract_audit_request(self):
         """
         Tests the entire flow of a successful audit request, from a request
@@ -99,7 +99,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__requestAudit(buggy_contract, request_id, 100)
         self.__assert_audit_request_state(request_id, self.__AUDIT_STATE_SUCCESS)
 
-    @timeout(60, timeout_exception=StopIteration)
+    @timeout(80, timeout_exception=StopIteration)
     def test_contract_audit_request_with_compilation_error(self):
         """
         Tests the entire flow of an erroneous audit request, from a request
