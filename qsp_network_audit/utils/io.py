@@ -7,6 +7,7 @@ from json import load
 from hashlib import sha256
 import os
 import re
+import codecs
 
 __regex_file_uri = re.compile("^file://")
 
@@ -39,7 +40,7 @@ def has_matching_line(file, regex):
     return False
 
 def digest(file, charset="utf-8"):
-    with open(file) as stream:
+    with codecs.open(file, 'r', charset) as stream:
         in_memory_str = stream.read()
 
     return sha256(in_memory_str.encode(charset)).hexdigest()
