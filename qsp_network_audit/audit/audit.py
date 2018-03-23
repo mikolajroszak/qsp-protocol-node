@@ -23,8 +23,12 @@ class QSPAuditNode:
     __EVT_AUDIT_REQUESTED = "LogAuditQueued"
     __EVT_AUDIT_REQUEST_ASSIGNED = "LogAuditRequestAssigned"
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
-    __AUDIT_STATE_SUCCESS = 4 # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
-    __AUDIT_STATE_ERROR = 5 # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
+
+    # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
+    __AUDIT_STATE_SUCCESS = 4
+
+    # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
+    __AUDIT_STATE_ERROR = 5
 
     def __init__(self, config):
         """
@@ -93,6 +97,7 @@ class QSPAuditNode:
         # and eventually submitting results
         self.__internal_threads.append(self.__run_perform_audit_thread())
         self.__internal_threads.append(self.__run_submission_thread())
+        self.__internal_threads.append(self.__run_monitor_submisson_thread())
 
         # Monitors the state of each thread. Upon error, terminate the
         # audit node. Checking whether a thread is alive or not does
@@ -327,6 +332,8 @@ class QSPAuditNode:
         monitor_thread = Thread(target=exec, name="monitor thread")
         self.__internal_threads.append(monitor_thread)
         monitor_thread.start()
+
+        return monitor_thread
 
     def stop(self):
         """
