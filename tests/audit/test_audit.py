@@ -39,6 +39,8 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
+
+        # Steps required to perform the tests in AWS
         self.__env = os.environ["ENV"] if "ENV" in os.environ else "local"
         print("CONFIG_SELECTED")
         print(self.__env)
@@ -56,6 +58,13 @@ class TestQSPAuditNode(unittest.TestCase):
 
         audit_node_thread = Thread(target=exec, name="Audit node")
         audit_node_thread.start()
+
+    def tearDown(self):
+        """
+        Stops the execution of the current QSP audit node.
+        """
+        self.__audit_node.stop()
+        self.__clean_up_pool_db()
 
     def __assert_audit_request_state(self, request_id, expected_audit_state):
         sql3lite_worker = self.__cfg.event_pool_manager.sql3lite_worker
@@ -111,6 +120,18 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__requestAudit(buggy_contract, request_id, 100)
         self.__assert_audit_request_state(request_id, self.__AUDIT_STATE_ERROR)
 
+    @timeout(80, timeout_exception=StopIteration)
+    def test_target_contract_in_non_raw_text_file(self):
+        """
+        Tests the entire flow of an audit request of a non-raw text file contract (e.g., HTML), from a request
+        to the production of a report and its submission.
+        """
+        buggy_contract = resource_uri("DappBinWallet.sol")
+
+        request_id = randint(0, 10000)
+        self.__requestAudit(buggy_contract, request_id, 100)
+        self.__assert_audit_request_state(request_id, self.__AUDIT_STATE_ERROR)
+
     def __requestAudit(self, contract_uri, request_id, price):
         """
         Submits a request for audit of a given target contract.
@@ -124,13 +145,6 @@ class TestQSPAuditNode(unittest.TestCase):
             contract_uri,
             price,
         )
-
-    def tearDown(self):
-        """
-        Stops the execution of the current QSP audit node.
-        """
-        self.__audit_node.stop()
-        self.__clean_up_pool_db()
 
 
 if __name__ == '__main__':
