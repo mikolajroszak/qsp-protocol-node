@@ -20,9 +20,15 @@ logger = logging_utils.get_logger()
 
 class QSPAuditNode:
 
-    __EVT_AUDIT_REQUESTED = "LogAuditRequested"
+    __EVT_AUDIT_REQUESTED = "LogAuditQueued"
     __EVT_AUDIT_REQUEST_ASSIGNED = "LogAuditRequestAssigned"
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
+
+    # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
+    __AUDIT_STATE_SUCCESS = 4
+
+    # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
+    __AUDIT_STATE_ERROR = 5
 
     def __init__(self, config):
         """
@@ -91,6 +97,7 @@ class QSPAuditNode:
         # and eventually submitting results
         self.__internal_threads.append(self.__run_perform_audit_thread())
         self.__internal_threads.append(self.__run_submission_thread())
+        self.__internal_threads.append(self.__run_monitor_submisson_thread())
 
         # Monitors the state of each thread. Upon error, terminate the
         # audit node. Checking whether a thread is alive or not does
@@ -229,20 +236,22 @@ class QSPAuditNode:
                 requestor = evt['requestor']
                 request_id = evt['request_id']
                 contract_uri = evt['contract_uri']
-                report = self.audit(requestor, contract_uri, request_id)
+                audit_result = self.audit(requestor, contract_uri, request_id)
 
-                if report is None:
+                if audit_result is None:
                     error = "Could not generate report"
                     evt['status_info'] = error
                     logger.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
-                    evt['report'] = json.dumps(report)
+                    evt['report_uri'] = audit_result['report_uri']
+                    evt['report_hash'] = audit_result['report_hash']
+                    evt['audit_state'] = audit_result['audit_state']
                     evt['status_info'] = "Sucessfully generated report"
                     logger.debug(
-                        "Generated report is {0}. Saving it in the internal database (if not previously saved)".format(
-                            str(evt['report'])
-                        ), requestId=request_id
+                        "Generated report URI is {0}. Saving it in the internal database (if not previously saved)".format(
+                            str(evt['report_uri'])
+                        ), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except Exception as error:
@@ -271,9 +280,9 @@ class QSPAuditNode:
             try:
                 tx_hash = self.__submit_report(
                     int(evt['request_id']),
-                    evt['requestor'],
-                    evt['contract_uri'],
-                    evt['report'],
+                    evt['audit_state'],
+                    evt['report_uri'],
+                    evt['report_hash'],
                 )
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
@@ -324,6 +333,8 @@ class QSPAuditNode:
         self.__internal_threads.append(monitor_thread)
         monitor_thread.start()
 
+        return monitor_thread
+
     def stop(self):
         """
         Signals to the executing QSP audit node that is should stop the execution of the node.
@@ -349,13 +360,29 @@ class QSPAuditNode:
 
         target_contract = fetch_file(uri)
 
-        report = self.__config.analyzer.check(
+        analyzer_report = self.__config.analyzer.check(
             target_contract,
             self.__config.analyzer_output,
             request_id,
         )
         
-        report_as_string = str(json.dumps(report))
+        logger.info(
+            "Analyzer report contents",
+            requestId=request_id,
+            contents = analyzer_report,
+        )
+        
+        full_report = {
+          'auditor': self.__config.account,
+          'requestor': str(requestor),
+          'contract_uri': str(uri),
+          'contract_sha256': str(digest(target_contract)),
+          'analyzer_report': str(json.dumps(analyzer_report)),
+          'timestamp': str(datetime.utcnow()),
+        }
+
+        report_as_string = str(json.dumps(full_report, indent=2))
+        report_hash = str(sha256(report_as_string.encode()).hexdigest())
         upload_result = self.__config.report_uploader.upload(report_as_string)
 
         logger.info(
@@ -366,14 +393,12 @@ class QSPAuditNode:
         if not upload_result['success']:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
+        audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS if analyzer_report['status'] == 'success' else QSPAuditNode.__AUDIT_STATE_ERROR;
+
         return {
-            'auditor': self.__config.account,
-            'requestor': str(requestor),
-            'contract_uri': str(uri),
-            'contract_sha256': str(digest(target_contract)),
+            'audit_state': audit_state,
             'report_uri': upload_result['url'],
-            'report_sha256': sha256(report_as_string.encode()).hexdigest(),
-            'timestamp': str(datetime.utcnow()),
+            'report_hash': report_hash
         }
 
     def __get_next_audit_request(self):
@@ -384,7 +409,7 @@ class QSPAuditNode:
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
         return self.__config.internal_contract.transact(tx_args).getNextAuditRequest() 
 
-    def __submit_report(self, request_id, requestor, contract_uri, report):
+    def __submit_report(self, request_id, audit_state, report_uri, report_hash):
         """
         Submits the audit report to the entire QSP network.
         """
@@ -392,7 +417,7 @@ class QSPAuditNode:
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
         return self.__config.internal_contract.transact(tx_args).submitReport(
             request_id,
-            requestor,
-            contract_uri,
-            report,
+            audit_state,
+            report_uri,
+            report_hash
         )

@@ -10,8 +10,28 @@ local:
   evt_polling_sec: !!int 5
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
+      cmd: !!str "oyente -j -s ${input}"
+  report_uploader:
+      provider: !!str "S3Provider"
+      args:
+        bucket_name: "qsp-network-reports-dev"
+  account:
+    id: !!str "0xdbc1dc08bd84175c3a1a6daa2bc56f09b7469418"
+    ttl: 600
+
+local_docker:
+  eth_node:
+    provider: !!str "HTTPProvider"
+    args:
+      endpoint_uri: !!str "http://ec2-52-91-149-89.compute-1.amazonaws.com:8545"
+  internal_contract_abi:
+    uri: !!str "https://s3.amazonaws.com/qsp-network-contract-abi-dev/QuantstampInternal.abi.json"
+    metadata: !!str "https://s3.amazonaws.com/qsp-network-contract-abi-dev/QuantstampInternal.meta.json"
+  min_price: !!int 0
+  evt_polling_sec: !!int 5
+  analyzer:
+      output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
-      solidity: !!str "0.4.17"
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -33,14 +53,13 @@ dev:
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
-      solidity: !!str "0.4.17"
   report_uploader:
       provider: !!str "S3Provider"
       args:
         bucket_name: "qsp-network-reports-dev"
   account:
     ttl: 600
-  default_gas: !!int 600000
+  default_gas: !!int 700000
   evt_db_path: "/analyzer/audit-db/audit_node.db"
   submission_timeout_limit_blocks: 10
 
@@ -57,13 +76,12 @@ prod:
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
       cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
-      solidity: !!str "0.4.17"
   report_uploader:
       provider: !!str "S3Provider"
       args:
         bucket_name: "qsp-network-reports-prod"
   account:
     ttl: 600
-  default_gas: !!int 600000
+  default_gas: !!int 700000
   evt_db_path: "/analyzer/audit-db/audit_node.db"
   submission_timeout_limit_blocks: 10

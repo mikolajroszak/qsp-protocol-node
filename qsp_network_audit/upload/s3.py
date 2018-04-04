@@ -12,7 +12,8 @@ class S3Provider:
       response = self.__client.put_object(
         Body=str(report_as_string),
         Bucket=self.__bucket_name,
-        Key=report_file_name
+        Key=report_file_name,
+        ContentType="application/json"
       )
       return {
         'success': True,

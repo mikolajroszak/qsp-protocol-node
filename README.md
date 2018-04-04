@@ -25,7 +25,7 @@ All instructions must be run from the project's root folder.
 
 ## Run tests locally
 
-1. Run `make test`
+1. Run `make test`. To access the HTML coverage report, after running tests, open `htmlcov/index.html`.
 
 ## Run in regular mode
 
