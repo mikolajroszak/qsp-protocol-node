@@ -393,7 +393,10 @@ class QSPAuditNode:
         if not upload_result['success']:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
-        audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS if analyzer_report['status'] == 'success' else QSPAuditNode.__AUDIT_STATE_ERROR;
+        if analyzer_report['status'] == 'success':
+            audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
+        else:
+            audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
 
         return {
             'audit_state': audit_state,
