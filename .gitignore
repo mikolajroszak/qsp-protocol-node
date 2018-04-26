@@ -7,3 +7,4 @@ tests/*/*.json
 .pytest_cache
 .coverage
 htmlcov
+.terraform
