@@ -1,6 +1,6 @@
 # qsp-network-audit
 
-![Build status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiRGFyS3IwWW9yVlRPcFFHOUJiYldNWjJuVi9JRmx1VUMwSUhpaGlDcmtQTnpYdThvcVRUNVQ0QktZakl6MlZYcWoveURQSkE4YThjYVdDY2lla0k3R1hvPSIsIml2UGFyYW1ldGVyU3BlYyI6ImFMMmtlWTRQdWl6Q2c3UksiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop)
+![Build status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoib0RlSkZ0M0I5aGZVKzNYS2lyWnFaaEhJTlR0ZlpSTHU5YkwxbUFYQS8zY1AwZTVwQ0Y2cGJqTHA0ZllHMzhhMlpvV1lYdlJweWcwZ2MyQWpXUS9UYWJjPSIsIml2UGFyYW1ldGVyU3BlYyI6IitaMjBqcUVneSt6MlZmWVUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop)
 
 Implements the QSP audit node in the Quantstamp network.
 
