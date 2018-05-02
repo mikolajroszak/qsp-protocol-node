@@ -54,7 +54,25 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
+    name = "NODE_NAME"
+    value = "audit-${var.stage}"
+  }
+  
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "LOG_GROUP_NAME"
+    value = "/aws/elasticbeanstalk/qsp-protocol-${stage}/all.log"
+  }
+  
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
     name = "ETH_PASSPHRASE"
     value = "${var.ETH_PASSPHRASE}"
+  }
+  
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "WS_SECRET"
+    value = "${var.WS_SECRET}"
   }
 }

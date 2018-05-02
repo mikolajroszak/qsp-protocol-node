@@ -23,7 +23,7 @@
   "containerDefinitions": [
     {
       "name": "audit",
-      "image": "{{accountId}}.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-audit-node:{{imageTag}}",
+      "image": "{{image}}",
       "command": ["make", "run"],
       "essential": true,
       "memory": 2048,
