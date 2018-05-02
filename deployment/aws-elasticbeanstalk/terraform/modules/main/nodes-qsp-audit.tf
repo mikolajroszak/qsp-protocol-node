@@ -4,8 +4,8 @@ resource "aws_iam_instance_profile" "audit" {
 }
 
 resource "aws_elastic_beanstalk_environment" "audit" {
-  name                  = "qsp-network-audit-${var.stage}"
-  application           = "qsp-network-audit"
+  name                  = "qsp-protocol-node-${var.stage}"
+  application           = "qsp-protocol-node"
   solution_stack_name   = "64bit Amazon Linux 2017.09 v2.8.4 running Multi-container Docker 17.09.1-ce (Generic)"
   tier                  = "WebServer"
 
