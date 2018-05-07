@@ -136,10 +136,8 @@ resource "aws_iam_role_policy" "main" {
             "s3:GetObjectVersion"
         ],
         "Resource": [
-            "arn:aws:s3:::qsp-protocol-contract-abi-${var.stage}/*",
-            "arn:aws:s3:::qsp-protocol-contract-abi-${var.stage}",
-            "arn:aws:s3:::qsp-protocol-reports-${var.stage}/*",
-            "arn:aws:s3:::qsp-protocol-reports-${var.stage}"
+            "arn:aws:s3:::${aws_s3_bucket.reports_bucket.id}/*",
+            "arn:aws:s3:::${aws_s3_bucket.reports_bucket.id}"
         ]
     },
     {

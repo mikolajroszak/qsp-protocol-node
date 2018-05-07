@@ -12,6 +12,7 @@ terraform {
 }
 
 variable "ETH_PASSPHRASE" {}
+variable "WS_SECRET" {}
 
 module "main" {
   source = "../../modules/main"
@@ -23,4 +24,5 @@ module "main" {
 
   # the remaining variables are in terraform.tfvars
   ETH_PASSPHRASE = "${var.ETH_PASSPHRASE}"
+  WS_SECRET = "${var.WS_SECRET}"
 }
