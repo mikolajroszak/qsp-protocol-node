@@ -12,8 +12,4 @@ resource "aws_security_group" "audit" {
   tags {
     Name = "${var.environment}-audit"
   }
-  
-  lifecycle {
-    ignore_changes = "*"
-  }
 }

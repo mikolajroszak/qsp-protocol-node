@@ -25,7 +25,7 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "SecurityGroups"
-    value = "${aws_security_group.audit.id}"
+    value = "${aws_security_group.audit.name}"
   }
 
   setting {
@@ -61,7 +61,7 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name = "LOG_GROUP_NAME"
-    value = "/aws/elasticbeanstalk/qsp-protocol-${stage}/all.log"
+    value = "/aws/elasticbeanstalk/qsp-protocol-${var.stage}/all.log"
   }
   
   setting {
@@ -74,5 +74,11 @@ resource "aws_elastic_beanstalk_environment" "audit" {
     namespace = "aws:elasticbeanstalk:application:environment"
     name = "WS_SECRET"
     value = "${var.WS_SECRET}"
+  }
+  
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "WS_ENDPOINT"
+    value = "${var.WS_ENDPOINT}"
   }
 }
