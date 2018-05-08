@@ -1,2 +1,0 @@
-ETH_PASSWORD=test
-WS_SECRET=test

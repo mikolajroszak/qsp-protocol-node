@@ -1,4 +1,4 @@
-# aws-elasticbeanstalk
+# Deployment using AWS Elastic Beanstalk
 
 Deploying the audit node using AWS Elastic Beanstalk multi-container Docker.
 
@@ -7,12 +7,21 @@ Deploying the audit node using AWS Elastic Beanstalk multi-container Docker.
 1. Acquire AWS admin credentials
 2. In AWS console, create a new key pair: `qsp-protocol-dev` and `qsp-protocol-prod`.
 3. In AWS console, create a new Elastic Beanstalk app: `qsp-protocol-node` 
-4. Install [Terraform](https://www.terraform.io/).
+4. Install [Terraform](https://www.terraform.io/). Tested with the following version:
+  ```
+  terraform version
+  Terraform v0.11.1
+  + provider.aws v1.17.0
+  ```
 5. Go to `terraform`, then `stages/dev` or `stages/prod`
-6. Create a file called `terraform.tfvars` for storing secret values (but DO NOT commit these to the source control)
+6. Run `terraform plan` and review the changes
+7. Run `terraform apply` and confirm the changes
 
-`ETH_PASSWORD=...` - a passphrase for an account on the main (Ropsten) network
-`WS_SECRET=...` - a secret for `eth-stats` dashboard
+*Note*: by default, you will be prompted to provide values for certain sensitive variables,
+such as, `ETH_PASSPHRASE` and `WS_SECRET`. An alternative option is to create a file `terraform.tfvars`
+and specify the values here (but DO NOT commit this to the source control):
 
-7. Run `terraform plan` and review the changes
-8. Run `terraform apply` and confirm the changes
+```
+ETH_PASSPHRASE=value1
+WS_SECRET=value2
+```
