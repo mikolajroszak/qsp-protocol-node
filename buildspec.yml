@@ -11,13 +11,13 @@ phases:
       - docker pull 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit-base:latest
       - echo Building the Docker image...
       - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
-      - docker build -t qsp-protocol-audit-node .
-      - docker tag qsp-protocol-audit-node 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-audit-node:$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - docker tag qsp-protocol-audit-node 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-audit-node:develop
+      - docker build -t qsp-protocol-node .
+      - docker tag qsp-protocol-node 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker tag qsp-protocol-node 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:develop
       - echo Pushing the Docker image...
-      - docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-audit-node:$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-audit-node:develop
-      - sed -i -e "s/{{image}}/466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-audit-node:$CODEBUILD_RESOLVED_SOURCE_VERSION/g" ./deployment/aws-elasticbeanstalk/Dockerrun.aws.json
+      - docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:develop
+      - sed -i -e "s/{{image}}/466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:$CODEBUILD_RESOLVED_SOURCE_VERSION/g" ./deployment/aws-elasticbeanstalk/Dockerrun.aws.json
   post_build:
     commands:
       - echo Build completed on `date`
