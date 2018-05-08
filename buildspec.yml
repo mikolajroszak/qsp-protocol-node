@@ -17,7 +17,7 @@ phases:
       - echo Pushing the Docker image...
       - docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:$CODEBUILD_RESOLVED_SOURCE_VERSION
       - docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:develop
-      - sed -i -e "s/{{image}}/466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:$CODEBUILD_RESOLVED_SOURCE_VERSION/g" ./deployment/aws-elasticbeanstalk/Dockerrun.aws.json
+      - sed -i -e "s@{{image}}@466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:$CODEBUILD_RESOLVED_SOURCE_VERSION@g" ./deployment/aws-elasticbeanstalk/Dockerrun.aws.json
   post_build:
     commands:
       - echo Build completed on `date`
