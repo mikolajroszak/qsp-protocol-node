@@ -23,8 +23,8 @@ phases:
       - echo Build completed on `date`
 artifacts:
   files:
-    - '.ebextensions/**/*'
-    - Dockerrun.aws.json
+    - '**/*'
+  base-directory: deployment/aws-elasticbeanstalk/app
 cache:
   paths:
     - '/var/lib/docker/**/*'
