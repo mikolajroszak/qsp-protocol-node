@@ -11,7 +11,7 @@ All instructions must be run from the project's root folder.
 1. Clone the repo
 1. `git submodule init`
 1. `git submodule update`
-1. Run the following instructions:
+1. Run the following instructions (done once):
   ```
   brew install pyenv
   brew install pyenv-virtualenv
@@ -23,9 +23,16 @@ All instructions must be run from the project's root folder.
 1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#ops` Slack channel.
 1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)
 
-## Run tests locally
+### Run tests
 
-1. Run `make test`. To access the HTML coverage report, after running tests, open `htmlcov/index.html`.
+1. For testing purposes, one must install the Z3 solver wrapper and the Web3 experimental tester (done once):
+
+```
+pip install z3-solver
+pip install web3[solver]
+```
+
+2. Run `make test`. To access the HTML coverage report, after running tests, open `htmlcov/index.html`.
 
 ## Run in regular mode
 
@@ -66,6 +73,7 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing t
 1. `sudo su`
 1. `docker ps`, locate the image `466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node` and record its id, e.g., `e237a5cf55f2`
 1. `docker exec -i -t e237a5cf55f2 bash`
+
 
 ## Development hierarchy 
 

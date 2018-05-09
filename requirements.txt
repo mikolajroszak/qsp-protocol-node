@@ -1,4 +1,14 @@
-web3==3.16.5
+web3==4.2.0
+eth-abi==1.0.0
+eth-account==0.2.2
+eth-bloom==1.0.0
+eth-hash==0.1.2
+eth-keyfile==0.5.1
+eth-keys==0.2.0b3
+eth-rlp==0.1.2
+eth-tester==0.1.0b21
+eth-utils==1.0.3
+ethereum==1.6.1
 pyyaml==3.12
 dpath==1.4.2
 py-solc==2.1.0
@@ -13,3 +23,4 @@ tendo==0.2.8
 apsw==3.9.2.post1
 pytest==3.4.2
 pytest-cov==2.5.1
+rlp==0.6.0
