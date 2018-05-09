@@ -3,6 +3,7 @@ phases:
   pre_build:
     commands:
       - pip install -r requirements.txt
+      - pip install web3[tester]
   build:
     commands:
       - export ENV=local_docker
