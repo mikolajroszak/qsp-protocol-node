@@ -8,6 +8,7 @@ phases:
     commands:
       - export ENV=local_docker
       - make test
+      - apt-get -y install git # temporary - will be removed once we migrate away from the base image approach 
       - coveralls
   post_build:
     commands:
