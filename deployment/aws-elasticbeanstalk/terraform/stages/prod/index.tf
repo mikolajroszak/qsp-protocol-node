@@ -23,7 +23,6 @@ module "main" {
   node_instance_type_audit = "m4.large"
 
   WS_ENDPOINT = "qsp-stats.quantstamp.com"
-  # the remaining variables are in terraform.tfvars
   ETH_PASSPHRASE = "${var.ETH_PASSPHRASE}"
   WS_SECRET = "${var.WS_SECRET}"
 }
