@@ -39,7 +39,7 @@
     },
     {
       "name": "geth",
-      "image": "ethereum/client-go:v1.8.6",
+      "image": "ethereum/client-go:v1.8.7",
       "command": ["--testnet", "--config=/root/.ethereum/geth-config/audit-fullnode.toml"],
       "essential": true,
       "memory": 2048,
