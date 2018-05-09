@@ -10,6 +10,6 @@ resource "aws_security_group" "audit" {
   }
 
   tags {
-    Name = "${var.environment}-audit"
+    Name = "${var.environment}-node-sg"
   }
 }

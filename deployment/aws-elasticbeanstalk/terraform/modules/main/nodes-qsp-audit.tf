@@ -81,4 +81,8 @@ resource "aws_elastic_beanstalk_environment" "audit" {
     name = "WS_ENDPOINT"
     value = "${var.WS_ENDPOINT}"
   }
+  
+  tags {
+    Name = "${var.environment}-node-beanstalk-app"
+  }
 }
