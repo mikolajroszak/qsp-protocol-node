@@ -4,7 +4,7 @@ Deploying the audit node using AWS Elastic Beanstalk multi-container Docker.
 
 ## Setup
 
-1. Acquire AWS admin credentials
+1. Acquire AWS admin credentials (`#dev-protocol` on Slack)
 2. In AWS console, create a new key pair: `qsp-protocol-dev` and `qsp-protocol-prod`.
 3. In AWS console, create a new Elastic Beanstalk app: `qsp-protocol-node` 
 4. Install [Terraform](https://www.terraform.io/). Tested with the following version:
@@ -19,7 +19,7 @@ Deploying the audit node using AWS Elastic Beanstalk multi-container Docker.
 
 *Note*: by default, you will be prompted to provide values for certain sensitive variables,
 such as, `ETH_PASSPHRASE` and `WS_SECRET`. An alternative option is to create a file `terraform.tfvars`
-and specify the values here (but DO NOT commit this to the source control):
+(in `stages/dev` or `stages/prod`) and specify the values here (but DO NOT commit this to the source control):
 
 ```
 ETH_PASSPHRASE=value1
