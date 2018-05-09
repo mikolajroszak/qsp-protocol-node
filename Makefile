@@ -13,10 +13,10 @@ endif
 
 run: # printing "date" is important so Cloud Watch can distinguish log files 
   # the workaround should be removed when switched to Kubernetes
-	date; python  -W ignore::DeprecationWarning qsp_network_audit/qsp_network_audit.py -v -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
+	date; python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -v -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
 
 test:
-	PYTHONPATH=./tests:./qsp_network_audit pytest --cov=qsp_network_audit -s --disable-pytest-warnings --cov-report term-missing --cov-report html tests/
+	PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s --disable-pytest-warnings --cov-report term-missing --cov-report html tests/
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc)$$" | xargs rm -rf
