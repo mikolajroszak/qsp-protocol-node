@@ -2,7 +2,13 @@
 Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file.
 """
-from web3 import Web3, TestRPCProvider, HTTPProvider, IPCProvider, EthereumTesterProvider
+from web3 import (
+    Web3,
+    TestRPCProvider,
+    HTTPProvider,
+    IPCProvider,
+    EthereumTesterProvider,
+)
 from upload import S3Provider
 from dpath.util import get
 from solc import compile_files
@@ -20,7 +26,11 @@ logger = logging_utils.get_logger()
 import utils.io as io_utils
 
 from audit import Analyzer
-from utils.eth import WalletSessionManager, DummyWalletSessionManager
+from utils.eth import (
+    WalletSessionManager, 
+    DummyWalletSessionManager,
+    mk_checksum_address,
+)
 from evt import EventPoolManager
 
 
@@ -201,20 +211,6 @@ class Config:
             return IPCProvider(**args)
 
         if provider == "EthereumTesterProvider":
-            # NOTE: currently relies on the legacy EthereumTesterProvider,
-            # instead of having something like
-            #
-            # from web3 import Web3
-            # from web3.providers.eth_tester import EthereumTesterProvider
-            # from eth_tester import EthereumTester
-            # eth_tester = EthereumTester()
-            # provider = EthereumTesterProvider(eth_tester))
-            #
-            # The reason of that relies on bugs related to
-            # how keys are stored in events (given as dictionaries).
-            #
-            # See https://github.com/ethereum/web3.py/issues/503
-            # for further information.
             return EthereumTesterProvider()
 
         if provider == "TestRPCProvider":
@@ -332,7 +328,10 @@ class Config:
         self.__internal_contract_address = receipt['contractAddress']
 
         # Creates the contract object
-        return self.web3_client.eth.contract(contract_interface['abi'], self.__internal_contract_address)
+        return self.web3_client.eth.contract(
+		abi=contract_interface['abi'],
+		address=self.__internal_contract_address
+	)
 
     def __create_internal_contract(self):
         """
@@ -370,6 +369,7 @@ class Config:
     def __create_event_pool_manager(self):
         self.__event_pool_manager = EventPoolManager(self.evt_db_path)
 
+
     def __create_components(self, cfg):
         # Setup followed by verification
         self.__setup_values(cfg)
@@ -378,6 +378,19 @@ class Config:
         # Creation of internal components
         self.__create_eth_provider()
         self.__create_web3_client()
+
+        # After having a web3 client object, 
+        # use it to put addresses in a canonical
+        # format
+        self.__internal_contract_address = mk_checksum_address(
+            self.__web3_client,
+            self.__internal_contract_address,
+        )
+        self.__account = mk_checksum_address(
+            self.__web3_client,
+            self.__account,
+        )
+
         self.__create_internal_contract()
         self.__create_analyzer()
         self.__create_wallet_session_manager()
@@ -389,22 +402,6 @@ class Config:
 
         with open(config_file) as yaml_file:
             new_cfg_dict = yaml.load(yaml_file)[self.env]
-
-        current_digest = hashlib.sha256(
-            str(new_cfg_dict).encode("utf-8")
-        ).hexdigest()
-
-        # Use the digest as a means to detect whether or not
-        # the content of the configuration has changed. If not,
-        # just skip.
-
-        if current_digest == self.__hex_digest:
-            return
-
-        # If the configuration has changed, then reload it
-        # and verify values.
-
-        self.__hex_digest = current_digest
 
         try:
             logger.debug("Creating components from configuration")
@@ -436,8 +433,9 @@ class Config:
         self.__env = env
         self.__cfg_dict = None
         self.__account_passwd = account_passwd
-        self.__hex_digest = None
         self.__config_file_uri = config_file_uri
+        self.__load_config()
+
 
     def __raise_err(self, cond=True, msg=""):
         """
@@ -451,7 +449,6 @@ class Config:
         """
         Returns the Ethereum provider object.
         """
-        self.__load_config()
         return self.__eth_provider
 
     @property
@@ -459,7 +456,6 @@ class Config:
         """
         Returns the Ethereum provider name.
         """
-        self.__load_config()
         return self.__eth_provider_name
 
     @property
@@ -467,7 +463,6 @@ class Config:
         """
         Returns the arguments required for instantiating the target Ethereum provider.
         """
-        self.__load_config()
         return self.__eth_provider_args
 
     @property
@@ -475,7 +470,6 @@ class Config:
         """
         Returns the internal QSP contract address.
         """
-        self.__load_config()
         return self.__internal_contract_address
 
     @property
@@ -483,7 +477,6 @@ class Config:
         """
         Return the minimum QSP price for accepting an audit.
         """
-        self.__load_config()
         return self.__min_price
 
     @property
@@ -491,7 +484,6 @@ class Config:
         """
         Returns the polling for audit requests frequency (given in seconds).
         """
-        self.__load_config()
         return self.__evt_polling_sec
 
     @property
@@ -499,7 +491,6 @@ class Config:
         """
         Returns the output of the analyzer (either 'stdout' or a filename template).
         """
-        self.__load_config()
         return self.__analyzer_output
 
     @property
@@ -507,7 +498,6 @@ class Config:
         """
         Returns the analyzer command template."
         """
-        self.__load_config()
         return self.__analyzer_cmd
 
     @property
@@ -515,14 +505,12 @@ class Config:
         """
         Returns report uploader."
         """
-        self.__load_config()
         return self.__report_uploader
     @property
     def account(self):
         """
         Returns the account numeric identifier to sign reports.
         """
-        self.__load_config()
         return self.__account
 
     @property
@@ -530,7 +518,6 @@ class Config:
         """
         Returns the account TTL.
         """
-        self.__load_config()
         return self.__account_ttl
 
     @property
@@ -538,7 +525,6 @@ class Config:
         """
         Returns the account associated password.
         """
-        self.__load_config()
         return self.__account_passwd
 
     @property
@@ -546,7 +532,6 @@ class Config:
         """
         Returns the internal contract ABI URI.
         """
-        self.__load_config()
         return self.__internal_contract_abi_uri
 
     @property
@@ -554,7 +539,6 @@ class Config:
         """"
         Returns the internal contract source URI.
         """
-        self.__load_config()
         return self.__internal_contract_src_uri
 
     @property
@@ -563,7 +547,6 @@ class Config:
         Returns whether the internal contract source code, once compiled, should
         be deployed on the target network.
         """
-        self.__load_config()
         return self.__internal_contract_src_deploy
 
     @property
@@ -571,7 +554,6 @@ class Config:
         """
         Returns whether the internal contract has been made available.
         """
-        self.__load_config()
         return self.__has_internal_contract_src
 
     @property
@@ -579,7 +561,6 @@ class Config:
         """
         Returns whether the internal contract ABI has been made available.
         """
-        self.__load_config()
         return self.__has_internal_contract_abi
 
     @property
@@ -587,7 +568,6 @@ class Config:
         """ 
         Returns the Web3 client object built from the given YAML configuration file.
         """
-        self.__load_config()
         return self.__web3_client
 
     @property
@@ -595,7 +575,6 @@ class Config:
         """
         Returns the internal contract object built from the given YAML configuration file.
         """
-        self.__load_config()
         return self.__internal_contract
 
     @property
@@ -603,7 +582,6 @@ class Config:
         """
         Returns the name of the internal contract.
         """
-        self.__load_config()
         return self.__internal_contract_name
 
     @property
@@ -611,12 +589,10 @@ class Config:
         """
         Returns the analyzer object built from the given YAML configuration file.
         """
-        self.__load_config()
         return self.__analyzer
 
     @property
     def wallet_session_manager(self):
-        self.__load_config()
         return self.__wallet_session_manager
 
     @property
@@ -631,15 +607,7 @@ class Config:
         """
         Returns a fixed amount of gas to be used when interacting with the internal contract.
         """
-        self.__load_config()
         return self.__default_gas
-
-    @property
-    def hex_digest(self):
-        """"
-        Returns the sha256 hash digest (as a hexadecimal string) from the configuration file.
-        """
-        return self.__hex_digest
 
     @property
     def config_file_uri(self):
@@ -653,7 +621,6 @@ class Config:
         """
         Returns the event pool database path.
         """
-        self.__load_config()
         return self.__evt_db_path
 
     @property
@@ -661,7 +628,6 @@ class Config:
         """
         Returns the event pool database path.
         """
-        self.__load_config()
         return self.__submission_timeout_limit_blocks
 
     @property
@@ -669,5 +635,4 @@ class Config:
         """
         Returns the event pool manager.
         """
-        self.__load_config()
         return self.__event_pool_manager

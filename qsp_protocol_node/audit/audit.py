@@ -13,7 +13,6 @@ from hashlib import sha256
 from utils.io import fetch_file, digest
 from utils.eth import mk_args
 from threading import Thread
-from utils.eth import FilterThreads
 
 logger = logging_utils.get_logger()
 
@@ -24,10 +23,12 @@ class QSPAuditNode:
     __EVT_AUDIT_REQUEST_ASSIGNED = "LogAuditRequestAssigned"
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
 
-    # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
+    # must be in sync with 
+    # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
     __AUDIT_STATE_SUCCESS = 4
 
-    # must be in sync with https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
+    # must be in sync with 
+    # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
     __AUDIT_STATE_ERROR = 5
 
     def __init__(self, config):
@@ -36,14 +37,7 @@ class QSPAuditNode:
         """
         self.__config = config
         self.__exec = False
-
-        start_block = self.__config.event_pool_manager.get_latest_block_number()
-
-        # If no block has currently been processed, start from zero
-        if start_block == -1:
-            start_block = 0
-
-        logger.debug("Filtering events from block # {0}".format(str(start_block)))
+        self.__internal_threads = []
 
         # There are some important invariants that are to be respected at all
         # times when the audit node (re-)processes events (see associated queries):
@@ -67,18 +61,19 @@ class QSPAuditNode:
         #    processing new events. Old ones necessarily cause the underlying
         #    thread to complete execution and eventually dying
 
-        params = {'fromBlock': start_block}
 
-        self.__set_filter(QSPAuditNode.__EVT_AUDIT_REQUESTED, params, self.__on_audit_requested)
-        self.__set_filter(QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED, params, self.__on_audit_assigned)
-        self.__set_filter(QSPAuditNode.__EVT_REPORT_SUBMITTED, params, self.__on_report_submitted)
+    def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler):
+        def exec():
+            while self.__exec:
+                for evt in evt_filter.get_new_entries():
+                    evt_handler(evt)
 
-        self.__latest_request_id = self.__config.event_pool_manager.get_latest_request_id()
-        self.__internal_threads = []
+                sleep(self.__config.evt_polling)
 
-    def __set_filter(self, evt_name, params, callback):
-        self.__config.internal_contract.pastEvents(evt_name, params, callback)
-        FilterThreads.register(self.__config.internal_contract.on(evt_name, params, callback))
+        evt_thread = Thread(target=exec, name="{0} thread".format(evt_name))
+        evt_thread.start()
+
+        return evt_thread
 
     @property
     def config(self):
@@ -93,6 +88,29 @@ class QSPAuditNode:
 
         self.__exec = True
 
+        # If no block has currently been processed, start from zero
+        start_block = self.__config.event_pool_manager.get_latest_block_number()
+        if start_block < 0:
+            start_block = 0
+
+        logger.debug("Filtering events from block # {0}".format(str(start_block)))
+
+        self.__internal_threads.append(self.__run_audit_evt_thread(
+            "LogAuditQueued",
+            self.__config.internal_contract.events.LogAuditQueued.createFilter(fromBlock=start_block),
+            self.__on_audit_requested,
+        ))
+        self.__internal_threads.append(self.__run_audit_evt_thread(
+            "LogAuditRequestAssigned",
+            self.__config.internal_contract.events.LogAuditRequestAssigned.createFilter(fromBlock=start_block),
+            self.__on_audit_assigned,
+        ))
+        self.__internal_threads.append(self.__run_audit_evt_thread(
+            "LogReportSubmitted",
+            self.__config.internal_contract.events.LogReportSubmitted.createFilter(fromBlock=start_block),
+            self.__on_report_submitted,
+        ))
+        
         # Starts two additional threads for performing audits
         # and eventually submitting results
         self.__internal_threads.append(self.__run_perform_audit_thread())
@@ -107,20 +125,12 @@ class QSPAuditNode:
         health_check_interval_sec = 2
         while self.__exec:
             # Checking if all threads are still alive
-            for thread in (self.__internal_threads + FilterThreads.list()):
+            for thread in self.__internal_threads:
                 if not thread.is_alive():
                     logger.debug("Cannot proceed execution. At least one internal thread is lost")
                     self.stop()
 
-            # Specifically check the state of filter threads
-            # (may be executing, but not able to filter anything)
-            for filter_thread in FilterThreads.list():
-                if not FilterThreads.is_alive(filter_thread):
-                    logger.debug("Cannot proceed execution. At least one filter id was lost")
-                    self.stop()
-
             sleep(health_check_interval_sec)
-
 
     def __on_audit_requested(self, evt):
         """

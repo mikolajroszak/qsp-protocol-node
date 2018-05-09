@@ -11,7 +11,7 @@ All instructions must be run from the project's root folder.
 1. Clone the repo
 1. `git submodule init`
 1. `git submodule update`
-1. Run the following instructions:
+1. Run the following instructions (done once):
   ```
   brew install pyenv
   brew install pyenv-virtualenv
@@ -23,36 +23,43 @@ All instructions must be run from the project's root folder.
 1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#ops` Slack channel.
 1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)
 
-## Run tests locally
+### Run tests
 
-1. Run `make test`. To access the HTML coverage report, after running tests, open `htmlcov/index.html`.
+1. For testing purposes, one must install the Z3 solver wrapper and the Web3 experimental tester (done once):
+
+```
+pip install z3-solver
+pip install web3[solver]
+```
+
+2. Run `make test`. To access the HTML coverage report, after running tests, open `htmlcov/index.html`.
 
 ## Run in regular mode
 
-1. Acquire a passphase of a QSP network account and set environment variable `QSP_PASSWORD` to it.
+1. Acquire a passphase of a QSP network account and set environment variable `ETH_PASSPHRASE` to it.
 1. `make run`
 
 ## Run in container mode
 
 1. Login to be able to acquire the base image: `$(aws ecr get-login --region us-east-1 --no-include-email)`
-1. Build the image: `docker build -t qsp-network-audit .`
+1. Build the image: `docker build -t qsp-protocol-node .`
 1. Acquire a passphase of a QSP network account
-1. `docker run -i -t -e ENV=local_docker -e QSP_PASSWORD=passphrase-from-the-last-step qsp-network-audit`
+1. `docker run -i -t -e ENV=local_docker -e ETH_PASSPHRASE=passphrase-from-the-last-step qsp-protocol-node`
 
-To run a Bash shell inside the container, run it as: `docker run <other args> qsp-network-audit bash`
+To run a Bash shell inside the container, run it as: `docker run <other args> qsp-protocol-node bash`
 
 ## CI and deployment pipeline
 
-1. On every push to the repository, `buildspec-light.yml` is activated.
+1. On every push to the repository, `buildspec-ci.yml` is activated.
 The build environment is based on the Oyente's image (`qsp-analyzer-oyente`).
 The script runs `make test` and reports the status back to AWS CodeBuild.
 
 1. On every merge into `develop`, `buildspec.yml` is activated. It builds the image,
 pushes it to AWS Docker repository, creates a build artifact (a ZIP containing the 
 `Dockerrun.aws.json` file and the `.ebextensions` folder) and deploys it toa dev environment on AWS using
-[AWS CodePipeline](https://console.aws.amazon.com/codepipeline/home?region=us-east-1#/view/qsp-network-audit-dev).
+[AWS CodePipeline](https://console.aws.amazon.com/codepipeline/home?region=us-east-1#/view/qsp-protocol-node-dev).
 
-1. To promote a dev environment to production, go to [Application versions](https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/application/versions?applicationName=qsp-network-audit), select the desired artifact, click `Deploy`, and select `qsp-network-audit-prod` in the dropdown.
+1. To promote a dev environment to production, go to [Application versions](https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/application/versions?applicationName=qsp-protocol-node), select the desired artifact, click `Deploy`, and select `qsp-protocol-node-prod` in the dropdown.
 
 ## Infrastructure
 
@@ -61,11 +68,12 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing t
 
 ## SSH to instance and container
 1. Go [EC2 Dashboard](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#Instances:sort=tag:Name)
-1. Look for one of the instances named `qsp-network-audit-{stage}`
+1. Look for one of the instances named `qsp-protocol-node-{stage}`
 1. Click `Connect` and provide the corresponding key
 1. `sudo su`
-1. `docker ps`, locate the image `466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit` and record its id, e.g., `e237a5cf55f2`
+1. `docker ps`, locate the image `466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node` and record its id, e.g., `e237a5cf55f2`
 1. `docker exec -i -t e237a5cf55f2 bash`
+
 
 ## Development hierarchy 
 
@@ -99,4 +107,4 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing t
 1. In case of significant changes, run the node [in container mode](#run-in-container-mode) and check if there are any issues
 1. Open a pull request from your branch into `develop`
 1. Wait for CI tests to finish
-1. On merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS](https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-network-audit&environmentId=e-c2cqj8usi7)
+1. On merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS](https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-protocol-node&environmentId=e-c2cqj8usi7)
