@@ -240,26 +240,28 @@ class Config:
         # 
         # 1) Creates a given provider and checks if it is connected or not
         # 2) If connected, nothing else to do
-        # 3) Otherwise, check if the provider has been successfully created
-        #    If so, check its connection status. If connected, nothing else to do
-        #    Otherwise, keep trying at most max_attempts, waiting 5s per each iteration
-        # 6) If the provided has not been successfully created, keep trying at most max_attempts, 
+        # 3) Otherwise, keep trying at most max_attempts, 
         #    waiting 5s per each iteration
 
         self.__eth_provider = None
-        while attempts < max_attempts:
+        connected = False
 
-            if self.__eth_provider is not None:
-                if self.__eth_provider.isConnected():
-                    break
-
-            else:
+        while attempts < max_attempts and not connected:
+            try:
                 self.__eth_provider = Config.__new_provider(self.__eth_provider_name, self.__eth_provider_args)
-            
-            attempts = attempts + 1
-            sleep(5)
+                connected = True
+            except:
+                # An exception has occurred. Increment the number of attempts
+                # made, and retry after 5 seconds
+                attempts = attempts + 1
+                logger.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
+                        attempts
+                    )
+                )
+                sleep(5)
 
-        if self.__eth_provider == None:
+        if not connected:
+            self.__eth_provider = None
             raise Exception(
                 "Could not connect to ethereum node (time out after {0} attempts).".format(
                     max_attempts
