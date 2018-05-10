@@ -43,28 +43,26 @@ pip install web3[solver]
 
 1. Login to be able to acquire the base image: `$(aws ecr get-login --region us-east-1 --no-include-email)`
 1. Build the image: `docker build -t qsp-protocol-node .`
-1. Acquire a passphase of a QSP network account
-1. `docker run -i -t -e ENV=local_docker -e ETH_PASSPHRASE=passphrase-from-the-last-step qsp-protocol-node`
+1. Acquire a passphrase for the Ropsten test account by messaging to the `#dev-protocol` channel. 
+1. `docker run -i -t -e ENV=local_docker -e ETH_PASSPHRASE=the-passphrase qsp-protocol-node`
 
 To run a Bash shell inside the container, run it as: `docker run <other args> qsp-protocol-node bash`
 
 ## CI and deployment pipeline
 
 1. On every push to the repository, `buildspec-ci.yml` is activated.
-The build environment is based on the Oyente's image (`qsp-analyzer-oyente`).
+The build environment is based on the modification of the Oyente image (`Dockerfile.base`),
+however, this will change.
 The script runs `make test` and reports the status back to AWS CodeBuild.
 
 1. On every merge into `develop`, `buildspec.yml` is activated. It builds the image,
-pushes it to AWS Docker repository, creates a build artifact (a ZIP containing the 
-`Dockerrun.aws.json` file and the `.ebextensions` folder) and deploys it toa dev environment on AWS using
+pushes it to AWS Docker repository, creates a build artifact (a ZIP containing 
+`Dockerrun.aws.json` and `.ebextensions` from `deployment/aws-elasticbeanstalk`) and deploys it to a dev environment on AWS using
 [AWS CodePipeline](https://console.aws.amazon.com/codepipeline/home?region=us-east-1#/view/qsp-protocol-node-dev).
 
 1. To promote a dev environment to production, go to [Application versions](https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/application/versions?applicationName=qsp-protocol-node), select the desired artifact, click `Deploy`, and select `qsp-protocol-node-prod` in the dropdown.
 
-## Infrastructure
-
-1. The current infrastructure is based on Elastic Beanstalk and described in [this repository](https://github.com/quantstamp/qsp-network-genesis) using [Terraform](https://www.terraform.io/).
-1. The next-generation infrastructure based on Kubernetes is described in [this repository](https://github.com/quantstamp/qsp-network-kubernetes).
+1. To add a new deployment method, add another subfolder to `deployment`.
 
 ## SSH to instance and container
 1. Go [EC2 Dashboard](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#Instances:sort=tag:Name)
@@ -74,10 +72,9 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing t
 1. `docker ps`, locate the image `466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node` and record its id, e.g., `e237a5cf55f2`
 1. `docker exec -i -t e237a5cf55f2 bash`
 
-
 ## Development hierarchy 
 
-* Main file: `qsp_network_audit.py`
+* Main file: `qsp_protocol_audit.py`
 
 * Target environments are defined in `config.yaml`
 
@@ -106,5 +103,5 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing t
 1. Run the node [in regular mode](#run-in-regular-mode) and check if there are any issues
 1. In case of significant changes, run the node [in container mode](#run-in-container-mode) and check if there are any issues
 1. Open a pull request from your branch into `develop`
-1. Wait for CI tests to finish
-1. On merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS](https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-protocol-node&environmentId=e-c2cqj8usi7)
+1. Wait for CI tests to finish and pass
+1. After approved, merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS](https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-protocol-node&environmentId=e-c2cqj8usi7)
