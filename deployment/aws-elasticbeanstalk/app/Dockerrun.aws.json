@@ -1,0 +1,71 @@
+{
+  "AWSEBDockerrunVersion": "2",
+  "volumes": [
+    {
+      "name": "geth",
+      "host": {
+        "sourcePath": "/var/geth"
+      }
+    },
+    {
+      "name": "geth-config",
+      "host": {
+        "sourcePath": "/var/geth-config"
+      }
+    },
+    {
+      "name": "audit-db",
+      "host": {
+        "sourcePath": "/var/audit-db"
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "audit",
+      "image": "{{image}}",
+      "command": ["make", "run"],
+      "essential": true,
+      "memory": 2048,
+      "links": [
+        "geth"
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "audit-db",
+          "containerPath": "/analyzer/audit-db"
+        }
+      ]
+    },
+    {
+      "name": "geth",
+      "image": "ethereum/client-go:v1.8.7",
+      "command": ["--testnet", "--config=/root/.ethereum/geth-config/audit-fullnode.toml"],
+      "essential": true,
+      "memory": 2048,
+      "mountPoints": [
+        {
+          "sourceVolume": "geth",
+          "containerPath": "/root/.ethereum/geth"
+        },
+        {
+          "sourceVolume": "geth-config",
+          "containerPath": "/root/.ethereum/geth-config",
+          "readOnly": true
+        }
+      ]
+    },
+    {
+      "name": "ping",
+      "image": "nginx",
+      "essential": true,
+      "memory": 128,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "containerPort": 80
+        }
+      ]
+    }
+  ]
+}

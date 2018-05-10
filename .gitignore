@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 .DS_Store
 *.db
-tests/*/*.json
 .pytest_cache
 .coverage
 htmlcov
+.terraform
