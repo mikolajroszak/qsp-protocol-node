@@ -9,8 +9,6 @@ Implements the QSP audit node in the Quantstamp network.
 All instructions must be run from the project's root folder.
 
 1. Clone the repo
-1. `git submodule init`
-1. `git submodule update`
 1. Run the following instructions (done once):
   ```
   brew install pyenv
@@ -22,6 +20,7 @@ All instructions must be run from the project's root folder.
   ```
 1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#ops` Slack channel.
 1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)
+1. Initialize the analyzers: `./analyzers/init.sh`
 
 ### Run tests
 
@@ -44,7 +43,7 @@ pip install web3[solver]
 1. Login to be able to acquire the base image: `$(aws ecr get-login --region us-east-1 --no-include-email)`
 1. Build the image: `docker build -t qsp-protocol-node .`
 1. Acquire a passphrase for the Ropsten test account by messaging to the `#dev-protocol` channel. 
-1. `docker run -i -t -e ENV=local_docker -e ETH_PASSPHRASE=the-passphrase qsp-protocol-node`
+1. `docker run -i -t -e ETH_PASSPHRASE=<passphrase> qsp-protocol-node`
 
 To run a Bash shell inside the container, run it as: `docker run <other args> qsp-protocol-node bash`
 

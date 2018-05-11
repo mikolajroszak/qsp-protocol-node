@@ -1,3 +1,0 @@
-[submodule "oyente"]
-	path = oyente
-	url = git@github.com:quantstamp/qsp-analyzer-oyente.git

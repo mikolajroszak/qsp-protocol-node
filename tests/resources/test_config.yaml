@@ -8,27 +8,7 @@ local:
   evt_polling_sec: !!int 5
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "./oyente/oyente/oyente.py -j -s ${input}"
-  report_uploader:
-      provider: !!str "S3Provider"
-      args:
-            bucket_name: "qsp-protocol-reports-dev"
-  account:
-    # No provided account hex (use the first one by default)
-    ttl: 600
-  evt_db_path: "/tmp/evts.test"
-
-local_docker:
-  eth_node:
-    provider: !!str "EthereumTesterProvider" # (no args provided)
-  internal_contract_src: 
-    uri: !!str "./tests/resources/QuantstampAudit.sol"
-    metadata: !!str "./tests/resources/QuantstampAudit-metadata.json"
-  min_price: !!int 0
-  evt_polling_sec: !!int 5
-  analyzer:
-      output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
+      cmd: !!str "./analyzers/oyente/run.sh ${input}"
   report_uploader:
       provider: !!str "S3Provider"
       args:

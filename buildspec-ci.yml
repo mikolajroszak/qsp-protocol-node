@@ -4,9 +4,12 @@ phases:
     commands:
       - pip install -r requirements.txt
       - pip install web3[tester]
+      - wget https://github.com/ethereum/solidity/releases/download/v0.4.21/solc-static-linux
+      - chmod +x solc-static-linux
+      - mv solc-static-linux /usr/local/bin/solc
+      - bash ./analyzers/init.sh
   build:
     commands:
-      - export ENV=local_docker
       - make test
       - apt-get -y install git # temporary - will be removed once we migrate away from the base image approach 
       - coveralls

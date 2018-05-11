@@ -2,7 +2,7 @@ local:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "http://eth.quantstamp.com/geth/ropsten"
+      endpoint_uri: !!str "http://eth.quantstamp.com:8888/geth/http/ropsten"
   internal_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
@@ -10,28 +10,7 @@ local:
   evt_polling_sec: !!int 5
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "oyente -j -s ${input}"
-  report_uploader:
-      provider: !!str "S3Provider"
-      args:
-        bucket_name: "qsp-protocol-reports-dev"
-  account:
-    id: !!str "0x0283c049ed4705e2d98c807dbafdaf725f34b8d2"
-    ttl: 600
-
-local_docker:
-  eth_node:
-    provider: !!str "HTTPProvider"
-    args:
-      endpoint_uri: !!str "http://eth.quantstamp.com/geth/ropsten"
-  internal_contract_abi:
-    uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
-    metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
-  min_price: !!int 0
-  evt_polling_sec: !!int 5
-  analyzer:
-      output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
+      cmd: !!str "./analyzers/oyente/init.sh ${input}"
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -52,7 +31,7 @@ dev:
   evt_polling_sec: !!int 5
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
+      cmd: !!str "./analyzers/oyente/init.sh ${input}"
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -75,7 +54,7 @@ prod:
   evt_polling_sec: !!int 5
   analyzer:
       output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "/oyente/oyente/oyente.py -j -s ${input}"
+      cmd: !!str "./analyzers/oyente/init.sh ${input}"
   report_uploader:
       provider: !!str "S3Provider"
       args:

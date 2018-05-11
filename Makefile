@@ -2,12 +2,6 @@ ENV ?= local
 CONFIG ?= config.yaml
 ETH_PASSPHRASE ?= ""
 
-# If running locally, outside a container, explicitly 
-# set the path where do find the custom version of solc
-ifeq ($(ENV), "local")
-	 export SOLC_CUSTOM_PATH="./oyente/solc"
-endif
-
 # If running outside a container, assume the variable is configured
 # properly.
 

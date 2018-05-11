@@ -1,5 +1,7 @@
-FROM 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-network-audit-base:solcpatch
+FROM python:3.6.5
 
+RUN mkdir ./app
+WORKDIR ./app
 RUN mkdir ./audit-db
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
