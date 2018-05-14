@@ -1,0 +1,122 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "id": "http://quantstamp.com/schemas/analyzer.json",
+    "version": "0.0.1",
+    "type": "object",
+    "title": "Audit report",
+    "description": "API schema defining the expected output format of an audit report",
+    "properties": {
+        "id": {
+            "type": "string",
+            "pattern": "^[A-Fa-f0-9]{64}$",
+            "description": "Hash digest (256) of the resulting audit report" 
+        },
+        "analyzer": {
+            "type":  "object",
+            "description": "Meta data concerning the underlying analyzer",
+            "properties": {
+                "name": {
+                    "description": "Analyzer's name",
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "version": {
+                    "description": "Analyzer's version",
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "vulnerabilities": {
+                    "type": "array",
+                    "description": "Vulnerabilities checked by the analyzer",                    
+                    "maxItems": 100,
+                    "items": [{"type": "string"}],
+                    "additionalItems": true                        
+                },
+                "exec": {
+                    "type": "string",
+                    "description": "Command used when executing the analyzer for the given report"
+                }
+            },
+            "additionalProperties": false
+        },
+        "report": {
+            "type": "object",
+            "description": "Audit report produced by the analyzer",
+            "properties": {
+                "status": {
+                    "enum": ["success", "failed"],
+                    "description": "Status result of whether the analyzer succeeded or not"
+                },
+                "errors": {
+                    "array": {
+                        "type": "string",
+                        "description": "A list of errors encountered when producing the report"
+                    }
+                },
+                "warnings": {
+                    "array": {
+                        "type": "string",
+                        "description": "A list of warnings encountered when producing the report"
+                    }
+                },
+                "vulnerabilities": {
+                    "type": "array",
+                    "description": "List of vulnerabilities found",
+                    "items": {
+                        "title": "Vulnerability",
+                        "description": "Descriptive data about each reported vulnerability",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Name of the reported vulnerability",
+                                "maxLength": 100
+                            },
+                            "lines": {
+                                "type": "array",
+                                "description": "Sorted array of tuples containing the lines where the vulnerability occurs",
+                                "items": {
+                                    "type": "array",
+                                    "description": "Tuple (s, e) denoting a contiguous code sequence between 'ss and 'e' lines",
+                                    "items":
+                                        [
+                                            {
+                                                "type": "integer",
+                                                "description": "Start line of the code sequence containing the vulnerability",
+                                                "minimum": 1
+                                            },
+                                            {
+                                                "type": "integer",
+                                                "description": "End line of the code sequence containing the vulnerability",
+                                                "minimum": 1
+                                            }
+                                        ]
+                                }
+                            },
+                            "file": {
+                                "type": "string",
+                                "description": "Audited contract filename",
+                                "maxLength": 1000
+                            },
+                            "contract": {
+                                "type": "string",
+                                "description": "Audited contract name",
+                                "maxLength": 1000
+                            }
+                        }
+                    }
+                },
+                "start_time": {
+                    "type": "integer",
+                    "description": "The starting time (epoch) that the analyzer executed",
+                    "minimum": 1                    
+                },
+                "end_time": {
+                    "type": "integer",
+                    "description": "The starting time (epoch) that the analyzer executed",
+                    "minimum": 1                    
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}
