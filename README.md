@@ -18,9 +18,11 @@ All instructions must be run from the project's root folder.
   pyenv virtualenv env
   pip install -r requirements.txt
   ```
-1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#ops` Slack channel.
+1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#dev-protocol` Slack channel.
 1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)
-1. Initialize the analyzers: `./analyzers/init.sh`
+**On Mac**: double-check that Python bin path in your $PATH variable does not use the `~` character. If it does, replace it with your `/Users/<username>` (or `make` won't find `aws`).
+1. Install Docker: https://docs.docker.com/install/
+1. Make sure your user is a part of the docker group: `sudo usermod -a -G docker <username>`
 
 ### Run tests
 
@@ -28,24 +30,24 @@ All instructions must be run from the project's root folder.
 
 ```
 pip install z3-solver
-pip install web3[solver]
+pip install web3[tester]
 ```
 
 2. Run `make test`. To access the HTML coverage report, after running tests, open `htmlcov/index.html`.
 
 ## Run in regular mode
 
-1. Acquire a passphase of a QSP network account and set environment variable `ETH_PASSPHRASE` to it.
+1. Acquire a passphrase for the Ropsten test account (message the channel `#dev-protocol`) and set environment variable `ETH_PASSPHRASE`.
 1. `make run`
 
 ## Run in container mode
 
-1. Login to be able to acquire the base image: `$(aws ecr get-login --region us-east-1 --no-include-email)`
-1. Build the image: `docker build -t qsp-protocol-node .`
-1. Acquire a passphrase for the Ropsten test account by messaging to the `#dev-protocol` channel. 
-1. `docker run -i -t -e ETH_PASSPHRASE=<passphrase> qsp-protocol-node`
+1. Acquire a passphrase for the Ropsten test account (message the channel `#dev-protocol`) and set environment variable `ETH_PASSPHRASE`.
+1. `make run-docker`
 
-To run a Bash shell inside the container, run it as: `docker run <other args> qsp-protocol-node bash`
+## Run tests in container mode
+
+1. `make test-docker`
 
 ## CI and deployment pipeline
 

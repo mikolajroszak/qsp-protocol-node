@@ -18,6 +18,18 @@
       "host": {
         "sourcePath": "/var/audit-db"
       }
+    },
+    {
+      "name": "tmp",
+      "host": {
+        "sourcePath": "/tmp"
+      }
+    },
+    {
+      "name": "docker-sock",
+      "host": {
+        "sourcePath": "/var/run/docker.sock"
+      }
     }
   ],
   "containerDefinitions": [
@@ -33,7 +45,15 @@
       "mountPoints": [
         {
           "sourceVolume": "audit-db",
-          "containerPath": "/analyzer/audit-db"
+          "containerPath": "/app/audit-db"
+        },
+        {
+          "sourceVolume": "docker-sock",
+          "containerPath": "/var/run/docker.sock"
+        },
+        {
+          "sourceVolume": "tmp",
+          "containerPath": "/tmp"
         }
       ]
     },
