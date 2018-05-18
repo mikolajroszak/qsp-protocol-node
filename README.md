@@ -106,3 +106,11 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing
 1. Open a pull request from your branch into `develop`
 1. Wait for CI tests to finish and pass
 1. After approved, merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS](https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-protocol-node&environmentId=e-c2cqj8usi7)
+
+## Troubleshooting 
+
+This section includes situations that a command previously failed and we came up with ways to mitigate it. The following troubleshooting statements are in the form below:
+
+While _`doing command`_, on _`environment`_, , we encountered _`this meesage`_, then _`did these steps`_.
+
+1. While _executing_ ```pyenv install 3.6.4```, On `macOS 10.13.4`, we encountered `zipimport.ZipImportError: can't decompress data; zlib not availabl`, then _installed_ `xcode-select --install`.
