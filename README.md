@@ -111,6 +111,6 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing
 
 This section includes situations that a command previously failed and we came up with ways to mitigate it. The following troubleshooting statements are in the form below:
 
-While _`doing command`_, on _`environment`_, , we encountered _`this meesage`_, then _`did these steps`_.
+While _`doing command`_, on _`environment`_, , we encountered _`this message`_, then _`did these steps`_.
 
 1. While _executing_ ```pyenv install 3.6.4```, On `macOS 10.13.4`, we encountered `zipimport.ZipImportError: can't decompress data; zlib not availabl`, then _installed_ `xcode-select --install`.
