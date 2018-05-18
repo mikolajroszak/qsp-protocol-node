@@ -7,7 +7,6 @@ import traceback, sys
 import utils.logging as logging_utils
 
 import logging
-logger = logging_utils.get_logger()
 
 from audit import QSPAuditNode
 from config import Config

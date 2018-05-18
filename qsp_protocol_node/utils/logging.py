@@ -42,6 +42,3 @@ def config_logging(verbose):
           processors.UnicodeDecoder(),
           stdlib.render_to_log_kwargs]
   )
-
-def get_logger(name="audit"):
-  return getLogger(name)

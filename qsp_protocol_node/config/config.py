@@ -20,9 +20,7 @@ import re
 import os
 import hashlib
 
-import utils.logging as logging_utils
-logger = logging_utils.get_logger()
-
+import logging
 import utils.io as io_utils
 
 from audit import Analyzer
@@ -254,7 +252,7 @@ class Config:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
-                logger.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
+                logging.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
                         attempts
                     )
                 )
@@ -295,10 +293,10 @@ class Config:
         if self.__account is None:
             if len(self.__web3_client.eth.accounts) == 0:
                 self.__account = self.__web3_client.personal.newAccount(self.__account_passwd)
-                logger.debug("No account was provided, using a newly created one", account=self.__account)
+                logging.debug("No account was provided, using a newly created one", account=self.__account)
             else:
                 self.__account = self.__web3_client.eth.accounts[0]
-                logger.debug("No account was provided, using the account at index [0]", account=self.__account)
+                logging.debug("No account was provided, using the account at index [0]", account=self.__account)
 
     def __load_contract_from_src(self):
         """
@@ -406,9 +404,9 @@ class Config:
             new_cfg_dict = yaml.load(yaml_file)[self.env]
 
         try:
-            logger.debug("Creating components from configuration")
+            logging.debug("Creating components from configuration")
             self.__create_components(new_cfg_dict)
-            logger.debug("Components successfully created")
+            logging.debug("Components successfully created")
             self.__cfg_dict = new_cfg_dict
 
         except KeyError as missing_config:
@@ -424,9 +422,9 @@ class Config:
             # revert state to that
             else:
                 # Revert configuration as a means to prevent crashes
-                logger.debug("Configuration error. Reverting changes....")
+                logging.debug("Configuration error. Reverting changes....")
                 self.__create_components(self.__cfg_dict)
-                logger.debug("Successfully reverted changes")
+                logging.debug("Successfully reverted changes")
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """
