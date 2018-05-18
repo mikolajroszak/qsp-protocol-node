@@ -10,7 +10,7 @@ run: # printing "date" is important so Cloud Watch can distinguish log files
 	date; python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -v -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
 
 test:
-	./analyzers/init.sh && PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s --disable-pytest-warnings --cov-report term-missing --cov-report html tests/
+	./analyzers/init.sh && PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-report term-missing --cov-report html tests/
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc)$$" | xargs rm -rf
