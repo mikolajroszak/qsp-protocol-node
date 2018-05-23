@@ -5,8 +5,6 @@ import argparse
 import signal
 import traceback, sys
 
-import logging
-
 from audit import QSPAuditNode
 from config import Config
 from tendo.singleton import SingleInstance
@@ -14,35 +12,10 @@ from tendo.singleton import SingleInstance
 import faulthandler
 faulthandler.enable()
 
-done = False
-audit_node = None
-logger = logging.getLogger("default")
-
-def stop_audit_node():
-    global done
-    global audit_node
-    global logger
-
-    if audit_node is None or done:
-        return
-
-    logger.info("Stopping QSP Audit Node")
-
-    audit_node.stop()
-    done = True
-
-def handle_stop_signal(signal, frame):
-    stop_audit_node()
-
-signal.signal(signal.SIGTERM, handle_stop_signal)
-signal.signal(signal.SIGINT, handle_stop_signal)
-
 def main():
     """
     Main function.
     """
-    global audit_node
-    global logger
     try:
         # Sets the program's arguments
         parser = argparse.ArgumentParser(description='QSP Audit Node')
@@ -69,33 +42,38 @@ def main():
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
         cfg = Config(args.environment, args.config_yaml, args.password)
-        logger = cfg.logger
 
-        logger.info("Initializing QSP Audit Node")
-        logger.debug("account: {0}".format(str(cfg.account)))
-        logger.debug("internal contract: {0}".format(
+        cfg.logger.info("Initializing QSP Audit Node")
+        cfg.logger.debug("account: {0}".format(str(cfg.account)))
+        cfg.logger.debug("internal contract: {0}".format(
             str(cfg.internal_contract)))
-        logger.debug("analyzer: {0}".format(str(cfg.analyzer)))
-        logger.debug("min_price: {0}".format(str(cfg.min_price)))
-        logger.debug("evt_polling: {0}".format(str(cfg.evt_polling)))
+        cfg.logger.debug("analyzer: {0}".format(str(cfg.analyzer)))
+        cfg.logger.debug("min_price: {0}".format(str(cfg.min_price)))
+        cfg.logger.debug("evt_polling: {0}".format(str(cfg.evt_polling)))
 
         # Based on the provided configuration, instantiates a new
         # QSP audit node
         audit_node = QSPAuditNode(cfg)
+        
+        def handle_stop_signal(signal, frame):
+            audit_node.stop()
+            
+        signal.signal(signal.SIGTERM, handle_stop_signal)
+        signal.signal(signal.SIGINT, handle_stop_signal)
 
-        logger.info("Running QSP audit node")
+        cfg.logger.info("Running QSP audit node")
 
         # Runs the QSP audit node in a busy loop fashion
         audit_node.run()
     except Exception as error:
-        logger.exception(
+        cfg.logger.exception(
             "Cannot start audit node. {0}".format(
                 str(error)
             )
         )
         traceback.print_exc(file=sys.stdout)
     finally:
-        stop_audit_node()
+        audit_node.stop()
 
 
 if __name__ == "__main__":

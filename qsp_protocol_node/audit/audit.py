@@ -346,6 +346,9 @@ class QSPAuditNode:
         """
         Signals to the executing QSP audit node that is should stop the execution of the node.
         """
+        
+        self.__logger.info("Stopping QSP Audit Node")
+        
         self.__exec = False
 
         for internal_thread in self.__internal_threads:
