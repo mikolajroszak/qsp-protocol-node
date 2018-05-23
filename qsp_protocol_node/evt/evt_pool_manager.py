@@ -45,7 +45,7 @@ class EventPoolManager:
         query_file = EventPoolManager.__query_path(query)
         return worker.execute_script(query_file, values)
 
-    def __init__(self, db_path):
+    def __init__(self, db_path, logger):
         # Gets a connection with the SQL3Lite server
         # Must be explicitly closed by calling `close` on the same
         # EventPool object. The connection is created with autocommit
@@ -61,7 +61,7 @@ class EventPoolManager:
             if db_file.is_file():
                 db_existed = True
 
-            self.__sqlworker = Sqlite3Worker(file_name=db_path, max_queue_size=10000)
+            self.__sqlworker = Sqlite3Worker(logger, file_name=db_path, max_queue_size=10000)
             db_created = True
 
             if not db_existed:

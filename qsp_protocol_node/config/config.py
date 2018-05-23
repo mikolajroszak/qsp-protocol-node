@@ -21,6 +21,11 @@ import os
 import hashlib
 
 import logging
+import logging.config
+import structlog
+
+from structlog import configure_once, processors, stdlib, threadlocal
+
 import utils.io as io_utils
 
 from audit import Analyzer
@@ -30,7 +35,6 @@ from utils.eth import (
     mk_checksum_address,
 )
 from evt import EventPoolManager
-
 
 def config_value(cfg, path, default=None, accept_none=True):
     """
@@ -165,6 +169,11 @@ class Config:
             cfg,
             '/report_uploader/args',
             {}
+        )
+        self.__logging_is_verbose = config_value(
+            cfg,
+            '/logging/is_verbose',
+            False
         )
 
     def __check_values(self):
@@ -357,7 +366,7 @@ class Config:
         """
         Creates an instance of the the target analyzer that verifies a given contract.
         """
-        self.__analyzer = Analyzer(self.analyzer_cmd)
+        self.__analyzer = Analyzer(self.analyzer_cmd, self.logger)
 
     def __create_wallet_session_manager(self):
         if self.eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
@@ -367,12 +376,13 @@ class Config:
                 self.__web3_client, self.__account, self.__account_passwd)
 
     def __create_event_pool_manager(self):
-        self.__event_pool_manager = EventPoolManager(self.evt_db_path)
+        self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
 
 
     def __create_components(self, cfg):
         # Setup followed by verification
         self.__setup_values(cfg)
+        self.__configure_logging()
         self.__check_values()
 
         # Creation of internal components
@@ -404,9 +414,8 @@ class Config:
             new_cfg_dict = yaml.load(yaml_file)[self.env]
 
         try:
-            logging.debug("Creating components from configuration")
             self.__create_components(new_cfg_dict)
-            logging.debug("Components successfully created")
+            self.__logger.debug("Components successfully created")
             self.__cfg_dict = new_cfg_dict
 
         except KeyError as missing_config:
@@ -422,9 +431,54 @@ class Config:
             # revert state to that
             else:
                 # Revert configuration as a means to prevent crashes
-                logging.debug("Configuration error. Reverting changes....")
+                self.__logger.debug("Configuration error. Reverting changes....")
                 self.__create_components(self.__cfg_dict)
-                logging.debug("Successfully reverted changes")
+                self.__logger.debug("Successfully reverted changes")
+
+    def __configure_logging(self):
+      logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+      logging.getLogger('botocore').setLevel(logging.CRITICAL)
+        
+      configure_once(
+          context_class=threadlocal.wrap_dict(dict),
+          logger_factory=stdlib.LoggerFactory(),
+          wrapper_class=stdlib.BoundLogger,
+          processors=[
+              stdlib.filter_by_level,
+              stdlib.add_logger_name,
+              stdlib.add_log_level,
+              stdlib.PositionalArgumentsFormatter(),
+              processors.TimeStamper(fmt="iso"),
+              processors.StackInfoRenderer(),
+              processors.format_exc_info,
+              processors.UnicodeDecoder(),
+              stdlib.render_to_log_kwargs]
+      )
+      
+      logging.config.dictConfig({
+          'version': 1,
+          'disable_existing_loggers': False,
+          'formatters': {
+              'json': {
+                  'format': '%(message)s %(threadName)s %(lineno)d %(pathname)s ',
+                  'class': 'pythonjsonlogger.jsonlogger.JsonFormatter'
+              }
+          },
+          'handlers': {
+              'json': {
+                  'class': 'logging.StreamHandler',
+                  'formatter': 'json'
+              }
+          },
+          'loggers': {
+              '': {
+                  'handlers': ['json'],
+                  'level': logging.DEBUG if self.__logging_is_verbose else logging.INFO
+              }
+          }
+      })
+      
+      self.__logger = structlog.getLogger("audit")
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """
@@ -636,3 +690,10 @@ class Config:
         Returns the event pool manager.
         """
         return self.__event_pool_manager
+
+    @property
+    def logger(self):
+        """
+        Returns the configured logger.
+        """
+        return self.__logger

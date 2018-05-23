@@ -18,6 +18,8 @@ local:
   account:
     id: !!str "0x0283c049ed4705e2d98c807dbafdaf725f34b8d2"
     ttl: 600
+  logging:
+    is_verbose: True
 
 dev:
   eth_node:
@@ -41,6 +43,8 @@ dev:
   default_gas: !!int 700000
   evt_db_path: "/analyzer/audit-db/audit_node.db"
   submission_timeout_limit_blocks: 10
+  logging:
+    is_verbose: True
 
 prod:
   eth_node:
@@ -64,3 +68,5 @@ prod:
   default_gas: !!int 700000
   evt_db_path: "/analyzer/audit-db/audit_node.db"
   submission_timeout_limit_blocks: 10
+  logging:
+    is_verbose: True

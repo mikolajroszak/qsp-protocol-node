@@ -7,7 +7,7 @@ from audit import Analyzer, AnalyzerRunException
 
 from utils.io import fetch_file
 from helpers.resource import resource_uri
-
+from structlog import getLogger
 
 class TestAnalyzer(unittest.TestCase):
     """
@@ -21,7 +21,7 @@ class TestAnalyzer(unittest.TestCase):
         Tests whether a report is created upon calling the analyzer
         on a buggy contract
         """
-        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE)
+        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE, getLogger("test"))
 
         buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
         report = analyzer.check(buggy_contract, "${input}.json", "123")
@@ -40,7 +40,7 @@ class TestAnalyzer(unittest.TestCase):
         """
 
         inexistent_file = str(random()) + ".sol"
-        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE)
+        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE, getLogger("test"))
 
         report = analyzer.check(inexistent_file, "${input}.json", "123")
 
@@ -53,7 +53,7 @@ class TestAnalyzer(unittest.TestCase):
         """
 
         old_contract = fetch_file(resource_uri("DAOBugOld.sol"))
-        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE)
+        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE, getLogger("test"))
 
         report = analyzer.check(old_contract, "${input}.json", "123")
 
@@ -67,7 +67,7 @@ class TestAnalyzer(unittest.TestCase):
         """
 
         old_contract = fetch_file(resource_uri("DAOBugOld-Caret.sol"))
-        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE)
+        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE, getLogger("test"))
 
         report = analyzer.check(old_contract, "${input}.json", "123")
 

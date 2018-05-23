@@ -4,7 +4,6 @@ Provides an interface for invoking the analyzer software.
 
 import subprocess
 import os
-import logging
 
 from utils.io import load_json
 from utils.args import replace_args
@@ -26,12 +25,13 @@ class AnalyzerRunException(Exception):
 
 class Analyzer:
 
-    def __init__(self, cmd_template):
+    def __init__(self, cmd_template, logger):
         """
         Builds an Analyzer object from a given command template and supported version of
         the Solidity language.
         """
         self.__cmd_template = cmd_template
+        self.__logger = logger
 
     def __create_err_result(self, msg):
         return {
@@ -66,9 +66,9 @@ class Analyzer:
                 "${output}": injected_output,
             })
 
-            logging.debug("Executing check on contract {0}".format(contract), requestId=request_id)
-            logging.debug("Output set to {0}".format(injected_output), requestId=request_id)
-            logging.debug("Analyzer command set to {0}".format(injected_cmd), requestId=request_id)
+            self.__logger.debug("Executing check on contract {0}".format(contract), requestId=request_id)
+            self.__logger.debug("Output set to {0}".format(injected_output), requestId=request_id)
+            self.__logger.debug("Analyzer command set to {0}".format(injected_cmd), requestId=request_id)
 
             # NOTE: in some occasions, oyenete sucessfully runs, but
             # still returns a non-zero status. Consequently, 'check'
@@ -81,40 +81,40 @@ class Analyzer:
             if os.path.isfile(injected_output):
                 os.remove(injected_output)
 
-            logging.debug("Invoking analyzer tool as a subprocess", requestId=request_id)
+            self.__logger.debug("Invoking analyzer tool as a subprocess", requestId=request_id)
 
             # TODO Add timeout parameter based on a configuration parameter
             analyzer_result = subprocess.run(injected_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-            logging.debug("Done running analyzer process", requestId=request_id)
-            logging.debug("Analyzer output: {0}".format(analyzer_result.stderr), requestId=request_id)
+            self.__logger.debug("Done running analyzer process", requestId=request_id)
+            self.__logger.debug("Analyzer output: {0}".format(analyzer_result.stderr), requestId=request_id)
 
             if os.path.isfile(injected_output):
-                logging.debug(
+                self.__logger.debug(
                     "Loading result from {0}".format(injected_output), requestId=request_id)
 
                 result = load_json(injected_output)
                 os.remove(injected_output)
 
                 if result is not None and result:
-                    logging.debug("Analysis result is {0}".format(str(result)), requestId=request_id)
+                    self.__logger.debug("Analysis result is {0}".format(str(result)), requestId=request_id)
                     return self.__create_succ_result(result)
 
             # Unknown error. Report it as such
             raise AnalyzerRunException("Failed in running analyzer", analyzer_result.stdout)
 
         except ContractsNotFound as error:
-            logging.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
+            self.__logger.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
             return self.__create_err_result(str(error.stderr_data))
 
         except SolcError as error:
-            logging.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
+            self.__logger.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
             return self.__create_err_result(str(error.stderr_data))
 
         except AnalyzerRunException as error:
-            logging.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
+            self.__logger.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
             return self.__create_err_result(str(error.output))
 
         except Exception as error:
-            logging.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
+            self.__logger.debug("Error calling analyzer: {0}".format(str(error)), requestId=request_id)
             return self.__create_err_result(str(error))
