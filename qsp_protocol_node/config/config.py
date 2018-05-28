@@ -261,7 +261,7 @@ class Config:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
-                logging.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
+                self.__logger.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
                         attempts
                     )
                 )
@@ -302,10 +302,10 @@ class Config:
         if self.__account is None:
             if len(self.__web3_client.eth.accounts) == 0:
                 self.__account = self.__web3_client.personal.newAccount(self.__account_passwd)
-                logging.debug("No account was provided, using a newly created one", account=self.__account)
+                self.__logger.debug("No account was provided, using a newly created one", account=self.__account)
             else:
                 self.__account = self.__web3_client.eth.accounts[0]
-                logging.debug("No account was provided, using the account at index [0]", account=self.__account)
+                self.__logger.debug("No account was provided, using the account at index [0]", account=self.__account)
 
     def __load_contract_from_src(self):
         """
