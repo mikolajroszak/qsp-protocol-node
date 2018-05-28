@@ -29,15 +29,11 @@ __author__ = "Shawn Lee"
 __email__ = "shawnl@palantir.com"
 __license__ = "MIT"
 
-import logging
 import queue as Queue
 import apsw
 import threading
 import time
 import uuid
-
-logger = logging.getLogger('sqlite3worker')
-
 
 class Sqlite3Worker(threading.Thread):
     """Sqlite thread safe object.
@@ -63,7 +59,7 @@ class Sqlite3Worker(threading.Thread):
 
     As with execute, execute_script executes within a transaction.
     """
-    def __init__(self, file_name, max_queue_size=100):
+    def __init__(self, logger, file_name, max_queue_size=100):
         """Automatically starts the thread.
 
         Args:

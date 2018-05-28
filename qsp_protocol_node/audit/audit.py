@@ -2,7 +2,6 @@
 Provides the QSP Audit node implementation.
 """
 import json
-import utils.logging as logging_utils
 import traceback
 
 from queue import Queue
@@ -13,9 +12,6 @@ from hashlib import sha256
 from utils.io import fetch_file, digest
 from utils.eth import mk_args
 from threading import Thread
-
-logger = logging_utils.get_logger()
-
 
 class QSPAuditNode:
 
@@ -36,6 +32,7 @@ class QSPAuditNode:
         Builds a QSPAuditNode object from the given input parameters.
         """
         self.__config = config
+        self.__logger = config.logger
         self.__exec = False
         self.__internal_threads = []
 
@@ -93,7 +90,7 @@ class QSPAuditNode:
         if start_block < 0:
             start_block = 0
 
-        logger.debug("Filtering events from block # {0}".format(str(start_block)))
+        self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
         self.__internal_threads.append(self.__run_audit_evt_thread(
             "LogAuditQueued",
@@ -127,7 +124,7 @@ class QSPAuditNode:
             # Checking if all threads are still alive
             for thread in self.__internal_threads:
                 if not thread.is_alive():
-                    logger.debug("Cannot proceed execution. At least one internal thread is lost")
+                    self.__logger.debug("Cannot proceed execution. At least one internal thread is lost")
                     self.stop()
 
             sleep(health_check_interval_sec)
@@ -143,19 +140,19 @@ class QSPAuditNode:
             request_id = str(evt['args']['requestId'])
 
             if (price >= self.__config.min_price):
-                logger.debug("Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
+                self.__logger.debug("Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
                     str(evt)), requestId=request_id)
                 self.__get_next_audit_request()
 
             else:
-                logger.debug(
+                self.__logger.debug(
                     "Declining processing audit request: {0}. Not enough incentive".format(
                         str(evt)
                     ),
                     requestId=request_id,
                 )
         except Exception as error:
-            logger.exception(
+            self.__logger.exception(
                 "Error when processing audit request event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
@@ -168,7 +165,7 @@ class QSPAuditNode:
             # If an audit request is not targeted to the
             # running audit node, just disconsider it
             if target_auditor.lower() != self.__config.account.lower():
-                logger.debug(
+                self.__logger.debug(
                     "Ignoring audit request (not directed at current node): {0}".format(
                         str(evt)
                     ),
@@ -176,7 +173,7 @@ class QSPAuditNode:
                 )
                 return
 
-            logger.debug(
+            self.__logger.debug(
                 "Saving audit request for processing (if new): {0}".format(
                     str(evt)
                 ),
@@ -201,7 +198,7 @@ class QSPAuditNode:
                 audit_evt
             )
         except Exception as error:
-            logger.exception(
+            self.__logger.exception(
                 "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
@@ -214,7 +211,7 @@ class QSPAuditNode:
             # If an audit request is not targeted to the
             # running audit node, just disconsider it
             if target_auditor.lower() != self.__config.account.lower():
-                logger.debug(
+                self.__logger.debug(
                     "Ignoring submission event (not directed at current node): {0}".format(
                         str(evt)
                     ),
@@ -231,7 +228,7 @@ class QSPAuditNode:
                     audit_evt
                 )
         except Exception as error:
-            logger.exception(
+            self.__logger.exception(
                 "Error when processing submission event {0}: {1}. Audit event is {2}".format(
                     str(evt),
                     str(error),
@@ -251,21 +248,21 @@ class QSPAuditNode:
                 if audit_result is None:
                     error = "Could not generate report"
                     evt['status_info'] = error
-                    logger.exception(error, requestId=request_id)
+                    self.__logger.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
                     evt['report_uri'] = audit_result['report_uri']
                     evt['report_hash'] = audit_result['report_hash']
                     evt['audit_state'] = audit_result['audit_state']
                     evt['status_info'] = "Sucessfully generated report"
-                    logger.debug(
+                    self.__logger.debug(
                         "Generated report URI is {0}. Saving it in the internal database (if not previously saved)".format(
                             str(evt['report_uri'])
                         ), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except Exception as error:
-                logger.exception(
+                self.__logger.exception(
                     "Error when performing audit for request event {0}: {1}".format(str(evt), str(error)),
                     requestId=request_id,
                 )
@@ -326,7 +323,7 @@ class QSPAuditNode:
 
                 # TODO How to inform the network of a submission timeout?
             except Exception as error:
-                logger.exception("Unexpected error when monitoring timeout")
+                self.__logger.exception("Unexpected error when monitoring timeout")
 
         def exec():
             while self.__exec:
@@ -349,6 +346,9 @@ class QSPAuditNode:
         """
         Signals to the executing QSP audit node that is should stop the execution of the node.
         """
+        
+        self.__logger.info("Stopping QSP Audit Node")
+        
         self.__exec = False
 
         for internal_thread in self.__internal_threads:
@@ -363,7 +363,7 @@ class QSPAuditNode:
         """
         Audits a target contract.
         """
-        logger.info(
+        self.__logger.info(
             "Executing audit on contract at {0}".format(uri), 
             requestId=request_id,
         )
@@ -376,7 +376,7 @@ class QSPAuditNode:
             request_id,
         )
         
-        logger.info(
+        self.__logger.info(
             "Analyzer report contents",
             requestId=request_id,
             contents = analyzer_report,
@@ -395,7 +395,7 @@ class QSPAuditNode:
         report_hash = str(sha256(report_as_string.encode()).hexdigest())
         upload_result = self.__config.report_uploader.upload(report_as_string)
 
-        logger.info(
+        self.__logger.info(
             "Report upload result: {0}".format(upload_result), 
             requestId=request_id,
         )
