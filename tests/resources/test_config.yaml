@@ -17,3 +17,5 @@ local:
     # No provided account hex (use the first one by default)
     ttl: 600
   evt_db_path: "/tmp/evts.test"
+  logging:
+    is_verbose: True

@@ -10,6 +10,7 @@ from web3 import (
     EthereumTesterProvider,
 )
 from upload import S3Provider
+from streaming import CloudWatchProvider
 from dpath.util import get
 from solc import compile_files
 from os.path import expanduser
@@ -175,6 +176,15 @@ class Config:
             '/logging/is_verbose',
             False
         )
+        self.__logging_streaming_provider_name = config_value(
+            cfg,
+            '/logging/streaming/provider',
+        )
+        self.__logging_streaming_provider_args = config_value(
+            cfg,
+            '/logging/streaming/args',
+            {}
+        )
 
     def __check_values(self):
         """
@@ -289,6 +299,21 @@ class Config:
 
         raise Exception(
             "Unknown/Unsupported provider: {0}".format(self.__report_uploader_provider_name))
+
+    def __create_logging_streaming_provider(self):
+        """
+        Creates a logging streaming provider.
+        """
+        # Supported providers:
+        #
+        # CloudWatchProvider
+
+        if self.__logging_streaming_provider_name == "CloudWatchProvider":
+            self.__logging_streaming_provider = CloudWatchProvider(**self.__logging_streaming_provider_args)
+            return
+
+        raise Exception(
+            "Unknown/Unsupported provider: {0}".format(self.__logging_streaming_provider_name))
 
     def __create_web3_client(self):
         """
@@ -455,7 +480,7 @@ class Config:
               stdlib.render_to_log_kwargs]
       )
       
-      logging.config.dictConfig({
+      dictConfig = {
           'version': 1,
           'disable_existing_loggers': False,
           'formatters': {
@@ -476,9 +501,18 @@ class Config:
                   'level': logging.DEBUG if self.__logging_is_verbose else logging.INFO
               }
           }
-      })
-      
-      self.__logger = structlog.getLogger("audit")
+      };
+
+      if (self.__logging_streaming_provider_name != None):
+        self.__create_logging_streaming_provider()
+        dictConfig['handlers']['streaming'] = self.__logging_streaming_provider.get_dict_config()
+        dictConfig['loggers']['']['handlers'].append('streaming')
+        logging.config.dictConfig(dictConfig)
+        self.__logger = structlog.getLogger("audit")
+        self.__logger.addHandler(self.__logging_streaming_provider.get_handler())
+      else:
+        logging.config.dictConfig(dictConfig)
+        self.__logger = structlog.getLogger("audit")
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """
