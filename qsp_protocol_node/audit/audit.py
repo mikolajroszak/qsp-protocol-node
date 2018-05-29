@@ -351,12 +351,14 @@ class QSPAuditNode:
         def exec():
             while self.__exec:
                 self.__logger.info("Metrics",
-                    key=NodeKey.fetch(),
-                    blockNumber=self.__config.web3_client.eth.blockNumber,
-                    cpu=psutil.cpu_percent(),
-                    memory=psutil.virtual_memory().percent,
-                    disk=psutil.disk_usage('/').percent,
-                    min_price=self.__config.min_price,
+                    uniqueKey=NodeKey.fetch(),
+                    ethBlockNumber=self.__config.web3_client.eth.blockNumber,
+                    ethNodeVersion=self.__config.web3_client.version.node,
+                    ethProtocolVersion=self.__config.web3_client.version.ethereum,
+                    hostCpu=psutil.cpu_percent(),
+                    hostMemory=psutil.virtual_memory().percent,
+                    hostDisk=psutil.disk_usage('/').percent,
+                    minPrice=self.__config.min_price,
                     account=self.__config.account
                 )
                 sleep(self.__config.metrics_interval_seconds)
