@@ -117,7 +117,7 @@ class QSPAuditNode:
         self.__internal_threads.append(self.__run_monitor_submisson_thread())
 
         if (self.__config.metrics_is_enabled):
-          self.__internal_threads.append(self.__run_metrics_thread())
+            self.__internal_threads.append(self.__run_metrics_thread())
 
         # Monitors the state of each thread. Upon error, terminate the
         # audit node. Checking whether a thread is alive or not does
