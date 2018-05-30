@@ -5,9 +5,8 @@ ETH_PASSPHRASE ?= ""
 # If running outside a container, assume the variable is configured
 # properly.
 
-run: # printing "date" is important so Cloud Watch can distinguish log files 
-  # the workaround should be removed when switched to Kubernetes
-	date; python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
+run:
+	python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
 
 test:
 	./analyzers/init.sh && PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-report term-missing --cov-report html tests/
