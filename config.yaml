@@ -20,6 +20,9 @@ local:
     ttl: 600
   logging:
     is_verbose: True
+    metrics:
+      is_enabled: True
+      interval_seconds: 30
     streaming:
       provider: !!str "CloudWatchProvider"
       args:
@@ -51,6 +54,9 @@ dev:
   submission_timeout_limit_blocks: 10
   logging:
     is_verbose: True
+    metrics:
+      is_enabled: True
+      interval_seconds: 30
     streaming:
       provider: !!str "CloudWatchProvider"
       args:
@@ -82,6 +88,9 @@ prod:
   submission_timeout_limit_blocks: 10
   logging:
     is_verbose: True
+    metrics:
+      is_enabled: True
+      interval_seconds: 30
     streaming:
       provider: !!str "CloudWatchProvider"
       args:

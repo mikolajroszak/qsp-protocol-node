@@ -185,6 +185,16 @@ class Config:
             '/logging/streaming/args',
             {}
         )
+        self.__logging_metrics_is_enabled = config_value(
+            cfg,
+            '/logging/metrics/is_enabled',
+            False
+        )
+        self.__logging_metrics_interval_seconds = config_value(
+            cfg,
+            '/logging/metrics/interval_seconds',
+            False
+        )
 
     def __check_values(self):
         """
@@ -731,3 +741,17 @@ class Config:
         Returns the configured logger.
         """
         return self.__logger
+
+    @property
+    def metrics_is_enabled(self):
+        """
+        Is metric collection enabled.
+        """
+        return self.__logging_metrics_is_enabled
+
+    @property
+    def metrics_interval_seconds(self):
+        """
+        Metric collection interval in seconds.
+        """
+        return self.__logging_metrics_interval_seconds
