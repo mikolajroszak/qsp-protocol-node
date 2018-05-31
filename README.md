@@ -117,7 +117,7 @@ They could be automated in the future.
 ### Oyente
 
 1. Clone the latest https://github.com/melonproject/oyente
-2. In `Dockerfile`, replace `pip install requests web3` with `pip install requests web3==3.16.5` (won't be necessary after   https://github.com/melonproject/oyente/issues/331 is addressed)
+2. In `Dockerfile`, replace `pip install requests web3` with `pip install requests web3==3.16.5` (won't be necessary after https://github.com/melonproject/oyente/issues/331 is addressed)
 3. In `Dockerfile`, remove the lines starting `apt-get install yarn` (won't be necessary after https://github.com/melonproject/oyente/issues/332 is addressed)
 4. Login to Docker: `$(aws ecr get-login --region us-east-1 --no-include-email)`
 5. Build the image `docker build -t 466368306539.dkr.ecr.us-east-1.amazonaws.com/melonproject-oyente:57dcfae35773ff30aa34856865a7ad07c501d4d0 .`
