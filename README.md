@@ -9,10 +9,10 @@ Implements the QSP audit node in the Quantstamp network.
 All instructions must be run from the project's root folder.
 
 1. Clone the repo
-1. Run the following instructions (done once):
+1. Run the following instructions (done once; the second line installs solidity version 0.4.23):
   ```
-  brew install pyenv
-  brew install pyenv-virtualenv
+  brew install automake libtool awscli pyenv pyenv-virtualenv
+  brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/commit/9c1da746bbfc9e60831d37d01436a41f4464f0e1/solidity.rb
   pyenv install 3.6.4
   echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\neval "$(pyenv virtualenv-init -)"\nfi' >> ~/.bash_profile
   pyenv virtualenv env
