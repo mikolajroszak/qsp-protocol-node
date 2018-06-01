@@ -18,11 +18,12 @@ All instructions must be run from the project's root folder.
   pyenv virtualenv env
   pip install -r requirements.txt
   ```
-1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#dev-protocol` Slack channel.
+3. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#dev-protocol` Slack channel.
 1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)
 **On Mac**: double-check that Python bin path in your $PATH variable does not use the `~` character. If it does, replace it with your `/Users/<username>` (or `make` won't find `aws`).
 1. Install Docker: https://docs.docker.com/install/
 1. Make sure your user is a part of the docker group: `sudo usermod -a -G docker <username>`
+1. If you are using macOS, ensure `Xcode` is installed.
 
 ### Run tests
 
@@ -106,3 +107,11 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing
 1. Open a pull request from your branch into `develop`
 1. Wait for CI tests to finish and pass
 1. After approved, merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS](https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-protocol-node&environmentId=e-c2cqj8usi7)
+
+## Troubleshooting 
+
+This section includes situations that a command previously failed and we came up with ways to mitigate it. The following troubleshooting statements are in the form below:
+
+While _`doing command`_, on _`environment`_, , we encountered _`this message`_, then _`did these steps`_.
+
+1. While _executing_ ```pyenv install 3.6.4```, On `macOS 10.13.4`, we encountered `zipimport.ZipImportError: can't decompress data; zlib not availabl`, then _installed_ `xcode-select --install`.
