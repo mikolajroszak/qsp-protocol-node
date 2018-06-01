@@ -18,11 +18,12 @@ All instructions must be run from the project's root folder.
   pyenv virtualenv env
   pip install -r requirements.txt
   ```
-1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#dev-protocol` Slack channel.
+3. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#dev-protocol` Slack channel.
 1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)
 **On Mac**: double-check that Python bin path in your $PATH variable does not use the `~` character. If it does, replace it with your `/Users/<username>` (or `make` won't find `aws`).
 1. Install Docker: https://docs.docker.com/install/
 1. Make sure your user is a part of the docker group: `sudo usermod -a -G docker <username>`
+1. If you are using macOS, ensure `Xcode` is installed.
 
 ### Run tests
 
