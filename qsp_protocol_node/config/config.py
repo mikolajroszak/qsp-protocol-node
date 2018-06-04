@@ -11,6 +11,7 @@ from web3 import (
 )
 from upload import S3Provider
 from streaming import CloudWatchProvider
+from metrics import CloudWatchMetricCollectionProvider
 from dpath.util import get
 from solc import compile_files
 from os.path import expanduser
@@ -185,15 +186,24 @@ class Config:
             '/logging/streaming/args',
             {}
         )
-        self.__logging_metrics_is_enabled = config_value(
+        self.__metric_collection_is_enabled = config_value(
             cfg,
-            '/logging/metrics/is_enabled',
+            '/metric_collection/is_enabled',
             False
         )
-        self.__logging_metrics_interval_seconds = config_value(
+        self.__metric_collection_interval_seconds = config_value(
             cfg,
-            '/logging/metrics/interval_seconds',
+            '/metric_collection/interval_seconds',
             False
+        )
+        self.__metric_collection_provider_name = config_value(
+            cfg,
+            '/metric_collection/provider',
+        )
+        self.__metric_collection_provider_args = config_value(
+            cfg,
+            '/metric_collection/args',
+            {}
         )
 
     def __check_values(self):
@@ -325,6 +335,22 @@ class Config:
         raise Exception(
             "Unknown/Unsupported provider: {0}".format(self.__logging_streaming_provider_name))
 
+    def __create_metric_collection_provider(self):
+        """
+        Creates a metric collection provider.
+        """
+        # Supported providers:
+        #
+        # CloudWatchMetricCollectionProvider
+
+        if (self.__metric_collection_is_enabled):
+            if self.__metric_collection_provider_name == "CloudWatchMetricCollectionProvider":
+                self.__metric_collection_provider = CloudWatchMetricCollectionProvider(self, **self.__metric_collection_provider_args)
+                return
+
+            raise Exception(
+                "Unknown/Unsupported provider: {0}".format(self.__metric_collection_provider_name))
+
     def __create_web3_client(self):
         """
         Creates a Web3 client from the already set Ethereum provider.
@@ -421,6 +447,7 @@ class Config:
         self.__check_values()
 
         # Creation of internal components
+        self.__create_metric_collection_provider()
         self.__create_eth_provider()
         self.__create_web3_client()
 
@@ -743,15 +770,22 @@ class Config:
         return self.__logger
 
     @property
-    def metrics_is_enabled(self):
+    def metric_collection_is_enabled(self):
         """
         Is metric collection enabled.
         """
-        return self.__logging_metrics_is_enabled
+        return self.__metric_collection_is_enabled
 
     @property
-    def metrics_interval_seconds(self):
+    def metric_collection_interval_seconds(self):
         """
         Metric collection interval in seconds.
         """
-        return self.__logging_metrics_interval_seconds
+        return self.__metric_collection_interval_seconds
+
+    @property
+    def metric_collection_provider(self):
+        """
+        Metric collection provider.
+        """
+        return self.__metric_collection_provider

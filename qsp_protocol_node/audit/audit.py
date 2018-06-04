@@ -12,8 +12,6 @@ from hashlib import sha256
 from utils.io import fetch_file, digest
 from utils.eth import mk_args
 from threading import Thread
-from utils.node_key import NodeKey
-import psutil
 
 class QSPAuditNode:
 
@@ -86,6 +84,10 @@ class QSPAuditNode:
             raise Exception("Cannot run audit node thread due to another audit node instance")
 
         self.__exec = True
+                
+        if (self.__config.metric_collection_is_enabled):
+            self.__config.metric_collection_provider.collect_and_send()
+            self.__internal_threads.append(self.__run_metrics_thread())
 
         # If no block has currently been processed, start from zero
         start_block = self.__config.event_pool_manager.get_latest_block_number()
@@ -115,9 +117,6 @@ class QSPAuditNode:
         self.__internal_threads.append(self.__run_perform_audit_thread())
         self.__internal_threads.append(self.__run_submission_thread())
         self.__internal_threads.append(self.__run_monitor_submisson_thread())
-
-        if (self.__config.metrics_is_enabled):
-            self.__internal_threads.append(self.__run_metrics_thread())
 
         # Monitors the state of each thread. Upon error, terminate the
         # audit node. Checking whether a thread is alive or not does
@@ -350,18 +349,8 @@ class QSPAuditNode:
     def __run_metrics_thread(self):
         def exec():
             while self.__exec:
-                self.__logger.info("Metrics",
-                    uniqueKey=NodeKey.fetch(),
-                    ethBlockNumber=self.__config.web3_client.eth.blockNumber,
-                    ethNodeVersion=self.__config.web3_client.version.node,
-                    ethProtocolVersion=self.__config.web3_client.version.ethereum,
-                    hostCpu=psutil.cpu_percent(),
-                    hostMemory=psutil.virtual_memory().percent,
-                    hostDisk=psutil.disk_usage('/').percent,
-                    minPrice=self.__config.min_price,
-                    account=self.__config.account
-                )
-                sleep(self.__config.metrics_interval_seconds)
+                self.__config.metric_collection_provider.collect_and_send()
+                sleep(self.__config.metric_collection_interval_seconds)
 
         metrics_thread = Thread(target=exec, name="metrics thread")
         self.__internal_threads.append(metrics_thread)
