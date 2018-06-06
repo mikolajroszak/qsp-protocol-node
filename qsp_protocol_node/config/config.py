@@ -11,7 +11,6 @@ from web3 import (
 )
 from upload import S3Provider
 from streaming import CloudWatchProvider
-from metrics import CloudWatchMetricCollectionProvider
 from dpath.util import get
 from solc import compile_files
 from os.path import expanduser
@@ -194,16 +193,7 @@ class Config:
         self.__metric_collection_interval_seconds = config_value(
             cfg,
             '/metric_collection/interval_seconds',
-            False
-        )
-        self.__metric_collection_provider_name = config_value(
-            cfg,
-            '/metric_collection/provider',
-        )
-        self.__metric_collection_provider_args = config_value(
-            cfg,
-            '/metric_collection/args',
-            {}
+            30
         )
 
     def __check_values(self):
@@ -335,22 +325,6 @@ class Config:
         raise Exception(
             "Unknown/Unsupported provider: {0}".format(self.__logging_streaming_provider_name))
 
-    def __create_metric_collection_provider(self):
-        """
-        Creates a metric collection provider.
-        """
-        # Supported providers:
-        #
-        # CloudWatchMetricCollectionProvider
-
-        if (self.__metric_collection_is_enabled):
-            if self.__metric_collection_provider_name == "CloudWatchMetricCollectionProvider":
-                self.__metric_collection_provider = CloudWatchMetricCollectionProvider(self, **self.__metric_collection_provider_args)
-                return
-
-            raise Exception(
-                "Unknown/Unsupported provider: {0}".format(self.__metric_collection_provider_name))
-
     def __create_web3_client(self):
         """
         Creates a Web3 client from the already set Ethereum provider.
@@ -447,7 +421,6 @@ class Config:
         self.__check_values()
 
         # Creation of internal components
-        self.__create_metric_collection_provider()
         self.__create_eth_provider()
         self.__create_web3_client()
 
@@ -782,10 +755,3 @@ class Config:
         Metric collection interval in seconds.
         """
         return self.__metric_collection_interval_seconds
-
-    @property
-    def metric_collection_provider(self):
-        """
-        Metric collection provider.
-        """
-        return self.__metric_collection_provider

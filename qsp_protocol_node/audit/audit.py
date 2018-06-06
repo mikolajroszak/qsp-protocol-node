@@ -12,6 +12,7 @@ from hashlib import sha256
 from utils.io import fetch_file, digest
 from utils.eth import mk_args
 from threading import Thread
+from utils.metrics import MetricCollector
 
 class QSPAuditNode:
 
@@ -33,6 +34,7 @@ class QSPAuditNode:
         """
         self.__config = config
         self.__logger = config.logger
+        self.__metric_collector = MetricCollector(config)
         self.__exec = False
         self.__internal_threads = []
 
@@ -86,7 +88,7 @@ class QSPAuditNode:
         self.__exec = True
                 
         if (self.__config.metric_collection_is_enabled):
-            self.__config.metric_collection_provider.collect_and_send()
+            self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
 
         # If no block has currently been processed, start from zero
@@ -349,7 +351,7 @@ class QSPAuditNode:
     def __run_metrics_thread(self):
         def exec():
             while self.__exec:
-                self.__config.metric_collection_provider.collect_and_send()
+                self.__metric_collector.collect()
                 sleep(self.__config.metric_collection_interval_seconds)
 
         metrics_thread = Thread(target=exec, name="metrics thread")
