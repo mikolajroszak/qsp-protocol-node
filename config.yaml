@@ -23,9 +23,12 @@ local:
     streaming:
       provider: !!str "CloudWatchProvider"
       args:
-        log_group: "qsp-protocol-nodes-local"
+        log_group: "qsp-protocol-nodes-dev"
         log_stream: "node-{id}"
         send_interval_seconds: 30
+  metric_collection:
+    is_enabled: True
+    interval_seconds: 30
 
 dev:
   eth_node:
@@ -57,6 +60,9 @@ dev:
         log_group: "qsp-protocol-nodes-dev"
         log_stream: "node-{id}"
         send_interval_seconds: 30
+  metric_collection:
+    is_enabled: True
+    interval_seconds: 30
 
 prod:
   eth_node:
@@ -88,3 +94,6 @@ prod:
         log_group: "qsp-protocol-nodes-prod"
         log_stream: "node-{id}"
         send_interval_seconds: 30
+  metric_collection:
+    is_enabled: True
+    interval_seconds: 30

@@ -12,6 +12,7 @@ from hashlib import sha256
 from utils.io import fetch_file, digest
 from utils.eth import mk_args
 from threading import Thread
+from utils.metrics import MetricCollector
 
 class QSPAuditNode:
 
@@ -33,6 +34,7 @@ class QSPAuditNode:
         """
         self.__config = config
         self.__logger = config.logger
+        self.__metric_collector = MetricCollector(config)
         self.__exec = False
         self.__internal_threads = []
 
@@ -84,6 +86,10 @@ class QSPAuditNode:
             raise Exception("Cannot run audit node thread due to another audit node instance")
 
         self.__exec = True
+                
+        if (self.__config.metric_collection_is_enabled):
+            self.__metric_collector.collect()
+            self.__internal_threads.append(self.__run_metrics_thread())
 
         # If no block has currently been processed, start from zero
         start_block = self.__config.event_pool_manager.get_latest_block_number()
@@ -341,6 +347,18 @@ class QSPAuditNode:
         monitor_thread.start()
 
         return monitor_thread
+
+    def __run_metrics_thread(self):
+        def exec():
+            while self.__exec:
+                self.__metric_collector.collect()
+                sleep(self.__config.metric_collection_interval_seconds)
+
+        metrics_thread = Thread(target=exec, name="metrics thread")
+        self.__internal_threads.append(metrics_thread)
+        metrics_thread.start()
+
+        return metrics_thread
 
     def stop(self):
         """
