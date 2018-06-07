@@ -138,6 +138,9 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing
 
 1. Wait for CI tests to finish and pass
 
+1. After approval, merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS]
+(https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-protocol-node&environmentId=e-c2cqj8usi7)
+
 ## Analyzer release process
 
 Not all analyzers are easy-to-build and easy-to-run out of the box.
