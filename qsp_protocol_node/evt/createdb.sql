@@ -3,22 +3,11 @@ create table evt_status (
     description varchar(20) not null
 );
 
-insert into evt_status values (
-    'RV', 'Received'
-);
-
-insert into evt_status values (
-    'TS', 'To be submitted'
-);
-insert into evt_status values (
-    'SB', 'Submitted'
-);
-insert into evt_status values (
-    'DN', 'Done'
-);
-insert into evt_status values (
-    'ER', 'Error'
-);
+insert into evt_status(id, description) values ('RV', 'Received'),
+    ('TS', 'To be submitted'),
+    ('SB', 'Submitted'),
+    ('DN', 'Done'),
+    ('ER', 'Error');
 
 create table audit_evt (
     request_id          string primary key,
