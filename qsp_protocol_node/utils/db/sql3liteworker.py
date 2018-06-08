@@ -67,6 +67,7 @@ class Sqlite3Worker(threading.Thread):
             max_queue_size: The max queries that will be queued.
         """
         threading.Thread.__init__(self)
+        self.logger = logger
         self.daemon = True
         self.sqlite3_conn = apsw.Connection(file_name)
 
