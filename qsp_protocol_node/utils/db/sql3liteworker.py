@@ -148,7 +148,7 @@ class Sqlite3Worker(threading.Thread):
                 if not select:
                     self.sqlite3_cursor.execute("rollback")
 
-                logger.error(
+                self.logger.error(
                     "Query returned error: %s: %s: %s",
                     query,
                     values,
