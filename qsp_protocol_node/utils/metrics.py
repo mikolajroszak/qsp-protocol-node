@@ -7,12 +7,13 @@ class MetricCollector:
         self.__client = boto3.client('cloudwatch')
         self.__config = config
         self.__logger = config.logger
+        self.__unique_key = NodeKey.fetch()
       
     def collect(self):
       try:
         self.__logger.info("Metrics",
             metrics=True,
-            uniqueKey=NodeKey.fetch(),
+            uniqueKey=self.__unique_key,
             ethBlockNumber=self.__config.web3_client.eth.blockNumber,
             ethNodeVersion=self.__config.web3_client.version.node,
             ethProtocolVersion=self.__config.web3_client.version.ethereum,

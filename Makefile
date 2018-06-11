@@ -13,8 +13,8 @@ setup:
 	pyenv virtualenv env ; \
 	pip install -r requirements.txt
 
-run:
-	python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
+run: # printing "date" is important due to the logic Cloud Watch uses to distinguish log files
+	date; python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
 
 test:
 	pip install web3[tester] ; \
