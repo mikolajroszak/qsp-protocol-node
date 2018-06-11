@@ -15,6 +15,7 @@ RUN pip install -U pkg-config
 RUN apk add --no-cache python3-dev gcc musl-dev libtool automake autoconf
 RUN apk add --no-cache openssl-dev make
 RUN apk add --no-cache libffi-dev
+RUN apk add --no-cache linux-headers
 
 # Install aws-cli
 RUN pip install -U awscli
