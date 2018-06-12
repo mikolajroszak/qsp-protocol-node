@@ -7,7 +7,6 @@ import apsw
 
 from config import config_value
 from helpers.resource import resource_uri
-from helpers.resource import main_resource_uri
 from timeout_decorator import timeout
 from utils.db import Sqlite3Worker
 from utils.io import fetch_file
@@ -46,7 +45,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         self.logger_mock = LoggerMock()
         self.worker = Sqlite3Worker(self.logger_mock, file)
         self.worker.execute_script(fetch_file(resource_uri('dropdb.sql')))
-        self.worker.execute_script(fetch_file(main_resource_uri('evt/createdb.sql')))
+        self.worker.execute_script(fetch_file(resource_uri('evt/createdb.sql', is_main=True)))
 
 
     def tearDown(self):
@@ -64,7 +63,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         """
         self.assertFalse(self.logger_mock.logged)
         result = self.worker.execute("select * from evt_status")
-        self.assertEqual(len(result), 5,
+        self.assertEqual(len(result), 6,
                          'We are expecting 5 event type records. There are {0}'.format(len(result)))
         self.assertFalse(self.logger_mock.logged)
 
@@ -80,15 +79,15 @@ class TestSqlLite3Worker(unittest.TestCase):
         # The result is string if the database is locked (caused by previously failed tests)
         self.assertFalse(isinstance(result, str))
         self.assertFalse(self.logger_mock.logged)
-        original_value = [x for x in result if x['id'] == 'RV'][0]
+        original_value = [x for x in result if x['id'] == 'RQ'][0]
         # Inserts a repeated primary key
-        self.worker.execute("insert into evt_status values ('RV', 'Updated received')")
+        self.worker.execute("insert into evt_status values ('RQ', 'Updated received')")
         result = self.worker.execute("select * from evt_status")
         # The result is string if the database is locked (caused by previously failed tests)
         self.assertFalse(isinstance(result, str))
-        self.assertEqual(len(result), 5,
+        self.assertEqual(len(result), 6,
                          'We are expecting 5 event type records. There are {0}'.format(len(result)))
-        new_value = [x for x in result if x['id'] == 'RV'][0]
+        new_value = [x for x in result if x['id'] == 'RQ'][0]
         self.assertEqual(new_value, original_value,
                          "The original value changed after the insert")
         # This should stay at the very end after the worker thread has been merged
