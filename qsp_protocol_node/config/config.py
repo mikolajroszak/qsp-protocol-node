@@ -28,6 +28,7 @@ import structlog
 from structlog import configure_once, processors, stdlib, threadlocal
 
 import utils.io as io_utils
+import difflib
 
 from audit import Analyzer
 from utils.eth import (
@@ -59,51 +60,47 @@ class Config:
     """
     Provides a set of methods for accessing configuration parameters.
     """
-
-    def __fetch_internal_contract_metadata(self, cfg):
-        metadata_uri = config_value(cfg, '/internal_contract_abi/metadata')
+    def __fetch_audit_contract_metadata(self, cfg):
+        metadata_uri = config_value(cfg, '/audit_contract_abi/metadata')
         if metadata_uri is not None:
             return io_utils.load_json(
                 io_utils.fetch_file(metadata_uri)
             )
 
-        metadata_uri = config_value(cfg, '/internal_contract_src/metadata')
+        metadata_uri = config_value(cfg, '/audit_contract_src/metadata')
         if metadata_uri is not None:
             return io_utils.load_json(
                 io_utils.fetch_file(metadata_uri)
             )
 
-        raise Exception("Missing internal contract metadata")
+        raise Exception("Missing audit contract metadata")
 
     def __setup_values(self, cfg):
-        metadata = self.__fetch_internal_contract_metadata(cfg)
-        self.__internal_contract_name = config_value(
-            metadata,
+        audit_contract_metadata = self.__fetch_audit_contract_metadata(cfg)
+        self.__audit_contract_name = config_value(
+            audit_contract_metadata,
             '/contractName',
         )
-        self.__internal_contract_address = config_value(
-            metadata,
+        self.__audit_contract_address = config_value(
+            audit_contract_metadata,
             '/contractAddress',
         )
+        self.__audit_contract = None
 
-        self.__internal_contract = None
-
-        self.__internal_contract_src_uri = config_value(
+        self.__audit_contract_src_uri = config_value(
             cfg,
-            '/internal_contract_src/uri',
+            '/audit_contract_src/uri',
         )
-        self.__has_internal_contract_src = bool(
-            self.__internal_contract_src_uri
+        self.__has_audit_contract_src = bool(
+            self.__audit_contract_src_uri
         )
-
-        self.__internal_contract_abi_uri = config_value(
+        self.__audit_contract_abi_uri = config_value(
             cfg,
-            '/internal_contract_abi/uri',
+            '/audit_contract_abi/uri',
         )
-        self.__has_internal_contract_abi = bool(
-            self.__internal_contract_abi_uri
+        self.__has_audit_contract_abi = bool(
+            self.__audit_contract_abi_uri
         )
-
         self.__eth_provider_name = config_value(
             cfg,
             '/eth_node/provider',
@@ -200,34 +197,34 @@ class Config:
         """
         Checks the configuration values provided in the YAML configuration file.
         """
-        self.__check_internal_contract_settings()
+        self.__check_audit_contract_settings()
 
-    def __check_internal_contract_settings(self):
+    def __check_audit_contract_settings(self):
         """
-        Checks the settings w.r.t. the internal contract.
+        Checks the settings w.r.t. the audit contract.
         """
         self.__raise_err(
-            self.__has_internal_contract_abi and self.__has_internal_contract_src,
-            "Settings must include internal contract ABI or source, but not both",
+            self.__has_audit_contract_abi and self.__has_audit_contract_src,
+            "Settings must include audit contract ABI or source, but not both",
         )
 
-        if self.__has_internal_contract_abi:
-            has_uri = bool(self.__internal_contract_abi_uri)
-            has_addr = bool(self.__internal_contract_address)
+        if self.__has_audit_contract_abi:
+            has_uri = bool(self.__audit_contract_abi_uri)
+            has_addr = bool(self.__audit_contract_address)
             self.__raise_err(
                 not (has_uri and has_addr),
-                "Missing internal contract ABI URI and address",
+                "Missing audit contract ABI URI and address",
             )
 
-        elif self.__has_internal_contract_src:
-            has_uri = bool(self.__internal_contract_src_uri)
+        elif self.__has_audit_contract_src:
+            has_uri = bool(self.__audit_contract_src_uri)
             self.__raise_err(
                 not has_uri,
-                "Missing internal contract source URI"
+                "Missing audit contract source URI"
             )
         else:
             self.__raise_err(
-                msg="Missing the internal contract source or its ABI")
+                msg="Missing the audit contract source or its ABI")
 
     @staticmethod
     def __new_provider(provider, args):
@@ -333,7 +330,6 @@ class Config:
 
         # It could be the case that account is not setup, which may happen for
         # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
-
         if self.__account is None:
             if len(self.__web3_client.eth.accounts) == 0:
                 self.__account = self.__web3_client.personal.newAccount(self.__account_passwd)
@@ -342,60 +338,55 @@ class Config:
                 self.__account = self.__web3_client.eth.accounts[0]
                 self.__logger.debug("No account was provided, using the account at index [0]", account=self.__account)
 
-    def __load_contract_from_src(self):
+    def __load_audit_contract_from_src(self, contract_src_uri, contract_name, constructor_from):
         """
-        Loads the internal contract from source code (useful for testing purposes).
+        Loads the QuantstampAuditMock contract from source code (useful for testing purposes), returning the (address, contract) pair.
         """
-        # Compiles the source
-        src_contract = io_utils.fetch_file(self.__internal_contract_src_uri)
-        contract_dict = compile_files([src_contract])
-
+        audit_contract_src = io_utils.fetch_file(contract_src_uri)
+        contract_dict = compile_files([audit_contract_src])
         contract_id = "{0}:{1}".format(
-            self.__internal_contract_src_uri,
-            self.__internal_contract_name,
+          contract_src_uri,
+          contract_name,
         )
-
-        # Gets the contract interface
         contract_interface = contract_dict[contract_id]
 
-        # Instantiates the contract
+        # deploy the audit contract
         contract = self.web3_client.eth.contract(
             abi=contract_interface['abi'],
             bytecode=contract_interface['bin']
         )
+        tx_hash = contract.constructor().transact({'from': constructor_from, 'gasPrice' : 0})
+        receipt = self.web3_client.eth.getTransactionReceipt(tx_hash)
+        address = receipt['contractAddress']
+        contract = self.web3_client.eth.contract(
+            abi=contract_interface['abi'],
+            address=address,
+        )
+        return address, contract
 
-        # Deploys the contract
-        transaction_hash = contract.deploy(
-            transaction={'from': self.__account})
-
-        receipt = self.web3_client.eth.getTransactionReceipt(transaction_hash)
-        self.__internal_contract_address = receipt['contractAddress']
-
-        # Creates the contract object
-        return self.web3_client.eth.contract(
-		abi=contract_interface['abi'],
-		address=self.__internal_contract_address
-	)
-
-    def __create_internal_contract(self):
+    def __create_audit_contract(self):
         """
-        Creates the internal contract either from its ABI or from its source code (whichever is available).
+        Creates the audit contract either from its ABI or from its source code (whichever is available).
         """
-        self.__internal_contract = None
+        self.__audit_contract = None
 
-        if self.__has_internal_contract_abi:
+        if self.__has_audit_contract_abi:
             # Creates contract from ABI settings
 
-            abi_file = io_utils.fetch_file(self.internal_contract_abi_uri)
+            abi_file = io_utils.fetch_file(self.audit_contract_abi_uri)
             abi_json = io_utils.load_json(abi_file)
 
-            self.__internal_contract = self.web3_client.eth.contract(
-                address=self.internal_contract_address,
+            self.__audit_contract = self.web3_client.eth.contract(
+                address=self.audit_contract_address,
                 abi=abi_json,
             )
 
         else:
-            self.__internal_contract = self.__load_contract_from_src()
+            self.__audit_contract_address, self.__audit_contract = self.__load_audit_contract_from_src(
+                self.__audit_contract_src_uri,
+                self.__audit_contract_name,
+                self.__account)
+
 
     def __create_analyzer(self):
         """
@@ -427,16 +418,16 @@ class Config:
         # After having a web3 client object, 
         # use it to put addresses in a canonical
         # format
-        self.__internal_contract_address = mk_checksum_address(
+        self.__audit_contract_address = mk_checksum_address(
             self.__web3_client,
-            self.__internal_contract_address,
+            self.__audit_contract_address,
         )
         self.__account = mk_checksum_address(
             self.__web3_client,
             self.__account,
         )
 
-        self.__create_internal_contract()
+        self.__create_audit_contract()
         self.__create_analyzer()
         self.__create_wallet_session_manager()
         self.__create_event_pool_manager()
@@ -560,11 +551,11 @@ class Config:
         return self.__eth_provider_args
 
     @property
-    def internal_contract_address(self):
+    def audit_contract_address(self):
         """
-        Returns the internal QSP contract address.
+        Returns the audit QSP contract address.
         """
-        return self.__internal_contract_address
+        return self.__audit_contract_address
 
     @property
     def min_price(self):
@@ -600,6 +591,7 @@ class Config:
         Returns report uploader."
         """
         return self.__report_uploader
+    
     @property
     def account(self):
         """
@@ -622,40 +614,40 @@ class Config:
         return self.__account_passwd
 
     @property
-    def internal_contract_abi_uri(self):
+    def audit_contract_abi_uri(self):
         """
-        Returns the internal contract ABI URI.
+        Returns the audit contract ABI URI.
         """
-        return self.__internal_contract_abi_uri
+        return self.__audit_contract_abi_uri
 
     @property
-    def internal_contract_src_uri(self):
+    def audit_contract_src_uri(self):
         """"
-        Returns the internal contract source URI.
+        Returns the audit contract source URI.
         """
-        return self.__internal_contract_src_uri
+        return self.__audit_contract_src_uri
 
     @property
-    def internal_contract_src_deploy(self):
+    def audit_contract_src_deploy(self):
         """
-        Returns whether the internal contract source code, once compiled, should
+        Returns whether the audit contract source code, once compiled, should
         be deployed on the target network.
         """
-        return self.__internal_contract_src_deploy
+        return self.__audit_contract_src_deploy
 
     @property
-    def has_internal_contract_src(self):
+    def has_audit_contract_src(self):
         """
-        Returns whether the internal contract has been made available.
+        Returns whether the audit contract has been made available.
         """
-        return self.__has_internal_contract_src
+        return self.__has_audit_contract_src
 
     @property
-    def has_internal_contract_abi(self):
+    def has_audit_contract_abi(self):
         """
-        Returns whether the internal contract ABI has been made available.
+        Returns whether the audit contract ABI has been made available.
         """
-        return self.__has_internal_contract_abi
+        return self.__has_audit_contract_abi
 
     @property
     def web3_client(self):
@@ -665,18 +657,25 @@ class Config:
         return self.__web3_client
 
     @property
-    def internal_contract(self):
+    def token_contract(self):
         """
-        Returns the internal contract object built from the given YAML configuration file.
+        Returns the token contract object built from the given YAML configuration file.
         """
-        return self.__internal_contract
+        return self.__token_contract
 
     @property
-    def internal_contract_name(self):
+    def audit_contract(self):
         """
-        Returns the name of the internal contract.
+        Returns the audit contract object built from the given YAML configuration file.
         """
-        return self.__internal_contract_name
+        return self.__audit_contract
+
+    @property
+    def audit_contract_name(self):
+        """
+        Returns the name of the audit contract.
+        """
+        return self.__audit_contract_name
 
     @property
     def analyzer(self):
@@ -699,7 +698,7 @@ class Config:
     @property
     def default_gas(self):
         """
-        Returns a fixed amount of gas to be used when interacting with the internal contract.
+        Returns a fixed amount of gas to be used when interacting with the audit contract.
         """
         return self.__default_gas
 

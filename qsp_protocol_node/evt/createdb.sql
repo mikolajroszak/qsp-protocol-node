@@ -3,7 +3,9 @@ create table evt_status (
     description varchar(20) not null
 );
 
-insert into evt_status(id, description) values ('RV', 'Received'),
+insert into evt_status(id, description) values
+    ('RQ', 'Requested'),
+    ('AS', 'Assigned'),
     ('TS', 'To be submitted'),
     ('SB', 'Submitted'),
     ('DN', 'Done'),

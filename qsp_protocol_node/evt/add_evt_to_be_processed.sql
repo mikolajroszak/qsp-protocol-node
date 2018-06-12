@@ -6,7 +6,7 @@ audit_evt(
     evt_name, 
     block_nbr,
     status_info,
-    price,
-    fk_status
+    fk_status,
+    price
 )
-values(?, ?, ?, ?, ?, ?, ?, 'RV')
+values(?, ?, ?, ?, ?, ?, 'RQ', ?)

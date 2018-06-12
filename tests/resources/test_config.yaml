@@ -1,9 +1,12 @@
 local:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
-  internal_contract_src: 
-    uri: !!str "./tests/resources/QuantstampAudit.sol"
+    #provider: !!str "TestRPCProvider"
+  audit_contract_src: 
+    # uri: !!str "./tests/resources/QuantstampAuditV2.sol"
+    uri: !!str "./tests/resources/QuantstampAuditMock.sol"
     metadata: !!str "./tests/resources/QuantstampAudit-metadata.json"
+  
   min_price: !!int 0
   evt_polling_sec: !!int 5
   analyzer:

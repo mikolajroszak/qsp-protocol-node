@@ -3,7 +3,7 @@ local:
     provider: !!str "HTTPProvider"
     args:
       endpoint_uri: !!str "http://eth.quantstamp.com:8888/geth/http/ropsten"
-  internal_contract_abi:
+  audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
   min_price: !!int 0
@@ -35,7 +35,7 @@ dev:
     provider: !!str "HTTPProvider"
     args:
       endpoint_uri: !!str "http://geth:8545"
-  internal_contract_abi:
+  audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
   min_price: !!int 0
@@ -69,7 +69,7 @@ prod:
     provider: !!str "HTTPProvider"
     args:
       endpoint_uri: !!str "http://geth:8545"
-  internal_contract_abi:
+  audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-prod/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-prod/QuantstampAudit.meta.json"
   min_price: !!int 0

@@ -146,6 +146,14 @@ class EventPoolManager:
             fct_kwargs=kw_args,
         )
 
+    def set_evt_to_assigned(self, evt):
+        encoded_evt = EventPoolManager.__encode(evt)
+        EventPoolManager.__exec_sql(
+            self.__sqlworker,
+           'set_evt_to_assigned',
+            (encoded_evt['evt_name'], encoded_evt['status_info'], encoded_evt['request_id'],),
+        )
+
     def set_evt_to_be_submitted(self, evt):
         encoded_evt = EventPoolManager.__encode(evt)
         EventPoolManager.__exec_sql(

@@ -6,4 +6,4 @@ set fk_status = 'TS',
     report_hash = ?,
     audit_state = ?,
     submission_attempts = audit_evt.submission_attempts + 1
-where request_id = ? and fk_status = 'RV'
+where request_id = ? and fk_status = 'AS'

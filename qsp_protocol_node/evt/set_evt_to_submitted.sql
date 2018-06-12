@@ -5,4 +5,4 @@ set fk_status = 'SB',
     report_uri = ?,
     report_hash = ?,
     audit_state = ?
-where request_id = ? and fk_status in ('RV', 'TS')
+where request_id = ? and fk_status = 'TS'

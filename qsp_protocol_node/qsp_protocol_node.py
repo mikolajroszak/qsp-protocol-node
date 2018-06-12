@@ -45,8 +45,8 @@ def main():
 
         cfg.logger.info("Initializing QSP Audit Node")
         cfg.logger.debug("account: {0}".format(str(cfg.account)))
-        cfg.logger.debug("internal contract: {0}".format(
-            str(cfg.internal_contract)))
+        cfg.logger.debug("audit contract: {0}".format(
+            str(cfg.audit_contract)))
         cfg.logger.debug("analyzer: {0}".format(str(cfg.analyzer)))
         cfg.logger.debug("min_price: {0}".format(str(cfg.min_price)))
         cfg.logger.debug("evt_polling: {0}".format(str(cfg.evt_polling)))

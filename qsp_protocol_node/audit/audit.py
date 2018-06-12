@@ -16,8 +16,8 @@ from utils.metrics import MetricCollector
 
 class QSPAuditNode:
 
-    __EVT_AUDIT_REQUESTED = "LogAuditQueued"
-    __EVT_AUDIT_REQUEST_ASSIGNED = "LogAuditRequestAssigned"
+    __EVT_AUDIT_REQUESTED = "LogAuditRequested"
+    __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
     __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
 
     # must be in sync with 
@@ -47,7 +47,7 @@ class QSPAuditNode:
         #    updated with a status lower in ranking
         #    The current ranking is given by:
         #   
-        #    RV (Received) < TS (To be submitted) < SB (submitted) < DN (done)
+        #    RQ (Requested) < AS (Assigned < TS (To be submitted) < SB (Submitted) < DN (Done)
         #
         # 3) Errors are currently not recoverable, i.e., if an audit event reaches
         #    an error state in the finite automata internally captured by the audit node,
@@ -99,18 +99,18 @@ class QSPAuditNode:
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
         self.__internal_threads.append(self.__run_audit_evt_thread(
-            "LogAuditQueued",
-            self.__config.internal_contract.events.LogAuditQueued.createFilter(fromBlock=start_block),
+            "LogAuditRequested",
+            self.__config.audit_contract.events.LogAuditRequested.createFilter(fromBlock=start_block),
             self.__on_audit_requested,
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
-            "LogAuditRequestAssigned",
-            self.__config.internal_contract.events.LogAuditRequestAssigned.createFilter(fromBlock=start_block),
+            "LogAuditAssigned",
+            self.__config.audit_contract.events.LogAuditAssigned.createFilter(fromBlock=start_block),
             self.__on_audit_assigned,
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
-            "LogReportSubmitted",
-            self.__config.internal_contract.events.LogReportSubmitted.createFilter(fromBlock=start_block),
+            "LogAuditFinished",
+            self.__config.audit_contract.events.LogAuditFinished.createFilter(fromBlock=start_block),
             self.__on_report_submitted,
         ))
         
@@ -148,8 +148,19 @@ class QSPAuditNode:
             if (price >= self.__config.min_price):
                 self.__logger.debug("Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
                     str(evt)), requestId=request_id)
+                audit_evt = {
+                  'request_id': request_id,
+                  'requestor': str(evt['args']['requestor']),
+                  'contract_uri': str(evt['args']['uri']),
+                  'evt_name': QSPAuditNode.__EVT_AUDIT_REQUESTED,
+                  'block_nbr': evt['args']['requestTimestamp'],
+                  'status_info': "Audit requested",
+                  'price': str(evt['args']['price']),
+                }
+                self.__config.event_pool_manager.add_evt_to_be_processed(
+                  audit_evt
+                )
                 self.__get_next_audit_request()
-
             else:
                 self.__logger.debug(
                     "Declining processing audit request: {0}. Not enough incentive".format(
@@ -167,7 +178,7 @@ class QSPAuditNode:
         request_id = str(evt['args']['requestId'])
         try:
             target_auditor = evt['args']['auditor']
-
+            # TODO: sanity check that the audit request is already in the DB
             # If an audit request is not targeted to the
             # running audit node, just disconsider it
             if target_auditor.lower() != self.__config.account.lower():
@@ -186,60 +197,18 @@ class QSPAuditNode:
                 requestId=request_id,
             )
 
-            # Otherwise, the audit request must be processed
-            # throught its different stages. As such, save it
-            # in the internal database, marking it as RECEIVED
-
             audit_evt = {
                 'request_id': request_id,
-                'requestor': str(evt['args']['requestor']),
-                'contract_uri': str(evt['args']['uri']),
-                'evt_name':  QSPAuditNode.__EVT_AUDIT_REQUEST_ASSIGNED,
-                'block_nbr': evt['blockNumber'],
-                'price': evt['args']['price'],
-                'status_info': "Audit request received",
+                'evt_name': QSPAuditNode.__EVT_AUDIT_ASSIGNED,
+                'status_info': "Audit Assigned",
             }
 
-            self.__config.event_pool_manager.add_evt_to_be_processed(
+            self.__config.event_pool_manager.set_evt_to_assigned(
                 audit_evt
             )
         except Exception as error:
             self.__logger.exception(
                 "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
-                requestId=request_id,
-            )
-
-    def __on_report_submitted(self, evt):
-        try:
-            request_id = str(evt['args']['requestId'])
-            target_auditor = evt['args']['auditor']
-
-            # If an audit request is not targeted to the
-            # running audit node, just disconsider it
-            if target_auditor.lower() != self.__config.account.lower():
-                self.__logger.debug(
-                    "Ignoring submission event (not directed at current node): {0}".format(
-                        str(evt)
-                    ),
-                    requestId=request_id,
-                )
-                return
-
-            audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
-                request_id
-            )
-            if audit_evt != {}:
-                audit_evt['status_info'] = 'Report successfully submitted'
-                self.__config.event_pool_manager.set_evt_to_done(
-                    audit_evt
-                )
-        except Exception as error:
-            self.__logger.exception(
-                "Error when processing submission event {0}: {1}. Audit event is {2}".format(
-                    str(evt),
-                    str(error),
-                    str(audit_evt),
-                ),
                 requestId=request_id,
             )
 
@@ -250,7 +219,6 @@ class QSPAuditNode:
                 request_id = evt['request_id']
                 contract_uri = evt['contract_uri']
                 audit_result = self.audit(requestor, contract_uri, request_id)
-
                 if audit_result is None:
                     error = "Could not generate report"
                     evt['status_info'] = error
@@ -267,6 +235,7 @@ class QSPAuditNode:
                         ), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
+
             except Exception as error:
                 self.__logger.exception(
                     "Error when performing audit for request event {0}: {1}".format(str(evt), str(error)),
@@ -288,6 +257,7 @@ class QSPAuditNode:
 
         return audit_thread
 
+
     def __run_submission_thread(self):
         def process_submission_request(evt):
             try:
@@ -300,7 +270,15 @@ class QSPAuditNode:
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
-            except Exception:
+
+            except Exception as error:
+                self.__logger.exception(
+                  "Error when processing submission event {0}: {1}.".format(
+                    str(evt),
+                    str(error),
+                  ),
+                  requestId=evt['request_id'],
+                )
                 evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
 
@@ -309,7 +287,6 @@ class QSPAuditNode:
                 self.__config.event_pool_manager.process_events_to_be_submitted(
                     process_submission_request
                 )
-
                 sleep(self.__config.evt_polling)
 
         submission_thread = Thread(target=exec, name="submission thread")
@@ -318,9 +295,42 @@ class QSPAuditNode:
 
         return submission_thread
 
+    def __on_report_submitted(self, evt):
+        try:
+            request_id = str(evt['args']['requestId'])
+            target_auditor = evt['args']['auditor']
+
+            # If an audit request is not targeted to the
+            # running audit node, just disconsider it
+            if target_auditor.lower() != self.__config.account.lower():
+                self.__logger.debug(
+                    "Ignoring submission event (not directed at current node): {0}".format(
+                        str(evt)
+                    ),
+                    requestId=request_id,
+                )
+                return
+
+            audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
+              request_id
+            )
+            if audit_evt != {}:
+                audit_evt['status_info'] = 'Report successfully submitted'
+                self.__config.event_pool_manager.set_evt_to_done(
+                    audit_evt
+            )
+        except Exception as error:
+            self.__logger.exception(
+                "Error when processing submission event {0}: {1}. Audit event is {2}".format(
+                    str(evt),
+                    str(error),
+                    str(audit_evt),
+                ),
+                requestId=request_id,
+            )
+
     def __run_monitor_submisson_thread(self):
         timeout_limit = self.__config.submission_timeout_limit_blocks
-
         def monitor_submission_timeout(evt, current_block):
             try:
                 if (current_block - evt['block_nbr']) > timeout_limit:
@@ -438,7 +448,7 @@ class QSPAuditNode:
         """
         tx_args = mk_args(self.__config)
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
-        return self.__config.internal_contract.transact(tx_args).getNextAuditRequest() 
+        return self.__config.audit_contract.functions.getNextAuditRequest().transact(tx_args)
 
     def __submit_report(self, request_id, audit_state, report_uri, report_hash):
         """
@@ -446,9 +456,9 @@ class QSPAuditNode:
         """
         tx_args = mk_args(self.__config)
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
-        return self.__config.internal_contract.transact(tx_args).submitReport(
+        return self.__config.audit_contract.functions.submitReport(
             request_id,
             audit_state,
             report_uri,
             report_hash
-        )
+        ).transact(tx_args)
