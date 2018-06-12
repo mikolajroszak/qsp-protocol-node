@@ -7,6 +7,7 @@ import apsw
 
 from config import config_value
 from helpers.resource import resource_uri
+from helpers.resource import main_resource_uri
 from timeout_decorator import timeout
 from utils.db import Sqlite3Worker
 from utils.io import fetch_file
@@ -44,6 +45,9 @@ class TestSqlLite3Worker(unittest.TestCase):
         file = config_value(cfg, '/local/evt_db_path')
         self.logger_mock = LoggerMock()
         self.worker = Sqlite3Worker(self.logger_mock, file)
+        self.worker.execute_script(fetch_file(resource_uri('dropdb.sql')))
+        self.worker.execute_script(fetch_file(main_resource_uri('evt/createdb.sql')))
+
 
     def tearDown(self):
         """
@@ -58,7 +62,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         Tests that the worker is capable of creating the database and insert items by executing a
         script.
         """
-        self.worker.execute_script(fetch_file(resource_uri('createdb.sql')))
+        self.assertFalse(self.logger_mock.logged)
         result = self.worker.execute("select * from evt_status")
         self.assertEqual(len(result), 5,
                          'We are expecting 5 event type records. There are {0}'.format(len(result)))
@@ -72,7 +76,6 @@ class TestSqlLite3Worker(unittest.TestCase):
         existing values remain the same.
         """
         self.assertFalse(self.logger_mock.logged)
-        self.worker.execute_script(fetch_file(resource_uri('createdb.sql')))
         result = self.worker.execute("select * from evt_status")
         # The result is string if the database is locked (caused by previously failed tests)
         self.assertFalse(isinstance(result, str))
@@ -99,7 +102,6 @@ class TestSqlLite3Worker(unittest.TestCase):
         Tests that wrong select returns string and logs an error.
         """
         self.assertFalse(self.logger_mock.logged)
-        self.worker.execute_script(fetch_file(resource_uri('createdb.sql')))
         result = self.worker.execute("select * from nonexistent_table")
         # The result is string if the database is locked (caused by previously failed tests)
         self.assertTrue(isinstance(result, str))
