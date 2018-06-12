@@ -13,7 +13,7 @@ setup:
 	pyenv virtualenv env ; \
 	pip install -r requirements.txt
 
-run: # printing "date" is important due to the logic Cloud Watch uses to distinguish log files
+run: # printing "date" is important due to the logic CloudWatch uses to distinguish log files
 	date; python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
 
 test:
