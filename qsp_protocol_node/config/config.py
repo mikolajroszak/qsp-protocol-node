@@ -513,16 +513,12 @@ class Config:
           }
       };
 
+      logging.config.dictConfig(dictConfig)
+      self.__logger = structlog.getLogger("audit")
+
       if (self.__logging_streaming_provider_name != None):
-        self.__create_logging_streaming_provider()
-        dictConfig['handlers']['streaming'] = self.__logging_streaming_provider.get_dict_config()
-        dictConfig['loggers']['']['handlers'].append('streaming')
-        logging.config.dictConfig(dictConfig)
-        self.__logger = structlog.getLogger("audit")
-        self.__logger.addHandler(self.__logging_streaming_provider.get_handler())
-      else:
-        logging.config.dictConfig(dictConfig)
-        self.__logger = structlog.getLogger("audit")
+          self.__create_logging_streaming_provider()
+          self.__logger.addHandler(self.__logging_streaming_provider.get_handler())
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """

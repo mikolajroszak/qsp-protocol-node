@@ -97,7 +97,8 @@ resource "aws_iam_role_policy" "main" {
         ],
         "Effect": "Allow",
         "Resource": [
-            "arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk*"
+            "arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk*",
+            "arn:aws:logs:*:*:log-group:qsp-protocol-nodes-${var.stage}*"
         ]
     },
     {
