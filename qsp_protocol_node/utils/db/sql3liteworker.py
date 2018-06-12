@@ -35,6 +35,7 @@ import threading
 import time
 import uuid
 
+
 class Sqlite3Worker(threading.Thread):
     """Sqlite thread safe object.
 
@@ -59,6 +60,7 @@ class Sqlite3Worker(threading.Thread):
 
     As with execute, execute_script executes within a transaction.
     """
+
     def __init__(self, logger, file_name, max_queue_size=100):
         """Automatically starts the thread.
 
@@ -75,7 +77,7 @@ class Sqlite3Worker(threading.Thread):
         # instead of a tuple
         def row_factory(cursor, row):
             return {k[0]: row[i] for i, k in enumerate(cursor.getdescription())}
-            
+
         self.sqlite3_conn.setrowtrace(row_factory)
         self.sqlite3_cursor = self.sqlite3_conn.cursor()
         self.sql_queue = Queue.Queue(maxsize=max_queue_size)
@@ -98,17 +100,17 @@ class Sqlite3Worker(threading.Thread):
         calling commit() to speed things up by reducing the number of times
         commit is called.
         """
-        #logger.debug("run: Thread started")
+        # logger.debug("run: Thread started")
         execute_count = 0
         for token, query, values in iter(self.sql_queue.get, None):
-            #logger.debug("sql_queue: %s", self.sql_queue.qsize())
+            # logger.debug("sql_queue: %s", self.sql_queue.qsize())
             if token != self.exit_token:
-                #logger.debug("run: %s", query)
+                # logger.debug("run: %s", query)
                 self.run_query(token, query, values)
                 execute_count += 1
 
-                if (self.sql_queue.empty() or 
-                    execute_count == self.max_queue_size):
+                if (self.sql_queue.empty() or
+                        execute_count == self.max_queue_size):
                     execute_count = 0
 
             # Only exit if the queue is empty. Otherwise keep getting
@@ -135,13 +137,11 @@ class Sqlite3Worker(threading.Thread):
             except apsw.Error as err:
                 # Put the error into the output queue since a response
                 # is required.
-                self.results[token] = (
-                    "Query returned error: %s: %s: %s" % (query, values, err))
-                #logger.error(
-                #    "Query returned error: %s: %s: %s", query, values, err)
+                self.results[token] = ("Query returned error: %s: %s: %s" % (query, values, err))
+                self.logger.error("Query returned error: %s: %s: %s", query, values, err)
         else:
             try:
-                self.sqlite3_cursor.execute("begin")            
+                self.sqlite3_cursor.execute("begin")
                 self.sqlite3_cursor.execute(query, values)
                 self.sqlite3_cursor.execute("commit")
             except apsw.Error as err:
@@ -186,7 +186,7 @@ class Sqlite3Worker(threading.Thread):
             # Double back on the delay to a max of 8 seconds.  This prevents
             # a long lived select statement from trashing the CPU with this
             # infinite loop as it's waiting for the query results.
-            #logger.debug("Sleeping: %s %s", delay, token)
+            # logger.debug("Sleeping: %s %s", delay, token)
             time.sleep(delay)
             if delay < 8:
                 delay += delay
@@ -202,9 +202,9 @@ class Sqlite3Worker(threading.Thread):
             If it's a select query it will return the results of the query.
         """
         if self.exit_set:
-            #logger.debug("Exit set, not running: %s", query)
+            # logger.debug("Exit set, not running: %s", query)
             return "Exit Called"
-        #logger.debug("execute: %s", query)
+        # logger.debug("execute: %s", query)
         values = values or []
         # A token to track this query with.
         token = str(uuid.uuid4())
@@ -221,5 +221,5 @@ class Sqlite3Worker(threading.Thread):
     def execute_script(self, query_file, values=()):
         with open(query_file) as query_stream:
             query = query_stream.read().strip()
-        
+
         return self.execute(query, values)

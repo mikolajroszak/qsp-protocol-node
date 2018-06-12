@@ -88,9 +88,23 @@ class TestSqlLite3Worker(unittest.TestCase):
         new_value = [x for x in result if x['id'] == 'RV'][0]
         self.assertEqual(new_value, original_value,
                          "The original value changed after the insert")
-        # This should stay at the very thread after the worker thread can be merged
+        # This should stay at the very end after the worker thread has been merged
         self.worker.close()
         self.assertTrue(isinstance(self.logger_mock.err, apsw.ConstraintError))
+        self.assertTrue(self.logger_mock.logged)
+
+    @timeout(3, timeout_exception=StopIteration)
+    def test_wrong_select(self):
+        """
+        Tests that wrong select returns string and logs an error.
+        """
+        self.assertFalse(self.logger_mock.logged)
+        self.worker.execute_script(fetch_file(resource_uri('createdb.sql')))
+        result = self.worker.execute("select * from nonexistent_table")
+        # The result is string if the database is locked (caused by previously failed tests)
+        self.assertTrue(isinstance(result, str))
+        # This should stay at the very end after the worker thread has been merged
+        self.worker.close()
         self.assertTrue(self.logger_mock.logged)
 
     @staticmethod
