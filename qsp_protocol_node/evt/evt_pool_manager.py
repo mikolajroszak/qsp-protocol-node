@@ -123,7 +123,7 @@ class EventPoolManager:
         for evt in EventPoolManager.__exec_sql(self.__sqlworker, query_name, values):
             decoded_evt = EventPoolManager.__decode(evt)
             if fct_kwargs is None:
-                fct(decoded_evt, {})
+                fct(decoded_evt, **{})
             else:
                 fct(decoded_evt, **fct_kwargs)
 
