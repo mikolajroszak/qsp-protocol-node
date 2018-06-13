@@ -2,6 +2,29 @@
 Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file.
 """
+import logging
+import logging.config
+import structlog
+import utils.io as io_utils
+import yaml
+
+from audit import Analyzer
+from dpath.util import get
+from evt import EventPoolManager
+from os.path import expanduser
+from streaming import CloudWatchProvider
+from solc import compile_files
+from structlog import configure_once
+from structlog import processors
+from structlog import stdlib
+from structlog import threadlocal
+from time import sleep
+from upload import S3Provider
+from utils.eth import (
+    WalletSessionManager,
+    DummyWalletSessionManager,
+    mk_checksum_address,
+)
 from web3 import (
     Web3,
     TestRPCProvider,
@@ -9,34 +32,7 @@ from web3 import (
     IPCProvider,
     EthereumTesterProvider,
 )
-from upload import S3Provider
-from streaming import CloudWatchProvider
-from dpath.util import get
-from solc import compile_files
-from os.path import expanduser
-from time import sleep
 
-import yaml
-import re
-import os
-import hashlib
-
-import logging
-import logging.config
-import structlog
-
-from structlog import configure_once, processors, stdlib, threadlocal
-
-import utils.io as io_utils
-import difflib
-
-from audit import Analyzer
-from utils.eth import (
-    WalletSessionManager, 
-    DummyWalletSessionManager,
-    mk_checksum_address,
-)
-from evt import EventPoolManager
 
 def config_value(cfg, path, default=None, accept_none=True):
     """
@@ -60,47 +56,51 @@ class Config:
     """
     Provides a set of methods for accessing configuration parameters.
     """
-    def __fetch_audit_contract_metadata(self, cfg):
-        metadata_uri = config_value(cfg, '/audit_contract_abi/metadata')
+
+    def __fetch_internal_contract_metadata(self, cfg):
+        metadata_uri = config_value(cfg, '/internal_contract_abi/metadata')
         if metadata_uri is not None:
             return io_utils.load_json(
                 io_utils.fetch_file(metadata_uri)
             )
 
-        metadata_uri = config_value(cfg, '/audit_contract_src/metadata')
+        metadata_uri = config_value(cfg, '/internal_contract_src/metadata')
         if metadata_uri is not None:
             return io_utils.load_json(
                 io_utils.fetch_file(metadata_uri)
             )
 
-        raise Exception("Missing audit contract metadata")
+        raise Exception("Missing internal contract metadata")
 
     def __setup_values(self, cfg):
-        audit_contract_metadata = self.__fetch_audit_contract_metadata(cfg)
-        self.__audit_contract_name = config_value(
-            audit_contract_metadata,
+        metadata = self.__fetch_internal_contract_metadata(cfg)
+        self.__internal_contract_name = config_value(
+            metadata,
             '/contractName',
         )
-        self.__audit_contract_address = config_value(
-            audit_contract_metadata,
+        self.__internal_contract_address = config_value(
+            metadata,
             '/contractAddress',
         )
-        self.__audit_contract = None
 
-        self.__audit_contract_src_uri = config_value(
+        self.__internal_contract = None
+
+        self.__internal_contract_src_uri = config_value(
             cfg,
-            '/audit_contract_src/uri',
+            '/internal_contract_src/uri',
         )
-        self.__has_audit_contract_src = bool(
-            self.__audit_contract_src_uri
+        self.__has_internal_contract_src = bool(
+            self.__internal_contract_src_uri
         )
-        self.__audit_contract_abi_uri = config_value(
+
+        self.__internal_contract_abi_uri = config_value(
             cfg,
-            '/audit_contract_abi/uri',
+            '/internal_contract_abi/uri',
         )
-        self.__has_audit_contract_abi = bool(
-            self.__audit_contract_abi_uri
+        self.__has_internal_contract_abi = bool(
+            self.__internal_contract_abi_uri
         )
+
         self.__eth_provider_name = config_value(
             cfg,
             '/eth_node/provider',
@@ -137,7 +137,7 @@ class Config:
             '/account/id',
         )
         self.__account_ttl = config_value(
-            cfg, 
+            cfg,
             '/account/ttl',
             600,
         )
@@ -197,34 +197,34 @@ class Config:
         """
         Checks the configuration values provided in the YAML configuration file.
         """
-        self.__check_audit_contract_settings()
+        self.__check_internal_contract_settings()
 
-    def __check_audit_contract_settings(self):
+    def __check_internal_contract_settings(self):
         """
-        Checks the settings w.r.t. the audit contract.
+        Checks the settings w.r.t. the internal contract.
         """
         self.__raise_err(
-            self.__has_audit_contract_abi and self.__has_audit_contract_src,
-            "Settings must include audit contract ABI or source, but not both",
+            self.__has_internal_contract_abi and self.__has_internal_contract_src,
+            "Settings must include internal contract ABI or source, but not both",
         )
 
-        if self.__has_audit_contract_abi:
-            has_uri = bool(self.__audit_contract_abi_uri)
-            has_addr = bool(self.__audit_contract_address)
+        if self.__has_internal_contract_abi:
+            has_uri = bool(self.__internal_contract_abi_uri)
+            has_addr = bool(self.__internal_contract_address)
             self.__raise_err(
                 not (has_uri and has_addr),
-                "Missing audit contract ABI URI and address",
+                "Missing internal contract ABI URI and address",
             )
 
-        elif self.__has_audit_contract_src:
-            has_uri = bool(self.__audit_contract_src_uri)
+        elif self.__has_internal_contract_src:
+            has_uri = bool(self.__internal_contract_src_uri)
             self.__raise_err(
                 not has_uri,
-                "Missing audit contract source URI"
+                "Missing internal contract source URI"
             )
         else:
             self.__raise_err(
-                msg="Missing the audit contract source or its ABI")
+                msg="Missing the internal contract source or its ABI")
 
     @staticmethod
     def __new_provider(provider, args):
@@ -261,10 +261,10 @@ class Config:
         attempts = 0
 
         # Default policy for creating a provider is as follows:
-        # 
+        #
         # 1) Creates a given provider and checks if it is connected or not
         # 2) If connected, nothing else to do
-        # 3) Otherwise, keep trying at most max_attempts, 
+        # 3) Otherwise, keep trying at most max_attempts,
         #    waiting 5s per each iteration
 
         self.__eth_provider = None
@@ -272,15 +272,16 @@ class Config:
 
         while attempts < max_attempts and not connected:
             try:
-                self.__eth_provider = Config.__new_provider(self.__eth_provider_name, self.__eth_provider_args)
+                self.__eth_provider = Config.__new_provider(self.__eth_provider_name,
+                                                            self.__eth_provider_args)
                 connected = True
-            except:
+            except Exception:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
                 self.__logger.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
-                        attempts
-                    )
+                    attempts
+                )
                 )
                 sleep(5)
 
@@ -316,7 +317,8 @@ class Config:
         # CloudWatchProvider
 
         if self.__logging_streaming_provider_name == "CloudWatchProvider":
-            self.__logging_streaming_provider = CloudWatchProvider(**self.__logging_streaming_provider_args)
+            self.__logging_streaming_provider = CloudWatchProvider(
+                **self.__logging_streaming_provider_args)
             return
 
         raise Exception(
@@ -330,63 +332,72 @@ class Config:
 
         # It could be the case that account is not setup, which may happen for
         # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
+
         if self.__account is None:
             if len(self.__web3_client.eth.accounts) == 0:
                 self.__account = self.__web3_client.personal.newAccount(self.__account_passwd)
-                self.__logger.debug("No account was provided, using a newly created one", account=self.__account)
+                self.__logger.debug("No account was provided, using a newly created one",
+                                    account=self.__account)
             else:
                 self.__account = self.__web3_client.eth.accounts[0]
-                self.__logger.debug("No account was provided, using the account at index [0]", account=self.__account)
+                self.__logger.debug("No account was provided, using the account at index [0]",
+                                    account=self.__account)
 
-    def __load_audit_contract_from_src(self, contract_src_uri, contract_name, constructor_from):
+    def __load_contract_from_src(self):
         """
-        Loads the QuantstampAuditMock contract from source code (useful for testing purposes), returning the (address, contract) pair.
+        Loads the internal contract from source code (useful for testing purposes).
         """
-        audit_contract_src = io_utils.fetch_file(contract_src_uri)
-        contract_dict = compile_files([audit_contract_src])
+        # Compiles the source
+        src_contract = io_utils.fetch_file(self.__internal_contract_src_uri)
+        contract_dict = compile_files([src_contract])
+
         contract_id = "{0}:{1}".format(
-          contract_src_uri,
-          contract_name,
+            self.__internal_contract_src_uri,
+            self.__internal_contract_name,
         )
+
+        # Gets the contract interface
         contract_interface = contract_dict[contract_id]
 
-        # deploy the audit contract
+        # Instantiates the contract
         contract = self.web3_client.eth.contract(
             abi=contract_interface['abi'],
             bytecode=contract_interface['bin']
         )
-        tx_hash = contract.constructor().transact({'from': constructor_from, 'gasPrice' : 0})
-        receipt = self.web3_client.eth.getTransactionReceipt(tx_hash)
-        address = receipt['contractAddress']
-        contract = self.web3_client.eth.contract(
+
+        # Deploys the contract
+        transaction_hash = contract.deploy(
+            transaction={'from': self.__account})
+
+        receipt = self.web3_client.eth.getTransactionReceipt(transaction_hash)
+        self.__internal_contract_address = receipt['contractAddress']
+
+        # Creates the contract object
+        return self.web3_client.eth.contract(
             abi=contract_interface['abi'],
-            address=address,
+            address=self.__internal_contract_address
         )
-        return address, contract
 
-    def __create_audit_contract(self):
+    def __create_internal_contract(self):
         """
-        Creates the audit contract either from its ABI or from its source code (whichever is available).
+        Creates the internal contract either from its ABI or from its source code (whichever is
+        available).
         """
-        self.__audit_contract = None
+        self.__internal_contract = None
 
-        if self.__has_audit_contract_abi:
+        if self.__has_internal_contract_abi:
             # Creates contract from ABI settings
 
-            abi_file = io_utils.fetch_file(self.audit_contract_abi_uri)
+            abi_file = io_utils.fetch_file(self.internal_contract_abi_uri)
             abi_json = io_utils.load_json(abi_file)
 
-            self.__audit_contract = self.web3_client.eth.contract(
-                address=self.audit_contract_address,
+            self.__internal_contract = self.web3_client.eth.contract(
+                address=self.internal_contract_address,
                 abi=abi_json,
             )
 
         else:
-            self.__audit_contract_address, self.__audit_contract = self.__load_audit_contract_from_src(
-                self.__audit_contract_src_uri,
-                self.__audit_contract_name,
-                self.__account)
-
+            self.__internal_contract = self.__load_contract_from_src()
 
     def __create_analyzer(self):
         """
@@ -404,7 +415,6 @@ class Config:
     def __create_event_pool_manager(self):
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
 
-
     def __create_components(self, cfg):
         # Setup followed by verification
         self.__setup_values(cfg)
@@ -415,19 +425,19 @@ class Config:
         self.__create_eth_provider()
         self.__create_web3_client()
 
-        # After having a web3 client object, 
+        # After having a web3 client object,
         # use it to put addresses in a canonical
         # format
-        self.__audit_contract_address = mk_checksum_address(
+        self.__internal_contract_address = mk_checksum_address(
             self.__web3_client,
-            self.__audit_contract_address,
+            self.__internal_contract_address,
         )
         self.__account = mk_checksum_address(
             self.__web3_client,
             self.__account,
         )
 
-        self.__create_audit_contract()
+        self.__create_internal_contract()
         self.__create_analyzer()
         self.__create_wallet_session_manager()
         self.__create_event_pool_manager()
@@ -462,65 +472,71 @@ class Config:
                 self.__logger.debug("Successfully reverted changes")
 
     def __configure_logging(self):
-      logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-      logging.getLogger('botocore').setLevel(logging.CRITICAL)
-        
-      configure_once(
-          context_class=threadlocal.wrap_dict(dict),
-          logger_factory=stdlib.LoggerFactory(),
-          wrapper_class=stdlib.BoundLogger,
-          processors=[
-              stdlib.filter_by_level,
-              stdlib.add_logger_name,
-              stdlib.add_log_level,
-              stdlib.PositionalArgumentsFormatter(),
-              processors.TimeStamper(fmt="iso"),
-              processors.StackInfoRenderer(),
-              processors.format_exc_info,
-              processors.UnicodeDecoder(),
-              stdlib.render_to_log_kwargs]
-      )
-      
-      dictConfig = {
-          'version': 1,
-          'disable_existing_loggers': False,
-          'formatters': {
-              'json': {
-                  'format': '%(message)s %(threadName)s %(lineno)d %(pathname)s ',
-                  'class': 'pythonjsonlogger.jsonlogger.JsonFormatter'
-              }
-          },
-          'handlers': {
-              'json': {
-                  'class': 'logging.StreamHandler',
-                  'formatter': 'json'
-              }
-          },
-          'loggers': {
-              '': {
-                  'handlers': ['json'],
-                  'level': logging.DEBUG if self.__logging_is_verbose else logging.INFO
-              }
-          }
-      };
+        logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+        logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
-      logging.config.dictConfig(dictConfig)
-      self.__logger = structlog.getLogger("audit")
+        configure_once(
+            context_class=threadlocal.wrap_dict(dict),
+            logger_factory=stdlib.LoggerFactory(),
+            wrapper_class=stdlib.BoundLogger,
+            processors=[
+                stdlib.filter_by_level,
+                stdlib.add_logger_name,
+                stdlib.add_log_level,
+                stdlib.PositionalArgumentsFormatter(),
+                processors.TimeStamper(fmt="iso"),
+                processors.StackInfoRenderer(),
+                processors.format_exc_info,
+                processors.UnicodeDecoder(),
+                stdlib.render_to_log_kwargs]
+        )
 
-      if (self.__logging_streaming_provider_name != None):
-          self.__create_logging_streaming_provider()
-          self.__logger.addHandler(self.__logging_streaming_provider.get_handler())
+        dict_config = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'json': {
+                    'format': '%(message)s %(threadName)s %(lineno)d %(pathname)s ',
+                    'class': 'pythonjsonlogger.jsonlogger.JsonFormatter'
+                }
+            },
+            'handlers': {
+                'json': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'json'
+                }
+            },
+            'loggers': {
+                '': {
+                    'handlers': ['json'],
+                    'level': logging.DEBUG if self.__logging_is_verbose else logging.INFO
+                }
+            }
+        }
+
+        if self.__logging_streaming_provider_name is not None:
+            self.__create_logging_streaming_provider()
+            dict_config['handlers'][
+                'streaming'] = self.__logging_streaming_provider.get_dict_config()
+            # todo(mderka): Static analysis resolves this as string with no .append method
+            dict_config['loggers']['']['handlers'].append('streaming')
+            logging.config.dictConfig(dict_config)
+            self.__logger = structlog.getLogger("audit")
+            self.__logger.addHandler(self.__logging_streaming_provider.get_handler())
+        else:
+            logging.config.dictConfig(dict_config)
+            self.__logger = structlog.getLogger("audit")
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """
-        Builds a Config object from a target environment (e.g., test) and an input YAML configuration file. 
+        Builds a Config object from a target environment (e.g., test) and an input YAML
+        configuration file.
         """
         self.__env = env
         self.__cfg_dict = None
         self.__account_passwd = account_passwd
         self.__config_file_uri = config_file_uri
         self.__load_config()
-
 
     def __raise_err(self, cond=True, msg=""):
         """
@@ -551,11 +567,11 @@ class Config:
         return self.__eth_provider_args
 
     @property
-    def audit_contract_address(self):
+    def internal_contract_address(self):
         """
-        Returns the audit QSP contract address.
+        Returns the internal QSP contract address.
         """
-        return self.__audit_contract_address
+        return self.__internal_contract_address
 
     @property
     def min_price(self):
@@ -591,7 +607,7 @@ class Config:
         Returns report uploader."
         """
         return self.__report_uploader
-    
+
     @property
     def account(self):
         """
@@ -614,68 +630,62 @@ class Config:
         return self.__account_passwd
 
     @property
-    def audit_contract_abi_uri(self):
+    def internal_contract_abi_uri(self):
         """
-        Returns the audit contract ABI URI.
+        Returns the internal contract ABI URI.
         """
-        return self.__audit_contract_abi_uri
+        return self.__internal_contract_abi_uri
 
     @property
-    def audit_contract_src_uri(self):
+    def internal_contract_src_uri(self):
         """"
-        Returns the audit contract source URI.
+        Returns the internal contract source URI.
         """
-        return self.__audit_contract_src_uri
+        return self.__internal_contract_src_uri
 
     @property
-    def audit_contract_src_deploy(self):
+    def internal_contract_src_deploy(self):
         """
-        Returns whether the audit contract source code, once compiled, should
+        Returns whether the internal contract source code, once compiled, should
         be deployed on the target network.
         """
-        return self.__audit_contract_src_deploy
+        # todo(mderka): Static analysis reports that this cannot be resolved. Investigate.
+        return self.__internal_contract_src_deploy
 
     @property
-    def has_audit_contract_src(self):
+    def has_internal_contract_src(self):
         """
-        Returns whether the audit contract has been made available.
+        Returns whether the internal contract has been made available.
         """
-        return self.__has_audit_contract_src
+        return self.__has_internal_contract_src
 
     @property
-    def has_audit_contract_abi(self):
+    def has_internal_contract_abi(self):
         """
-        Returns whether the audit contract ABI has been made available.
+        Returns whether the internal contract ABI has been made available.
         """
-        return self.__has_audit_contract_abi
+        return self.__has_internal_contract_abi
 
     @property
     def web3_client(self):
-        """ 
+        """
         Returns the Web3 client object built from the given YAML configuration file.
         """
         return self.__web3_client
 
     @property
-    def token_contract(self):
+    def internal_contract(self):
         """
-        Returns the token contract object built from the given YAML configuration file.
+        Returns the internal contract object built from the given YAML configuration file.
         """
-        return self.__token_contract
+        return self.__internal_contract
 
     @property
-    def audit_contract(self):
+    def internal_contract_name(self):
         """
-        Returns the audit contract object built from the given YAML configuration file.
+        Returns the name of the internal contract.
         """
-        return self.__audit_contract
-
-    @property
-    def audit_contract_name(self):
-        """
-        Returns the name of the audit contract.
-        """
-        return self.__audit_contract_name
+        return self.__internal_contract_name
 
     @property
     def analyzer(self):
@@ -698,7 +708,7 @@ class Config:
     @property
     def default_gas(self):
         """
-        Returns a fixed amount of gas to be used when interacting with the audit contract.
+        Returns a fixed amount of gas to be used when interacting with the internal contract.
         """
         return self.__default_gas
 

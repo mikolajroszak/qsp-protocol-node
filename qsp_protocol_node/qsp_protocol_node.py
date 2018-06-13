@@ -3,19 +3,22 @@ Provides the main entry for executing a QSP audit node.
 """
 import argparse
 import signal
-import traceback, sys
+import traceback
+import sys
+import faulthandler
 
 from audit import QSPAuditNode
 from config import Config
-from tendo.singleton import SingleInstance
 
-import faulthandler
 faulthandler.enable()
+
 
 def main():
     """
     Main function.
     """
+    cfg = None
+    audit_node = None
     try:
         # Sets the program's arguments
         parser = argparse.ArgumentParser(description='QSP Audit Node')
@@ -45,8 +48,8 @@ def main():
 
         cfg.logger.info("Initializing QSP Audit Node")
         cfg.logger.debug("account: {0}".format(str(cfg.account)))
-        cfg.logger.debug("audit contract: {0}".format(
-            str(cfg.audit_contract)))
+        # todo(mderka): The reference cfg.audit_contract does not seem to exist
+        cfg.logger.debug("audit contract: {0}".format(str(cfg.audit_contract)))
         cfg.logger.debug("analyzer: {0}".format(str(cfg.analyzer)))
         cfg.logger.debug("min_price: {0}".format(str(cfg.min_price)))
         cfg.logger.debug("evt_polling: {0}".format(str(cfg.evt_polling)))
@@ -54,10 +57,10 @@ def main():
         # Based on the provided configuration, instantiates a new
         # QSP audit node
         audit_node = QSPAuditNode(cfg)
-        
-        def handle_stop_signal(signal, frame):
+
+        def handle_stop_signal(stop_signal, frame):
             audit_node.stop()
-            
+
         signal.signal(signal.SIGTERM, handle_stop_signal)
         signal.signal(signal.SIGINT, handle_stop_signal)
 
@@ -66,14 +69,14 @@ def main():
         # Runs the QSP audit node in a busy loop fashion
         audit_node.run()
     except Exception as error:
-        cfg.logger.exception(
-            "Cannot start audit node. {0}".format(
-                str(error)
-            )
-        )
-        traceback.print_exc(file=sys.stdout)
-    finally:
-        audit_node.stop()
+        message = "Cannot start audit node. {0}".format(str(error))
+        if cfg is not None:
+            cfg.logger.exception(message)
+        else:
+            print(message, file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        if audit_node is not None:
+            audit_node.stop()
 
 
 if __name__ == "__main__":
