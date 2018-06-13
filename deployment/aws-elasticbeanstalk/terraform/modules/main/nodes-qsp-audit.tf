@@ -70,18 +70,6 @@ resource "aws_elastic_beanstalk_environment" "audit" {
     value = "${var.ETH_PASSPHRASE}"
   }
   
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name = "WS_SECRET"
-    value = "${var.WS_SECRET}"
-  }
-  
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name = "WS_ENDPOINT"
-    value = "${var.WS_ENDPOINT}"
-  }
-  
   tags {
     Name = "${var.environment}-node-beanstalk-app"
   }
