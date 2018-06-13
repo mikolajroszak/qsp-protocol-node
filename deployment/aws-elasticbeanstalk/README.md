@@ -18,10 +18,9 @@ Deploying the audit node using AWS Elastic Beanstalk multi-container Docker.
 7. Run `terraform apply` and confirm the changes
 
 *Note*: by default, you will be prompted to provide values for certain sensitive variables,
-such as, `ETH_PASSPHRASE` and `WS_SECRET`. An alternative option is to create a file `terraform.tfvars`
+such as, `ETH_PASSPHRASE`. An alternative option is to create a file `terraform.tfvars`
 (in `stages/dev` or `stages/prod`) and specify the values here (but DO NOT commit this to the source control):
 
 ```
 ETH_PASSPHRASE=value1
-WS_SECRET=value2
 ```
