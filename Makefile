@@ -8,6 +8,8 @@ setup:
 	brew install automake libtool awscli pyenv pyenv-virtualenv ; \
 	brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9c1da746bbfc9e60831d37d01436a41f4464f0e1/solidity.rb ; \
 	rm -rf $(HOME)/.pyenv ; \
+	ln -s -f $(shell git rev-parse --show-toplevel)/pre-commit $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \
+	chmod +x $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \
 	pyenv install 3.6.4 ; \
 	echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\neval "$(pyenv virtualenv-init -)"\nfi' >> ~/.bash_profile ; \
 	pyenv virtualenv env ; \
