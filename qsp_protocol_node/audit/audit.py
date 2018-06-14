@@ -34,6 +34,7 @@ class QSPAuditNode:
         """
         self.__config = config
         self.__logger = config.logger
+        self.__metric_collector = None
         self.__exec = False
         self.__internal_threads = []
 
