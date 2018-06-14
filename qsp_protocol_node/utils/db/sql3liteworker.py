@@ -19,8 +19,8 @@
 # THE SOFTWARE.
 #
 # Author: Shawn Lee
-# Changes by Leonardo Passos (Quantstamp Inc): support aspw layer, plus transaction 
-#                                              control
+# Changes by Leonardo Passos (Quantstamp Inc): support aspw layer, plus transaction
+# control
 
 
 """Thread safe sqlite3 interface."""
@@ -128,10 +128,8 @@ class Sqlite3Worker(threading.Thread):
             query: A sql query with ? placeholders for values.
             values: A tuple of values to replace "?" in query.
         """
-        select = False
         if query.lower().strip().startswith("select"):
             try:
-                select = True
                 self.sqlite3_cursor.execute(query, values)
                 self.results[token] = self.sqlite3_cursor.fetchall()
             except apsw.Error as err:
@@ -145,9 +143,7 @@ class Sqlite3Worker(threading.Thread):
                 self.sqlite3_cursor.execute(query, values)
                 self.sqlite3_cursor.execute("commit")
             except apsw.Error as err:
-                if not select:
-                    self.sqlite3_cursor.execute("rollback")
-
+                self.sqlite3_cursor.execute("rollback")
                 self.logger.error(
                     "Query returned error: %s: %s: %s",
                     query,

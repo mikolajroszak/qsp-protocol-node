@@ -148,6 +148,22 @@ However, maintaining private forks is labour- and time-consuming process.
 Here are the manual steps that were followed to release the analyzers.
 They could be automated in the future.
 
+## Codestyle
+
+The codestyle builds on PEP8 and includes especially the following:
+
+1. Indentation is done using spaces in multiples of 4
+2. Lines are broken after 100 characters, longer lines are allowed in exceptional cases only
+3. Methods are separated with 2 blank lines
+4. Do not use parentheses when not necessary
+5. `import` statements come before `from import` statements
+6. Import only one module per line
+7. Remove unused imports
+8. Use lowercase_underscore naming for variables
+9. Use `is` and `is not` when comparing to `None`
+10. Beware of overriding built-ins
+
+
 ### Oyente
 
 1. Clone the latest https://github.com/melonproject/oyente

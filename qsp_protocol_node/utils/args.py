@@ -6,4 +6,4 @@ def replace_args(template, args):
     cmd = template
     for name in args:
         cmd = cmd.replace(name, args[name])
-    return cmd      
+    return cmd
