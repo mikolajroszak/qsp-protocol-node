@@ -34,7 +34,6 @@ class QSPAuditNode:
         """
         self.__config = config
         self.__logger = config.logger
-        self.__metric_collector = MetricCollector(config)
         self.__exec = False
         self.__internal_threads = []
 
@@ -88,6 +87,7 @@ class QSPAuditNode:
         self.__exec = True
                 
         if (self.__config.metric_collection_is_enabled):
+            self.__metric_collector = MetricCollector(self.__config)
             self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
 
