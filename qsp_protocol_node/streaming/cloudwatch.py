@@ -1,12 +1,13 @@
-from boto3.session import Session
 import watchtower
-import uuid
+
+from boto3.session import Session
 from utils.node_key import NodeKey
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
+
 class CloudWatchProvider:
     def __init__(self, log_group, log_stream, send_interval_seconds):
-        self.__stream_name = log_stream.replace('{id}', NodeKey.fetch());
+        self.__stream_name = log_stream.replace('{id}', NodeKey.fetch())
         self.__log_group = log_group
         self.__send_interval = send_interval_seconds
 
@@ -18,6 +19,6 @@ class CloudWatchProvider:
             boto3_session=Session(),
             create_log_group=False,
         )
-    
-        handler.setFormatter(JsonFormatter('%(message)s %(threadName)s %(lineno)d %(pathname)s'))    
+
+        handler.setFormatter(JsonFormatter('%(message)s %(threadName)s %(lineno)d %(pathname)s'))
         return handler
