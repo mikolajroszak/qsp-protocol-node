@@ -3,7 +3,7 @@ import unittest
 from utils.eth.tx import mk_args
 
 
-class SimpleConfigMock():
+class SimpleConfigMock:
 
     def __init__(self, default_gas):
         self.__default_gas = default_gas
