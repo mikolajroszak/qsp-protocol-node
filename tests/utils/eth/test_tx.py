@@ -21,6 +21,9 @@ class SimpleConfigMock():
 class TestFile(unittest.TestCase):
 
     def test_none_gas(self):
+        """
+        If no gas is provided, the arguments do not contain the gas record.
+        """
         config = SimpleConfigMock(None)
         result = mk_args(config)
         self.assertEqual(0, result['gasPrice'])
@@ -33,6 +36,9 @@ class TestFile(unittest.TestCase):
             pass
 
     def test_zero_gas(self):
+        """
+        Tests zero gas case.
+        """
         config = SimpleConfigMock(0)
         result = mk_args(config)
         self.assertEqual(0, result['gasPrice'])
@@ -40,6 +46,9 @@ class TestFile(unittest.TestCase):
         self.assertEqual(0, result['gas'])
 
     def test_positive_gas(self):
+        """
+        Tests positive gas case.
+        """
         config = SimpleConfigMock(7)
         result = mk_args(config)
         self.assertEqual(0, result['gasPrice'])
@@ -47,6 +56,9 @@ class TestFile(unittest.TestCase):
         self.assertEqual(7, result['gas'])
 
     def test_string_gas(self):
+        """
+        Tests positive gas case where gas is provided as a string.
+        """
         config = SimpleConfigMock('7')
         result = mk_args(config)
         self.assertEqual(0, result['gasPrice'])
@@ -54,6 +66,9 @@ class TestFile(unittest.TestCase):
         self.assertEqual(7, result['gas'])
 
     def test_negative_gas(self):
+        """
+        Tests negative gas case provided as string. The value should not be included.
+        """
         config = SimpleConfigMock('-8')
         result = mk_args(config)
         self.assertEqual(0, result['gasPrice'])
