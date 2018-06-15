@@ -2,6 +2,29 @@
 Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file.
 """
+import logging
+import logging.config
+import structlog
+import yaml
+import utils.io as io_utils
+
+from os.path import expanduser
+from time import sleep
+from dpath.util import get
+from solc import compile_files
+from structlog import configure_once
+from structlog import processors
+from structlog import stdlib
+from structlog import threadlocal
+from audit import Analyzer
+from evt import EventPoolManager
+from streaming import CloudWatchProvider
+from upload import S3Provider
+from utils.eth import (
+    WalletSessionManager,
+    DummyWalletSessionManager,
+    mk_checksum_address,
+)
 from web3 import (
     Web3,
     TestRPCProvider,
@@ -9,34 +32,7 @@ from web3 import (
     IPCProvider,
     EthereumTesterProvider,
 )
-from upload import S3Provider
-from streaming import CloudWatchProvider
-from dpath.util import get
-from solc import compile_files
-from os.path import expanduser
-from time import sleep
 
-import yaml
-import re
-import os
-import hashlib
-
-import logging
-import logging.config
-import structlog
-
-from structlog import configure_once, processors, stdlib, threadlocal
-
-import utils.io as io_utils
-import difflib
-
-from audit import Analyzer
-from utils.eth import (
-    WalletSessionManager, 
-    DummyWalletSessionManager,
-    mk_checksum_address,
-)
-from evt import EventPoolManager
 
 def config_value(cfg, path, default=None, accept_none=True):
     """
@@ -60,6 +56,7 @@ class Config:
     """
     Provides a set of methods for accessing configuration parameters.
     """
+
     def __fetch_audit_contract_metadata(self, cfg):
         metadata_uri = config_value(cfg, '/audit_contract_abi/metadata')
         if metadata_uri is not None:
@@ -137,7 +134,7 @@ class Config:
             '/account/id',
         )
         self.__account_ttl = config_value(
-            cfg, 
+            cfg,
             '/account/ttl',
             600,
         )
@@ -261,26 +258,25 @@ class Config:
         attempts = 0
 
         # Default policy for creating a provider is as follows:
-        # 
         # 1) Creates a given provider and checks if it is connected or not
         # 2) If connected, nothing else to do
-        # 3) Otherwise, keep trying at most max_attempts, 
-        #    waiting 5s per each iteration
+        # 3) Otherwise, keep trying at most max_attempts, waiting 5s per each iteration
 
         self.__eth_provider = None
         connected = False
 
         while attempts < max_attempts and not connected:
             try:
-                self.__eth_provider = Config.__new_provider(self.__eth_provider_name, self.__eth_provider_args)
+                self.__eth_provider = Config.__new_provider(self.__eth_provider_name,
+                                                            self.__eth_provider_args)
                 connected = True
-            except:
+            except Exception:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
                 self.__logger.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
-                        attempts
-                    )
+                    attempts
+                )
                 )
                 sleep(5)
 
@@ -316,7 +312,8 @@ class Config:
         # CloudWatchProvider
 
         if self.__logging_streaming_provider_name == "CloudWatchProvider":
-            self.__logging_streaming_provider = CloudWatchProvider(**self.__logging_streaming_provider_args)
+            self.__logging_streaming_provider = CloudWatchProvider(
+                **self.__logging_streaming_provider_args)
             return
 
         raise Exception(
@@ -333,20 +330,23 @@ class Config:
         if self.__account is None:
             if len(self.__web3_client.eth.accounts) == 0:
                 self.__account = self.__web3_client.personal.newAccount(self.__account_passwd)
-                self.__logger.debug("No account was provided, using a newly created one", account=self.__account)
+                self.__logger.debug("No account was provided, using a newly created one",
+                                    account=self.__account)
             else:
                 self.__account = self.__web3_client.eth.accounts[0]
-                self.__logger.debug("No account was provided, using the account at index [0]", account=self.__account)
+                self.__logger.debug("No account was provided, using the account at index [0]",
+                                    account=self.__account)
 
     def __load_audit_contract_from_src(self, contract_src_uri, contract_name, constructor_from):
         """
-        Loads the QuantstampAuditMock contract from source code (useful for testing purposes), returning the (address, contract) pair.
+        Loads the QuantstampAuditMock contract from source code (useful for testing purposes),
+        returning the (address, contract) pair.
         """
         audit_contract_src = io_utils.fetch_file(contract_src_uri)
         contract_dict = compile_files([audit_contract_src])
         contract_id = "{0}:{1}".format(
-          contract_src_uri,
-          contract_name,
+            contract_src_uri,
+            contract_name,
         )
         contract_interface = contract_dict[contract_id]
 
@@ -355,7 +355,7 @@ class Config:
             abi=contract_interface['abi'],
             bytecode=contract_interface['bin']
         )
-        tx_hash = contract.constructor().transact({'from': constructor_from, 'gasPrice' : 0})
+        tx_hash = contract.constructor().transact({'from': constructor_from, 'gasPrice': 0})
         receipt = self.web3_client.eth.getTransactionReceipt(tx_hash)
         address = receipt['contractAddress']
         contract = self.web3_client.eth.contract(
@@ -366,7 +366,8 @@ class Config:
 
     def __create_audit_contract(self):
         """
-        Creates the audit contract either from its ABI or from its source code (whichever is available).
+        Creates the audit contract either from its ABI or from its source code (whichever is
+        available).
         """
         self.__audit_contract = None
 
@@ -382,11 +383,11 @@ class Config:
             )
 
         else:
-            self.__audit_contract_address, self.__audit_contract = self.__load_audit_contract_from_src(
-                self.__audit_contract_src_uri,
-                self.__audit_contract_name,
-                self.__account)
-
+            self.__audit_contract_address, self.__audit_contract = \
+                self.__load_audit_contract_from_src(
+                    self.__audit_contract_src_uri,
+                    self.__audit_contract_name,
+                    self.__account)
 
     def __create_analyzer(self):
         """
@@ -404,7 +405,6 @@ class Config:
     def __create_event_pool_manager(self):
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
 
-
     def __create_components(self, cfg):
         # Setup followed by verification
         self.__setup_values(cfg)
@@ -415,9 +415,7 @@ class Config:
         self.__create_eth_provider()
         self.__create_web3_client()
 
-        # After having a web3 client object, 
-        # use it to put addresses in a canonical
-        # format
+        # After having a web3 client object, use it to put addresses in a canonical format
         self.__audit_contract_address = mk_checksum_address(
             self.__web3_client,
             self.__audit_contract_address,
@@ -462,65 +460,65 @@ class Config:
                 self.__logger.debug("Successfully reverted changes")
 
     def __configure_logging(self):
-      logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-      logging.getLogger('botocore').setLevel(logging.CRITICAL)
-        
-      configure_once(
-          context_class=threadlocal.wrap_dict(dict),
-          logger_factory=stdlib.LoggerFactory(),
-          wrapper_class=stdlib.BoundLogger,
-          processors=[
-              stdlib.filter_by_level,
-              stdlib.add_logger_name,
-              stdlib.add_log_level,
-              stdlib.PositionalArgumentsFormatter(),
-              processors.TimeStamper(fmt="iso"),
-              processors.StackInfoRenderer(),
-              processors.format_exc_info,
-              processors.UnicodeDecoder(),
-              stdlib.render_to_log_kwargs]
-      )
-      
-      dictConfig = {
-          'version': 1,
-          'disable_existing_loggers': False,
-          'formatters': {
-              'json': {
-                  'format': '%(message)s %(threadName)s %(lineno)d %(pathname)s ',
-                  'class': 'pythonjsonlogger.jsonlogger.JsonFormatter'
-              }
-          },
-          'handlers': {
-              'json': {
-                  'class': 'logging.StreamHandler',
-                  'formatter': 'json'
-              }
-          },
-          'loggers': {
-              '': {
-                  'handlers': ['json'],
-                  'level': logging.DEBUG if self.__logging_is_verbose else logging.INFO
-              }
-          }
-      };
+        logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+        logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
-      logging.config.dictConfig(dictConfig)
-      self.__logger = structlog.getLogger("audit")
+        configure_once(
+            context_class=threadlocal.wrap_dict(dict),
+            logger_factory=stdlib.LoggerFactory(),
+            wrapper_class=stdlib.BoundLogger,
+            processors=[
+                stdlib.filter_by_level,
+                stdlib.add_logger_name,
+                stdlib.add_log_level,
+                stdlib.PositionalArgumentsFormatter(),
+                processors.TimeStamper(fmt="iso"),
+                processors.StackInfoRenderer(),
+                processors.format_exc_info,
+                processors.UnicodeDecoder(),
+                stdlib.render_to_log_kwargs]
+        )
 
-      if (self.__logging_streaming_provider_name != None):
-          self.__create_logging_streaming_provider()
-          self.__logger.addHandler(self.__logging_streaming_provider.get_handler())
+        dict_config = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'json': {
+                    'format': '%(message)s %(threadName)s %(lineno)d %(pathname)s ',
+                    'class': 'pythonjsonlogger.jsonlogger.JsonFormatter'
+                }
+            },
+            'handlers': {
+                'json': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'json'
+                }
+            },
+            'loggers': {
+                '': {
+                    'handlers': ['json'],
+                    'level': logging.DEBUG if self.__logging_is_verbose else logging.INFO
+                }
+            }
+        }
+
+        logging.config.dictConfig(dict_config)
+        self.__logger = structlog.getLogger("audit")
+
+        if self.__logging_streaming_provider_name is not None:
+            self.__create_logging_streaming_provider()
+            self.__logger.addHandler(self.__logging_streaming_provider.get_handler())
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """
-        Builds a Config object from a target environment (e.g., test) and an input YAML configuration file. 
+        Builds a Config object from a target environment (e.g., test) and an input YAML
+        configuration file.
         """
         self.__env = env
         self.__cfg_dict = None
         self.__account_passwd = account_passwd
         self.__config_file_uri = config_file_uri
         self.__load_config()
-
 
     def __raise_err(self, cond=True, msg=""):
         """
@@ -591,7 +589,7 @@ class Config:
         Returns report uploader."
         """
         return self.__report_uploader
-    
+
     @property
     def account(self):
         """
@@ -651,7 +649,7 @@ class Config:
 
     @property
     def web3_client(self):
-        """ 
+        """
         Returns the Web3 client object built from the given YAML configuration file.
         """
         return self.__web3_client
