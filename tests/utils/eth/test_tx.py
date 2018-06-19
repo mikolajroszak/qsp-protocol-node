@@ -70,12 +70,8 @@ class TestFile(unittest.TestCase):
         Tests negative gas case provided as string. The value should not be included.
         """
         config = SimpleConfigMock('-8')
-        result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
-        self.assertEqual('account', result['from'])
         try:
-            temp = result['gas']
-            self.fail("The gas record should not be contained in the dictionary")
-        except KeyError:
+            mk_args(config)
+        except ValueError:
             # Expected
             pass
