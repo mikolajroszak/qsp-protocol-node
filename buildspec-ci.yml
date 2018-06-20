@@ -1,17 +1,38 @@
-version: 0.1
+# Environment variables to be provided externally:
+# CACHE_IMAGE:          the docker image used as a cache for the build
+#                       should point to the latest "develop" image
+# COVERALLS_REPO_TOKEN: repository token for Coveralls available
+#                       on the project page on Coveralls website
+version: 0.2
 phases:
   pre_build:
     commands:
-      - pip install -r requirements.txt
-      - pip install web3[tester]
-      - wget https://github.com/ethereum/solidity/releases/download/v0.4.23/solc-static-linux
-      - chmod +x solc-static-linux
-      - mv solc-static-linux /usr/local/bin/solc
+      - echo Build started on `date`
+      - $(aws ecr get-login --region us-east-1 --no-include-email)
+      - echo Pulling the latest image as a cache...
+      - docker pull $CACHE_IMAGE || true
+      - apt-get update
   build:
     commands:
-      - make test
-      - apt-get -y install git # required for coveralls 
-      - coveralls
+      # Tests are run inside the container that is built and run
+      # using the "make test-ci" command
+      # For the AWS authentication to work, need to pass AWS credentials 
+      # from the CodeBuild host into the container
+      # Source for the curl command: https://github.com/giuseppeborgese/run-terraform-inside-aws-codebuild/blob/7805720980521a345d66e20c99e3b333aec26a65/buildspec.yml#L19
+      - apt-get -y install jq
+      - curl 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI | jq 'to_entries | [ .[] | select(.key | (contains("Expiration") or contains("RoleArn"))  | not) ] |  map(if .key == "AccessKeyId" then . + {"key":"AWS_ACCESS_KEY_ID"} else . end) | map(if .key == "SecretAccessKey" then . + {"key":"AWS_SECRET_ACCESS_KEY"} else . end) | map(if .key == "Token" then . + {"key":"AWS_SESSION_TOKEN"} else . end) | map("export \(.key)=\(.value)") | .[]' -r > /tmp/aws_cred_export.txt
+      - . /tmp/aws_cred_export.txt && make test-ci
   post_build:
     commands:
+      # Collecting coveralls information
+      # 1. Coverage report is produced in the container (as tests are run there)
+      # 2. The make task "lifts" those results up to the host
+      # 3. Container paths are replace with the host paths
+      # 4. Coveralls runs on the host and publishes the mapped coverage results
       - echo Build completed on `date`
+      - apt-get -y install git # required for coveralls
+      - apt-get -y install python3-pip
+      - pip3 install coveralls==1.3.0
+      - sed -i -e "s@/app/@$PWD/@g" ./tests/coverage/.coverage # container paths -> host paths
+      - cat ./tests/coverage/.coverage
+      - coveralls
