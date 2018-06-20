@@ -1,1 +1,0 @@
-from .cloudwatch import CloudWatchMetricCollectionProvider
