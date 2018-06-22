@@ -26,7 +26,7 @@ phases:
       # Posting coverage information to coveralls:
       # 1. Coverage report is produced in the container (as tests are run there)
       # 2. The make task "lifts" those results up to the host
-      # 3. Container paths are replace with the host paths
+      # 3. Container paths are replaced with the host paths
       # 4. Coveralls runs on the host and publishes the mapped coverage results
       - echo Collecting coverage information
       - apt-get -y install git # required for coveralls
