@@ -7,11 +7,9 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Build started on `date`
       - $(aws ecr get-login --region us-east-1 --no-include-email)
       - echo Pulling the latest image as a cache...
-      - docker pull $CACHE_IMAGE || true
-      - apt-get update
+      - docker pull $CACHE_IMAGE || true # allow full rebuild if CACHE_IMAGE is not provided
   build:
     commands:
       # Tests are run inside the container that is built and run
@@ -29,7 +27,8 @@ phases:
       # 2. The make task "lifts" those results up to the host
       # 3. Container paths are replace with the host paths
       # 4. Coveralls runs on the host and publishes the mapped coverage results
-      - echo Build completed on `date`
+      - echo Collecting coverage information
+      - apt-get update
       - apt-get -y install git # required for coveralls
       - apt-get -y install python3-pip
       - pip3 install coveralls==1.3.0
