@@ -20,7 +20,7 @@ run: # printing "date" is important due to the logic CloudWatch uses to distingu
 
 test:
 	pip install web3[tester] ; \
-	./analyzers/init.sh && PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-report term-missing --cov-report html tests/
+	./analyzers/init.sh && PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc)$$" | xargs rm -rf
@@ -41,5 +41,16 @@ test-docker:
 		-v /tmp:/tmp \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
+		-e AWS_DEFAULT_REGION="us-east-1" \
+		qsp-protocol-node sh -c "make test"
+
+test-ci:
+	docker build --cache-from $(CACHE_IMAGE) -t qsp-protocol-node . && docker run -t \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v /tmp:/tmp \
+		-v $(PWD)/tests/coverage:/app/tests/coverage \
+		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
+		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
+		-e AWS_SESSION_TOKEN="$(AWS_SESSION_TOKEN)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		qsp-protocol-node sh -c "make test"

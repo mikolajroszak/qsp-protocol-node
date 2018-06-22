@@ -36,7 +36,7 @@ All instructions must be run from the project's root folder.
     make test
     ```
 
-2. To access the HTML coverage report, after running tests, open `htmlcov/index.html`.
+2. To access the HTML coverage report, after running tests, open `tests/coverage/htmlcov/index.html`.
 
 ## Run in regular mode
 

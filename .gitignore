@@ -4,8 +4,8 @@ __pycache__/
 .DS_Store
 *.db
 .pytest_cache
-.coverage
-htmlcov
+tests/coverage/.coverage
+tests/coverage/htmlcov
 .terraform
 node.key
 .idea/
