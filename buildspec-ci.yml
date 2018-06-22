@@ -24,7 +24,7 @@ phases:
       - . /tmp/aws_cred_export.txt && make test-ci
   post_build:
     commands:
-      # Collecting coveralls information
+      # Posting coverage information to coveralls:
       # 1. Coverage report is produced in the container (as tests are run there)
       # 2. The make task "lifts" those results up to the host
       # 3. Container paths are replace with the host paths
