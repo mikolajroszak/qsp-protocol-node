@@ -104,7 +104,7 @@ class QSPAuditNode:
         # If no block has currently been processed, start from zero
         start_block = self.__config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
-            start_block = 0
+            start_block = self.__config.web3_client.eth.blockNumber
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
@@ -163,7 +163,7 @@ class QSPAuditNode:
                   'requestor': str(evt['args']['requestor']),
                   'contract_uri': str(evt['args']['uri']),
                   'evt_name': QSPAuditNode.__EVT_AUDIT_REQUESTED,
-                  'block_nbr': evt['args']['requestTimestamp'],
+                  'block_nbr': evt['blockNumber'],
                   'status_info': "Audit requested",
                   'price': str(evt['args']['price']),
                 }
