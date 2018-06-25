@@ -3,7 +3,6 @@ Provides an interface for invoking the analyzer software.
 """
 
 import json
-import os
 
 from utils.io import digest
 
