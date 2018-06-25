@@ -10,7 +10,7 @@ run: # printing "date" is important due to the logic CloudWatch uses to distingu
 
 setup:
 	brew install automake libtool awscli pyenv pyenv-virtualenv ; \
-	brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9c1da746bbfc9e60831d37d01436a41f4464f0e1/solidity.rb ; \
+	brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9599ce8371d9de039988f89ed577460e58a0f56a/solidity.rb ; \
 	pyenv uninstall -f 3.6.4 ; \
 	ln -s -f $(shell git rev-parse --show-toplevel)/pre-commit $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \
 	chmod +x $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \

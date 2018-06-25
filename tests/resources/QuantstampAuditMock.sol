@@ -1,4 +1,4 @@
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 // File: contracts/QuantstampAudit.sol
 // For updating the protocol node to use the real QuantstampAudit contract,
