@@ -1,7 +1,9 @@
 """
 Provides the QSP Audit node implementation.
 """
+import calendar
 import json
+import time
 import traceback
 
 from queue import Queue
@@ -9,24 +11,32 @@ from datetime import datetime
 from tempfile import mkstemp
 from time import sleep
 from hashlib import sha256
-from utils.io import fetch_file, digest
+from utils.io import (
+    fetch_file,
+    digest,
+    digest_file,
+)
 from utils.eth import mk_args
+
 from threading import Thread
 from utils.metrics import MetricCollector
+
 
 class QSPAuditNode:
 
     __EVT_AUDIT_REQUESTED = "LogAuditRequested"
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
-    __EVT_REPORT_SUBMITTED = "LogReportSubmitted"
+    __EVT_REPORT_SUBMITTED = "LogAuditFinished"
 
-    # must be in sync with 
+    # must be in sync with
     # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
     __AUDIT_STATE_SUCCESS = 4
 
-    # must be in sync with 
+    # must be in sync with
     # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
     __AUDIT_STATE_ERROR = 5
+
+    __PROTOCOL_VERSION = '1.0'
 
     def __init__(self, config):
         """
@@ -46,7 +56,7 @@ class QSPAuditNode:
         # 2) If an event has been given a certain status, it is never
         #    updated with a status lower in ranking
         #    The current ranking is given by:
-        #   
+        #
         #    RQ (Requested) < AS (Assigned < TS (To be submitted) < SB (Submitted) < DN (Done)
         #
         # 3) Errors are currently not recoverable, i.e., if an audit event reaches
@@ -59,7 +69,6 @@ class QSPAuditNode:
         # 5) At all times, the audit node only accounts for the health of threads
         #    processing new events. Old ones necessarily cause the underlying
         #    thread to complete execution and eventually dying
-
 
     def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler):
         def exec():
@@ -86,7 +95,7 @@ class QSPAuditNode:
             raise Exception("Cannot run audit node thread due to another audit node instance")
 
         self.__exec = True
-                
+
         if (self.__config.metric_collection_is_enabled):
             self.__metric_collector = MetricCollector(self.__config)
             self.__metric_collector.collect()
@@ -100,22 +109,22 @@ class QSPAuditNode:
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
         self.__internal_threads.append(self.__run_audit_evt_thread(
-            "LogAuditRequested",
+            QSPAuditNode.__EVT_AUDIT_REQUESTED,
             self.__config.audit_contract.events.LogAuditRequested.createFilter(fromBlock=start_block),
             self.__on_audit_requested,
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
-            "LogAuditAssigned",
+            QSPAuditNode.__EVT_AUDIT_ASSIGNED,
             self.__config.audit_contract.events.LogAuditAssigned.createFilter(fromBlock=start_block),
             self.__on_audit_assigned,
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
-            "LogAuditFinished",
+            QSPAuditNode.__EVT_REPORT_SUBMITTED,
             self.__config.audit_contract.events.LogAuditFinished.createFilter(fromBlock=start_block),
             self.__on_report_submitted,
         ))
-        
-        # Starts two additional threads for performing audits
+
+        # Starts two   additional threads for performing audits
         # and eventually submitting results
         self.__internal_threads.append(self.__run_perform_audit_thread())
         self.__internal_threads.append(self.__run_submission_thread())
@@ -226,13 +235,13 @@ class QSPAuditNode:
                     self.__logger.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
-                    evt['report_uri'] = audit_result['report_uri']
-                    evt['report_hash'] = audit_result['report_hash']
+                    evt['audit_uri'] = audit_result['audit_uri']
+                    evt['audit_hash'] = audit_result['audit_hash']
                     evt['audit_state'] = audit_result['audit_state']
                     evt['status_info'] = "Sucessfully generated report"
                     self.__logger.debug(
                         "Generated report URI is {0}. Saving it in the internal database (if not previously saved)".format(
-                            str(evt['report_uri'])
+                            str(evt['audit_uri'])
                         ), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
@@ -258,15 +267,14 @@ class QSPAuditNode:
 
         return audit_thread
 
-
     def __run_submission_thread(self):
         def process_submission_request(evt):
             try:
                 tx_hash = self.__submit_report(
                     int(evt['request_id']),
                     evt['audit_state'],
-                    evt['report_uri'],
-                    evt['report_hash'],
+                    evt['audit_uri'],
+                    evt['audit_hash'],
                 )
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
@@ -332,6 +340,7 @@ class QSPAuditNode:
 
     def __run_monitor_submisson_thread(self):
         timeout_limit = self.__config.submission_timeout_limit_blocks
+
         def monitor_submission_timeout(evt, current_block):
             try:
                 if (current_block - evt['block_nbr']) > timeout_limit:
@@ -375,9 +384,8 @@ class QSPAuditNode:
         """
         Signals to the executing QSP audit node that is should stop the execution of the node.
         """
-        
+
         self.__logger.info("Stopping QSP Audit Node")
-        
         self.__exec = False
 
         for internal_thread in self.__internal_threads:
@@ -393,55 +401,85 @@ class QSPAuditNode:
         Audits a target contract.
         """
         self.__logger.info(
-            "Executing audit on contract at {0}".format(uri), 
+            "Executing audit on contract at {0}".format(uri),
             requestId=request_id,
         )
 
         target_contract = fetch_file(uri)
+        number_of_analyzers = len(self.__config.analyzers)
+        analyzers_report = [{}] * number_of_analyzers
 
-        analyzer_report = self.__config.analyzer.check(
-            target_contract,
-            self.__config.analyzer_output,
-            request_id,
-        )
-        
+        def check_contract(analyzer_id):
+            analyzer = self.__config.analyzers[analyzer_id]
+            result = analyzer.check(target_contract, request_id)
+            analyzers_report[analyzer_id] = result
+
+        analyzers_threads = []
+        analyzers_timeouts = []
+        i = 0
+
+        # Starts each analyzer thread
+        for analyzer in self.__config.analyzers:
+            analyzer_thread = Thread(target=check_contract, args=[i])
+            analyzers_threads.append(analyzer_thread)
+            analyzers_timeouts.append(analyzer.wrapper.timeout_sec)
+            analyzer_thread.start()
+            i += 1
+
+        for i in range(0, number_of_analyzers):
+            analyzers_threads[i].join(analyzers_timeouts[i])
+
+        audit = {
+            'timestamp': calendar.timegm(time.gmtime()),
+            'contract_uri': uri,
+            'contract_hash': digest_file(target_contract),
+            'requestor': requestor,
+            'auditor': self.__config.account,
+            'request_id': request_id,
+            'version': QSPAuditNode.__PROTOCOL_VERSION,
+        }
+        audit_str = json.dumps(audit, indent=2)
+        audit_hash = digest(audit_str)
+        audit['audit_hash'] = audit_hash
+
         self.__logger.info(
             "Analyzer report contents",
             requestId=request_id,
-            contents = analyzer_report,
+            contents=audit,
         )
-        
-        full_report = {
-          'auditor': self.__config.account,
-          'requestor': str(requestor),
-          'contract_uri': str(uri),
-          'contract_sha256': str(digest(target_contract)),
-          'analyzer_report': str(json.dumps(analyzer_report)),
-          'timestamp': str(datetime.utcnow()),
-        }
 
-        report_as_string = str(json.dumps(full_report, indent=2))
-        report_hash = str(sha256(report_as_string.encode()).hexdigest())
-        upload_result = self.__config.report_uploader.upload(report_as_string)
+        upload_result = self.__config.report_uploader.upload(audit_str)
 
         self.__logger.info(
-            "Report upload result: {0}".format(upload_result), 
+            "Report upload result: {0}".format(upload_result),
             requestId=request_id,
         )
 
         if not upload_result['success']:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
-        if analyzer_report['status'] == 'success':
-            audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
-        else:
-            audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
+        # FIXME
+        # This is currently a very simple mechanism to claim an audit as
+        # successful or not. Either it is fully successful (all analyzer produce a result),
+        # or fails otherwise.
 
-        return {
+        audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
+        final_reports = []
+
+        for analyzer_report in analyzers_report:
+            final_reports.append(analyzer_report)
+            if analyzer_report.get('status', 'error') == 'error':
+                audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
+
+        audit_in_blockchain = {
             'audit_state': audit_state,
-            'report_uri': upload_result['url'],
-            'report_hash': report_hash
+            'audit_uri': upload_result['url'],
+            'audit_hash': audit_hash,
+            'report': final_reports,
+            'version': QSPAuditNode.__PROTOCOL_VERSION,
         }
+
+        return audit_in_blockchain
 
     def __get_next_audit_request(self):
         """
@@ -451,7 +489,7 @@ class QSPAuditNode:
         self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
         return self.__config.audit_contract.functions.getNextAuditRequest().transact(tx_args)
 
-    def __submit_report(self, request_id, audit_state, report_uri, report_hash):
+    def __submit_report(self, request_id, audit_state, audit_uri, audit_hash):
         """
         Submits the audit report to the entire QSP network.
         """
@@ -460,6 +498,6 @@ class QSPAuditNode:
         return self.__config.audit_contract.functions.submitReport(
             request_id,
             audit_state,
-            report_uri,
-            report_hash
+            audit_uri,
+            audit_hash
         ).transact(tx_args)

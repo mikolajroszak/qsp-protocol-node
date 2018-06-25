@@ -1,0 +1,172 @@
+#!/usr/bin/env python
+
+from collections import defaultdict
+
+import argparse
+import calendar
+import json
+import re
+import sys
+
+def get_potential_vulnerabilities(solidity_file, contract_name, json_report_file, vulnerability_count):
+
+    def get_vulnerability_line(vulnerability_instance):
+        # NOTE: Oyente only reports one vulnerability per line
+
+        delim_left = vulnerability_instance.find(" Warning: ") - 1
+        context_left = re.search(
+            r"(?P<line>[0-9]+):[0-9]+$",
+            vulnerability_instance[:delim_left]
+        )
+        line = int(context_left.group(1))
+        return line
+    
+    with open(json_report_file) as f:
+        report = json.load(f)
+
+    reports = []
+
+    # Except for money_concurrency, the generator id function
+    # is always incremental
+
+    for vulnerability in report['vulnerabilities'].keys():
+        instances = report['vulnerabilities'][vulnerability]
+        
+        if len(instances) == 0:
+            continue
+        
+        vulnerability_report = {
+            'name': vulnerability,
+            'file': solidity_file,
+            'contract': contract_name,
+        }
+
+        instances_found = []
+        if vulnerability == 'money_concurrency':
+            flows = instances
+            for flow in flows:
+                for warning in flow:
+                    line = get_vulnerability_line(warning)
+                    instances_found.append({
+                        'ref_id': vulnerability_count,
+                        'start_line': line,
+                        'end_line': line,
+                    })
+            vulnerability_count = vulnerability_count + 1
+
+        else:            
+            for instance in instances:
+                line = get_vulnerability_line(instance)
+                instances_found.append({
+                    'ref_id': vulnerability_count,
+                    'start_line': line,
+                    'end_line': line,
+                })
+                vulnerability_count = vulnerability_count + 1
+            
+        vulnerability_report['instances'] = instances_found
+        reports.append(vulnerability_report)
+
+
+    return (reports, float(report['evm_code_coverage']), vulnerability_count)
+
+def load_list(input_list):
+    with open(input_list) as f:
+        lines = f.read().splitlines()
+
+    return lines
+
+def main(argv):
+    if len(sys.argv) < 2:
+        print("Error: expecting at least one .json file as input")
+
+    parser = argparse.ArgumentParser(description='Report formatting of Oyente results')
+
+    parser.add_argument(
+        'oyente_version',
+        metavar='oyente_version',
+        type=str,
+        help='oyente version used in producing the report'
+    )
+    parser.add_argument(
+        'cmd',
+        metavar='oyente_command',
+        type=str,
+        help='command used when invoking oyente'
+    )
+    parser.add_argument(
+        'vulnerabilities',
+        metavar='vulnerabilities',
+        type=str,
+        help='file containing all vulnerability names (one per line) supported in this version of oyente'
+    )
+
+    parser.add_argument(
+        'warnings',
+        metavar='warnings',
+        type=str,
+        help="warnings reported by the oyente tool"
+    )
+
+    parser.add_argument(
+        'reports',
+        nargs='+',
+        metavar='report',
+        type=str,
+        help="reports to be merged and standardized according to the output interface"
+    )
+    # Validates input arguments
+    args = parser.parse_args()
+
+    # Declares final_report dictionary
+    final_report = {
+        'analyzer': {
+            'name': 'oyente',
+            'version': args.oyente_version,
+            'vulnerabilities_checked': load_list(args.vulnerabilities),
+            'command': args.cmd,
+        },
+        'status': 'success',
+        'warnings': load_list(args.warnings),
+    }
+
+    errors = []
+    coverages = []
+    potential_vulnerabilities = []
+
+    count = 0
+    for report in args.reports:
+        params = report.replace(".json", "").split(":")
+
+        contract_name = params[1]
+        solidity_file = params[0]        
+
+        (vulnerabilities, coverage, new_count) = get_potential_vulnerabilities(                        
+            solidity_file,
+            contract_name,
+            report,
+            count,
+        )
+        count = new_count
+        potential_vulnerabilities = potential_vulnerabilities + vulnerabilities
+        coverages.append({
+            'percentage': coverage,
+            'file': solidity_file,
+            'contract': contract_name,
+        })
+
+    if len(errors) > 0:
+        final_report['errors'] = coverages
+
+    if len(coverages) > 0:
+        final_report['coverages'] = coverages
+
+    if len(potential_vulnerabilities) > 0:
+        final_report['potential_vulnerabilities'] = potential_vulnerabilities
+
+    final_report['count_potential_vulnerabilities'] = count
+
+    print(json.dumps(final_report, indent=2))
+
+if __name__ == "__main__":
+    main(sys.argv)

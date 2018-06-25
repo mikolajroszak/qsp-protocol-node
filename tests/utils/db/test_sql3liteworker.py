@@ -47,7 +47,6 @@ class TestSqlLite3Worker(unittest.TestCase):
         self.worker.execute_script(fetch_file(resource_uri('dropdb.sql')))
         self.worker.execute_script(fetch_file(resource_uri('evt/createdb.sql', is_main=True)))
 
-
     def tearDown(self):
         """
         Clears the database after the test.

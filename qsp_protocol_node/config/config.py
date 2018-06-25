@@ -4,21 +4,27 @@ as loaded from an input YAML file.
 """
 import logging
 import logging.config
+import os
 import structlog
-import yaml
 import utils.io as io_utils
+import yaml
 
-from os.path import expanduser
-from time import sleep
+from audit import (
+    Analyzer,
+    Wrapper,
+)
+from evt import EventPoolManager
 from dpath.util import get
+from os.path import expanduser
+from pathlib import Path
 from solc import compile_files
+from streaming import CloudWatchProvider
 from structlog import configure_once
 from structlog import processors
 from structlog import stdlib
 from structlog import threadlocal
-from audit import Analyzer
-from evt import EventPoolManager
-from streaming import CloudWatchProvider
+from time import sleep
+from tempfile import gettempdir
 from upload import S3Provider
 from utils.eth import (
     WalletSessionManager,
@@ -51,6 +57,12 @@ def config_value(cfg, path, default=None, accept_none=True):
 
     return value
 
+
+# FIXME
+# There is some technical debt accumulating in this file. Config started simple and therefore justified
+# its own existence as a self-contained module. This has to change as we move forward. Break config
+# into smaller subconfigs. See QSP-414.
+# https://quantstamp.atlassian.net/browse/QSP-414
 
 class Config:
     """
@@ -119,14 +131,10 @@ class Config:
             '/evt_polling_sec',
             accept_none=False,
         )
-        self.__analyzer_output = config_value(
+        self.__analyzers = []
+        self.__analyzers_config = config_value(
             cfg,
-            '/analyzer/output',
-            accept_none=False,
-        )
-        self.__analyzer_cmd = config_value(
-            cfg,
-            '/analyzer/cmd',
+            '/analyzers',
             accept_none=False,
         )
         self.__account = config_value(
@@ -276,7 +284,7 @@ class Config:
                 attempts = attempts + 1
                 self.__logger.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
                     attempts
-                )
+                    )
                 )
                 sleep(5)
 
@@ -389,11 +397,41 @@ class Config:
                     self.__audit_contract_name,
                     self.__account)
 
-    def __create_analyzer(self):
+    def __create_analyzers(self):
         """
-        Creates an instance of the the target analyzer that verifies a given contract.
+        Creates an instance of the each target analyzer that should be verifying a given contract.
         """
-        self.__analyzer = Analyzer(self.analyzer_cmd, self.logger)
+        default_timeout_sec = 60
+        default_storage = gettempdir()
+
+        for i, analyzer_config_dict in enumerate(self.__analyzers_config):
+            # Each analyzer config is a dictionary of a single entry
+            # <analyzer_name> -> {
+            #     analyzer dictionary configuration
+            # }
+
+            # Gets ths single key in the dictionart (the name of the analyzer)
+            analyzer_name = list(analyzer_config_dict.keys())[0]
+            analyzer_config = self.__analyzers_config[i][analyzer_name]
+
+            script_path = os.path.realpath(__file__)
+            wrappers_dir = '{0}/../../analyzers/wrappers'.format(os.path.dirname(script_path))
+
+            wrapper = Wrapper(
+                wrappers_dir=wrappers_dir,
+                analyzer_name=analyzer_name,
+                args=analyzer_config.get('args', ""),
+                storage_dir=analyzer_config.get('storage_dir', default_storage),
+                timeout_sec=analyzer_config.get('timeout_sec', default_timeout_sec),
+                logger=self.__logger,
+            )
+
+            default_storage = "{0}/.{1}".format(
+                str(Path.home()),
+                analyzer_name,
+            )
+
+            self.__analyzers.append(Analyzer(wrapper, self.__logger))
 
     def __create_wallet_session_manager(self):
         if self.eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
@@ -426,7 +464,7 @@ class Config:
         )
 
         self.__create_audit_contract()
-        self.__create_analyzer()
+        self.__create_analyzers()
         self.__create_wallet_session_manager()
         self.__create_event_pool_manager()
         self.__create_report_uploader_provider()
@@ -460,6 +498,10 @@ class Config:
                 self.__logger.debug("Successfully reverted changes")
 
     def __configure_logging(self):
+        # FIXME
+        # This should be moved to the initialization level.
+        # See QSP-148.
+        # https://quantstamp.atlassian.net/browse/QSP-418
         logging.getLogger('urllib3').setLevel(logging.CRITICAL)
         logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
@@ -570,20 +612,6 @@ class Config:
         return self.__evt_polling_sec
 
     @property
-    def analyzer_output(self):
-        """
-        Returns the output of the analyzer (either 'stdout' or a filename template).
-        """
-        return self.__analyzer_output
-
-    @property
-    def analyzer_cmd(self):
-        """
-        Returns the analyzer command template."
-        """
-        return self.__analyzer_cmd
-
-    @property
     def report_uploader(self):
         """
         Returns report uploader."
@@ -655,13 +683,6 @@ class Config:
         return self.__web3_client
 
     @property
-    def token_contract(self):
-        """
-        Returns the token contract object built from the given YAML configuration file.
-        """
-        return self.__token_contract
-
-    @property
     def audit_contract(self):
         """
         Returns the audit contract object built from the given YAML configuration file.
@@ -676,11 +697,11 @@ class Config:
         return self.__audit_contract_name
 
     @property
-    def analyzer(self):
+    def analyzers(self):
         """
         Returns the analyzer object built from the given YAML configuration file.
         """
-        return self.__analyzer
+        return self.__analyzers
 
     @property
     def wallet_session_manager(self):

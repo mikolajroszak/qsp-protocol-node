@@ -109,8 +109,7 @@ class Sqlite3Worker(threading.Thread):
                 self.run_query(token, query, values)
                 execute_count += 1
 
-                if (self.sql_queue.empty() or
-                        execute_count == self.max_queue_size):
+                if self.sql_queue.empty() or execute_count == self.max_queue_size:
                     execute_count = 0
 
             # Only exit if the queue is empty. Otherwise keep getting

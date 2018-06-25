@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+import json
+import sys
+
+def print_report(errors=[], warnings=[]):
+    report = {
+        'status': 'error'
+    }
+
+    if len(errors) > 0:
+        report['errors'] = errors
+
+    if len(warnings) > 0:
+        report['warnings'] = warnings
+
+    print(json.dumps(report, indent=2))
+
+
+def main(argv):
+    errors = []
+    warnings = []
+    try:
+        if len(argv) != 3:
+            raise Exception("Missing argumet error. Usage: mk_error <errros file> <warnings-file>")
+        with open(argv[1]) as errors_file:
+            errors = [error for error in errors_file]
+
+        with open(argv[2]) as warnings_file:
+            warnings = [warning for warning in warnings_file]
+
+    except Exception as e:
+        errors.append(str(e))
+
+    try:
+        print_report(errors, warnings)
+    except Exception as e:
+        # Nothing much to do here....
+        sys.exit(1)
+
+
+
+if __name__ == "__main__":
+    main(sys.argv)

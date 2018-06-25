@@ -11,15 +11,15 @@ class TestNodeKey(unittest.TestCase):
 
     def setUp(self):
         """Replaces a node key file with a test file and internally remembers the original value"""
-        self.__original_file = utils.node_key.KEY_FILENAME
+        self.__original_file = NodeKey.KEY_FILENAME
         self.__test_key_file = ".test-node-key"
-        utils.node_key.KEY_FILENAME = self.__test_key_file
+        NodeKey.KEY_FILENAME = self.__test_key_file
         if os.path.isfile(self.__test_key_file):
             os.remove(self.__test_key_file)
 
     def tearDown(self):
         """Restores teh original value for other test suites"""
-        utils.node_key.KEY_FILENAME = self.__original_file
+        NodeKey.KEY_FILENAME = self.__original_file
         if os.path.isfile(self.__test_key_file):
             os.remove(self.__test_key_file)
 

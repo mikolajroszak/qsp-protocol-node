@@ -2,36 +2,55 @@
 Tests invocation of the analyzer tool.
 """
 import unittest
-from random import random
-from audit import Analyzer, AnalyzerRunException
+import random
 
+from audit import Analyzer
+from audit import AnalyzerRunException
+from audit import Wrapper
 from utils.io import fetch_file
+from helpers.resource import project_root
 from helpers.resource import resource_uri
 from structlog import getLogger
 
-class TestAnalyzer(unittest.TestCase):
+
+class TestOyenteAnalyzer(unittest.TestCase):
     """
     Asserts different properties over Analyzer objects.
     """
 
-    __ANALYZER_CMD_TEMPLATE = "./oyente/oyente/oyente.py -j -s ${input}"
+    @staticmethod
+    def __new_oyente_analyzer(args="", storage_dir="/tmp", timeout_sec=60):
+        logger = getLogger("test")
+        oyente_wrapper = Wrapper(
+            wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
+            analyzer_name="oyente",
+            args="-ce",
+            storage_dir=storage_dir,
+            timeout_sec=timeout_sec,
+            logger=logger,
+        )
+        return Analyzer(oyente_wrapper, logger)
 
     def test_report_creation(self):
         """
         Tests whether a report is created upon calling the analyzer
         on a buggy contract
         """
-        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE, getLogger("test"))
+        analyzer = TestOyenteAnalyzer.__new_oyente_analyzer()
 
         buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
-        report = analyzer.check(buggy_contract, "${input}.json", "123")
+        request_id = random.randrange(1, 100)
+        report = analyzer.check(buggy_contract, request_id)
 
         # Asserts some result produced
         self.assertTrue(report)
 
+        import json
+        print(json.dumps(report, indent=2))
+
         # Asserts result is success
         self.assertTrue(report['status'], 'success')
-        self.assertTrue(report['result'] is not None)
+        self.assertTrue(report['potential_vulnerabilities'] is not None)
 
     def test_file_not_found(self):
         """
@@ -39,10 +58,12 @@ class TestAnalyzer(unittest.TestCase):
         on a non-inexistent file
         """
 
-        inexistent_file = str(random()) + ".sol"
-        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE, getLogger("test"))
+        filename_prefix = str(random.randrange(1, 100))
+        inexistent_file = "{0}.sol".format(filename_prefix)
+        analyzer = TestOyenteAnalyzer.__new_oyente_analyzer()
 
-        report = analyzer.check(inexistent_file, "${input}.json", "123")
+        request_id = random.randrange(1, 100)
+        report = analyzer.check(inexistent_file, request_id)
 
         self.assertTrue(report['status'], 'error')
 
@@ -53,12 +74,12 @@ class TestAnalyzer(unittest.TestCase):
         """
 
         old_contract = fetch_file(resource_uri("DAOBugOld.sol"))
-        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE, getLogger("test"))
+        analyzer = TestOyenteAnalyzer.__new_oyente_analyzer()
 
-        report = analyzer.check(old_contract, "${input}.json", "123")
+        request_id = random.randrange(1, 100)
+        report = analyzer.check(old_contract, request_id)
 
         self.assertTrue(report['status'], 'error')
-        self.assertTrue(report['result'] is not None)
 
     def test_old_pragma_with_carot(self):
         """
@@ -67,12 +88,12 @@ class TestAnalyzer(unittest.TestCase):
         """
 
         old_contract = fetch_file(resource_uri("DAOBugOld-Caret.sol"))
-        analyzer = Analyzer(TestAnalyzer.__ANALYZER_CMD_TEMPLATE, getLogger("test"))
+        analyzer = TestOyenteAnalyzer.__new_oyente_analyzer()
 
-        report = analyzer.check(old_contract, "${input}.json", "123")
+        request_id = random.randrange(1, 100)
+        report = analyzer.check(old_contract, request_id)
 
         self.assertTrue(report['status'], 'success')
-        self.assertTrue(report['result'] is not None)
 
 
 if __name__ == '__main__':

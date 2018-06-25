@@ -3,10 +3,11 @@ import logging
 
 from pathlib import Path
 
-KEY_FILENAME = "node.key"
-
 
 class NodeKey:
+
+    KEY_FILENAME = ".node.key"
+
     @staticmethod
     def __is_valid(key):
         try:
@@ -19,16 +20,16 @@ class NodeKey:
 
     @staticmethod
     def __load():
-        my_file = Path(KEY_FILENAME)
+        my_file = Path(NodeKey.KEY_FILENAME)
         if not my_file.is_file():
-            logging.debug('Node key not loaded - file "{0}" not found'.format(KEY_FILENAME))
+            logging.debug('Node key not loaded - file "{0}" not found'.format(NodeKey.KEY_FILENAME))
             return False
 
-        with open(KEY_FILENAME, 'r') as key_file:
+        with open(NodeKey.KEY_FILENAME, 'r') as key_file:
             node_key = key_file.read()
             if not NodeKey.__is_valid(node_key):
                 logging.debug(
-                    'Invalid node key in file "{0}": "{1}"'.format(KEY_FILENAME, node_key))
+                    'Invalid node key in file "{0}": "{1}"'.format(NodeKey.KEY_FILENAME, node_key))
                 return False
 
             logging.debug('Node key loaded successfully: "{0}"'.format(node_key))
@@ -36,7 +37,7 @@ class NodeKey:
 
     @staticmethod
     def __recreate():
-        with open(KEY_FILENAME, 'w+') as key_file:
+        with open(NodeKey.KEY_FILENAME, 'w+') as key_file:
             node_key = str(uuid.uuid4())
             key_file.write(node_key)
             logging.debug('Node key re-created successfully: "{0}"'.format(node_key))

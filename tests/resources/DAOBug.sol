@@ -21,3 +21,4 @@ contract SendBalance {
     userBalances[msg.sender] = 0;
   }
 }
+

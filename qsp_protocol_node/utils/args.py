@@ -1,6 +1,6 @@
 def replace_args(template, args):
     """
-    Injects a set of input arguments into the command template, returning a 
+    Injects a set of input arguments into the command template, returning a
     command instance.
     """
     cmd = template

@@ -6,117 +6,173 @@
     "title": "Audit report",
     "description": "API schema defining the expected output format of an audit report",
     "properties": {
-        "id": {
+        "timestamp": {
+            "type": "string",
+            "description": "The UTC time in which in this report was produced"
+        },
+        "contract_uri": {
+            "type": "string",
+            "description": "The UTC time in which in this report was produced"
+        },
+        "contract_hash": {
             "type": "string",
             "pattern": "^[A-Fa-f0-9]{64}$",
-            "description": "Hash digest (256) of the resulting audit report" 
+            "description": "Hash digest (sha256) of the target contract" 
         },
-        "analyzer": {
-            "type":  "object",
-            "description": "Meta data concerning the underlying analyzer",
-            "properties": {
-                "name": {
-                    "description": "Analyzer's name",
-                    "type": "string",
-                    "maxLength": 50
-                },
-                "version": {
-                    "description": "Analyzer's version",
-                    "type": "string",
-                    "maxLength": 20
-                },
-                "vulnerabilities": {
-                    "type": "array",
-                    "description": "Vulnerabilities checked by the analyzer",                    
-                    "maxItems": 100,
-                    "items": [{"type": "string"}],
-                    "additionalItems": true                        
-                },
-                "exec": {
-                    "type": "string",
-                    "description": "Command used when executing the analyzer for the given report"
-                }
-            },
-            "additionalProperties": false
+        "requestor": {
+            "type": "string",
+            "pattern": "^(0x)?[A-Fa-f0-9]{40}$",
+            "description": "The account address of the party requesting the audit"
+        },
+        "auditor": {
+            "type": "string",
+            "pattern": "^(0x)?[A-Fa-f0-9]{40}$",
+            "description": "The account address of the party producing the audit"
+        },
+        "request_id": {
+            "type": "integer"
         },
         "report": {
-            "type": "object",
-            "description": "Audit report produced by the analyzer",
-            "properties": {
-                "status": {
-                    "enum": ["success", "failed"],
-                    "description": "Status result of whether the analyzer succeeded or not"
-                },
-                "errors": {
-                    "array": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "start_time": {
+                        "type": "integer",
+                        "description": "The starting time (epoch) that the analyzer started execution",
+                        "minimum": 1                    
+                    },
+                    "end_time": {
+                        "type": "integer",
+                        "description": "The end time (epoch) that the analyzer ended execution",
+                        "minimum": 1                    
+                    },
+                    "hash": {
                         "type": "string",
-                        "description": "A list of errors encountered when producing the report"
-                    }
-                },
-                "warnings": {
-                    "array": {
-                        "type": "string",
-                        "description": "A list of warnings encountered when producing the report"
-                    }
-                },
-                "vulnerabilities": {
-                    "type": "array",
-                    "description": "List of vulnerabilities found",
-                    "items": {
-                        "title": "Vulnerability",
-                        "description": "Descriptive data about each reported vulnerability",
+                        "pattern": "^[A-Fa-f0-9]{64}$",
+                        "description": "Hash digest (sha256) of this audit report" 
+                    },
+                    "analyzer": {
+                        "type":  "object",
+                        "description": "Meta data concerning the underlying analyzer",
                         "properties": {
                             "name": {
+                                "description": "Analyzer's name",
                                 "type": "string",
-                                "description": "Name of the reported vulnerability",
-                                "maxLength": 100
+                                "maxLength": 50
                             },
-                            "lines": {
+                            "version": {
+                                "description": "Analyzer's version",
+                                "type": "string",
+                                "maxLength": 20
+                            },
+                            "vulnerabilities_checked": {
                                 "type": "array",
-                                "description": "Sorted array of tuples containing the lines where the vulnerability occurs",
-                                "items": {
+                                "description": "Vulnerabilities checked by the analyzer",                    
+                                "maxItems": 100,
+                                "items": [{"type": "string"}],
+                                "additionalItems": true                        
+                            },
+                            "command": {
+                                "type": "string",
+                                "description": "Command used when executing the analyzer for the given report"
+                            }
+                        }
+                    },
+                    "status": {
+                        "enum": ["success", "failed"],
+                        "description": "Status result of whether the analyzer succeeded or not"
+                    },
+                    "errors": {
+                        "array": {
+                            "type": "string",
+                            "description": "List of errors encountered when producing the report"
+                        }
+                    },
+                    "warnings": {
+                        "array": {
+                            "type": "string",
+                            "description": "List of warnings encountered when producing the report"
+                        }
+                    },
+                    "coverages": {
+                        "type": "array",
+                        "description": "The coverages in percentage achieved in each contract",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "percentage": {
+                                    "type": "number",
+                                    "description": "The percentage value of bytecode statements covered during the audit",
+                                    "minimum": 0,
+                                    "maximum": 100,
+                                    "multipleOf": "0.1"
+
+                                },
+                                "file": {
+                                    "type": "string",
+                                    "description": "Audited contract filename",
+                                    "maxLength": 1000
+                                },
+                                "contract": {
+                                    "type": "string",
+                                    "description": "Audited contract name",
+                                    "maxLength": 1000
+                                }
+                            }
+                        }
+                    },
+                    "potential_vulnerabilities": {
+                        "type": "array",
+                        "description": "List of potential vulnerabilities found",
+                        "items": {
+                            "title": "Vulnerability",
+                            "description": "Descriptive data about each reported vulnerability",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Name of the reported vulnerability",
+                                    "maxLength": 100
+                                },
+                                "file": {
+                                    "type": "string",
+                                    "description": "Audited contract filename",
+                                    "maxLength": 1000
+                                },
+                                "contract": {
+                                    "type": "string",
+                                    "description": "Audited contract name",
+                                    "maxLength": 1000
+                                },
+                                "instances": {
                                     "type": "array",
-                                    "description": "Tuple (s, e) denoting a contiguous code sequence between 'ss and 'e' lines",
-                                    "items":
-                                        [
-                                            {
+                                    "description": "Array of dictionaries describing each potential vulnerability",
+                                    "items": {
+                                        "properties": {
+                                            "ref_id": {
                                                 "type": "integer",
-                                                "description": "Start line of the code sequence containing the vulnerability",
+                                                "description": "Reference identifier associated with this instance",
                                                 "minimum": 1
                                             },
-                                            {
+                                            "start_line": {
                                                 "type": "integer",
-                                                "description": "End line of the code sequence containing the vulnerability",
+                                                "description": "The initial line where the vulnerability was found",
                                                 "minimum": 1
-                                            }
-                                        ]
+                                            },
+                                            "end_line": {
+                                                "type": "integer",
+                                                "description": "The end line where the vulnerability was found",
+                                                "minimum": 1
+                                            },
+                                            "additionalProperties": true
+                                        }
+                                    }
                                 }
-                            },
-                            "file": {
-                                "type": "string",
-                                "description": "Audited contract filename",
-                                "maxLength": 1000
-                            },
-                            "contract": {
-                                "type": "string",
-                                "description": "Audited contract name",
-                                "maxLength": 1000
                             }
                         }
                     }
-                },
-                "start_time": {
-                    "type": "integer",
-                    "description": "The starting time (epoch) that the analyzer executed",
-                    "minimum": 1                    
-                },
-                "end_time": {
-                    "type": "integer",
-                    "description": "The starting time (epoch) that the analyzer executed",
-                    "minimum": 1                    
                 }
             }
         }
-    },
-    "additionalProperties": false
+    }
 }

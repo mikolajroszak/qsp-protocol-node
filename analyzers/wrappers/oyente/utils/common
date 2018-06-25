@@ -1,0 +1,23 @@
+readonly DOCKER_IMAGE="466368306539.dkr.ecr.us-east-1.amazonaws.com/melonproject-oyente:57dcfae35773ff30aa34856865a7ad07c501d4d0"
+
+declare -a ON_EXIT_HANDLERS
+
+function on_exit()
+{
+    for i in "${ON_EXIT_HANDLERS[@]}"
+    do
+        eval $i
+    done
+}
+
+function on_exit_do()
+{
+    local n=${#ON_EXIT_HANDLERS[*]}
+    ON_EXIT_HANDLERS[$n]="$*"
+    if [[ $n -eq 0 ]]; then
+        # TODO
+        # Check how complete ths list of signals is
+        trap on_exit EXIT SIGINT SIGTERM SIGKILL
+    fi
+}
+

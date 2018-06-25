@@ -8,9 +8,11 @@ local:
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
   min_price: !!int 0
   evt_polling_sec: !!int 5
-  analyzer:
-      output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "./analyzers/oyente/init.sh ${input}"
+  analyzers:
+    - oyente:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: ~/.oyente
+        timeout_sec: 120
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -40,9 +42,9 @@ dev:
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
   min_price: !!int 0
   evt_polling_sec: !!int 5
-  analyzer:
-      output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "./analyzers/oyente/init.sh ${input}"
+  analyzers:
+    - oyente: 
+        args: "" # No args provided; rely on defaults for now
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -74,9 +76,9 @@ prod:
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-prod/QuantstampAudit.meta.json"
   min_price: !!int 0
   evt_polling_sec: !!int 5
-  analyzer:
-      output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "./analyzers/oyente/init.sh ${input}"
+  analyzers:
+    - oyente:
+        args: "" # No args provided; rely on defaults for now
   report_uploader:
       provider: !!str "S3Provider"
       args:

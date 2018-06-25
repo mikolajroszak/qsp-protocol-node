@@ -8,6 +8,20 @@ Implements the QSP audit node in the Quantstamp network.
 
 All instructions must be run from the project's root folder.
 
+1. Make sure you have `pyenv` installed and that it is properly initialized.
+Initialization entails changing your `~/.bash_profile` (if not already done so):
+
+```
+echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+
+```
+
+and sourcing it:
+
+```
+source ~/.bash_profile
+```
+
 1. Clone the repo and set it up by running 
     ```
     make setup

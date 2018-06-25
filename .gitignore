@@ -7,5 +7,5 @@ __pycache__/
 tests/coverage/.coverage
 tests/coverage/htmlcov
 .terraform
-node.key
+.node.key
 .idea/

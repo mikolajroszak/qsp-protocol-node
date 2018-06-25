@@ -6,12 +6,13 @@ local:
     # uri: !!str "./tests/resources/QuantstampAuditV2.sol"
     uri: !!str "./tests/resources/QuantstampAuditMock.sol"
     metadata: !!str "./tests/resources/QuantstampAudit-metadata.json"
-  
   min_price: !!int 0
   evt_polling_sec: !!int 5
-  analyzer:
-      output: !!str ${input}.json # either a file name or stdout
-      cmd: !!str "./analyzers/oyente/run.sh ${input}"
+  analyzers:
+    - oyente:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: /tmp/.oyente
+        timeout_sec: 120
   report_uploader:
       provider: !!str "S3Provider"
       args:
