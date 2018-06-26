@@ -4,10 +4,11 @@ from utils.eth.tx import mk_args
 
 
 class SimpleConfigMock:
-
+    DEFAULT_GAS_PRICE = 4000000000
     def __init__(self, default_gas):
         self.__default_gas = default_gas
         self.__account = "account"
+        self.__default_gas_price = SimpleConfigMock.DEFAULT_GAS_PRICE;
 
     @property
     def default_gas(self):
@@ -17,6 +18,9 @@ class SimpleConfigMock:
     def account(self):
         return self.__account
 
+    @property
+    def default_gas_price(self):
+        return self.__default_gas_price
 
 class TestFile(unittest.TestCase):
 
@@ -26,7 +30,7 @@ class TestFile(unittest.TestCase):
         """
         config = SimpleConfigMock(None)
         result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
+        self.assertEqual(SimpleConfigMock.DEFAULT_GAS_PRICE, result['gasPrice'])
         self.assertEqual('account', result['from'])
         try:
             temp = result['gas']
@@ -41,7 +45,7 @@ class TestFile(unittest.TestCase):
         """
         config = SimpleConfigMock(0)
         result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
+        self.assertEqual(SimpleConfigMock.DEFAULT_GAS_PRICE, result['gasPrice'])
         self.assertEqual('account', result['from'])
         self.assertEqual(0, result['gas'])
 
@@ -51,7 +55,7 @@ class TestFile(unittest.TestCase):
         """
         config = SimpleConfigMock(7)
         result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
+        self.assertEqual(SimpleConfigMock.DEFAULT_GAS_PRICE, result['gasPrice'])
         self.assertEqual('account', result['from'])
         self.assertEqual(7, result['gas'])
 
@@ -61,7 +65,7 @@ class TestFile(unittest.TestCase):
         """
         config = SimpleConfigMock('7')
         result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
+        self.assertEqual(SimpleConfigMock.DEFAULT_GAS_PRICE, result['gasPrice'])
         self.assertEqual('account', result['from'])
         self.assertEqual(7, result['gas'])
 

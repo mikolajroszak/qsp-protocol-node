@@ -7,6 +7,7 @@ local:
     uri: !!str "./tests/resources/QuantstampAuditMock.sol"
     metadata: !!str "./tests/resources/QuantstampAudit-metadata.json"
   min_price: !!int 0
+  default_gas_price: !!int 0
   evt_polling_sec: !!int 5
   analyzers:
     - oyente:
