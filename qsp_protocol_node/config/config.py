@@ -164,9 +164,9 @@ class Config:
             cfg,
             '/default_gas',
         )
-        self.__default_gas_price = config_value(
+        self.__gas_price_wei = config_value(
             cfg,
-            '/default_gas_price',
+            '/gas_price_wei',
         )
         self.__report_uploader_provider_name = config_value(
             cfg,
@@ -328,7 +328,7 @@ class Config:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
-                self.__logger.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
+                self.__logger.debug("Connection attempt ({0}) failed. Retrying in 10 seconds".format(
                     attempts
                     )
                 )
@@ -730,11 +730,11 @@ class Config:
         return self.__default_gas
 
     @property
-    def default_gas_price(self):
+    def gas_price_wei(self):
         """
         Returns default gas price.
         """
-        return self.__default_gas_price
+        return self.__gas_price_wei
 
     @property
     def config_file_uri(self):
