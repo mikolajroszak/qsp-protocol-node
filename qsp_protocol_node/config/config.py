@@ -304,8 +304,6 @@ class Config:
         """
         Creates a Web3 client from the already set Ethereum provider.
         """
-        self.__web3_client = Web3(self.eth_provider)
-
         max_attempts = 30
         attempts = 0
 
@@ -318,6 +316,7 @@ class Config:
 
         while attempts < max_attempts and not connected:
             try:
+                self.__web3_client = Web3(self.eth_provider)
                 self.__web3_client.eth.accounts
                 connected = True
                 self.__logger.debug("Connected on attempt {0}".format(
