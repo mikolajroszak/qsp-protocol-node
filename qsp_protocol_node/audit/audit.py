@@ -83,6 +83,24 @@ class QSPAuditNode:
 
         return evt_thread
 
+    def __run_block_mined_thread(self, handler_name, handler):
+        """
+        Checks if a new block is mined. Reacting to a new block the handler is called.
+        """
+        def exec():
+            current_block = 0
+            while self.__exec:
+                if current_block < self.__config.web3_client.eth.blockNumber:
+                    current_block = self.__config.web3_client.eth.blockNumber
+                    handler()
+
+                sleep(self.__config.is_mined_polling)
+
+        new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
+        new_block_monitor_thread.start()
+
+        return evt_thread
+
     @property
     def config(self):
         return self.__config
@@ -108,6 +126,10 @@ class QSPAuditNode:
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
+        self.__internal_threads.append(self.__run_block_mined_thread(
+            "check_available_requests",
+            self.__check_then_bid_audit_request
+        ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_AUDIT_REQUESTED,
             self.__config.audit_contract.events.LogAuditRequested.createFilter(fromBlock=start_block),
@@ -145,35 +167,36 @@ class QSPAuditNode:
 
             sleep(health_check_interval_sec)
 
-    def __on_audit_requested(self, evt):
+    def __check_then_bid_audit_request(self):
         """
-        Bids for an audit upon an audit request event.
+        Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
-            # Bids for audit requests whose reward is at least as
-            # high as given by the configured min_price
+            any_request_avialble = self.__config.audit_contract.functions.isRequestAvialble().call()
+            if any_request_avialble == 0:
+                self.__get_next_audit_request()
+                self.__logger.debug("Bid on an audit.")
+            else:
+                self.__logger.debug("No request were available as the contract returned {0}.".format(str(any_request_avialble)))
+        except Exception as error:
+            self.__logger.exception(
+                "Error when calling to get a review {0}".format(str(error))
+            )
+
+    def __on_audit_requested(self, evt):
+        """
+        Records an audit upon an audit request event.
+        """
+        try:
             price = evt['args']['price']
             request_id = str(evt['args']['requestId'])
 
             if (price >= self.__config.min_price):
-                self.__logger.debug("Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
+                self.__logger.debug("A new audit request is showed up within a price range: {0}.)".format(
                     str(evt)), requestId=request_id)
-                audit_evt = {
-                  'request_id': request_id,
-                  'requestor': str(evt['args']['requestor']),
-                  'contract_uri': str(evt['args']['uri']),
-                  'evt_name': QSPAuditNode.__EVT_AUDIT_REQUESTED,
-                  'block_nbr': evt['args']['requestTimestamp'],
-                  'status_info': "Audit requested",
-                  'price': str(evt['args']['price']),
-                }
-                self.__config.event_pool_manager.add_evt_to_be_processed(
-                  audit_evt
-                )
-                self.__get_next_audit_request()
             else:
                 self.__logger.debug(
-                    "Declining processing audit request: {0}. Not enough incentive".format(
+                    "Not enough incentive for processing the new audit request: {0}. ".format(
                         str(evt)
                     ),
                     requestId=request_id,

@@ -8,6 +8,7 @@ local:
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
   min_price: !!int 0
   evt_polling_sec: !!int 5
+  is_mined_polling_sec: !!int 1
   analyzers:
     - oyente:
         args: "" # No args provided; rely on defaults for now
@@ -42,6 +43,7 @@ dev:
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
   min_price: !!int 0
   evt_polling_sec: !!int 5
+  is_mined_polling_sec: !!int 1
   analyzers:
     - oyente: 
         args: "" # No args provided; rely on defaults for now
@@ -76,6 +78,7 @@ prod:
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-prod/QuantstampAudit.meta.json"
   min_price: !!int 0
   evt_polling_sec: !!int 5
+  is_mined_polling_sec: !!int 1
   analyzers:
     - oyente:
         args: "" # No args provided; rely on defaults for now

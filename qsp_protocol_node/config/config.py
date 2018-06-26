@@ -131,6 +131,11 @@ class Config:
             '/evt_polling_sec',
             accept_none=False,
         )
+        self.__is_mined_polling_sec = config_value(
+            cfg,
+            '/is_mined_polling_sec',
+            accept_none=False,
+        )
         self.__analyzers = []
         self.__analyzers_config = config_value(
             cfg,
@@ -610,6 +615,13 @@ class Config:
         Returns the polling for audit requests frequency (given in seconds).
         """
         return self.__evt_polling_sec
+
+    @property
+    def is_mined_polling(self):
+        """
+        Returns the polling for checking if a new block is mined (given in seconds).
+        """
+        return self.__is_mined_polling_sec
 
     @property
     def report_uploader(self):
