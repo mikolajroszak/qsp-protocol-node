@@ -13,6 +13,7 @@ from audit import (
     Analyzer,
     Wrapper,
 )
+from .alternate_config_utils import ConfigUtils
 from evt import EventPoolManager
 from dpath.util import get
 from os.path import expanduser
@@ -235,25 +236,7 @@ class Config:
             self.__raise_err(
                 msg="Missing the audit contract source or its ABI")
 
-    @staticmethod
-    def __new_provider(provider, args):
-        if provider == "HTTPProvider":
-            return HTTPProvider(**args)
-
-        if provider == "IPCProvider":
-            return IPCProvider(**args)
-
-        if provider == "EthereumTesterProvider":
-            return EthereumTesterProvider()
-
-        if provider == "TestRPCProvider":
-            return TestRPCProvider(**args)
-
-        raise Exception(
-            "Unknown/Unsupported provider: {0}".format(provider)
-        )
-
-    def __create_eth_provider(self):
+    def __create_eth_provider(self, config_utils):
         """
         Creates an Ethereum provider.
         """
@@ -265,24 +248,15 @@ class Config:
         # TestRPCProvider
         #
         # See: http://web3py.readthedocs.io/en/stable/providers.html
+        return config_utils.new_provider(self.__eth_provider_name,
+                                         self.__eth_provider_args)
 
-        self.__eth_provider = Config.__new_provider(self.__eth_provider_name,
-                                                    self.__eth_provider_args)
-
-    def __create_report_uploader_provider(self):
+    def __create_report_uploader_provider(self, config_utils):
         """
         Creates a report uploader provider.
         """
-        # Supported providers:
-        #
-        # S3Provider
-
-        if self.__report_uploader_provider_name == "S3Provider":
-            self.__report_uploader = S3Provider(**self.__report_uploader_provider_args)
-            return
-
-        raise Exception(
-            "Unknown/Unsupported provider: {0}".format(self.__report_uploader_provider_name))
+        return config_utils.create_report_uploader_provider(self.__report_uploader_provider_name,
+                                                            self.__report_uploader_provider_args)
 
     def __create_logging_streaming_provider(self):
         """
@@ -301,6 +275,7 @@ class Config:
             "Unknown/Unsupported provider: {0}".format(self.__logging_streaming_provider_name))
 
     def __create_web3_client(self):
+        # TODO(mderka): The functionality of this has changed since the utils class was created. Incorporate changes.
         """
         Creates a Web3 client from the already set Ethereum provider.
         """
@@ -321,7 +296,7 @@ class Config:
                 connected = True
                 self.__logger.debug("Connected on attempt {0}".format(
                     attempts
-                    )
+                )
                 )
             except Exception:
                 # An exception has occurred. Increment the number of attempts
@@ -329,7 +304,7 @@ class Config:
                 attempts = attempts + 1
                 self.__logger.debug("Connection attempt ({0}) failed. Retrying in 10 seconds".format(
                     attempts
-                    )
+                )
                 )
                 sleep(10)
 
@@ -440,24 +415,22 @@ class Config:
 
             self.__analyzers.append(Analyzer(wrapper, self.__logger))
 
-    def __create_wallet_session_manager(self):
-        if self.eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
-            self.__wallet_session_manager = DummyWalletSessionManager()
-        else:
-            self.__wallet_session_manager = WalletSessionManager(
-                self.__web3_client, self.__account, self.__account_passwd)
+    def __create_wallet_session_manager(self, config_utils):
+        return config_utils.create_wallet_session_manager(self.eth_provider_name, self.web3_client, self.account,
+                                                          self.account_passwd)
 
     def __create_event_pool_manager(self):
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
 
     def __create_components(self, cfg):
+        config_utils = ConfigUtils()
         # Setup followed by verification
         self.__setup_values(cfg)
         self.__configure_logging()
         self.__check_values()
 
         # Creation of internal components
-        self.__create_eth_provider()
+        self.__eth_provider = self.__create_eth_provider(config_utils)
         self.__create_web3_client()
 
         # After having a web3 client object, use it to put addresses in a canonical format
@@ -472,9 +445,9 @@ class Config:
 
         self.__create_audit_contract()
         self.__create_analyzers()
-        self.__create_wallet_session_manager()
+        self.__wallet_session_manager = self.__create_wallet_session_manager(config_utils)
         self.__create_event_pool_manager()
-        self.__create_report_uploader_provider()
+        self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
     def __load_config(self):
         config_file = io_utils.fetch_file(self.config_file_uri)
@@ -567,6 +540,9 @@ class Config:
         self.__cfg_dict = None
         self.__account_passwd = account_passwd
         self.__config_file_uri = config_file_uri
+        self.__report_uploader = None
+        self.__wallet_session_manager = None
+        self.__eth_provider = None
         self.__load_config()
 
     def __raise_err(self, cond=True, msg=""):

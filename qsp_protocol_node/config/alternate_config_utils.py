@@ -132,6 +132,7 @@ class ConfigUtils:
             return WalletSessionManager(client, account, passwd)
 
     def create_web3_client(self, eth_provider, account, account_passwd):
+        # TODO(mderka): Make this function consistent with config. It was changed in #51
         """
         Returns a web3 client and an account. The account is potentially none
         """
