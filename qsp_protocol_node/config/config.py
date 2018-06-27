@@ -248,8 +248,8 @@ class Config:
         # TestRPCProvider
         #
         # See: http://web3py.readthedocs.io/en/stable/providers.html
-        return config_utils.new_provider(self.__eth_provider_name,
-                                         self.__eth_provider_args)
+        return config_utils.create_eth_provider(self.__eth_provider_name,
+                                                self.__eth_provider_args)
 
     def __create_report_uploader_provider(self, config_utils):
         """
@@ -274,58 +274,11 @@ class Config:
         raise Exception(
             "Unknown/Unsupported provider: {0}".format(self.__logging_streaming_provider_name))
 
-    def __create_web3_client(self):
-        # TODO(mderka): The functionality of this has changed since the utils class was created. Incorporate changes.
+    def __create_web3_client(self, config_utils):
         """
         Creates a Web3 client from the already set Ethereum provider.
         """
-        max_attempts = 30
-        attempts = 0
-
-        # Default retry policy is as follows:
-        # 1) Makes a query (in this case, "eth.accounts")
-        # 2) If connected, nothing else to do
-        # 3) Otherwise, keep trying at most max_attempts, waiting 10s per each iteration
-
-        connected = False
-
-        while attempts < max_attempts and not connected:
-            try:
-                self.__web3_client = Web3(self.eth_provider)
-                self.__web3_client.eth.accounts
-                connected = True
-                self.__logger.debug("Connected on attempt {0}".format(
-                    attempts
-                )
-                )
-            except Exception:
-                # An exception has occurred. Increment the number of attempts
-                # made, and retry after 5 seconds
-                attempts = attempts + 1
-                self.__logger.debug("Connection attempt ({0}) failed. Retrying in 10 seconds".format(
-                    attempts
-                )
-                )
-                sleep(10)
-
-        if not connected:
-            raise Exception(
-                "Could not connect to ethereum node (time out after {0} attempts).".format(
-                    max_attempts
-                )
-            )
-
-        # It could be the case that account is not setup, which may happen for
-        # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
-        if self.__account is None:
-            if len(self.__web3_client.eth.accounts) == 0:
-                self.__account = self.__web3_client.personal.newAccount(self.__account_passwd)
-                self.__logger.debug("No account was provided, using a newly created one",
-                                    account=self.__account)
-            else:
-                self.__account = self.__web3_client.eth.accounts[0]
-                self.__logger.debug("No account was provided, using the account at index [0]",
-                                    account=self.__account)
+        return config_utils.create_web3_client(self.eth_provider, self.account, self.account_passwd)
 
     def __load_audit_contract_from_src(self, contract_src_uri, contract_name, constructor_from):
         """
@@ -419,19 +372,17 @@ class Config:
         return config_utils.create_wallet_session_manager(self.eth_provider_name, self.web3_client, self.account,
                                                           self.account_passwd)
 
-    def __create_event_pool_manager(self):
-        self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
-
     def __create_components(self, cfg):
         config_utils = ConfigUtils()
         # Setup followed by verification
         self.__setup_values(cfg)
-        self.__configure_logging()
+        self.__logger, self.__logging_streaming_provider = self.__configure_logging(config_utils)
         self.__check_values()
 
         # Creation of internal components
         self.__eth_provider = self.__create_eth_provider(config_utils)
-        self.__create_web3_client()
+        self.__web3_client, self.__account = self.__create_web3_client(config_utils)
+        # self.__create_web3_client()
 
         # After having a web3 client object, use it to put addresses in a canonical format
         self.__audit_contract_address = mk_checksum_address(
@@ -446,7 +397,7 @@ class Config:
         self.__create_audit_contract()
         self.__create_analyzers()
         self.__wallet_session_manager = self.__create_wallet_session_manager(config_utils)
-        self.__create_event_pool_manager()
+        self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
     def __load_config(self):
@@ -477,59 +428,9 @@ class Config:
                 self.__create_components(self.__cfg_dict)
                 self.__logger.debug("Successfully reverted changes")
 
-    def __configure_logging(self):
-        # FIXME
-        # This should be moved to the initialization level.
-        # See QSP-148.
-        # https://quantstamp.atlassian.net/browse/QSP-418
-        logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-        logging.getLogger('botocore').setLevel(logging.CRITICAL)
-
-        configure_once(
-            context_class=threadlocal.wrap_dict(dict),
-            logger_factory=stdlib.LoggerFactory(),
-            wrapper_class=stdlib.BoundLogger,
-            processors=[
-                stdlib.filter_by_level,
-                stdlib.add_logger_name,
-                stdlib.add_log_level,
-                stdlib.PositionalArgumentsFormatter(),
-                processors.TimeStamper(fmt="iso"),
-                processors.StackInfoRenderer(),
-                processors.format_exc_info,
-                processors.UnicodeDecoder(),
-                stdlib.render_to_log_kwargs]
-        )
-
-        dict_config = {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'json': {
-                    'format': '%(message)s %(threadName)s %(lineno)d %(pathname)s ',
-                    'class': 'pythonjsonlogger.jsonlogger.JsonFormatter'
-                }
-            },
-            'handlers': {
-                'json': {
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'json'
-                }
-            },
-            'loggers': {
-                '': {
-                    'handlers': ['json'],
-                    'level': logging.DEBUG if self.__logging_is_verbose else logging.INFO
-                }
-            }
-        }
-
-        logging.config.dictConfig(dict_config)
-        self.__logger = structlog.getLogger("audit")
-
-        if self.__logging_streaming_provider_name is not None:
-            self.__create_logging_streaming_provider()
-            self.__logger.addHandler(self.__logging_streaming_provider.get_handler())
+    def __configure_logging(self, config_utils):
+        return config_utils.configure_logging(self.__logging_is_verbose, self.__logging_streaming_provider_name,
+                                              self.__logging_streaming_provider_args)
 
     def __init__(self, env, config_file_uri, account_passwd=""):
         """
@@ -540,9 +441,14 @@ class Config:
         self.__cfg_dict = None
         self.__account_passwd = account_passwd
         self.__config_file_uri = config_file_uri
+        self.__web3_client = None
+        self.__account = None
         self.__report_uploader = None
         self.__wallet_session_manager = None
         self.__eth_provider = None
+        self.__event_pool_manager = None
+        self.__logger = None
+        self.__logging_streaming_provider = None
         self.__load_config()
 
     def __raise_err(self, cond=True, msg=""):

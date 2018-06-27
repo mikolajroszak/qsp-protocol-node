@@ -54,46 +54,6 @@ class ConfigUtils:
         raise ConfigurationException(
             "Unknown/Unsupported provider: {0}".format(report_uploader_provider_name))
 
-    def create_eth_provider(self, eth_provider_name, eth_provider_args):
-        """
-        Returns new Ethereum provider.
-        """
-        # Known providers according to Web3
-        #
-        # HTTPProvider
-        # IPCProvider
-        # EthereumTesterProvider
-        # TestRPCProvider
-        #
-        # See: http://web3py.readthedocs.io/en/stable/providers.html
-
-        max_attempts = 6
-        attempts = 0
-
-        # Default policy for creating a provider is as follows:
-        # 1) Creates a given provider and checks if it is connected or not
-        # 2) If connected, nothing else to do
-        # 3) Otherwise, keep trying at most max_attempts, waiting 5s per each iteration
-        while attempts < max_attempts:
-            try:
-                eth_provider = self.new_provider(eth_provider_name, eth_provider_args)
-                return eth_provider
-            except ConfigurationException as e:
-                # Wrong type requested, retires will not help
-                self.__logger.debug(str(e))
-                raise e
-            except Exception as e:
-                # An exception has occurred. Increment the number of attempts
-                # made, and retry after 5 seconds
-                attempts = attempts + 1
-                msg = "Connection attempt ({0}) failed. Retrying in 5 seconds".format(attempts)
-                self.__logger.debug(msg)
-                self.__logger.debug(e)
-                sleep(5)
-        msg = "Could not connect to ethereum node (time out after {0} attempts).".format(
-            max_attempts)
-        raise ConnectionError(msg)
-
     def create_logging_streaming_provider(self, logging_streaming_provider_name,
                                           logging_streaming_provider_args):
         """
@@ -109,7 +69,7 @@ class ConfigUtils:
         raise ConfigurationException(
             "Unknown/Unsupported provider: {0}".format(logging_streaming_provider_name))
 
-    def new_provider(self, provider, args):
+    def create_eth_provider(self, provider, args):
         if provider == "HTTPProvider":
             return HTTPProvider(**args)
 
@@ -131,13 +91,39 @@ class ConfigUtils:
         else:
             return WalletSessionManager(client, account, passwd)
 
-    def create_web3_client(self, eth_provider, account, account_passwd):
-        # TODO(mderka): Make this function consistent with config. It was changed in #51
+    def create_web3_client(self, eth_provider, account, account_passwd, max_attempts=30):
         """
-        Returns a web3 client and an account. The account is potentially none
+        Creates a Web3 client from the already set Ethereum provider, and creates and account.
         """
+        attempts = 0
+
+        # Default retry policy is as follows:
+        # 1) Makes a query (in this case, "eth.accounts")
+        # 2) If connected, nothing else to do
+        # 3) Otherwise, keep trying at most max_attempts, waiting 10s per each iteration
         web3_client = Web3(eth_provider)
         new_account = account
+        connected = False
+        while attempts < max_attempts and not connected:
+            try:
+                web3_client = Web3(eth_provider)
+                # the following throws if Geth is not reachable
+                web3_client.eth.accounts
+                connected = True
+                self.__logger.debug("Connected on attempt {0}".format(attempts))
+            except Exception:
+                # An exception has occurred. Increment the number of attempts
+                # made, and retry after 5 seconds
+                attempts = attempts + 1
+                self.__logger.debug("Connection attempt ({0}) failed. Retrying in 10 seconds".format(attempts))
+                sleep(10)
+
+        if not connected:
+            raise ConfigurationException(
+                "Could not connect to ethereum node (time out after {0} attempts).".format(
+                    max_attempts
+                )
+            )
 
         # It could be the case that account is not setup, which may happen for
         # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
@@ -154,6 +140,10 @@ class ConfigUtils:
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
                           logging_streaming_provider_args):
+        # FIXME
+        # This should be moved to the initialization level.
+        # See QSP-148.
+        # https://quantstamp.atlassian.net/browse/QSP-418
         logging.getLogger('urllib3').setLevel(logging.CRITICAL)
         logging.getLogger('botocore').setLevel(logging.CRITICAL)
 

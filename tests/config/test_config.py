@@ -73,12 +73,21 @@ class ConfigUtilsMock:
         arguments_to_check = ['report_uploader_provider_name', 'report_uploader_provider_args']
         return self.call('create_report_uploader_provider', arguments_to_check, locals())
 
-    def new_provider(self, provider, args):
+    def create_eth_provider(self, provider, args):
         """
         A stub for new_provider method.
         """
         arguments_to_check = ['provider', 'args']
-        return self.call('new_provider', arguments_to_check, locals())
+        return self.call('create_eth_provider', arguments_to_check, locals())
+
+    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
+                          logging_streaming_provider_args):
+        """
+        A stub for new_provider method.
+        """
+        arguments_to_check = ['logging_is_verbose', 'logging_streaming_provider_name',
+                              'logging_streaming_provider_args']
+        return self.call('configure_logging', arguments_to_check, locals())
 
 
 class TestConfig(unittest.TestCase):
@@ -223,40 +232,30 @@ class TestConfig(unittest.TestCase):
         config._Config__eth_provider_name = name
         config._Config__eth_provider_args = args
         utils = ConfigUtilsMock()
-        utils.expect('new_provider',
+        utils.expect('create_eth_provider',
                      {'provider': name, 'args': args},
                      return_value)
         result = config._Config__create_eth_provider(utils)
         self.assertEqual(return_value, result)
         utils.verify()
 
-
-#    def test_config_reload(self):
-#        # Makes a copy of the test_config.yaml file to later
-#        # change it
-#
-#        yaml_file, cfg_dict = self.__copy_yaml_setup()
-#        cfg = Config('test', "file://{0}".format(yaml_file.name))
-#
-#        # Changes the previous settings (min_price, evt_polling, and ttl)
-#        # and check whether the config object is updated accordingly
-#
-#        new_ttl = 1200
-#        new_evt_polling = 10
-#        new_min_price = 100
-#
-#        # Updates the yaml file
-#        cfg_dict['test']['account']['ttl'] = new_ttl
-#        cfg_dict['test']['evt_polling_sec'] = new_evt_polling
-#        cfg_dict['test']['min_price'] = new_min_price
-#
-#        # Writes the configuration back to the yaml file
-#        self.__write_yaml(cfg_dict, yaml_file)
-#
-#        # Asserts properties have been updated
-#        self.assertEqual(cfg.account_ttl, new_ttl)
-#        self.assertEqual(cfg.evt_polling, new_evt_polling)
-#        self.assertEqual(cfg.min_price, new_min_price)
+    def test_configure_logging(self):
+        name = "provider name"
+        args = "arguments"
+        return_value = "value"
+        verbose = False
+        config = TestConfig.fetch_config()
+        config._Config__logging_is_verbose = verbose
+        config._Config__logging_streaming_provider_name = name
+        config._Config__logging_streaming_provider_args = args
+        utils = ConfigUtilsMock()
+        utils.expect('configure_logging',
+                     {'logging_is_verbose': verbose, 'logging_streaming_provider_name': name,
+                      'logging_streaming_provider_args': args},
+                     return_value)
+        result = config._Config__configure_logging(utils)
+        self.assertEqual(return_value, result)
+        utils.verify()
 
 
 if __name__ == '__main__':

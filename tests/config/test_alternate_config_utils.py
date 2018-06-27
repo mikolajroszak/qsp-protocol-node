@@ -173,20 +173,7 @@ class TestConfigUtil(unittest.TestCase):
             # Expected
             pass
 
-    def test_create_eth_provider_fail(self):
-        """
-        Tests that after failing several times, the factory raises a connection error.
-        """
-        # The following None makes the construction fail, keep as is!
-        args = None
-        try:
-            self.config_utils.create_eth_provider("IPCProvider", args)
-            self.fail("None parameters are provided, this should fail after several retries.")
-        except ConnectionError:
-            # Expected
-            pass
-
-    def test_create_eth_provider_success(self):
+    def test_create_eth_provider(self):
         """
         Tests that all providers can be successfully created and if a wrong name is specified, an
         an exception is raised.
@@ -212,12 +199,19 @@ class TestConfigUtil(unittest.TestCase):
         """
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
         account = "Account"
-        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None)
+        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertEqual(account, new_account, "Account was recreated even though it was not None")
-        client, new_account = self.config_utils.create_web3_client(eth_provider, None, None)
+        client, new_account = self.config_utils.create_web3_client(eth_provider, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertIsNotNone(new_account, "The account was none and was not created")
+        # None ETH provider will make this fail
+        try:
+            client, new_account = self.config_utils.create_web3_client(None, None, None, 2)
+            self.fail("No exception was thrown even though the eth provider does not exist and web3 cannot connect")
+        except ConfigurationException:
+            # Expected
+            pass
 
     def test_load_config(self):
         """
