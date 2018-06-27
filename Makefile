@@ -6,7 +6,7 @@ ETH_PASSPHRASE ?= ""
 
 # Default target
 run: # printing "date" is important due to the logic CloudWatch uses to distinguish log files
-	date; python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
+	date; python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(ETH_PASSPHRASE)" $(ENV) $(CONFIG)
 
 setup:
 	brew install automake libtool awscli pyenv pyenv-virtualenv ; \
@@ -31,7 +31,7 @@ run-docker:
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
-		-e ETH_PASSPHRASE=$(ETH_PASSPHRASE) \
+		-e ETH_PASSPHRASE="$(ETH_PASSPHRASE)" \
 		qsp-protocol-node sh -c "make run"
 
 test-docker:

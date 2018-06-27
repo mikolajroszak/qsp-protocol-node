@@ -34,6 +34,6 @@ RUN pip install web3[tester]
 
 COPY . .
 
-RUN find "./analyzers" -type f -iname "*.sh" -exec chmod +x {} \;
+RUN find "./analyzers/wrappers" -type f -exec chmod +x {} \;
 
 CMD [ "make", "run" ]

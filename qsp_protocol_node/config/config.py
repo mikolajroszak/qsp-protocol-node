@@ -164,6 +164,10 @@ class Config:
             cfg,
             '/default_gas',
         )
+        self.__gas_price_wei = config_value(
+            cfg,
+            '/gas_price_wei',
+        )
         self.__report_uploader_provider_name = config_value(
             cfg,
             '/report_uploader/provider',
@@ -262,39 +266,8 @@ class Config:
         #
         # See: http://web3py.readthedocs.io/en/stable/providers.html
 
-        max_attempts = 6
-        attempts = 0
-
-        # Default policy for creating a provider is as follows:
-        # 1) Creates a given provider and checks if it is connected or not
-        # 2) If connected, nothing else to do
-        # 3) Otherwise, keep trying at most max_attempts, waiting 5s per each iteration
-
-        self.__eth_provider = None
-        connected = False
-
-        while attempts < max_attempts and not connected:
-            try:
-                self.__eth_provider = Config.__new_provider(self.__eth_provider_name,
-                                                            self.__eth_provider_args)
-                connected = True
-            except Exception:
-                # An exception has occurred. Increment the number of attempts
-                # made, and retry after 5 seconds
-                attempts = attempts + 1
-                self.__logger.debug("Connection attempt ({0}) failed. Retrying in 5 seconds".format(
-                    attempts
-                    )
-                )
-                sleep(5)
-
-        if not connected:
-            self.__eth_provider = None
-            raise Exception(
-                "Could not connect to ethereum node (time out after {0} attempts).".format(
-                    max_attempts
-                )
-            )
+        self.__eth_provider = Config.__new_provider(self.__eth_provider_name,
+                                                    self.__eth_provider_args)
 
     def __create_report_uploader_provider(self):
         """
@@ -331,7 +304,41 @@ class Config:
         """
         Creates a Web3 client from the already set Ethereum provider.
         """
-        self.__web3_client = Web3(self.eth_provider)
+        max_attempts = 30
+        attempts = 0
+
+        # Default retry policy is as follows:
+        # 1) Makes a query (in this case, "eth.accounts")
+        # 2) If connected, nothing else to do
+        # 3) Otherwise, keep trying at most max_attempts, waiting 10s per each iteration
+
+        connected = False
+
+        while attempts < max_attempts and not connected:
+            try:
+                self.__web3_client = Web3(self.eth_provider)
+                self.__web3_client.eth.accounts
+                connected = True
+                self.__logger.debug("Connected on attempt {0}".format(
+                    attempts
+                    )
+                )
+            except Exception:
+                # An exception has occurred. Increment the number of attempts
+                # made, and retry after 5 seconds
+                attempts = attempts + 1
+                self.__logger.debug("Connection attempt ({0}) failed. Retrying in 10 seconds".format(
+                    attempts
+                    )
+                )
+                sleep(10)
+
+        if not connected:
+            raise Exception(
+                "Could not connect to ethereum node (time out after {0} attempts).".format(
+                    max_attempts
+                )
+            )
 
         # It could be the case that account is not setup, which may happen for
         # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
@@ -720,6 +727,13 @@ class Config:
         Returns a fixed amount of gas to be used when interacting with the audit contract.
         """
         return self.__default_gas
+
+    @property
+    def gas_price_wei(self):
+        """
+        Returns default gas price.
+        """
+        return self.__gas_price_wei
 
     @property
     def config_file_uri(self):
