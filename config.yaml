@@ -13,6 +13,10 @@ local:
         args: "" # No args provided; rely on defaults for now
         storage_dir: ~/.oyente
         timeout_sec: 120
+    - mythril:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: ~/.mythril
+        timeout_sec: 120
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -45,6 +49,8 @@ dev:
   evt_polling_sec: !!int 5
   analyzers:
     - oyente: 
+        args: "" # No args provided; rely on defaults for now
+    - mythril:
         args: "" # No args provided; rely on defaults for now
   report_uploader:
       provider: !!str "S3Provider"
@@ -81,6 +87,8 @@ prod:
   evt_polling_sec: !!int 5
   analyzers:
     - oyente:
+        args: "" # No args provided; rely on defaults for now
+    - mythril:
         args: "" # No args provided; rely on defaults for now
   report_uploader:
       provider: !!str "S3Provider"

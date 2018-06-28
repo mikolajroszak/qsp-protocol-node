@@ -14,7 +14,7 @@ from threading import Thread
 from time import sleep
 
 from audit import QSPAuditNode
-from config import Config
+from config import ConfigFactory
 from helpers.resource import (
     resource_uri,
     project_root,
@@ -24,6 +24,8 @@ from utils.io import fetch_file, digest_file, load_json
 from utils.db import get_first
 from deepdiff import DeepDiff
 from pprint import pprint
+
+import json
 
 class TestQSPAuditNode(unittest.TestCase):
     __AUDIT_STATE_SUCCESS = 4
@@ -40,7 +42,7 @@ class TestQSPAuditNode(unittest.TestCase):
     @classmethod
     def fetch_config(cls):
         config_file_uri = resource_uri("test_config.yaml")
-        return Config("local", config_file_uri)
+        return ConfigFactory.create_from_file("local", config_file_uri)
 
     @classmethod
     def setUpClass(cls):
@@ -142,8 +144,6 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(digest_file(audit_file), row['audit_hash'])
         self.assertEqual(audit_state, expected_audit_state)
         
-        pprint(load_json(audit_file))
-        
         diff = DeepDiff(load_json(audit_file),
             load_json(fetch_file(resource_uri(report_file_path))),
             exclude_paths = {
@@ -155,6 +155,7 @@ class TestQSPAuditNode(unittest.TestCase):
                 "root['analyzer_reports'][0]['start_time']",
                 "root['analyzer_reports'][0]['end_time']",
                 "root['analyzer_reports'][0]['hash']",
+                "root['analyzer_reports'][1]['analyzer']['command']",
                 "root['analyzer_reports'][1]['coverages'][0]['file']",
                 "root['analyzer_reports'][1]['potential_vulnerabilities'][0]['file']",
                 "root['analyzer_reports'][1]['start_time']",

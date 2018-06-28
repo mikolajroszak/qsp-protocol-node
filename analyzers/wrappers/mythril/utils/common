@@ -1,4 +1,4 @@
-readonly DOCKER_IMAGE="luongnguyen/oyente@sha256:16c74d21e997cffe9a7480cb140ee6c05b7ba608e1b878df90f585b4710e41b0"
+readonly DOCKER_IMAGE="mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882"
 
 declare -a ON_EXIT_HANDLERS
 

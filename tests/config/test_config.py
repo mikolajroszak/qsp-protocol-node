@@ -5,7 +5,7 @@ import unittest
 import yaml
 from dpath.util import get
 from tempfile import NamedTemporaryFile
-from config import config_value, Config
+from config import config_value, Config, ConfigFactory
 from helpers.resource import resource_uri
 from utils.io import fetch_file
 
@@ -185,18 +185,13 @@ class TestConfig(unittest.TestCase):
         target_file.write(dump)
         target_file.flush()
 
-    @staticmethod
-    def fetch_config():
-        config_file_uri = resource_uri("test_config.yaml")
-        return Config("local", config_file_uri)
-
     def test_create_wallet_session_manager(self):
         account = "some account"
         passwd = "some passwd"
         web3_client = "some client"
         provider = "some name"
         return_value = "value"
-        config = TestConfig.fetch_config()
+        config = ConfigFactory.create_empty_config()
         config._Config__eth_provider_name = provider
         config._Config__account = account
         config._Config__web3_client = web3_client
@@ -213,7 +208,7 @@ class TestConfig(unittest.TestCase):
         name = "provider name"
         args = "arguments"
         return_value = "value"
-        config = TestConfig.fetch_config()
+        config = ConfigFactory.create_empty_config()
         config._Config__report_uploader_provider_name = name
         config._Config__report_uploader_provider_args = args
         utils = ConfigUtilsMock()
@@ -228,7 +223,7 @@ class TestConfig(unittest.TestCase):
         name = "provider name"
         args = "arguments"
         return_value = "value"
-        config = TestConfig.fetch_config()
+        config = ConfigFactory.create_empty_config()
         config._Config__eth_provider_name = name
         config._Config__eth_provider_args = args
         utils = ConfigUtilsMock()
@@ -244,7 +239,7 @@ class TestConfig(unittest.TestCase):
         args = "arguments"
         return_value = "value"
         verbose = False
-        config = TestConfig.fetch_config()
+        config = ConfigFactory.create_empty_config()
         config._Config__logging_is_verbose = verbose
         config._Config__logging_streaming_provider_name = name
         config._Config__logging_streaming_provider_args = args

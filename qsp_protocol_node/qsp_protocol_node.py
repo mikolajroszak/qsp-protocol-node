@@ -6,7 +6,7 @@ import signal
 import traceback
 import sys
 from audit import QSPAuditNode
-from config import Config
+from config import ConfigFactory
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
 
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
-        cfg = Config(args.environment, args.config_yaml, args.password)
+        cfg = ConfigFactory.create_from_file(args.environment, args.config_yaml, args.password)
 
         cfg.logger.info("Initializing QSP Audit Node")
         cfg.logger.debug("account: {0}".format(str(cfg.account)))

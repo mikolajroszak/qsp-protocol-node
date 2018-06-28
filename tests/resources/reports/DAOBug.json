@@ -1,59 +1,128 @@
 {
-   "timestamp": 1530189673,
-   "contract_uri": "file:///app/tests/helpers/../resources/DAOBug.sol",
-   "contract_hash": "433a2adab4d8b92e80bcf31a41ba6828a09ed432be43a912521c1726ea485735",
-   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-   "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-   "request_id": 1,
-   "version": "1.0",
-   "audit_state": 4,
-   "analyzer_reports": [
-     {
-       "analyzer": {
-         "name": "oyente",
-         "version": "57dcfae35773ff30aa34856865a7ad07c501d4d0",
-         "vulnerabilities_checked": [
-           "integer_underflow",
-           "integer_overflow",
-           "callstack",
-           "money_concurrency",
-           "time_dependency",
-           "reentrancy",
-           "parity_multisig_bug_2",
-           "assertion_failure"
-         ],
-         "command": "python /oyente/oyente/oyente.py  -j -s /shared/DAOBug.sol"
-       },
-       "status": "success",
-       "warnings": [
-         "root:You are using evm version 1.8.10. The supported version is 1.7.3",
-         "root:You are using solc version 0.4.24, The latest supported version is 0.4.19"
-       ],
-       "coverages": [
-         {
-           "percentage": 98.4,
-           "file": "/tmp/.oyente/49/DAOBug.sol",
-           "contract": "SendBalance"
-         }
-       ],
-       "potential_vulnerabilities": [
-         {
-           "name": "reentrancy",
-           "file": "/tmp/.oyente/49/DAOBug.sol",
-           "contract": "SendBalance",
-           "instances": [
-             {
-               "ref_id": 0,
-               "start_line": 17,
-               "end_line": 17
-             }
-           ]
-         }
-       ],
-       "count_potential_vulnerabilities": 1,
-       "start_time": 1530189669,
-       "end_time": 1530189673,
-       "hash": "e4d285feb59c26f8992c9cfb9e7302957ef620292279263104adda1137637fb0"
-     }
-   ]
+  "analyzer_reports": [
+    {
+      "analyzer": {
+        "command": "python /oyente/oyente/oyente.py  -j -s /shared/DAOBug.sol",
+        "name": "oyente",
+        "version": "16c74d21e997cffe9a7480cb140ee6c05b7ba608e1b878df90f585b4710e41b0",
+        "vulnerabilities_checked": [
+          "integer_underflow",
+          "integer_overflow",
+          "callstack",
+          "money_concurrency",
+          "time_dependency",
+          "reentrancy",
+          "parity_multisig_bug_2",
+          "assertion_failure"
+        ]
+      },
+      "count_potential_vulnerabilities": 1,
+      "coverages": [
+        {
+          "contract": "SendBalance",
+          "file": "/tmp/.oyente/400/DAOBug.sol",
+          "percentage": 98.3
+        }
+      ],
+      "end_time": 1530192805,
+      "hash": "51ba8f68ef3215e3983c8b2d5caa2ded5b2ff4d3351403ed89e19ef98e2ef64f",
+      "potential_vulnerabilities": [
+        {
+          "contract": "SendBalance",
+          "file": "/tmp/.oyente/400/DAOBug.sol",
+          "instances": [
+            {
+              "end_line": 17,
+              "ref_id": 0,
+              "start_line": 17
+            }
+          ],
+          "name": "reentrancy"
+        }
+      ],
+      "start_time": 1530192801,
+      "status": "success",
+      "warnings": [
+        "root:You are using evm version 1.8.2. The supported version is 1.7.3",
+        "root:You are using solc version 0.4.21, The latest supported version is 0.4.19"
+      ]
+    },
+    {
+      "analyzer": {
+        "command": "docker run -v \"/tmp/.mythril/403\":/shared/ -i \"mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882\" -o json -x \"/shared/DAOBug.sol\"",
+        "name": "mythril",
+        "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
+        "vulnerabilities_checked": [
+          "call_data_forwarded",
+          "dependence_on_environment_variable",
+          "call_to_a_user-supplied_address",
+          "use_of_tx_origin",
+          "ether_send",
+          "exception_state",
+          "message_call_to_external_contract",
+          "state_change_after_external_call",
+          "integer_overflow",
+          "integer_underflow",
+          "multiple_calls",
+          "unchecked_suicide",
+          "transaction_order_dependence",
+          "unchecked_call_return_value"
+        ]
+      },
+      "count_potential_vulnerabilities": 3,
+      "coverages": [],
+      "end_time": 1530192805,
+      "errors": [],
+      "hash": "038f3fd738fbe388b32aaf4961967ebe64cff47b053a5a13b16561b3c616a538",
+      "potential_vulnerabilities": [
+        {
+          "description": "In the function `withdrawBalance()` a non-zero amount of Ether is sent to msg.sender.\nIt seems that this function can be called without restrictions.",
+          "file": "/shared/DAOBug.sol",
+          "instances": [
+            {
+              "ref_id": 0,
+              "start_line": 17
+            }
+          ],
+          "name": "Ether send",
+          "type": "ether_send"
+        },
+        {
+          "description": "This contract executes a message call to the address of the transaction sender. Generally, it is not recommended to call user-supplied addresses using Solidity's call() construct. Note that attackers might leverage reentrancy attacks to exploit race conditions or manipulate this contract's state.",
+          "file": "/shared/DAOBug.sol",
+          "instances": [
+            {
+              "ref_id": 1,
+              "start_line": 17
+            }
+          ],
+          "name": "Message call to external contract",
+          "type": "message_call_to_external_contract"
+        },
+        {
+          "description": "The contract account state is changed after an external call. Consider that the called contract could re-enter the function before this state change takes place. This can lead to business logic vulnerabilities.",
+          "file": "/shared/DAOBug.sol",
+          "instances": [
+            {
+              "ref_id": 2,
+              "start_line": 21
+            }
+          ],
+          "name": "State change after external call",
+          "type": "state_change_after_external_call"
+        }
+      ],
+      "start_time": 1530192801,
+      "status": "success",
+      "warnings": []
+    }
+  ],
+  "audit_state": 4,
+  "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "contract_hash": "433a2adab4d8b92e80bcf31a41ba6828a09ed432be43a912521c1726ea485735",
+  "contract_uri": "file:///app/tests/helpers/../resources/DAOBug.sol",
+  "request_id": 1,
+  "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "timestamp": 1530192805,
+  "version": "1.0"
 }
