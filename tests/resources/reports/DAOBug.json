@@ -1,0 +1,59 @@
+{
+   "timestamp": 1530189673,
+   "contract_uri": "file:///app/tests/helpers/../resources/DAOBug.sol",
+   "contract_hash": "433a2adab4d8b92e80bcf31a41ba6828a09ed432be43a912521c1726ea485735",
+   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+   "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+   "request_id": 1,
+   "version": "1.0",
+   "audit_state": 4,
+   "analyzer_reports": [
+     {
+       "analyzer": {
+         "name": "oyente",
+         "version": "57dcfae35773ff30aa34856865a7ad07c501d4d0",
+         "vulnerabilities_checked": [
+           "integer_underflow",
+           "integer_overflow",
+           "callstack",
+           "money_concurrency",
+           "time_dependency",
+           "reentrancy",
+           "parity_multisig_bug_2",
+           "assertion_failure"
+         ],
+         "command": "python /oyente/oyente/oyente.py  -j -s /shared/DAOBug.sol"
+       },
+       "status": "success",
+       "warnings": [
+         "root:You are using evm version 1.8.10. The supported version is 1.7.3",
+         "root:You are using solc version 0.4.24, The latest supported version is 0.4.19"
+       ],
+       "coverages": [
+         {
+           "percentage": 98.4,
+           "file": "/tmp/.oyente/49/DAOBug.sol",
+           "contract": "SendBalance"
+         }
+       ],
+       "potential_vulnerabilities": [
+         {
+           "name": "reentrancy",
+           "file": "/tmp/.oyente/49/DAOBug.sol",
+           "contract": "SendBalance",
+           "instances": [
+             {
+               "ref_id": 0,
+               "start_line": 17,
+               "end_line": 17
+             }
+           ]
+         }
+       ],
+       "count_potential_vulnerabilities": 1,
+       "start_time": 1530189669,
+       "end_time": 1530189673,
+       "hash": "e4d285feb59c26f8992c9cfb9e7302957ef620292279263104adda1137637fb0"
+     }
+   ]
+}
