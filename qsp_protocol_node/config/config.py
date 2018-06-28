@@ -8,7 +8,6 @@ from os.path import expanduser
 from pathlib import Path
 from tempfile import gettempdir
 from dpath.util import get
-from solc import compile_files
 import utils.io as io_utils
 from audit import (
     Analyzer,
@@ -57,14 +56,6 @@ class Config:
                 io_utils.fetch_file(metadata_uri)
             )
 
-        metadata_uri = config_value(cfg, '/audit_contract_src/metadata')
-        if metadata_uri is not None:
-            return io_utils.load_json(
-                io_utils.fetch_file(metadata_uri)
-            )
-
-        raise Exception("Missing audit contract metadata")
-
     def __setup_values(self, cfg):
         audit_contract_metadata = self.__fetch_audit_contract_metadata(cfg)
         self.__audit_contract_name = config_value(
@@ -77,19 +68,9 @@ class Config:
         )
         self.__audit_contract = None
 
-        self.__audit_contract_src_uri = config_value(
-            cfg,
-            '/audit_contract_src/uri',
-        )
-        self.__has_audit_contract_src = bool(
-            self.__audit_contract_src_uri
-        )
         self.__audit_contract_abi_uri = config_value(
             cfg,
             '/audit_contract_abi/uri',
-        )
-        self.__has_audit_contract_abi = bool(
-            self.__audit_contract_abi_uri
         )
         self.__eth_provider_name = config_value(
             cfg,
@@ -211,33 +192,6 @@ class Config:
         """
         return config_utils.create_web3_client(self.eth_provider, self.account, self.account_passwd)
 
-    def __load_audit_contract_from_src(self, contract_src_uri, contract_name, constructor_from):
-        """
-        Loads the QuantstampAuditMock contract from source code (useful for testing purposes),
-        returning the (address, contract) pair.
-        """
-        audit_contract_src = io_utils.fetch_file(contract_src_uri)
-        contract_dict = compile_files([audit_contract_src])
-        contract_id = "{0}:{1}".format(
-            contract_src_uri,
-            contract_name,
-        )
-        contract_interface = contract_dict[contract_id]
-
-        # deploy the audit contract
-        contract = self.web3_client.eth.contract(
-            abi=contract_interface['abi'],
-            bytecode=contract_interface['bin']
-        )
-        tx_hash = contract.constructor().transact({'from': constructor_from, 'gasPrice': 0})
-        receipt = self.web3_client.eth.getTransactionReceipt(tx_hash)
-        address = receipt['contractAddress']
-        contract = self.web3_client.eth.contract(
-            abi=contract_interface['abi'],
-            address=address,
-        )
-        return address, contract
-
     def __create_audit_contract(self):
         """
         Creates the audit contract either from its ABI or from its source code (whichever is
@@ -245,7 +199,7 @@ class Config:
         """
         self.__audit_contract = None
 
-        if self.__has_audit_contract_abi:
+        if self.has_audit_contract_abi:
             # Creates contract from ABI settings
 
             abi_file = io_utils.fetch_file(self.audit_contract_abi_uri)
@@ -255,13 +209,6 @@ class Config:
                 address=self.audit_contract_address,
                 abi=abi_json,
             )
-
-        else:
-            self.__audit_contract_address, self.__audit_contract = \
-                self.__load_audit_contract_from_src(
-                    self.__audit_contract_src_uri,
-                    self.__audit_contract_name,
-                    self.__account)
 
     def __create_analyzers(self):
         """
@@ -303,17 +250,17 @@ class Config:
         return config_utils.create_wallet_session_manager(self.eth_provider_name, self.web3_client, self.account,
                                                           self.account_passwd)
 
-    def __create_components(self, cfg):
+    def __create_components(self, cfg, validate_contract_settings=True):
         config_utils = ConfigUtils()
         # Setup followed by verification
         self.__setup_values(cfg)
         self.__logger, self.__logging_streaming_provider = self.__configure_logging(config_utils)
-        config_utils.check_audit_contract_settings(self)
+        if validate_contract_settings:
+            config_utils.check_audit_contract_settings(self)
 
         # Creation of internal components
         self.__eth_provider = self.__create_eth_provider(config_utils)
         self.__web3_client, self.__account = self.__create_web3_client(config_utils)
-        # self.__create_web3_client()
 
         # After having a web3 client object, use it to put addresses in a canonical format
         self.__audit_contract_address = mk_checksum_address(
@@ -331,13 +278,13 @@ class Config:
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
-    def load_config(self, env, config_file_uri, account_passwd=""):
+    def load_config(self, env, config_file_uri, account_passwd="", validate_contract_settings=True):
         config_utils = ConfigUtils()
         self.__config_file_uri = config_file_uri
         self.__env = env
         self.__account_passwd = account_passwd
         new_cfg_dict = config_utils.load_config(config_file_uri, env)
-        self.__create_components(new_cfg_dict)
+        self.__create_components(new_cfg_dict, validate_contract_settings)
         self.__logger.debug("Components successfully created")
         self.__cfg_dict = new_cfg_dict
 
@@ -448,33 +395,11 @@ class Config:
         return self.__audit_contract_abi_uri
 
     @property
-    def audit_contract_src_uri(self):
-        """"
-        Returns the audit contract source URI.
-        """
-        return self.__audit_contract_src_uri
-
-    @property
-    def audit_contract_src_deploy(self):
-        """
-        Returns whether the audit contract source code, once compiled, should
-        be deployed on the target network.
-        """
-        return self.__audit_contract_src_deploy
-
-    @property
-    def has_audit_contract_src(self):
-        """
-        Returns whether the audit contract has been made available.
-        """
-        return self.__has_audit_contract_src
-
-    @property
     def has_audit_contract_abi(self):
         """
         Returns whether the audit contract ABI has been made available.
         """
-        return self.__has_audit_contract_abi
+        return bool(self.__audit_contract_abi_uri)
 
     @property
     def web3_client(self):
