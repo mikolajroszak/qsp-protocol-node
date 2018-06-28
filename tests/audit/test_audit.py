@@ -88,13 +88,13 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config = TestQSPAuditNode.fetch_config()
         self.__audit_node = QSPAuditNode(self.__config)
 
-        self.__requestAudit_filter = self.__config.audit_contract.events.requestAudit_called.createFilter(
-          fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
-        )
         self.__getNextAuditRequest_filter = self.__config.audit_contract.events.getNextAuditRequest_called.createFilter(
             fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
         )
         self.__submitReport_filter = self.__config.audit_contract.events.submitReport_called.createFilter(
+            fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
+        )
+        self.__setAnyRequestAvailableResult_filter = self.__config.audit_contract.events.setAnyRequestAvailableResult_called.createFilter(
             fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
         )
 
@@ -155,19 +155,23 @@ class TestQSPAuditNode(unittest.TestCase):
         Tests the entire flow of a successful audit request, from a request
         to the production of a report and its submission.
         """
+        # since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__requestAudit(buggy_contract, self.__PRICE)
         )
-        # since we're mocking function calls, we should wait for getNextAuditRequest to be called
-        self.evt_wait_loop(self.__getNextAuditRequest_filter)
-        self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID, self.__config.account).transact({"from": self.__config.account})
-        )
+
         self.evt_wait_loop(self.__submitReport_filter)
+
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID, self.__config.account, 0, "", "", 0).transact({"from": self.__config.account})
+            self.__config.audit_contract.functions.emitLogAuditFinished(
+                self.__REQUEST_ID,
+                self.__config.account,
+                0,
+                "",
+                "",
+                0).transact({"from": self.__config.account})
         )
         self.__assert_audit_request_state(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS)
 
@@ -179,15 +183,11 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         buggy_contract = resource_uri("BasicToken.sol")
         self.__config.web3_client.eth.waitForTransactionReceipt(
-          self.__requestAudit(buggy_contract, self.__PRICE)
+            self.__requestAudit(buggy_contract, self.__PRICE)
         )
-        self.evt_wait_loop(self.__getNextAuditRequest_filter)
-        self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID, self.__config.account).transact(
-                {"from": self.__config.account}
-            )
-        )
+
         self.evt_wait_loop(self.__submitReport_filter)
+
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID,
@@ -207,18 +207,12 @@ class TestQSPAuditNode(unittest.TestCase):
         to the production of a report and its submission.
         """
         buggy_contract = resource_uri("DappBinWallet.sol")
-
         self.__config.web3_client.eth.waitForTransactionReceipt(
-          self.__requestAudit(buggy_contract, self.__PRICE)
+            self.__requestAudit(buggy_contract, self.__PRICE)
         )
-        self.evt_wait_loop(self.__getNextAuditRequest_filter)
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID, self.__config.account).transact(
-                {"from": self.__config.account}
-            )
-        )
         self.evt_wait_loop(self.__submitReport_filter)
+
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID,
@@ -233,21 +227,37 @@ class TestQSPAuditNode(unittest.TestCase):
 
     def __requestAudit(self, contract_uri, price):
         """
-        Submits a request for audit of a given target contract.
+        Emulates requesting for a new audit.
         """
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(1).transact(
+                {"from": self.__config.account})
+        )
+        self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+
+        self.evt_wait_loop(self.__getNextAuditRequest_filter)
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(0).transact(
+                {"from": self.__config.account})
+        )
+        self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+
         request_id = 1
-        requestor = self.__config.account
+        requester = self.__config.account
+        auditor = self.__config.account
         transaction_fee = 123
         timestamp = 40
-        # don't need to actually call requestAudit. All node behaviour is in terms of events
-        return self.__config.audit_contract.functions.emitLogAuditRequested(
+
+        # Emulates assigning a request for a given target contract by submitting the appropriate event.
+        return self.__config.audit_contract.functions.emitLogAuditAssigned(
             request_id,
-            requestor,
+            requester,
+            auditor,
             contract_uri,
             price,
             transaction_fee,
-            timestamp
-        ).transact({"from": self.__config.account})
+            timestamp).transact({"from": self.__config.account})
 
 
 if __name__ == '__main__':

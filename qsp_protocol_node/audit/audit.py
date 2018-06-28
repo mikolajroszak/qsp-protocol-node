@@ -90,16 +90,16 @@ class QSPAuditNode:
         def exec():
             current_block = 0
             while self.__exec:
+                sleep(self.__config.is_mined_polling)
                 if current_block < self.__config.web3_client.eth.blockNumber:
                     current_block = self.__config.web3_client.eth.blockNumber
+                    self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
                     handler()
-
-                sleep(self.__config.is_mined_polling)
 
         new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
         new_block_monitor_thread.start()
 
-        return evt_thread
+        return new_block_monitor_thread
 
     @property
     def config(self):
@@ -172,17 +172,20 @@ class QSPAuditNode:
         Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
-            any_request_avialble = self.__config.audit_contract.functions.isRequestAvialble().call()
-            if any_request_avialble == 0:
+            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='pending')
+            if any_request_available == 1:
+                self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
-                self.__logger.debug("Bid on an audit.")
             else:
-                self.__logger.debug("No request were available as the contract returned {0}.".format(str(any_request_avialble)))
+                self.__logger.debug("No request were available as the contract returned {0}.".format(str(any_request_available)))
         except Exception as error:
             self.__logger.exception(
                 "Error when calling to get a review {0}".format(str(error))
             )
 
+    # TODO decide on whether this function should be kept. The function currently does not initiate any
+    # action responding its appropriate event other than logging the event. The log might be informative for the
+    # the node user, but its management might be a hassle in terms of event-thread management.
     def __on_audit_requested(self, evt):
         """
         Records an audit upon an audit request event.
@@ -211,7 +214,7 @@ class QSPAuditNode:
         request_id = str(evt['args']['requestId'])
         try:
             target_auditor = evt['args']['auditor']
-            # TODO: sanity check that the audit request is already in the DB
+
             # If an audit request is not targeted to the
             # running audit node, just disconsider it
             if target_auditor.lower() != self.__config.account.lower():
@@ -230,13 +233,18 @@ class QSPAuditNode:
                 requestId=request_id,
             )
 
+            price = evt['args']['price']
+            request_id = str(evt['args']['requestId'])
             audit_evt = {
                 'request_id': request_id,
+                'requestor': str(evt['args']['requestor']),
+                'contract_uri': str(evt['args']['uri']),
                 'evt_name': QSPAuditNode.__EVT_AUDIT_ASSIGNED,
+                'block_nbr': evt['blockNumber'],
                 'status_info': "Audit Assigned",
+                'price': str(price),
             }
-
-            self.__config.event_pool_manager.set_evt_to_assigned(
+            self.__config.event_pool_manager.add_evt_to_be_assigned(
                 audit_evt
             )
         except Exception as error:
