@@ -3,9 +3,5 @@
 # Imports common definitions
 source "$WRAPPER_HOME"/utils/common
 
-# FIXME
-# This won't be necessary once we switch to public images
-$(aws ecr get-login --no-include-email --region us-east-1) || exit 1
-
 # Pull oyente's docker image
 docker pull "$DOCKER_IMAGE" || exit 1
