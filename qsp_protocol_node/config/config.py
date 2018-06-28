@@ -152,7 +152,7 @@ class Config:
         )
 
         if self.has_audit_contract_abi:
-            self.__create_audit_contract(config_utils)
+            self.__audit_contract =  self.__create_audit_contract(config_utils)
         self.__analyzers = self.__create_analyzers(config_utils)
         self.__wallet_session_manager = self.__create_wallet_session_manager(config_utils)
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
