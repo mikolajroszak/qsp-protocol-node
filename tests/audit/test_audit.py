@@ -14,7 +14,7 @@ from threading import Thread
 from time import sleep
 
 from audit import QSPAuditNode
-from config import Config
+from config import ConfigFactory
 from helpers.resource import (
     resource_uri,
     project_root,
@@ -39,7 +39,7 @@ class TestQSPAuditNode(unittest.TestCase):
     @classmethod
     def fetch_config(cls):
         config_file_uri = resource_uri("test_config.yaml")
-        return Config("local", config_file_uri)
+        return ConfigFactory.create_from_file("local", config_file_uri)
 
     @classmethod
     def setUpClass(cls):

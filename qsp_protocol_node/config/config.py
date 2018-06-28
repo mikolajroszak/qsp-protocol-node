@@ -2,43 +2,23 @@
 Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file.
 """
-import logging
-import logging.config
 import os
-import structlog
-import utils.io as io_utils
-import yaml
 
+from os.path import expanduser
+from pathlib import Path
+from tempfile import gettempdir
+from dpath.util import get
+from solc import compile_files
+import utils.io as io_utils
 from audit import (
     Analyzer,
     Wrapper,
 )
-from .alternate_config_utils import ConfigUtils
 from evt import EventPoolManager
-from dpath.util import get
-from os.path import expanduser
-from pathlib import Path
-from solc import compile_files
-from streaming import CloudWatchProvider
-from structlog import configure_once
-from structlog import processors
-from structlog import stdlib
-from structlog import threadlocal
-from time import sleep
-from tempfile import gettempdir
-from upload import S3Provider
 from utils.eth import (
-    WalletSessionManager,
-    DummyWalletSessionManager,
     mk_checksum_address,
 )
-from web3 import (
-    Web3,
-    TestRPCProvider,
-    HTTPProvider,
-    IPCProvider,
-    EthereumTesterProvider,
-)
+from .alternate_config_utils import ConfigUtils
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -203,39 +183,6 @@ class Config:
             30
         )
 
-    def __check_values(self):
-        """
-        Checks the configuration values provided in the YAML configuration file.
-        """
-        self.__check_audit_contract_settings()
-
-    def __check_audit_contract_settings(self):
-        """
-        Checks the settings w.r.t. the audit contract.
-        """
-        self.__raise_err(
-            self.__has_audit_contract_abi and self.__has_audit_contract_src,
-            "Settings must include audit contract ABI or source, but not both",
-        )
-
-        if self.__has_audit_contract_abi:
-            has_uri = bool(self.__audit_contract_abi_uri)
-            has_addr = bool(self.__audit_contract_address)
-            self.__raise_err(
-                not (has_uri and has_addr),
-                "Missing audit contract ABI URI and address",
-            )
-
-        elif self.__has_audit_contract_src:
-            has_uri = bool(self.__audit_contract_src_uri)
-            self.__raise_err(
-                not has_uri,
-                "Missing audit contract source URI"
-            )
-        else:
-            self.__raise_err(
-                msg="Missing the audit contract source or its ABI")
-
     def __create_eth_provider(self, config_utils):
         """
         Creates an Ethereum provider.
@@ -257,22 +204,6 @@ class Config:
         """
         return config_utils.create_report_uploader_provider(self.__report_uploader_provider_name,
                                                             self.__report_uploader_provider_args)
-
-    def __create_logging_streaming_provider(self):
-        """
-        Creates a logging streaming provider.
-        """
-        # Supported providers:
-        #
-        # CloudWatchProvider
-
-        if self.__logging_streaming_provider_name == "CloudWatchProvider":
-            self.__logging_streaming_provider = CloudWatchProvider(
-                **self.__logging_streaming_provider_args)
-            return
-
-        raise Exception(
-            "Unknown/Unsupported provider: {0}".format(self.__logging_streaming_provider_name))
 
     def __create_web3_client(self, config_utils):
         """
@@ -377,7 +308,7 @@ class Config:
         # Setup followed by verification
         self.__setup_values(cfg)
         self.__logger, self.__logging_streaming_provider = self.__configure_logging(config_utils)
-        self.__check_values()
+        config_utils.check_audit_contract_settings(self)
 
         # Creation of internal components
         self.__eth_provider = self.__create_eth_provider(config_utils)
@@ -400,47 +331,29 @@ class Config:
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
-    def __load_config(self):
-        config_file = io_utils.fetch_file(self.config_file_uri)
-
-        with open(config_file) as yaml_file:
-            new_cfg_dict = yaml.load(yaml_file)[self.env]
-
-        try:
-            self.__create_components(new_cfg_dict)
-            self.__logger.debug("Components successfully created")
-            self.__cfg_dict = new_cfg_dict
-
-        except KeyError as missing_config:
-
-            # If this is the first time the loading is happening,
-            # nothing to be done except report an exception
-            if self.__cfg_dict is None:
-                raise Exception(
-                    "Incorrect configuration. Missing entry {0}".format(missing_config)
-                )
-
-            # Otherwise, the a load happened in the past, and one can
-            # revert state to that
-            else:
-                # Revert configuration as a means to prevent crashes
-                self.__logger.debug("Configuration error. Reverting changes....")
-                self.__create_components(self.__cfg_dict)
-                self.__logger.debug("Successfully reverted changes")
+    def load_config(self, env, config_file_uri, account_passwd=""):
+        config_utils = ConfigUtils()
+        self.__config_file_uri = config_file_uri
+        self.__env = env
+        self.__account_passwd = account_passwd
+        new_cfg_dict = config_utils.load_config(config_file_uri, env)
+        self.__create_components(new_cfg_dict)
+        self.__logger.debug("Components successfully created")
+        self.__cfg_dict = new_cfg_dict
 
     def __configure_logging(self, config_utils):
         return config_utils.configure_logging(self.__logging_is_verbose, self.__logging_streaming_provider_name,
                                               self.__logging_streaming_provider_args)
 
-    def __init__(self, env, config_file_uri, account_passwd=""):
+    def __init__(self):
         """
         Builds a Config object from a target environment (e.g., test) and an input YAML
         configuration file.
         """
-        self.__env = env
+        self.__env = None
         self.__cfg_dict = None
-        self.__account_passwd = account_passwd
-        self.__config_file_uri = config_file_uri
+        self.__account_passwd = None
+        self.__config_file_uri = None
         self.__web3_client = None
         self.__account = None
         self.__report_uploader = None
@@ -449,7 +362,6 @@ class Config:
         self.__event_pool_manager = None
         self.__logger = None
         self.__logging_streaming_provider = None
-        self.__load_config()
 
     def __raise_err(self, cond=True, msg=""):
         """
