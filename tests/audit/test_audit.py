@@ -129,7 +129,7 @@ class TestQSPAuditNode(unittest.TestCase):
             else:
                 sleep(5)
         self.assertEqual(row['evt_name'], "LogAuditAssigned")
-        self.assertTrue(int(row['block_nbr']) > 0)
+        self.assertTrue(int(row['block_nbr']) > 0) # FIXME: add range validation
         self.assertEqual(int(row['price']), 100)
         self.assertEqual(row['submission_attempts'], 1)
         self.assertEqual(row['is_persisted'], True)

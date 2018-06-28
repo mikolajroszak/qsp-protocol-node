@@ -438,17 +438,20 @@ class QSPAuditNode:
             'request_id': request_id,
             'version': QSPAuditNode.__PROTOCOL_VERSION,
             'audit_state': QSPAuditNode.__AUDIT_STATE_SUCCESS,
-            'analyzer_reports': [],
         }
 
         # FIXME
         # This is currently a very simple mechanism to claim an audit as
         # successful or not. Either it is fully successful (all analyzer produce a result),
         # or fails otherwise.
+        analyzer_reports = []
         for analyzer_report in analyzers_report:
-            audit_report['analyzer_reports'].append(analyzer_report)
+            analyzer_reports.append(analyzer_report)
             if analyzer_report.get('status', 'error') == 'error':
                 audit_report['audit_state'] = QSPAuditNode.__AUDIT_STATE_ERROR
+
+        if len(analyzer_report) > 0:
+            audit_report['analyzer_reports'] = analyzer_reports
 
         self.__logger.info(
             "Analyzer report contents",
