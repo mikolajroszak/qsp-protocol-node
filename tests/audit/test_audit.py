@@ -15,11 +15,13 @@ from time import sleep
 
 from audit import QSPAuditNode
 from config import ConfigFactory
+from dpath.util import get
 from helpers.resource import (
     resource_uri,
     project_root,
 )
 from pathlib import Path
+from solc import compile_files
 from utils.io import fetch_file, digest_file, load_json
 from utils.db import get_first
 from deepdiff import DeepDiff
@@ -39,10 +41,47 @@ class TestQSPAuditNode(unittest.TestCase):
         with contextlib.suppress(FileNotFoundError):
             os.remove(evt_db_path)
 
+    @staticmethod
+    def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name, constructor_from):
+        """
+        Loads the QuantstampAuditMock contract from source code returning the (address, contract) pair.
+        """
+        audit_contract_src = fetch_file(contract_src_uri)
+        contract_dict = compile_files([audit_contract_src])
+        contract_id = "{0}:{1}".format(
+            contract_src_uri,
+            contract_name,
+        )
+        contract_interface = contract_dict[contract_id]
+
+        # deploy the audit contract
+        contract = web3_client.eth.contract(
+            abi=contract_interface['abi'],
+            bytecode=contract_interface['bin']
+        )
+        tx_hash = contract.constructor().transact({'from': constructor_from, 'gasPrice': 0})
+        receipt = web3_client.eth.getTransactionReceipt(tx_hash)
+        address = receipt['contractAddress']
+        contract = web3_client.eth.contract(
+            abi=contract_interface['abi'],
+            address=address,
+        )
+        return address, contract
+
     @classmethod
     def fetch_config(cls):
+        # create config from file, the contract is not provided and will be injected separately
         config_file_uri = resource_uri("test_config.yaml")
-        return ConfigFactory.create_from_file("local", config_file_uri)
+        config = ConfigFactory.create_from_file("local", config_file_uri, validate_contract_settings=False)
+        # compile and inject contract
+        contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
+        contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
+        audit_contract_metadata = load_json(fetch_file(contract_metadata_uri))
+        audit_contract_name = get(audit_contract_metadata, '/contractName')
+        config._Config__audit_contract_address, config._Config__audit_contract = \
+            TestQSPAuditNode.__load_audit_contract_from_src(
+                config.web3_client, contract_source_uri, audit_contract_name, config.account)
+        return config
 
     @classmethod
     def setUpClass(cls):
@@ -80,7 +119,8 @@ class TestQSPAuditNode(unittest.TestCase):
 
             if once_process.returncode == 1:
                 # An error occurred
-                raise Exception("Error invoking once (return value is not 0). Output is {0}".format(once_process.stdout))
+                raise Exception(
+                    "Error invoking once (return value is not 0). Output is {0}".format(once_process.stdout))
 
             i += 1
 
@@ -93,7 +133,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.maxDiff = None
 
         self.__requestAudit_filter = self.__config.audit_contract.events.requestAudit_called.createFilter(
-          fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
+            fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
         )
         self.__getNextAuditRequest_filter = self.__config.audit_contract.events.getNextAuditRequest_called.createFilter(
             fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
@@ -188,12 +228,15 @@ class TestQSPAuditNode(unittest.TestCase):
         # since we're mocking function calls, we should wait for getNextAuditRequest to be called
         self.evt_wait_loop(self.__getNextAuditRequest_filter)
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID, self.__config.account).transact({"from": self.__config.account})
+            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID,
+                                                                        self.__config.account).transact(
+                {"from": self.__config.account})
         )
         self.evt_wait_loop(self.__submitReport_filter)
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID, self.__config.account, 0, "", "", 0).transact({"from": self.__config.account})
+            self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID, self.__config.account, 0, "",
+                                                                        "", 0).transact({"from": self.__config.account})
         )
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS, "reports/DAOBug.json")
 
@@ -205,11 +248,12 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         buggy_contract = resource_uri("BasicToken.sol")
         self.__config.web3_client.eth.waitForTransactionReceipt(
-          self.__requestAudit(buggy_contract, self.__PRICE)
+            self.__requestAudit(buggy_contract, self.__PRICE)
         )
         self.evt_wait_loop(self.__getNextAuditRequest_filter)
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID, self.__config.account).transact(
+            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID,
+                                                                        self.__config.account).transact(
                 {"from": self.__config.account}
             )
         )
@@ -217,11 +261,11 @@ class TestQSPAuditNode(unittest.TestCase):
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID,
-                                                                     self.__config.account,
-                                                                     0,
-                                                                     "",
-                                                                     "",
-                                                                     0).transact({"from": self.__config.account})
+                                                                        self.__config.account,
+                                                                        0,
+                                                                        "",
+                                                                        "",
+                                                                        0).transact({"from": self.__config.account})
         )
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/BasicToken.json")
@@ -235,12 +279,13 @@ class TestQSPAuditNode(unittest.TestCase):
         buggy_contract = resource_uri("DappBinWallet.sol")
 
         self.__config.web3_client.eth.waitForTransactionReceipt(
-          self.__requestAudit(buggy_contract, self.__PRICE)
+            self.__requestAudit(buggy_contract, self.__PRICE)
         )
         self.evt_wait_loop(self.__getNextAuditRequest_filter)
 
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID, self.__config.account).transact(
+            self.__config.audit_contract.functions.emitLogAuditAssigned(self.__REQUEST_ID,
+                                                                        self.__config.account).transact(
                 {"from": self.__config.account}
             )
         )
@@ -248,11 +293,11 @@ class TestQSPAuditNode(unittest.TestCase):
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID,
-                                                                     self.__config.account,
-                                                                     0,
-                                                                     "",
-                                                                     "",
-                                                                     0).transact({"from": self.__config.account})
+                                                                        self.__config.account,
+                                                                        0,
+                                                                        "",
+                                                                        "",
+                                                                        0).transact({"from": self.__config.account})
         )
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/DappBinWallet.json")
