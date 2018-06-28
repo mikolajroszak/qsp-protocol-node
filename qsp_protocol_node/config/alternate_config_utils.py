@@ -11,7 +11,6 @@ from utils.eth import (
     WalletSessionManager,
     DummyWalletSessionManager,
 )
-from solc import compile_files
 from structlog import configure_once
 from structlog import processors
 from structlog import stdlib
@@ -211,22 +210,14 @@ class ConfigUtils:
         Checks the contact configuration values provided in the YAML configuration file. The
         contract ABI and source code are mutually exclusive, but one has to be provided.
         """
-        ConfigUtils.raise_err(
-            config.has_audit_contract_abi and config.has_audit_contract_src,
-            "Settings must include audit contract ABI or source, but not both",
-        )
-
         if config.has_audit_contract_abi:
             has_uri = bool(config.audit_contract_abi_uri)
             has_addr = bool(config.audit_contract_address)
             ConfigUtils.raise_err(not (has_uri and has_addr),
                                   "Missing audit contract ABI URI and address",
                                   )
-        elif config.has_audit_contract_src:
-            has_uri = bool(config.audit_contract_src_uri)
-            ConfigUtils.raise_err(not has_uri, "Missing audit contract source URI")
         else:
-            ConfigUtils.raise_err(msg="Missing the audit contract source or its ABI")
+            ConfigUtils.raise_err(msg="Missing the audit contract ABI")
 
     @staticmethod
     def raise_err(cond=True, msg=""):
