@@ -8,6 +8,7 @@ import sys
 
 from audit import QSPAuditNode
 from config import ConfigFactory
+from stop import Stop
 
 
 def main():
