@@ -11,16 +11,33 @@ All instructions must be run from the project's root folder.
 1. Make sure you have `pyenv` installed and that it is properly initialized.
 Initialization entails changing your `~/.bash_profile` (if not already done so):
 
-```
-echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+    ```
+    echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+    ```
 
-```
+    and sourcing it:
 
-and sourcing it:
+    ```
+    source ~/.bash_profile
+    ```
 
-```
-source ~/.bash_profile
-```
+1. Install dependencies
+    * automake
+    * libtool
+    * awscli
+    * pyenv
+    * pyenv-virtualenv
+    * coreutils
+
+    For Mac, this can be done using `brew`:
+    ```
+    brew install automake libtool awscli pyenv pyenv-virtualenv coreutils
+    ```
+
+    You also need to install the compiler for Solidity 0.4.24. If not installed, this can be done with
+    ```
+    brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9599ce8371d9de039988f89ed577460e58a0f56a/solidity.rb
+    ```
 
 1. Clone the repo and set it up by running 
     ```
@@ -40,7 +57,7 @@ source ~/.bash_profile
     sudo usermod -a -G docker <username>
     ```
 
-1. If you are using macOS, ensure `Xcode` is installed.
+1. If you are using MacOS, ensure `Xcode` is installed.
 
 ### Run tests
  
