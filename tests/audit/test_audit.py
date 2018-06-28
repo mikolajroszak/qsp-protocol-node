@@ -187,6 +187,7 @@ class TestQSPAuditNode(unittest.TestCase):
         diff = DeepDiff(load_json(audit_file),
             load_json(fetch_file(resource_uri(report_file_path))),
             exclude_paths = {
+                "root['contract_uri']", # path is different depending on whether running inside Docker
                 "root['timestamp']",
                 "root['start_time']",
                 "root['end_time']",
