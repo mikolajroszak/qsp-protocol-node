@@ -5,16 +5,19 @@ import argparse
 import signal
 import traceback
 import sys
+
 from audit import QSPAuditNode
-from config import Config
+from config import ConfigFactory
+from stop import Stop
 
 
 def main():
     """
     Main function.
     """
-    cfg = None
-    audit_node = None
+
+    ERR_EXCEPTION = 1
+    ERR_INVALID_ARGUMENT = 2
 
     try:
         # Sets the program's arguments
@@ -39,9 +42,13 @@ def main():
         # Validates input arguments
         args = parser.parse_args()
 
+    except SystemExit:
+        Stop.error(code=ERR_INVALID_ARGUMENT)
+
+    try:
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
-        cfg = Config(args.environment, args.config_yaml, args.password)
+        cfg = ConfigFactory.create_from_file(args.environment, args.config_yaml, args.password)
 
         cfg.logger.info("Initializing QSP Audit Node")
         cfg.logger.debug("account: {0}".format(str(cfg.account)))
@@ -56,16 +63,8 @@ def main():
         # QSP audit node
         audit_node = QSPAuditNode(cfg)
 
-        def handle_stop_signal(signal, frame):
-            # If not already stopping, stop.
-            if not handle_stop_signal.stopping:
-                handle_stop_signal.stopping = True
-                audit_node.stop()
-
-        handle_stop_signal.stopping = False
-
-        signal.signal(signal.SIGTERM, handle_stop_signal)
-        signal.signal(signal.SIGINT, handle_stop_signal)
+        Stop.set_logger(cfg.logger)
+        Stop.register(audit_node)
 
         cfg.logger.info("Running QSP audit node")
 
@@ -73,19 +72,7 @@ def main():
         audit_node.run()
 
     except Exception as error:
-        if audit_node is not None:
-            audit_node.stop()
-
-        error_msg = "Cannot start audit node. {0}".format(str(error))
-
-        # Makes sure the initialization of the logger object is in place
-        if cfg is not None and cfg.logger is not None:
-            cfg.logger.exception(error_msg)
-        else:
-            # If not, just print to standard error
-            print(error_msg, file=sys.stderr)
-
-        traceback.print_exc(file=sys.stdout)
+        Stop.error(err=error, code=ERR_EXCEPTION)
 
 
 if __name__ == "__main__":

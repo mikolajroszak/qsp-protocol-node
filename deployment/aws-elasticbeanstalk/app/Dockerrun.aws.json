@@ -14,6 +14,12 @@
       }
     },
     {
+      "name": "geth-keystore",
+      "host": {
+        "sourcePath": "/var/geth-keystore"
+      }
+    },
+    {
       "name": "audit-db",
       "host": {
         "sourcePath": "/var/audit-db"
@@ -34,7 +40,7 @@
     {
       "name": "node-key",
       "host": {
-        "sourcePath": "/var/node.key"
+        "sourcePath": "/var/.node.key"
       }
     }
   ],
@@ -55,7 +61,7 @@
         },
         {
           "sourceVolume": "node-key",
-          "containerPath": "/app/node.key"
+          "containerPath": "/app/.node.key"
         },
         {
           "sourceVolume": "docker-sock",
@@ -70,17 +76,21 @@
     {
       "name": "geth",
       "image": "ethereum/client-go:v1.8.7",
-      "command": ["--testnet", "--config=/root/.ethereum/geth-config/audit-fullnode.toml"],
+      "command": ["--testnet", "--config=/root/.ethereum/testnet/geth-config/audit-fullnode.toml"],
       "essential": true,
       "memory": 2048,
       "mountPoints": [
         {
           "sourceVolume": "geth",
-          "containerPath": "/root/.ethereum/geth"
+          "containerPath": "/root/.ethereum/testnet/geth"
+        },
+        {
+          "sourceVolume": "geth-keystore",
+          "containerPath": "/root/.ethereum/testnet/keystore"
         },
         {
           "sourceVolume": "geth-config",
-          "containerPath": "/root/.ethereum/geth-config",
+          "containerPath": "/root/.ethereum/testnet/geth-config",
           "readOnly": true
         }
       ]

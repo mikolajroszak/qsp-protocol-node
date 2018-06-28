@@ -4,10 +4,14 @@ from utils.eth.tx import mk_args
 
 
 class SimpleConfigMock:
-
-    def __init__(self, default_gas):
+    def __init__(self, gas_price_wei, default_gas):
+        self.__gas_price_wei = gas_price_wei
         self.__default_gas = default_gas
         self.__account = "account"
+
+    @property
+    def gas_price_wei(self):
+        return self.__gas_price_wei
 
     @property
     def default_gas(self):
@@ -24,9 +28,10 @@ class TestFile(unittest.TestCase):
         """
         If no gas is provided, the arguments do not contain the gas record.
         """
-        config = SimpleConfigMock(None)
+        gas_price_wei = 4000000000
+        config = SimpleConfigMock(gas_price_wei, None)
         result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
+        self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
         try:
             temp = result['gas']
@@ -39,9 +44,10 @@ class TestFile(unittest.TestCase):
         """
         Tests zero gas case.
         """
-        config = SimpleConfigMock(0)
+        gas_price_wei = 4000000000
+        config = SimpleConfigMock(gas_price_wei, 0)
         result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
+        self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
         self.assertEqual(0, result['gas'])
 
@@ -49,9 +55,10 @@ class TestFile(unittest.TestCase):
         """
         Tests positive gas case.
         """
-        config = SimpleConfigMock(7)
+        gas_price_wei = 4000000000
+        config = SimpleConfigMock(gas_price_wei, 7)
         result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
+        self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
         self.assertEqual(7, result['gas'])
 
@@ -59,9 +66,10 @@ class TestFile(unittest.TestCase):
         """
         Tests positive gas case where gas is provided as a string.
         """
-        config = SimpleConfigMock('7')
+        gas_price_wei = 4000000000
+        config = SimpleConfigMock(gas_price_wei, '7')
         result = mk_args(config)
-        self.assertEqual(0, result['gasPrice'])
+        self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
         self.assertEqual(7, result['gas'])
 
@@ -69,7 +77,7 @@ class TestFile(unittest.TestCase):
         """
         Tests negative gas case provided as string. The value should not be included.
         """
-        config = SimpleConfigMock('-8')
+        config = SimpleConfigMock(4000000000, '-8')
         try:
             mk_args(config)
         except ValueError:

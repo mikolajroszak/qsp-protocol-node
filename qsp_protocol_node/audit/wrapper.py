@@ -86,7 +86,7 @@ class Wrapper:
             end_time = calendar.timegm(time.gmtime())
             json_report = json.loads(analyzer.stdout)
 
-        except Exception as error:
+        except Exception as inner_error:
             # This should never occur; the wrapper should never
             # throw an exception, i.e., if an error occurs it should
             # be wrapper according to the integration schema.
@@ -99,10 +99,10 @@ class Wrapper:
             json_report = {
                 'analyzer': {'name': self.__analyzer_name},
                 'status': 'error',
-                'errors': [str(error)],
+                'errors': [str(inner_error)],
             }
 
-            self.__logger.debug("Error running wrapper: {0}".format(str(error)), requestId=request_id)
+            self.__logger.debug("Error running wrapper: {0}".format(str(inner_error)), requestId=request_id)
 
         if analyzer is not None:
             self.__logger.debug("Wrapper stdout is: {0}".format(str(analyzer.stdout)), requestId=request_id)
@@ -112,7 +112,7 @@ class Wrapper:
             json_report['start_time'] = start_time
 
         if end_time is not None:
-            json_report['start_time'] = start_time
+            json_report['end_time'] = end_time
 
         if not error:
             self.__logger.debug("No error when running the wrapper")

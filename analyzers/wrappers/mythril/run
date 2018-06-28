@@ -1,0 +1,82 @@
+#!/bin/bash
+##################################################################
+
+# Imports common definitions
+source "$WRAPPER_HOME"/utils/common
+
+
+# Generates an error report without warnings
+function error {
+    "$WRAPPER_HOME/utils/make_error_report" "$1"
+}
+
+# Generates an error report with warnings
+function werror {
+    "$WRAPPER_HOME/utils/make_error_report" "$1"
+}
+
+##################################################################
+# Setup
+##################################################################
+
+# Creates a temporary folder that will be deleted once
+# this script executes
+
+readonly TMP_FOLDER="$STORAGE_DIR/$$"
+mkdir "$TMP_FOLDER" &> /dev/null
+on_exit_do rm -rf "$TMP_FOLDER"
+
+readonly LOG_OUTPUT="$TMP_FOLDER/output.log"
+on_exit_do rm -f "$LOG_OUTPUT"
+
+##################################################################
+# once step
+##################################################################
+
+# Only run `once`` if it has not been executed before
+if [[ ! -f "$STORAGE_DIR/.once" ]] ; then
+    "$WRAPPER_HOME"/once >> "$LOG_OUTPUT" 2>&1 || \
+        { error "$LOG_OUTPUT"; exit 1; }
+else
+    > "$STORAGE_DIR/.once"
+fi
+
+##################################################################
+# pre-run step
+##################################################################
+# Prepares the wrapper
+"$WRAPPER_HOME"/pre_run &> "$LOG_OUTPUT" || \
+    { error "$LOG_OUTPUT"; exit 1; }
+
+# Copies the input contract to the temporary folder just created
+cp "$CONTRACT_PATH" "$TMP_FOLDER" >> "$LOG_OUTPUT" 2>&1 || \
+    { error "$LOG_OUTPUT"; exit 1; }
+
+CONTRACT_FILENAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
+
+ANALYZER_VULNERABILITIES="$WRAPPER_HOME"/resources/vulnerabilities
+ANALYZER_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':' -f2)
+
+##################################################################
+# run step and post-run
+##################################################################
+
+# Executes the analyzer
+docker run -v "$TMP_FOLDER":/shared/ -i "$DOCKER_IMAGE" -o json -x "/shared/$CONTRACT_FILENAME" \
+    &> "$LOG_OUTPUT"
+
+# Mythril can failed with error code 0 providing an error message in json
+cat "$LOG_OUTPUT" | grep "\"success\": true" >/dev/null || \
+    { error "$LOG_OUTPUT"; exit 1; }
+
+# Cleans up any resources
+"$WRAPPER_HOME"/post_run >> "$LOG_OUTPUT" 2>&1
+
+
+ANALYZER_CMD="docker run -v \"$TMP_FOLDER\":/shared/ -i \"$DOCKER_IMAGE\" -o json -x \"/shared/$CONTRACT_FILENAME\""
+"$WRAPPER_HOME/utils/mk_success_report" "${ANALYZER_VERSION}" "${ANALYZER_CMD}" "${ANALYZER_VULNERABILITIES}"  \
+    "${LOG_OUTPUT}" || \
+        { error "$LOG_OUTPUT"; exit 1; }
+
+# Exit with a success status code
+exit 0

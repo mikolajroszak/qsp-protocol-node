@@ -1,16 +1,14 @@
 ENV ?= local
 CONFIG ?= config.yaml
-ETH_PASSPHRASE ?= ""
+ETH_PASSPHRASE ?= \"\"
 
 # NOTE: if running outside a container, assume all required environment variables are configured properly.
 
 # Default target
 run: # printing "date" is important due to the logic CloudWatch uses to distinguish log files
-	date; python  -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p $(ETH_PASSPHRASE) $(ENV) $(CONFIG)
+	date; python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(ETH_PASSPHRASE)" $(ENV) $(CONFIG)
 
 setup:
-	brew install automake libtool awscli pyenv pyenv-virtualenv ; \
-	brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9599ce8371d9de039988f89ed577460e58a0f56a/solidity.rb ; \
 	pyenv uninstall -f 3.6.4 ; \
 	ln -s -f $(shell git rev-parse --show-toplevel)/pre-commit $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \
 	chmod +x $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \
@@ -31,7 +29,7 @@ run-docker:
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
-		-e ETH_PASSPHRASE=$(ETH_PASSPHRASE) \
+		-e ETH_PASSPHRASE="$(ETH_PASSPHRASE)" \
 		qsp-protocol-node sh -c "make run"
 
 test-docker:

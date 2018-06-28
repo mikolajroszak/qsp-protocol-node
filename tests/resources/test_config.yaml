@@ -2,17 +2,19 @@ local:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
     #provider: !!str "TestRPCProvider"
-  audit_contract_src: 
-    # uri: !!str "./tests/resources/QuantstampAuditV2.sol"
-    uri: !!str "./tests/resources/QuantstampAuditMock.sol"
-    metadata: !!str "./tests/resources/QuantstampAudit-metadata.json"
+  # audit_contract_abi: The contract is injected in tests
   min_price: !!int 0
+  gas_price_wei: !!int 0
   evt_polling_sec: !!int 5
   is_mined_polling_sec: !!int 5
   analyzers:
     - oyente:
         args: "" # No args provided; rely on defaults for now
         storage_dir: /tmp/.oyente
+        timeout_sec: 120
+    - mythril:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: /tmp/.mythril
         timeout_sec: 120
   report_uploader:
       provider: !!str "S3Provider"

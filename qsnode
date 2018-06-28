@@ -1,0 +1,52 @@
+#!/bin/bash
+
+QSP_NODE="python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py"
+
+# Must be kept in synch with the return codes given in 
+# qsp_protocol_node/qsp_protocol_node.py.
+
+SUCCESS="0"
+ERR_EXCEPTION="1"
+ERR_INVALID_ARGS="2"
+
+# Invokes the audit node.
+date
+$QSP_NODE $@
+
+# Stores the exit code of invoking the audit node.
+return_code=$?
+
+# If invocation is successfull, it means the given command arguments worked
+# as expected. Otherwise, no need to proceed.
+
+if [[ "$return_code" == "$ERR_INVALID_ARGS" ]] ; then
+    exit $return_code
+fi
+
+# Invocation was successfull; enter infinite loop
+# as a means for error recovery.
+
+while true ; do
+
+    if [[ "$return_code" == "$SUCCESS" ]]; then
+        # Normal exit. Just end gracefully.
+        # 0: normal execution
+        # 1: SIGKILL sent by user
+        exit 0
+    fi
+
+    # Sleeps 30 seconds before starting the audit node.
+    echo -n "Restarting the audit node in 30s "
+    for i in `seq 1 30`; do
+        echo -n "."
+        sleep 1
+    done
+
+    echo ""
+        
+    # Invokes the audit node.      
+    date
+    $QSP_NODE $@
+
+    return_code=$?
+done

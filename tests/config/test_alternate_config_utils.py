@@ -1,5 +1,4 @@
 import unittest
-import os
 
 from config import ConfigUtils
 from config import ConfigurationException
@@ -22,12 +21,10 @@ class ConfigStub:
     TODO(mderka): Replace this with real config class when it become available in later PRs
     """
 
-    def __init__(self, abi, abi_uri, contract_address, src, src_uri):
+    def __init__(self, abi, abi_uri, contract_address):
         self.has_audit_contract_abi = abi
-        self.has_audit_contract_src = src
         self.audit_contract_abi_uri = abi_uri
         self.audit_contract_address = contract_address
-        self.audit_contract_src_uri = src_uri
 
 
 class TestConfigUtil(unittest.TestCase):
@@ -134,59 +131,32 @@ class TestConfigUtil(unittest.TestCase):
         Tests that verification of ABI and source code in a config happens properly and admits
         exactly one of the two but not both.
         """
-        both = ConfigStub(True, None, None, True, None)
-        try:
-            self.config_utils.check_audit_contract_settings(both)
-            self.fail("Both abi and src are present but no exception was raised")
-        except ConfigurationException:
-            # Expected
-            pass
         # Test ABI
-        abi = ConfigStub(True, True, True, None, None)
+        abi = ConfigStub(True, True, True)
         self.config_utils.check_audit_contract_settings(abi)
-        abi_faulty = ConfigStub(True, False, True, None, None)
+        abi_faulty = ConfigStub(True, False, True)
         try:
             self.config_utils.check_audit_contract_settings(abi_faulty)
             self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        abi_faulty = ConfigStub(True, True, False, None, None)
+        abi_faulty = ConfigStub(True, True, False)
         try:
             self.config_utils.check_audit_contract_settings(abi_faulty)
             self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        source_faulty = ConfigStub(False, False, False, True, None)
-        try:
-            self.config_utils.check_audit_contract_settings(source_faulty)
-            self.fail("Source is missing address but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        none = ConfigStub(False, False, False, False, False)
+        none = ConfigStub(False, False, False)
         try:
             self.config_utils.check_audit_contract_settings(none)
-            self.fail("Neither ABi or source are present but no exception was thrown")
+            self.fail("Neither ABI is not present but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
 
-    def test_create_eth_provider_fail(self):
-        """
-        Tests that after failing several times, the factory raises a connection error.
-        """
-        # The following None makes the construction fail, keep as is!
-        args = None
-        try:
-            self.config_utils.create_eth_provider("IPCProvider", args)
-            self.fail("None parameters are provided, this should fail after several retries.")
-        except ConnectionError:
-            # Expected
-            pass
-
-    def test_create_eth_provider_success(self):
+    def test_create_eth_provider(self):
         """
         Tests that all providers can be successfully created and if a wrong name is specified, an
         an exception is raised.
@@ -212,12 +182,19 @@ class TestConfigUtil(unittest.TestCase):
         """
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
         account = "Account"
-        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None)
+        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertEqual(account, new_account, "Account was recreated even though it was not None")
-        client, new_account = self.config_utils.create_web3_client(eth_provider, None, None)
+        client, new_account = self.config_utils.create_web3_client(eth_provider, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertIsNotNone(new_account, "The account was none and was not created")
+        # None ETH provider will make this fail
+        try:
+            client, new_account = self.config_utils.create_web3_client(None, None, None, 2)
+            self.fail("No exception was thrown even though the eth provider does not exist and web3 cannot connect")
+        except ConfigurationException:
+            # Expected
+            pass
 
     def test_load_config(self):
         """

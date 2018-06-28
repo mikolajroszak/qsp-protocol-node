@@ -11,16 +11,33 @@ All instructions must be run from the project's root folder.
 1. Make sure you have `pyenv` installed and that it is properly initialized.
 Initialization entails changing your `~/.bash_profile` (if not already done so):
 
-```
-echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+    ```
+    echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+    ```
 
-```
+    and sourcing it:
 
-and sourcing it:
+    ```
+    source ~/.bash_profile
+    ```
 
-```
-source ~/.bash_profile
-```
+1. Install dependencies
+    * automake
+    * libtool
+    * awscli
+    * pyenv
+    * pyenv-virtualenv
+    * coreutils
+
+    For Mac, this can be done using `brew`:
+    ```
+    brew install automake libtool awscli pyenv pyenv-virtualenv coreutils
+    ```
+
+    You also need to install the compiler for Solidity 0.4.24. If not installed, this can be done with
+    ```
+    brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9599ce8371d9de039988f89ed577460e58a0f56a/solidity.rb
+    ```
 
 1. Clone the repo and set it up by running 
     ```
@@ -40,7 +57,7 @@ source ~/.bash_profile
     sudo usermod -a -G docker <username>
     ```
 
-1. If you are using macOS, ensure `Xcode` is installed.
+1. If you are using MacOS, ensure `Xcode` is installed.
 
 ### Run tests
  
@@ -155,13 +172,6 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing
 1. After approval, merge into `develop`, a new Docker image is built and tagged with the commit id and deployed to [AWS]
 (https://console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environment/dashboard?applicationName=qsp-protocol-node&environmentId=e-c2cqj8usi7)
 
-## Analyzer release process
-
-Not all analyzers are easy-to-build and easy-to-run out of the box.
-However, maintaining private forks is labour- and time-consuming process.
-Here are the manual steps that were followed to release the analyzers.
-They could be automated in the future.
-
 ## Codestyle
 
 The codestyle builds on PEP8 and includes especially the following:
@@ -176,16 +186,6 @@ The codestyle builds on PEP8 and includes especially the following:
 8. Use lowercase_underscore naming for variables
 9. Use `is` and `is not` when comparing to `None`
 10. Beware of overriding built-ins
-
-
-### Oyente
-
-1. Clone the latest https://github.com/melonproject/oyente
-2. In `Dockerfile`, replace `pip install requests web3` with `pip install requests web3==3.16.5` (won't be necessary after https://github.com/melonproject/oyente/issues/331 is addressed)
-3. In `Dockerfile`, remove the lines starting `apt-get install yarn` (won't be necessary after https://github.com/melonproject/oyente/issues/332 is addressed)
-4. Login to Docker: `$(aws ecr get-login --region us-east-1 --no-include-email)`
-5. Build the image `docker build -t 466368306539.dkr.ecr.us-east-1.amazonaws.com/melonproject-oyente:{commit-id} .`
-6. Push the image: `docker push 466368306539.dkr.ecr.us-east-1.amazonaws.com/melonproject-oyente:{commit-id}`
 
 ## Troubleshooting 
 

@@ -122,7 +122,7 @@ class QSPAuditNode:
         # If no block has currently been processed, start from zero
         start_block = self.__config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
-            start_block = 0
+            start_block = self.__config.web3_client.eth.blockNumber
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
@@ -146,7 +146,7 @@ class QSPAuditNode:
             self.__on_report_submitted,
         ))
 
-        # Starts two   additional threads for performing audits
+        # Starts two additional threads for performing audits
         # and eventually submitting results
         self.__internal_threads.append(self.__run_perform_audit_thread())
         self.__internal_threads.append(self.__run_submission_thread())
@@ -460,7 +460,7 @@ class QSPAuditNode:
         for i in range(0, number_of_analyzers):
             analyzers_threads[i].join(analyzers_timeouts[i])
 
-        audit = {
+        audit_report = {
             'timestamp': calendar.timegm(time.gmtime()),
             'contract_uri': uri,
             'contract_hash': digest_file(target_contract),
@@ -468,18 +468,30 @@ class QSPAuditNode:
             'auditor': self.__config.account,
             'request_id': request_id,
             'version': QSPAuditNode.__PROTOCOL_VERSION,
+            'audit_state': QSPAuditNode.__AUDIT_STATE_SUCCESS,
         }
-        audit_str = json.dumps(audit, indent=2)
-        audit_hash = digest(audit_str)
-        audit['audit_hash'] = audit_hash
+
+        # FIXME
+        # This is currently a very simple mechanism to claim an audit as
+        # successful or not. Either it is fully successful (all analyzer produce a result),
+        # or fails otherwise.
+        analyzer_reports = []
+        for analyzer_report in analyzers_report:
+            analyzer_reports.append(analyzer_report)
+            if analyzer_report.get('status', 'error') == 'error':
+                audit_report['audit_state'] = QSPAuditNode.__AUDIT_STATE_ERROR
+
+        if len(analyzer_report) > 0:
+            audit_report['analyzer_reports'] = analyzer_reports
 
         self.__logger.info(
             "Analyzer report contents",
             requestId=request_id,
-            contents=audit,
+            contents=audit_report,
         )
 
-        upload_result = self.__config.report_uploader.upload(audit_str)
+        audit_report_str = json.dumps(audit_report, indent=2)
+        upload_result = self.__config.report_uploader.upload(audit_report_str)
 
         self.__logger.info(
             "Report upload result: {0}".format(upload_result),
@@ -489,28 +501,11 @@ class QSPAuditNode:
         if not upload_result['success']:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
-        # FIXME
-        # This is currently a very simple mechanism to claim an audit as
-        # successful or not. Either it is fully successful (all analyzer produce a result),
-        # or fails otherwise.
-
-        audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
-        final_reports = []
-
-        for analyzer_report in analyzers_report:
-            final_reports.append(analyzer_report)
-            if analyzer_report.get('status', 'error') == 'error':
-                audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
-
-        audit_in_blockchain = {
-            'audit_state': audit_state,
+        return {
+            'audit_state': audit_report['audit_state'],
             'audit_uri': upload_result['url'],
-            'audit_hash': audit_hash,
-            'report': final_reports,
-            'version': QSPAuditNode.__PROTOCOL_VERSION,
+            'audit_hash': digest(audit_report_str),
         }
-
-        return audit_in_blockchain
 
     def __get_next_audit_request(self):
         """
