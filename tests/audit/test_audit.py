@@ -24,7 +24,10 @@ from pathlib import Path
 from solc import compile_files
 from utils.io import fetch_file, digest_file, load_json
 from utils.db import get_first
+from deepdiff import DeepDiff
+from pprint import pprint
 
+import json
 
 class TestQSPAuditNode(unittest.TestCase):
     __AUDIT_STATE_SUCCESS = 4
@@ -127,6 +130,7 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         self.__config = TestQSPAuditNode.fetch_config()
         self.__audit_node = QSPAuditNode(self.__config)
+        self.maxDiff = None
 
         self.__requestAudit_filter = self.__config.audit_contract.events.requestAudit_called.createFilter(
             fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
@@ -151,7 +155,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node.stop()
         TestQSPAuditNode.__clean_up_pool_db(self.__config.evt_db_path)
 
-    def __assert_audit_request_state(self, request_id, expected_audit_state):
+    def __assert_audit_request(self, request_id, expected_audit_state, report_file_path):
         sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
 
         # Busy waits on receiving events up to the configured
@@ -165,7 +169,7 @@ class TestQSPAuditNode(unittest.TestCase):
             else:
                 sleep(5)
         self.assertEqual(row['evt_name'], "LogAuditAssigned")
-        self.assertTrue(int(row['block_nbr']) > 0)
+        self.assertTrue(int(row['block_nbr']) > 0) # FIXME: add range validation
         self.assertEqual(int(row['price']), 100)
         self.assertEqual(row['submission_attempts'], 1)
         self.assertEqual(row['is_persisted'], True)
@@ -179,6 +183,28 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.assertEqual(digest_file(audit_file), row['audit_hash'])
         self.assertEqual(audit_state, expected_audit_state)
+        
+        diff = DeepDiff(load_json(audit_file),
+            load_json(fetch_file(resource_uri(report_file_path))),
+            exclude_paths = {
+                "root['timestamp']",
+                "root['start_time']",
+                "root['end_time']",
+                "root['analyzer_reports'][0]['coverages'][0]['file']",
+                "root['analyzer_reports'][0]['potential_vulnerabilities'][0]['file']",
+                "root['analyzer_reports'][0]['start_time']",
+                "root['analyzer_reports'][0]['end_time']",
+                "root['analyzer_reports'][0]['hash']",
+                "root['analyzer_reports'][1]['analyzer']['command']",
+                "root['analyzer_reports'][1]['coverages'][0]['file']",
+                "root['analyzer_reports'][1]['potential_vulnerabilities'][0]['file']",
+                "root['analyzer_reports'][1]['start_time']",
+                "root['analyzer_reports'][1]['end_time']",
+                "root['analyzer_reports'][1]['hash']",                
+            }
+        )
+        pprint(diff)
+        self.assertEqual(diff, {})
 
     def evt_wait_loop(self, current_filter):
         wait = True
@@ -212,7 +238,7 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID, self.__config.account, 0, "",
                                                                         "", 0).transact({"from": self.__config.account})
         )
-        self.__assert_audit_request_state(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS)
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS, "reports/DAOBug.json")
 
     @timeout(80, timeout_exception=StopIteration)
     def test_buggy_contract_audit_request(self):
@@ -242,7 +268,7 @@ class TestQSPAuditNode(unittest.TestCase):
                                                                         0).transact({"from": self.__config.account})
         )
 
-        self.__assert_audit_request_state(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR)
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/BasicToken.json")
 
     @timeout(80, timeout_exception=StopIteration)
     def test_target_contract_in_non_raw_text_file(self):
@@ -274,7 +300,7 @@ class TestQSPAuditNode(unittest.TestCase):
                                                                         0).transact({"from": self.__config.account})
         )
 
-        self.__assert_audit_request_state(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR)
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/DappBinWallet.json")
 
     def __requestAudit(self, contract_uri, price):
         """

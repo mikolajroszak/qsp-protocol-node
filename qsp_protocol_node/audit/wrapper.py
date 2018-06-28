@@ -112,7 +112,7 @@ class Wrapper:
             json_report['start_time'] = start_time
 
         if end_time is not None:
-            json_report['start_time'] = start_time
+            json_report['end_time'] = end_time
 
         if not error:
             self.__logger.debug("No error when running the wrapper")
