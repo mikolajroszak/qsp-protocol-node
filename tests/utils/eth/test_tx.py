@@ -5,7 +5,7 @@ from utils.eth.tx import mk_args
 
 class SimpleConfigMock:
     def __init__(self, gas_price_wei, default_gas):
-        self.__gas_price_wei = gas_price_wei;
+        self.__gas_price_wei = gas_price_wei
         self.__default_gas = default_gas
         self.__account = "account"
 
@@ -20,6 +20,7 @@ class SimpleConfigMock:
     @property
     def account(self):
         return self.__account
+
 
 class TestFile(unittest.TestCase):
 

@@ -124,7 +124,7 @@ class QSPAuditNode:
             self.__on_report_submitted,
         ))
 
-        # Starts two   additional threads for performing audits
+        # Starts two additional threads for performing audits
         # and eventually submitting results
         self.__internal_threads.append(self.__run_perform_audit_thread())
         self.__internal_threads.append(self.__run_submission_thread())
