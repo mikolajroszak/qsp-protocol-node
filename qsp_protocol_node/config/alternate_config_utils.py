@@ -3,7 +3,14 @@ import logging.config
 import structlog
 import utils.io as io_utils
 import yaml
+import os
 
+from audit import (
+    Analyzer,
+    Wrapper,
+)
+from pathlib import Path
+from tempfile import gettempdir
 from streaming import CloudWatchProvider
 from upload import S3Provider
 from time import sleep
@@ -218,6 +225,58 @@ class ConfigUtils:
                                   )
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
+
+    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+        """
+        Creates the audit contract either from its ABI or from its source code (whichever is
+        available).
+        """
+        abi_file = io_utils.fetch_file(audit_contract_abi_uri)
+        abi_json = io_utils.load_json(abi_file)
+
+        return web3_client.eth.contract(
+            address=audit_contract_address,
+            abi=abi_json,
+        )
+
+    def create_analyzers(self, analyzers_config, logger):
+        """
+        Creates an instance of the each target analyzer that should be verifying a given contract.
+        """
+        default_timeout_sec = 60
+        default_storage = gettempdir()
+        analyzers = []
+
+        for i, analyzer_config_dict in enumerate(analyzers_config):
+            # Each analyzer config is a dictionary of a single entry
+            # <analyzer_name> -> {
+            #     analyzer dictionary configuration
+            # }
+
+            # Gets ths single key in the dictionart (the name of the analyzer)
+            analyzer_name = list(analyzer_config_dict.keys())[0]
+            analyzer_config = analyzers_config[i][analyzer_name]
+
+            script_path = os.path.realpath(__file__)
+            wrappers_dir = '{0}/../../analyzers/wrappers'.format(os.path.dirname(script_path))
+
+            wrapper = Wrapper(
+                wrappers_dir=wrappers_dir,
+                analyzer_name=analyzer_name,
+                args=analyzer_config.get('args', ""),
+                storage_dir=analyzer_config.get('storage_dir', default_storage),
+                timeout_sec=analyzer_config.get('timeout_sec', default_timeout_sec),
+                logger=self.__logger,
+            )
+
+            default_storage = "{0}/.{1}".format(
+                str(Path.home()),
+                analyzer_name,
+            )
+
+            analyzers.append(Analyzer(wrapper, logger))
+
+        return analyzers
 
     @staticmethod
     def raise_err(cond=True, msg=""):

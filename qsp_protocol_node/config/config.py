@@ -2,22 +2,14 @@
 Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file.
 """
-import os
+import utils.io as io_utils
 
 from os.path import expanduser
-from pathlib import Path
-from tempfile import gettempdir
 from dpath.util import get
-import utils.io as io_utils
-from audit import (
-    Analyzer,
-    Wrapper,
-)
 from evt import EventPoolManager
 from utils.eth import (
     mk_checksum_address,
 )
-from .alternate_config_utils import ConfigUtils
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -58,111 +50,31 @@ class Config:
 
     def __setup_values(self, cfg):
         audit_contract_metadata = self.__fetch_audit_contract_metadata(cfg)
-        self.__audit_contract_name = config_value(
-            audit_contract_metadata,
-            '/contractName',
-        )
-        self.__audit_contract_address = config_value(
-            audit_contract_metadata,
-            '/contractAddress',
-        )
+        self.__audit_contract_name = config_value(audit_contract_metadata, '/contractName', )
+        self.__audit_contract_address = config_value(audit_contract_metadata, '/contractAddress', )
         self.__audit_contract = None
-
-        self.__audit_contract_abi_uri = config_value(
-            cfg,
-            '/audit_contract_abi/uri',
-        )
-        self.__eth_provider_name = config_value(
-            cfg,
-            '/eth_node/provider',
-            accept_none=False,
-        )
+        self.__audit_contract_abi_uri = config_value(cfg, '/audit_contract_abi/uri', )
+        self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False, )
         self.__eth_provider = None
-        self.__eth_provider_args = config_value(
-            cfg,
-            '/eth_node/args',
-            {},
-        )
-        self.__min_price = config_value(
-            cfg,
-            '/min_price',
-            accept_none=False,
-        )
-        self.__evt_polling_sec = config_value(
-            cfg,
-            '/evt_polling_sec',
-            accept_none=False,
-        )
+        self.__eth_provider_args = config_value(cfg, '/eth_node/args', {}, )
+        self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
+        self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False, )
         self.__analyzers = []
-        self.__analyzers_config = config_value(
-            cfg,
-            '/analyzers',
-            accept_none=False,
-        )
-        self.__account = config_value(
-            cfg,
-            '/account/id',
-        )
-        self.__account_ttl = config_value(
-            cfg,
-            '/account/ttl',
-            600,
-        )
-        self.__default_gas = config_value(
-            cfg,
-            '/default_gas'
-        )
-        self.__evt_db_path = config_value(
-            cfg,
-            '/evt_db_path',
-            expanduser("~") + "/" + ".audit_node.db",
-        )
-        self.__submission_timeout_limit_blocks = config_value(
-            cfg,
-            '/submission_timeout_limit_blocks',
-            10,
-        )
-        self.__default_gas = config_value(
-            cfg,
-            '/default_gas',
-        )
-        self.__gas_price_wei = config_value(
-            cfg,
-            '/gas_price_wei',
-        )
-        self.__report_uploader_provider_name = config_value(
-            cfg,
-            '/report_uploader/provider',
-        )
-        self.__report_uploader_provider_args = config_value(
-            cfg,
-            '/report_uploader/args',
-            {}
-        )
-        self.__logging_is_verbose = config_value(
-            cfg,
-            '/logging/is_verbose',
-            False
-        )
-        self.__logging_streaming_provider_name = config_value(
-            cfg,
-            '/logging/streaming/provider',
-        )
-        self.__logging_streaming_provider_args = config_value(
-            cfg,
-            '/logging/streaming/args',
-            {}
-        )
-        self.__metric_collection_is_enabled = config_value(
-            cfg,
-            '/metric_collection/is_enabled',
-            False
-        )
-        self.__metric_collection_interval_seconds = config_value(
-            cfg,
-            '/metric_collection/interval_seconds',
-            30
-        )
+        self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False, )
+        self.__account = config_value(cfg, '/account/id', )
+        self.__account_ttl = config_value(cfg, '/account/ttl', 600, )
+        self.__default_gas = config_value(cfg, '/default_gas')
+        self.__evt_db_path = config_value(cfg, '/evt_db_path', expanduser("~") + "/" + ".audit_node.db", )
+        self.__submission_timeout_limit_blocks = config_value(cfg, '/submission_timeout_limit_blocks', 10, )
+        self.__default_gas = config_value(cfg, '/default_gas', )
+        self.__gas_price_wei = config_value(cfg, '/gas_price_wei', )
+        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', )
+        self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
+        self.__logging_is_verbose = config_value(cfg, '/logging/is_verbose', False)
+        self.__logging_streaming_provider_name = config_value(cfg, '/logging/streaming/provider', )
+        self.__logging_streaming_provider_args = config_value(cfg, '/logging/streaming/args', {})
+        self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled', False)
+        self.__metric_collection_interval_seconds = config_value(cfg, '/metric_collection/interval_seconds', 30)
 
     def __create_eth_provider(self, config_utils):
         """
@@ -176,15 +88,15 @@ class Config:
         # TestRPCProvider
         #
         # See: http://web3py.readthedocs.io/en/stable/providers.html
-        return config_utils.create_eth_provider(self.__eth_provider_name,
-                                                self.__eth_provider_args)
+        return config_utils.create_eth_provider(self.eth_provider_name,
+                                                self.eth_provider_args)
 
     def __create_report_uploader_provider(self, config_utils):
         """
         Creates a report uploader provider.
         """
-        return config_utils.create_report_uploader_provider(self.__report_uploader_provider_name,
-                                                            self.__report_uploader_provider_args)
+        return config_utils.create_report_uploader_provider(self.report_uploader_provider_name,
+                                                            self.report_uploader_provider_args)
 
     def __create_web3_client(self, config_utils):
         """
@@ -192,69 +104,36 @@ class Config:
         """
         return config_utils.create_web3_client(self.eth_provider, self.account, self.account_passwd)
 
-    def __create_audit_contract(self):
+    def __create_audit_contract(self, config_utils):
         """
         Creates the audit contract either from its ABI or from its source code (whichever is
         available).
         """
-        self.__audit_contract = None
+        return config_utils.create_audit_contract(self.web3_client, self.audit_contract_abi_uri,
+                                                  self.audit_contract_address)
 
-        if self.has_audit_contract_abi:
-            # Creates contract from ABI settings
-
-            abi_file = io_utils.fetch_file(self.audit_contract_abi_uri)
-            abi_json = io_utils.load_json(abi_file)
-
-            self.__audit_contract = self.web3_client.eth.contract(
-                address=self.audit_contract_address,
-                abi=abi_json,
-            )
-
-    def __create_analyzers(self):
+    def __create_analyzers(self, config_utils):
         """
         Creates an instance of the each target analyzer that should be verifying a given contract.
         """
-        default_timeout_sec = 60
-        default_storage = gettempdir()
-
-        for i, analyzer_config_dict in enumerate(self.__analyzers_config):
-            # Each analyzer config is a dictionary of a single entry
-            # <analyzer_name> -> {
-            #     analyzer dictionary configuration
-            # }
-
-            # Gets ths single key in the dictionart (the name of the analyzer)
-            analyzer_name = list(analyzer_config_dict.keys())[0]
-            analyzer_config = self.__analyzers_config[i][analyzer_name]
-
-            script_path = os.path.realpath(__file__)
-            wrappers_dir = '{0}/../../analyzers/wrappers'.format(os.path.dirname(script_path))
-
-            wrapper = Wrapper(
-                wrappers_dir=wrappers_dir,
-                analyzer_name=analyzer_name,
-                args=analyzer_config.get('args', ""),
-                storage_dir=analyzer_config.get('storage_dir', default_storage),
-                timeout_sec=analyzer_config.get('timeout_sec', default_timeout_sec),
-                logger=self.__logger,
-            )
-
-            default_storage = "{0}/.{1}".format(
-                str(Path.home()),
-                analyzer_name,
-            )
-
-            self.__analyzers.append(Analyzer(wrapper, self.__logger))
+        return config_utils.create_analyzers(self.analyzers_config, self.logger)
 
     def __create_wallet_session_manager(self, config_utils):
         return config_utils.create_wallet_session_manager(self.eth_provider_name, self.web3_client, self.account,
                                                           self.account_passwd)
 
-    def __create_components(self, cfg, validate_contract_settings=True):
-        config_utils = ConfigUtils()
+    def __configure_logging(self, config_utils):
+        """
+        Configures and logging and creates a logger and logging streaming provider.
+        """
+        return config_utils.configure_logging(self.logging_is_verbose, self.logging_streaming_provider_name,
+                                              self.logging_streaming_provider_args)
+
+    def __create_components(self, config_utils, validate_contract_settings=True):
         # Setup followed by verification
-        self.__setup_values(cfg)
         self.__logger, self.__logging_streaming_provider = self.__configure_logging(config_utils)
+
+        # Contract settings validation
         if validate_contract_settings:
             config_utils.check_audit_contract_settings(self)
 
@@ -272,50 +151,62 @@ class Config:
             self.__account,
         )
 
-        self.__create_audit_contract()
-        self.__create_analyzers()
+        if self.has_audit_contract_abi:
+            self.__create_audit_contract(config_utils)
+        self.__analyzers = self.__create_analyzers(config_utils)
         self.__wallet_session_manager = self.__create_wallet_session_manager(config_utils)
-        self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.__logger)
+        self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
-    def load_config(self, env, config_file_uri, account_passwd="", validate_contract_settings=True):
-        config_utils = ConfigUtils()
+    def load_config(self, config_utils, env, config_file_uri, account_passwd="", validate_contract_settings=True):
         self.__config_file_uri = config_file_uri
         self.__env = env
         self.__account_passwd = account_passwd
-        new_cfg_dict = config_utils.load_config(config_file_uri, env)
-        self.__create_components(new_cfg_dict, validate_contract_settings)
+        cfg = config_utils.load_config(config_file_uri, env)
+        self.__setup_values(cfg)
+        self.__create_components(config_utils, validate_contract_settings)
         self.__logger.debug("Components successfully created")
-        self.__cfg_dict = new_cfg_dict
-
-    def __configure_logging(self, config_utils):
-        return config_utils.configure_logging(self.__logging_is_verbose, self.__logging_streaming_provider_name,
-                                              self.__logging_streaming_provider_args)
+        self.__cfg_dict = cfg
 
     def __init__(self):
         """
         Builds a Config object from a target environment (e.g., test) and an input YAML
         configuration file.
         """
-        self.__env = None
-        self.__cfg_dict = None
-        self.__account_passwd = None
-        self.__config_file_uri = None
-        self.__web3_client = None
+        self.__analyzers = []
+        self.__analyzers_config = []
+        self.__audit_contract_name = None
+        self.__audit_contract_address = None
+        self.__audit_contract_abi_uri = None
+        self.__audit_contract = None
         self.__account = None
-        self.__report_uploader = None
-        self.__wallet_session_manager = None
-        self.__eth_provider = None
+        self.__account_passwd = None
+        self.__account_ttl = 600
+        self.__cfg_dict = None
+        self.__config_file_uri = None
+        self.__default_gas = 0
+        self.__evt_db_path = None
+        self.__evt_polling_sec = 0
         self.__event_pool_manager = None
+        self.__env = None
+        self.__eth_provider_name = None
+        self.__eth_provider_args = None
+        self.__eth_provider = None
+        self.__gas_price_wei = 0
         self.__logger = None
+        self.__logging_is_verbose = False
+        self.__logging_streaming_provider_name = None
+        self.__logging_streaming_provider_args = None
         self.__logging_streaming_provider = None
-
-    def __raise_err(self, cond=True, msg=""):
-        """
-        Raises an exception if the given condition holds.
-        """
-        if cond:
-            raise Exception("Cannot initialize QSP node. {0}".format(msg))
+        self.__min_price = 0
+        self.__metric_collection_is_enabled = True
+        self.__metric_collection_interval_seconds = 30
+        self.__report_uploader = None
+        self.__report_uploader_provider_name = None
+        self.__report_uploader_provider_args = None
+        self.__submission_timeout_limit_blocks = 10
+        self.__web3_client = None
+        self.__wallet_session_manager = None
 
     @property
     def eth_provider(self):
@@ -502,3 +393,31 @@ class Config:
         Metric collection interval in seconds.
         """
         return self.__metric_collection_interval_seconds
+
+    @property
+    def logging_streaming_provider(self):
+        return self.__logging_streaming_provider
+
+    @property
+    def report_uploader_provider_name(self):
+        return self.__report_uploader_provider_name
+
+    @property
+    def report_uploader_provider_args(self):
+        return self.__report_uploader_provider_args
+
+    @property
+    def analyzers_config(self):
+        return self.__analyzers_config
+
+    @property
+    def logging_is_verbose(self):
+        return self.__logging_is_verbose
+
+    @property
+    def logging_streaming_provider_name(self):
+        return self.__logging_streaming_provider_name
+
+    @property
+    def logging_streaming_provider_args(self):
+        return self.__logging_streaming_provider_args

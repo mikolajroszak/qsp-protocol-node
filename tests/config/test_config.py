@@ -3,7 +3,6 @@ Tests different scenarios for retrieving configuration values.
 """
 import unittest
 import yaml
-from dpath.util import get
 from tempfile import NamedTemporaryFile
 from config import config_value, Config, ConfigFactory
 from helpers.resource import resource_uri
@@ -83,11 +82,38 @@ class ConfigUtilsMock:
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
                           logging_streaming_provider_args):
         """
-        A stub for new_provider method.
+        A stub for configure_logging method.
         """
         arguments_to_check = ['logging_is_verbose', 'logging_streaming_provider_name',
                               'logging_streaming_provider_args']
         return self.call('configure_logging', arguments_to_check, locals())
+
+    def create_analyzers(self, analyzers_config, logger):
+        """
+        A stub for configure_logging method.
+        """
+        arguments_to_check = ['analyzers_config', 'logger']
+        return self.call('create_analyzers', arguments_to_check, locals())
+
+    def check_audit_contract_settings(self, config):
+        """
+        A stub for configure_logging method.
+        """
+        arguments_to_check = ['config']
+        return self.call('check_audit_contract_settings', arguments_to_check, locals())
+
+    def create_web3_client(self, eth_provider, account, account_passwd, max_attempts=30):
+        arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'max_attempts']
+        return self.call('create_web3_client', arguments_to_check, locals())
+
+
+class Web3Mock:
+
+    def isAddress(self, address):
+        return address == "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
+
+    def isChecksumAddress(self, address):
+        return address == "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
 
 
 class TestConfig(unittest.TestCase):
@@ -205,18 +231,19 @@ class TestConfig(unittest.TestCase):
         utils.verify()
 
     def test_create_report_uploader_provider(self):
-        name = "provider name"
-        args = "arguments"
-        return_value = "value"
+        report_uploader_provider_name = "provider name"
+        report_uploader_provider_args = "arguments"
+        report_uploader = "value"
         config = ConfigFactory.create_empty_config()
-        config._Config__report_uploader_provider_name = name
-        config._Config__report_uploader_provider_args = args
+        config._Config__report_uploader_provider_name = report_uploader_provider_name
+        config._Config__report_uploader_provider_args = report_uploader_provider_args
         utils = ConfigUtilsMock()
         utils.expect('create_report_uploader_provider',
-                     {'report_uploader_provider_name': name, 'report_uploader_provider_args': args},
-                     return_value)
+                     {'report_uploader_provider_name': report_uploader_provider_name,
+                      'report_uploader_provider_args': report_uploader_provider_args},
+                     report_uploader)
         result = config._Config__create_report_uploader_provider(utils)
-        self.assertEqual(return_value, result)
+        self.assertEqual(report_uploader, result)
         utils.verify()
 
     def test_create_eth_provider(self):
@@ -251,6 +278,163 @@ class TestConfig(unittest.TestCase):
         result = config._Config__configure_logging(utils)
         self.assertEqual(return_value, result)
         utils.verify()
+
+    def test_create_analyzers(self):
+        analyzers_config = "config list"
+        logger = "logger"
+        return_value = "value"
+        config = ConfigFactory.create_empty_config()
+        config._Config__analyzers_config = analyzers_config
+        config._Config__logger = logger
+        utils = ConfigUtilsMock()
+        utils.expect('create_analyzers',
+                     {'analyzers_config': analyzers_config, 'logger': logger},
+                     return_value)
+        result = config._Config__create_analyzers(utils)
+        self.assertEqual(return_value, result)
+        utils.verify()
+
+    def test_create_web3_client(self):
+        eth_provider = "eth_provider"
+        account = "account"
+        account_passwd = "account password"
+        created_web3_provider = "created provider"
+        config = ConfigFactory.create_empty_config()
+        config._Config__eth_provider = eth_provider
+        config._Config__account = account
+        config._Config__account_passwd = account_passwd
+        utils = ConfigUtilsMock()
+        utils.expect('create_web3_client',
+                     {'eth_provider': eth_provider, 'account': account, 'account_passwd': account_passwd,
+                      'max_attempts': 30},
+                     created_web3_provider)
+        result = config._Config__create_web3_client(utils)
+        self.assertEqual(created_web3_provider, result)
+        utils.verify()
+
+    def test_constructor(self):
+        """
+        Tests that all properties are listed in the constructor and have default values
+        """
+        config = Config()
+        self.assertIsNone(config.eth_provider)
+        self.assertIsNone(config.eth_provider_name)
+        self.assertIsNone(config.eth_provider_args)
+        self.assertIsNone(config.audit_contract_address)
+        self.assertEqual(0, config.min_price)
+        self.assertEqual(0, config.evt_polling)
+        self.assertIsNone(config.report_uploader)
+        self.assertIsNone(config.account)
+        self.assertEqual(600, config.account_ttl)
+        self.assertIsNone(config.account_passwd)
+        self.assertIsNone(config.audit_contract_abi_uri)
+        self.assertFalse(config.has_audit_contract_abi)
+        self.assertIsNone(config.web3_client)
+        self.assertIsNone(config.audit_contract)
+        self.assertIsNone(config.audit_contract_name)
+        self.assertEqual(0, len(config.analyzers))
+        self.assertIsNone(config.wallet_session_manager)
+        self.assertEqual(0, config.default_gas)
+        self.assertIsNone(config.env)
+        self.assertEqual(0, config.gas_price_wei)
+        self.assertIsNone(config.config_file_uri)
+        self.assertIsNone(config.evt_db_path)
+        self.assertEqual(10, config.submission_timeout_limit_blocks)
+        self.assertIsNone(config.event_pool_manager)
+        self.assertIsNone(config.logger)
+        self.assertTrue(config.metric_collection_is_enabled)
+        self.assertEquals(30, config.metric_collection_interval_seconds)
+        self.assertIsNone(config.logging_streaming_provider)
+        self.assertIsNone(config.report_uploader_provider_name)
+        self.assertIsNone(config.report_uploader_provider_args)
+        self.assertEqual(0, len(config.analyzers_config))
+        self.assertFalse(config.logging_is_verbose)
+        self.assertIsNone(config.logging_streaming_provider_name)
+        self.assertIsNone(config.logging_streaming_provider_args)
+
+    def test_create_components(self):
+        logging_provider_name = "provider name"
+        logging_provider_args = "arguments"
+        logger = "created logger"
+        streaming_provider = "created streaming provider"
+        verbose = False
+        eth_provider_name = "eth provider name"
+        eth_provider_args = "eth provider arguments"
+        created_eth_provider = "created_eth_provider"
+        account = "account"
+        new_account = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
+        account_passwd = "account password"
+        analyzers_config = "config list"
+        created_analyzers = "analyzers"
+        created_wallet_session_manager = "wallet session manager"
+        report_uploader_provider_name = "uploader provider name"
+        report_uploader_provider_args = "uploadervarguments"
+        report_uploader = "created report uploader"
+        created_web3_client = Web3Mock()
+        config = ConfigFactory.create_empty_config()
+        config._Config__logging_is_verbose = verbose
+        config._Config__logging_streaming_provider_name = logging_provider_name
+        config._Config__logging_streaming_provider_args = logging_provider_args
+        config._Config__eth_provider_name = eth_provider_name
+        config._Config__eth_provider_args = eth_provider_args
+        config._Config__account = account
+        config._Config__account_passwd = account_passwd
+        config._Config__analyzers_config = analyzers_config
+        config._Config__evt_db_path = "/tmp/evts.test"
+        config._Config__report_uploader_provider_name = report_uploader_provider_name
+        config._Config__report_uploader_provider_args = report_uploader_provider_args
+        utils = ConfigUtilsMock()
+        utils.expect('configure_logging',
+                     {'logging_is_verbose': verbose, 'logging_streaming_provider_name': logging_provider_name,
+                      'logging_streaming_provider_args': logging_provider_args},
+                     (logger, streaming_provider))
+        utils.expect('check_audit_contract_settings',
+                     {'config': config},
+                     None)
+        utils.expect('create_eth_provider',
+                     {'provider': eth_provider_name, 'args': eth_provider_args},
+                     created_eth_provider)
+        utils.expect('create_web3_client',
+                     {'eth_provider': created_eth_provider, 'account': account, 'account_passwd': account_passwd,
+                      'max_attempts': 30},
+                     (created_web3_client, new_account))
+        utils.expect('create_analyzers',
+                     {'analyzers_config': analyzers_config, 'logger': logger},
+                     created_analyzers)
+        utils.expect('create_wallet_session_manager',
+                     {'eth_provider_name': eth_provider_name, 'client': created_web3_client, 'account': new_account,
+                      'passwd': account_passwd},
+                     created_wallet_session_manager)
+        utils.expect('create_report_uploader_provider',
+                     {'report_uploader_provider_name': report_uploader_provider_name,
+                      'report_uploader_provider_args': report_uploader_provider_args},
+                     report_uploader)
+        config._Config__create_components(utils)
+        self.assertEqual(logger, config.logger)
+        self.assertEqual(streaming_provider, config.logging_streaming_provider)
+        self.assertEqual(created_eth_provider, config.eth_provider)
+        self.assertEqual(created_web3_client, config.web3_client)
+        self.assertEqual(new_account, config.account)
+        self.assertEqual(created_analyzers, config.analyzers)
+        self.assertEqual(created_wallet_session_manager, config.wallet_session_manager)
+        self.assertEqual(report_uploader, config.report_uploader)
+        utils.verify()
+
+    def test_load_config(self):
+        config_file_uri = resource_uri("test_config.yaml")
+        config = ConfigFactory.create_from_file("local", config_file_uri, validate_contract_settings=False)
+        self.assertIsNotNone(config.logger)
+        self.assertIsNone(config.logging_streaming_provider)
+        self.assertIsNotNone(config.eth_provider)
+        self.assertIsNotNone(config.web3_client)
+        self.assertIsNotNone(config.account)
+        self.assertIsNotNone(config.analyzers)
+        self.assertIsNotNone(config.wallet_session_manager)
+        self.assertIsNotNone(config.report_uploader)
+        self.assertEqual(0, config.min_price)
+        self.assertEqual(0, config.gas_price_wei)
+        self.assertEqual(5, config.evt_polling)
+        self.assertEqual(2, len(config.analyzers))
 
 
 if __name__ == '__main__':
