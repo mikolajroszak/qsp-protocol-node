@@ -22,7 +22,7 @@ class TestAnalyzerOyente(unittest.TestCase):
         oyente_wrapper = Wrapper(
             wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
             analyzer_name="oyente",
-            args="",
+            args="-ce",
             storage_dir=storage_dir,
             timeout_sec=timeout_sec,
             logger=logger
@@ -50,6 +50,8 @@ class TestAnalyzerOyente(unittest.TestCase):
         # Asserts result is success
         self.assertTrue(report['status'], 'success')
         self.assertIsNotNone(report['potential_vulnerabilities'])
+        self.assertEquals(1, len(report['potential_vulnerabilities']))
+        self.assertEquals(report['count_potential_vulnerabilities'], 1)
 
     def test_file_not_found(self):
         """
@@ -63,6 +65,7 @@ class TestAnalyzerOyente(unittest.TestCase):
         report = analyzer.check(no_file, request_id)
 
         self.assertTrue(report['status'], 'error')
+        self.assertTrue("No such file or directory" in report['errors'][0])
 
     def test_old_pragma(self):
         """
@@ -76,6 +79,8 @@ class TestAnalyzerOyente(unittest.TestCase):
         report = analyzer.check(old_contract, request_id)
 
         self.assertTrue(report['status'], 'error')
+        self.assertTrue(1, len(report['errors']))
+        self.assertTrue("Source file requires different compiler version" in report['errors'][0])
 
     def test_old_pragma_with_caret(self):
         """
@@ -89,6 +94,8 @@ class TestAnalyzerOyente(unittest.TestCase):
         report = analyzer.check(old_contract, request_id)
 
         self.assertTrue(report['status'], 'success')
+        self.assertEquals(1, len(report['potential_vulnerabilities']))
+        self.assertEquals(report['count_potential_vulnerabilities'], 1)
 
 
 if __name__ == '__main__':
