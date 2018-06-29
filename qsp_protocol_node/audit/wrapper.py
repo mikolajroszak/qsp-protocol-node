@@ -71,8 +71,6 @@ class Wrapper:
             env_vars['CONTRACT_PATH'] = contract_path
             env_vars['ANALYZER_ARGS'] = self.__args
 
-            # start time is defined at this point
-            start_time = calendar.timegm(time.gmtime())
             self.__logger.debug("Invoking wrapper as subprocess", requestId=request_id)
 
             analyzer = subprocess.run(
@@ -82,8 +80,8 @@ class Wrapper:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
+                timeout=self.__timeout_sec,
             )
-            end_time = calendar.timegm(time.gmtime())
             json_report = json.loads(analyzer.stdout)
 
         except Exception as inner_error:

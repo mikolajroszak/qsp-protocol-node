@@ -407,15 +407,16 @@ class QSPAuditNode:
 
         target_contract = fetch_file(uri)
         number_of_analyzers = len(self.__config.analyzers)
-        analyzers_report = [{}] * number_of_analyzers
+        analyzers_reports = [{}] * number_of_analyzers
 
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
             result = analyzer.check(target_contract, request_id)
-            analyzers_report[analyzer_id] = result
+            analyzers_reports[analyzer_id] = result
 
         analyzers_threads = []
         analyzers_timeouts = []
+        analyzers_start_times = []
         i = 0
 
         # Starts each analyzer thread
@@ -423,11 +424,40 @@ class QSPAuditNode:
             analyzer_thread = Thread(target=check_contract, args=[i])
             analyzers_threads.append(analyzer_thread)
             analyzers_timeouts.append(analyzer.wrapper.timeout_sec)
+
+            start_time = calendar.timegm(time.gmtime())
+            analyzers_start_times.append(start_time)
             analyzer_thread.start()
+
             i += 1
 
         for i in range(0, number_of_analyzers):
             analyzers_threads[i].join(analyzers_timeouts[i])
+
+            # NOTE
+            # Due to timeout issues, one has to account for start/end
+            # times at this point, rather than the wrapper itself
+
+            start_time = analyzers_start_times[i]
+            analyzers_reports[i]['start_time'] = start_time
+
+            # If thread is still alive, it means a timeout has
+            # occurred
+            if analyzers_threads[i].is_alive():
+                # An empty dictionary exists by default for the given
+                # timed out analyzers
+
+                analyzers_reports[i]['analyzer'] = self.__config.analyzers[i].name
+                analyzers_reports[i]['errors'] = [
+                    "Time out occurred. Could not finish {0} within {1} seconds".format(
+                        self.__config.analyzers[i].name,
+                        self.__config.analyzers[i].timeout_sec,
+                    )
+                ]
+            else:
+                # A timeout has not occurred. Register the end time
+                end_time = calendar.timegm(time.gmtime())
+                analyzers_reports[i]['end_time'] = end_time
 
         audit_report = {
             'timestamp': calendar.timegm(time.gmtime()),
@@ -445,7 +475,7 @@ class QSPAuditNode:
         # successful or not. Either it is fully successful (all analyzer produce a result),
         # or fails otherwise.
         analyzer_reports = []
-        for analyzer_report in analyzers_report:
+        for analyzer_report in analyzers_reports:
             analyzer_reports.append(analyzer_report)
             if analyzer_report.get('status', 'error') == 'error':
                 audit_report['audit_state'] = QSPAuditNode.__AUDIT_STATE_ERROR
