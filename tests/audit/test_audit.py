@@ -29,6 +29,7 @@ from pprint import pprint
 
 import json
 
+
 class TestQSPAuditNode(unittest.TestCase):
     __AUDIT_STATE_SUCCESS = 4
     __AUDIT_STATE_ERROR = 5
@@ -169,7 +170,10 @@ class TestQSPAuditNode(unittest.TestCase):
             else:
                 sleep(5)
         self.assertEqual(row['evt_name'], "LogAuditAssigned")
-        self.assertTrue(int(row['block_nbr']) > 0) # FIXME: add range validation
+
+        # FIXME: add range validation
+        self.assertTrue(int(row['block_nbr']) > 0)
+
         self.assertEqual(int(row['price']), 100)
         self.assertEqual(row['submission_attempts'], 1)
         self.assertEqual(row['is_persisted'], True)
@@ -183,24 +187,24 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.assertEqual(digest_file(audit_file), row['audit_hash'])
         self.assertEqual(audit_state, expected_audit_state)
-        
+
         diff = DeepDiff(load_json(audit_file),
             load_json(fetch_file(resource_uri(report_file_path))),
-            exclude_paths = {
+            exclude_paths={
                 "root['timestamp']",
                 "root['start_time']",
                 "root['end_time']",
-                "root['analyzer_reports'][0]['coverages'][0]['file']",
-                "root['analyzer_reports'][0]['potential_vulnerabilities'][0]['file']",
-                "root['analyzer_reports'][0]['start_time']",
-                "root['analyzer_reports'][0]['end_time']",
-                "root['analyzer_reports'][0]['hash']",
-                "root['analyzer_reports'][1]['analyzer']['command']",
-                "root['analyzer_reports'][1]['coverages'][0]['file']",
-                "root['analyzer_reports'][1]['potential_vulnerabilities'][0]['file']",
-                "root['analyzer_reports'][1]['start_time']",
-                "root['analyzer_reports'][1]['end_time']",
-                "root['analyzer_reports'][1]['hash']",                
+                "root['analyzers_reports'][0]['coverages'][0]['file']",
+                "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
+                "root['analyzers_reports'][0]['start_time']",
+                "root['analyzers_reports'][0]['end_time']",
+                "root['analyzers_reports'][0]['hash']",
+                "root['analyzers_reports'][1]['analyzer']['command']",
+                "root['analyzers_reports'][1]['coverages'][0]['file']",
+                "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
+                "root['analyzers_reports'][1]['start_time']",
+                "root['analyzers_reports'][1]['end_time']",
+                "root['analyzers_reports'][1]['hash']",
             }
         )
         pprint(diff)

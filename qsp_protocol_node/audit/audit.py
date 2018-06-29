@@ -417,6 +417,7 @@ class QSPAuditNode:
         analyzers_threads = []
         analyzers_timeouts = []
         analyzers_start_times = []
+        audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
         i = 0
 
         # Starts each analyzer thread
@@ -454,6 +455,7 @@ class QSPAuditNode:
                         self.__config.analyzers[i].timeout_sec,
                     )
                 ]
+                analyzers_reports[i]['status'] = 'error'
             else:
                 # A timeout has not occurred. Register the end time
                 end_time = calendar.timegm(time.gmtime())
@@ -467,21 +469,25 @@ class QSPAuditNode:
             'auditor': self.__config.account,
             'request_id': request_id,
             'version': QSPAuditNode.__PROTOCOL_VERSION,
-            'audit_state': QSPAuditNode.__AUDIT_STATE_SUCCESS,
         }
 
         # FIXME
         # This is currently a very simple mechanism to claim an audit as
         # successful or not. Either it is fully successful (all analyzer produce a result),
         # or fails otherwise.
-        analyzer_reports = []
-        for analyzer_report in analyzers_reports:
-            analyzer_reports.append(analyzer_report)
-            if analyzer_report.get('status', 'error') == 'error':
-                audit_report['audit_state'] = QSPAuditNode.__AUDIT_STATE_ERROR
+        all_succeed = True
 
-        if len(analyzer_report) > 0:
-            audit_report['analyzer_reports'] = analyzer_reports
+        for analyzer_report in analyzers_reports:
+            if analyzer_report.get('status', 'error') == 'error':
+                all_succeed = False
+
+        if all_succeed:
+            audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
+
+        audit_report['audit_state'] = audit_state
+
+        if len(analyzers_reports) > 0:
+            audit_report['analyzers_reports'] = analyzers_reports
 
         self.__logger.info(
             "Analyzer report contents",

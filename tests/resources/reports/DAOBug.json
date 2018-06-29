@@ -1,5 +1,5 @@
 {
-  "analyzer_reports": [
+  "analyzers_reports": [
     {
       "analyzer": {
         "command": "python /oyente/oyente/oyente.py  -j -s /shared/DAOBug.sol",
