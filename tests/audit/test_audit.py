@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 import yaml
+import ntpath
 
 from timeout_decorator import timeout
 from threading import Thread
@@ -188,9 +189,13 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(digest_file(audit_file), row['audit_hash'])
         self.assertEqual(audit_state, expected_audit_state)
 
-        diff = DeepDiff(load_json(audit_file),
-            load_json(fetch_file(resource_uri(report_file_path))),
+        actual_json = load_json(audit_file)
+        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
+        diff = DeepDiff(actual_json,
+            expected_json,
             exclude_paths={
+                # path is different depending on whether running inside Docker
+                "root['contract_uri']",
                 "root['timestamp']",
                 "root['start_time']",
                 "root['end_time']",
@@ -209,6 +214,8 @@ class TestQSPAuditNode(unittest.TestCase):
         )
         pprint(diff)
         self.assertEqual(diff, {})
+        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
+            ntpath.basename(expected_json['contract_uri']))
 
     def evt_wait_loop(self, current_filter):
         wait = True

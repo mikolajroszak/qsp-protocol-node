@@ -92,7 +92,7 @@ class Wrapper:
             # But, for whatever reason an error does occur (e.g.,
             # subprocess failes creating a new analyzer thread),
             # then produce a minimal report with whatever information
-            # is know at this point.
+            # is known at this point.
             error = True
             json_report = {
                 'analyzer': {'name': self.__analyzer_name},

@@ -3,7 +3,14 @@ import logging.config
 import structlog
 import utils.io as io_utils
 import yaml
+import os
 
+from audit import (
+    Analyzer,
+    Wrapper,
+)
+from pathlib import Path
+from tempfile import gettempdir
 from streaming import CloudWatchProvider
 from upload import S3Provider
 from time import sleep
@@ -137,12 +144,7 @@ class ConfigUtils:
                                     account=new_account)
         return web3_client, new_account
 
-    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                          logging_streaming_provider_args):
-        # FIXME
-        # This should be moved to the initialization level.
-        # See QSP-148.
-        # https://quantstamp.atlassian.net/browse/QSP-418
+    def configure_basic_logging(self, verbose=False):
         logging.getLogger('urllib3').setLevel(logging.CRITICAL)
         logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
@@ -180,12 +182,17 @@ class ConfigUtils:
             'loggers': {
                 '': {
                     'handlers': ['json'],
-                    'level': logging.DEBUG if logging_is_verbose else logging.INFO
+                    'level': logging.DEBUG if verbose else logging.INFO
                 }
             }
         }
 
         logging.config.dictConfig(dict_config)
+
+    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
+                          logging_streaming_provider_args):
+        if logging_is_verbose:
+            self.configure_basic_logging(verbose=True)
         logger = structlog.getLogger("audit")
         logging_streaming_provider = None
         if logging_streaming_provider_name is not None:
@@ -218,6 +225,57 @@ class ConfigUtils:
                                   )
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
+
+    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+        """
+        Creates the audit contract either from ABI.
+        """
+        abi_file = io_utils.fetch_file(audit_contract_abi_uri)
+        abi_json = io_utils.load_json(abi_file)
+
+        return web3_client.eth.contract(
+            address=audit_contract_address,
+            abi=abi_json,
+        )
+
+    def create_analyzers(self, analyzers_config, logger):
+        """
+        Creates an instance of the each target analyzer that should be verifying a given contract.
+        """
+        default_timeout_sec = 60
+        default_storage = gettempdir()
+        analyzers = []
+
+        for i, analyzer_config_dict in enumerate(analyzers_config):
+            # Each analyzer config is a dictionary of a single entry
+            # <analyzer_name> -> {
+            #     analyzer dictionary configuration
+            # }
+
+            # Gets ths single key in the dictionart (the name of the analyzer)
+            analyzer_name = list(analyzer_config_dict.keys())[0]
+            analyzer_config = analyzers_config[i][analyzer_name]
+
+            script_path = os.path.realpath(__file__)
+            wrappers_dir = '{0}/../../analyzers/wrappers'.format(os.path.dirname(script_path))
+
+            wrapper = Wrapper(
+                wrappers_dir=wrappers_dir,
+                analyzer_name=analyzer_name,
+                args=analyzer_config.get('args', ""),
+                storage_dir=analyzer_config.get('storage_dir', default_storage),
+                timeout_sec=analyzer_config.get('timeout_sec', default_timeout_sec),
+                logger=self.__logger,
+            )
+
+            default_storage = "{0}/.{1}".format(
+                str(Path.home()),
+                analyzer_name,
+            )
+
+            analyzers.append(Analyzer(wrapper, logger))
+
+        return analyzers
 
     @staticmethod
     def raise_err(cond=True, msg=""):
