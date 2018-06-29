@@ -417,11 +417,9 @@ class QSPAuditNode:
         analyzers_threads = []
         analyzers_timeouts = []
         analyzers_start_times = []
-        audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
-        i = 0
 
         # Starts each analyzer thread
-        for analyzer in self.__config.analyzers:
+        for i, analyzer in enumerate(self.__config.analyzers):
             analyzer_thread = Thread(target=check_contract, args=[i])
             analyzers_threads.append(analyzer_thread)
             analyzers_timeouts.append(analyzer.wrapper.timeout_sec)
@@ -429,8 +427,6 @@ class QSPAuditNode:
             start_time = calendar.timegm(time.gmtime())
             analyzers_start_times.append(start_time)
             analyzer_thread.start()
-
-            i += 1
 
         for i in range(0, number_of_analyzers):
             analyzers_threads[i].join(analyzers_timeouts[i])
@@ -448,10 +444,11 @@ class QSPAuditNode:
                 # An empty dictionary exists by default for the given
                 # timed out analyzers
 
-                analyzers_reports[i]['analyzer'] = self.__config.analyzers[i].name
+                analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
+                analyzers_reports[i]['analyzer'] = analyzer_name
                 analyzers_reports[i]['errors'] = [
                     "Time out occurred. Could not finish {0} within {1} seconds".format(
-                        self.__config.analyzers[i].name,
+                        analyzer_name,
                         self.__config.analyzers[i].timeout_sec,
                     )
                 ]
@@ -475,14 +472,37 @@ class QSPAuditNode:
         # This is currently a very simple mechanism to claim an audit as
         # successful or not. Either it is fully successful (all analyzer produce a result),
         # or fails otherwise.
-        all_succeed = True
+        audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
 
-        for analyzer_report in analyzers_reports:
-            if analyzer_report.get('status', 'error') == 'error':
-                all_succeed = False
+        for i, analyzer_report in enumerate(analyzers_reports):
+            analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
 
-        if all_succeed:
-            audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
+            # The next two fail safe checks should never kick in
+
+            # This is a fail safe mechanism (defensive programming)
+            if 'analyzer' not in analyzer_report:
+                analyzer_report['analyzer'] = {
+                    'name': analyzer_name
+                }
+
+            # Another fail safe mechanism (defensive programming)
+            if 'status' not in analyzer_report:
+                analyzer_report['status'] = 'error'
+                errors = analyzer_report.get('errors', [])
+                errors.append('Unknown error: cannot produce report')
+                analyzer_report['errors'] = errors
+
+            # Invariant: no analyzer report can ever be empty!
+
+            if analyzer_report['status'] == 'error':
+                audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
+
+            # FIXME
+            # The audit receives a report, which among other things, receives metadata from the wrapper plugin.
+            # The issue, however, is that if the wrapper fails, this metadata is never returned. To account for this case,
+            # there has to be a declaration file somewhere stating this metadata. The audit node, in turn, would fetch it
+            # and always make it part of the final report, even in the case of a fatal error.
+            # https://quantstamp.atlassian.net/browse/QSP-469
 
         audit_report['audit_state'] = audit_state
 
