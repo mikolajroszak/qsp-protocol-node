@@ -1,5 +1,5 @@
 from .config import Config
-from .alternate_config_utils import ConfigUtils
+from .config_utils import ConfigUtils
 
 
 class ConfigFactory:

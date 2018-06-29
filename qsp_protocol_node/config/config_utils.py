@@ -144,12 +144,7 @@ class ConfigUtils:
                                     account=new_account)
         return web3_client, new_account
 
-    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                          logging_streaming_provider_args):
-        # FIXME
-        # This should be moved to the initialization level.
-        # See QSP-148.
-        # https://quantstamp.atlassian.net/browse/QSP-418
+    def configure_basic_logging(self, verbose=False):
         logging.getLogger('urllib3').setLevel(logging.CRITICAL)
         logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
@@ -187,12 +182,17 @@ class ConfigUtils:
             'loggers': {
                 '': {
                     'handlers': ['json'],
-                    'level': logging.DEBUG if logging_is_verbose else logging.INFO
+                    'level': logging.DEBUG if verbose else logging.INFO
                 }
             }
         }
 
         logging.config.dictConfig(dict_config)
+
+    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
+                          logging_streaming_provider_args):
+        if logging_is_verbose:
+            self.configure_basic_logging(verbose=True)
         logger = structlog.getLogger("audit")
         logging_streaming_provider = None
         if logging_streaming_provider_name is not None:
@@ -228,8 +228,7 @@ class ConfigUtils:
 
     def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
         """
-        Creates the audit contract either from its ABI or from its source code (whichever is
-        available).
+        Creates the audit contract either from ABI.
         """
         abi_file = io_utils.fetch_file(audit_contract_abi_uri)
         abi_json = io_utils.load_json(abi_file)

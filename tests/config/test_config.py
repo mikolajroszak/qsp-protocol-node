@@ -102,6 +102,10 @@ class ConfigUtilsMock:
         arguments_to_check = ['config']
         return self.call('check_audit_contract_settings', arguments_to_check, locals())
 
+    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+        arguments_to_check = ['web3_client', 'audit_contract_abi_uri', 'audit_contract_address']
+        return self.call('create_audit_contract', arguments_to_check, locals())
+
     def create_web3_client(self, eth_provider, account, account_passwd, max_attempts=30):
         arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'max_attempts']
         return self.call('create_web3_client', arguments_to_check, locals())
@@ -370,6 +374,9 @@ class TestConfig(unittest.TestCase):
         report_uploader_provider_name = "uploader provider name"
         report_uploader_provider_args = "uploadervarguments"
         report_uploader = "created report uploader"
+        audit_contract_abi_uri = "some uri"
+        audit_contract_address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
+        created_audit_contract = "contract"
         created_web3_client = Web3Mock()
         config = ConfigFactory.create_empty_config()
         config._Config__logging_is_verbose = verbose
@@ -383,6 +390,8 @@ class TestConfig(unittest.TestCase):
         config._Config__evt_db_path = "/tmp/evts.test"
         config._Config__report_uploader_provider_name = report_uploader_provider_name
         config._Config__report_uploader_provider_args = report_uploader_provider_args
+        config._Config__audit_contract_abi_uri = audit_contract_abi_uri
+        config._Config__audit_contract_address = audit_contract_address
         utils = ConfigUtilsMock()
         utils.expect('configure_logging',
                      {'logging_is_verbose': verbose, 'logging_streaming_provider_name': logging_provider_name,
@@ -398,6 +407,10 @@ class TestConfig(unittest.TestCase):
                      {'eth_provider': created_eth_provider, 'account': account, 'account_passwd': account_passwd,
                       'max_attempts': 30},
                      (created_web3_client, new_account))
+        utils.expect('create_audit_contract',
+                     {'web3_client': created_web3_client, 'audit_contract_abi_uri': audit_contract_abi_uri,
+                      'audit_contract_address': audit_contract_address},
+                     created_audit_contract)
         utils.expect('create_analyzers',
                      {'analyzers_config': analyzers_config, 'logger': logger},
                      created_analyzers)
@@ -418,6 +431,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(created_analyzers, config.analyzers)
         self.assertEqual(created_wallet_session_manager, config.wallet_session_manager)
         self.assertEqual(report_uploader, config.report_uploader)
+        self.assertEqual(created_audit_contract, config.audit_contract)
         utils.verify()
 
     def test_load_config(self):
