@@ -52,9 +52,11 @@ dev:
     - oyente: 
         args: "" # No args provided; rely on defaults for now
         storage_dir: /tmp/oyente
+        timeout_sec: 300
     - mythril:
         args: "" # No args provided; rely on defaults for now
         storage_dir: /tmp/mythril
+        timeout_sec: 300
   report_uploader:
       provider: !!str "S3Provider"
       args:
