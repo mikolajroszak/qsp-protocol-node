@@ -49,7 +49,7 @@ dev:
   evt_polling_sec: !!int 5
   analyzers:
     - oyente: 
-        args: "" # No args provided; rely on defaults for now
+        args: "-ce" # No args provided; rely on defaults for now
     - mythril:
         args: "" # No args provided; rely on defaults for now
   report_uploader:
@@ -87,7 +87,7 @@ prod:
   evt_polling_sec: !!int 5
   analyzers:
     - oyente:
-        args: "" # No args provided; rely on defaults for now
+        args: "-ce" # No args provided; rely on defaults for now
     - mythril:
         args: "" # No args provided; rely on defaults for now
   report_uploader:
