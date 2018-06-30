@@ -2,8 +2,9 @@
   "analyzers_reports": [
     {
       "end_time": 1530192830,
-      "errors": [
-        "root:Solidity compilation failed. Please use -ce flag to see the detail.\n"
+      "errors":  [
+        "root:/shared/DappBinWallet.sol:7:1: Error: Expected pragma, import directive or contract/interface/library definition.\n",
+        "root:Solidity compilation failed.\n"
       ],
       "hash": "85014ee689bc0d6a89f553b9cfe9de2bebde9cf27d9b6bf9f7390bcf0bb90833",
       "start_time": 1530192828,

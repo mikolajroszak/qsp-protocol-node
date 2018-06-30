@@ -2,7 +2,7 @@
   "analyzers_reports": [
     {
       "analyzer": {
-        "command": "python /oyente/oyente/oyente.py  -j -s /shared/DAOBug.sol",
+        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/DAOBug.sol",
         "name": "oyente",
         "version": "16c74d21e997cffe9a7480cb140ee6c05b7ba608e1b878df90f585b4710e41b0",
         "vulnerabilities_checked": [
