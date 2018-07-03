@@ -70,9 +70,7 @@
         ]
       },
       "count_potential_vulnerabilities": 3,
-      "coverages": [],
       "end_time": 1530192805,
-      "errors": [],
       "hash": "038f3fd738fbe388b32aaf4961967ebe64cff47b053a5a13b16561b3c616a538",
       "potential_vulnerabilities": [
         {
@@ -113,8 +111,7 @@
         }
       ],
       "start_time": 1530192801,
-      "status": "success",
-      "warnings": []
+      "status": "success"
     }
   ],
   "audit_state": 4,

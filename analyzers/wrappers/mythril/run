@@ -6,12 +6,12 @@ source "$WRAPPER_HOME"/utils/common
 
 
 # Generates an error report without warnings
-function error {
+function report_errors {
     "$WRAPPER_HOME/utils/make_error_report" "$1"
 }
 
 # Generates an error report with warnings
-function werror {
+function report_warnings_and_errors {
     "$WRAPPER_HOME/utils/make_error_report" "$1"
 }
 
@@ -36,7 +36,7 @@ on_exit_do rm -f "$LOG_OUTPUT"
 # Only run `once`` if it has not been executed before
 if [[ ! -f "$STORAGE_DIR/.once" ]] ; then
     "$WRAPPER_HOME"/once >> "$LOG_OUTPUT" 2>&1 || \
-        { error "$LOG_OUTPUT"; exit 1; }
+        { report_errors "$LOG_OUTPUT"; exit 1; }
 else
     > "$STORAGE_DIR/.once"
 fi
@@ -46,11 +46,11 @@ fi
 ##################################################################
 # Prepares the wrapper
 "$WRAPPER_HOME"/pre_run &> "$LOG_OUTPUT" || \
-    { error "$LOG_OUTPUT"; exit 1; }
+    { report_errors "$LOG_OUTPUT"; exit 1; }
 
 # Copies the input contract to the temporary folder just created
 cp "$CONTRACT_PATH" "$TMP_FOLDER" >> "$LOG_OUTPUT" 2>&1 || \
-    { error "$LOG_OUTPUT"; exit 1; }
+    { report_errors "$LOG_OUTPUT"; exit 1; }
 
 CONTRACT_FILENAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
 
@@ -65,9 +65,9 @@ ANALYZER_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':'
 docker run -v "$TMP_FOLDER":/shared/ -i "$DOCKER_IMAGE" -o json -x "/shared/$CONTRACT_FILENAME" \
     &> "$LOG_OUTPUT"
 
-# Mythril can failed with error code 0 providing an error message in json
+# Mythril can fail with error code 0 providing an error message in json
 cat "$LOG_OUTPUT" | grep "\"success\": true" >/dev/null || \
-    { error "$LOG_OUTPUT"; exit 1; }
+    { report_errors "$LOG_OUTPUT"; exit 1; }
 
 # Cleans up any resources
 "$WRAPPER_HOME"/post_run >> "$LOG_OUTPUT" 2>&1
@@ -76,7 +76,7 @@ cat "$LOG_OUTPUT" | grep "\"success\": true" >/dev/null || \
 ANALYZER_CMD="docker run -v \"$TMP_FOLDER\":/shared/ -i \"$DOCKER_IMAGE\" -o json -x \"/shared/$CONTRACT_FILENAME\""
 "$WRAPPER_HOME/utils/mk_success_report" "${ANALYZER_VERSION}" "${ANALYZER_CMD}" "${ANALYZER_VULNERABILITIES}"  \
     "${LOG_OUTPUT}" || \
-        { error "$LOG_OUTPUT"; exit 1; }
+        { report_errors "$LOG_OUTPUT"; exit 1; }
 
 # Exit with a success status code
 exit 0

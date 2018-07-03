@@ -1,6 +1,7 @@
 """
 Tests invocation of the analyzer tool.
 """
+import json
 import unittest
 
 from random import random
@@ -44,12 +45,13 @@ class TestAnalyzerMythril(unittest.TestCase):
         # Asserts some result produced
         self.assertTrue(report)
 
-        import json
         print(json.dumps(report, indent=2))
 
         # Asserts result is success
         self.assertTrue(report['status'], 'success')
         self.assertIsNotNone(report['potential_vulnerabilities'])
+        self.assertEquals(3, len(report['potential_vulnerabilities']))
+        self.assertEquals(3, report['count_potential_vulnerabilities'])
 
     def test_file_not_found(self):
         """
@@ -63,6 +65,8 @@ class TestAnalyzerMythril(unittest.TestCase):
         report = analyzer.check(no_file, request_id)
 
         self.assertTrue(report['status'], 'error')
+        self.assertTrue(1, len(report['errors']))
+        self.assertTrue("No such file or directory" in report['errors'][0])
 
     def test_old_pragma(self):
         """
@@ -76,6 +80,8 @@ class TestAnalyzerMythril(unittest.TestCase):
         report = analyzer.check(old_contract, request_id)
 
         self.assertTrue(report['status'], 'error')
+        self.assertTrue(1, len(report['errors']))
+        self.assertTrue("Error: Source file requires different compiler version" in report['errors'][0])
 
     def test_old_pragma_with_caret(self):
         """
@@ -89,6 +95,8 @@ class TestAnalyzerMythril(unittest.TestCase):
         report = analyzer.check(old_contract, request_id)
 
         self.assertTrue(report['status'], 'success')
+        self.assertEquals(3, len(report['potential_vulnerabilities']))
+        self.assertEquals(3, report['count_potential_vulnerabilities'])
 
 
 if __name__ == '__main__':
