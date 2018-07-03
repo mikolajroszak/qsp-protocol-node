@@ -9,7 +9,7 @@ local:
   is_mined_polling_sec: !!int 5
   analyzers:
     - oyente:
-        args: "" # No args provided; rely on defaults for now
+        args: "-ce"
         storage_dir: /tmp/.oyente
         timeout_sec: 120
     - mythril:

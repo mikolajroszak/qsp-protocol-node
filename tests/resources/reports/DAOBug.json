@@ -1,8 +1,8 @@
 {
-  "analyzer_reports": [
+  "analyzers_reports": [
     {
       "analyzer": {
-        "command": "python /oyente/oyente/oyente.py  -j -s /shared/DAOBug.sol",
+        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/DAOBug.sol",
         "name": "oyente",
         "version": "16c74d21e997cffe9a7480cb140ee6c05b7ba608e1b878df90f585b4710e41b0",
         "vulnerabilities_checked": [
@@ -70,9 +70,7 @@
         ]
       },
       "count_potential_vulnerabilities": 3,
-      "coverages": [],
       "end_time": 1530192805,
-      "errors": [],
       "hash": "038f3fd738fbe388b32aaf4961967ebe64cff47b053a5a13b16561b3c616a538",
       "potential_vulnerabilities": [
         {
@@ -113,8 +111,7 @@
         }
       ],
       "start_time": 1530192801,
-      "status": "success",
-      "warnings": []
+      "status": "success"
     }
   ],
   "audit_state": 4,

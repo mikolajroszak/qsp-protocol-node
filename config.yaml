@@ -11,12 +11,12 @@ local:
   is_mined_polling_sec: !!int 1
   analyzers:
     - oyente:
-        args: "" # No args provided; rely on defaults for now
-        storage_dir: ~/.oyente
+        args: "-ce"
+        storage_dir: /tmp/oyente
         timeout_sec: 120
     - mythril:
         args: "" # No args provided; rely on defaults for now
-        storage_dir: ~/.mythril
+        storage_dir: /tmp/mythril
         timeout_sec: 120
   report_uploader:
       provider: !!str "S3Provider"
@@ -26,6 +26,7 @@ local:
     id: !!str "0x4e3277806890f7bbb665b13d5baeb75a9f47d2c3"
     ttl: 600
   default_gas: !!int 500000
+  gas_price_wei: !!int 8000000000
   logging:
     is_verbose: True
     streaming:
@@ -51,9 +52,13 @@ dev:
   is_mined_polling_sec: !!int 1
   analyzers:
     - oyente: 
-        args: "" # No args provided; rely on defaults for now
+        args: "-ce"
+        storage_dir: /tmp/oyente
+        timeout_sec: 300
     - mythril:
         args: "" # No args provided; rely on defaults for now
+        storage_dir: /tmp/mythril
+        timeout_sec: 300
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -90,7 +95,7 @@ prod:
   is_mined_polling_sec: !!int 1
   analyzers:
     - oyente:
-        args: "" # No args provided; rely on defaults for now
+        args: "-ce"
     - mythril:
         args: "" # No args provided; rely on defaults for now
   report_uploader:

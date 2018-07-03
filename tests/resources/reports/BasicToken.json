@@ -1,9 +1,10 @@
 {
-  "analyzer_reports": [
+  "analyzers_reports": [
     {
       "end_time": 1530192777,
       "errors": [
-        "root:Solidity compilation failed. Please use -ce flag to see the detail.\n"
+        "root:/shared/BasicToken.sol:4:1: Error: Source \"/shared/ERC20Basic.sol\" not found: Unknown exception in read callback.\n",
+        "root:Solidity compilation failed.\n"
       ],
       "hash": "d31e9bdf56eb07ca5c3c20b4aa2ebfe62b414f5df2b96c68aeaa181d224b070f",
       "start_time": 1530192774,
@@ -11,7 +12,10 @@
       "warnings": [
         "root:You are using evm version 1.8.2. The supported version is 1.7.3\n",
         "root:You are using solc version 0.4.21, The latest supported version is 0.4.19\n"
-      ]
+      ],
+      "analyzer": {
+        "name": "oyente"
+      }
     },
     {
       "end_time": 1530192777,
@@ -20,7 +24,10 @@
       ],
       "hash": "052ae21750ce10c572e10baf80acb4feab63619dc15ff6dc4308fe626a784901",
       "start_time": 1530192774,
-      "status": "error"
+      "status": "error",
+      "analyzer": {
+        "name": "mythril"
+      }
     }
   ],
   "audit_state": 5,

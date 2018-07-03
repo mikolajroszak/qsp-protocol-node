@@ -71,21 +71,23 @@ Initialization entails changing your `~/.bash_profile` (if not already done so):
 
 ## Run in regular mode
 
-Acquire a passphrase for the Ropsten test account (message the channel `#dev-protocol`) and set environment variable `ETH_PASSPHRASE` and
-execute 
+1. acquire a passphrase for the Ropsten test account (message the channel `#dev-protocol`) and set the environment variable `ETH_PASSPHRASE`
+2. `make run`
 
-```
-make run
-```
+The default account is whitelisted, but double-check that it has enough Ropsten ether. By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. A task is created to make local test environment more isolated.
+
+### Run with a new account address
+
+1. `geth attach` to the Ropsten node specified in `config.yaml` and do `personal.newAccount()`. Come up with a passphrase and record the new address.
+2. In `config.yaml/local/account/id`, specify the Ethereum address
+3. Set the environment variable `ETH_PASSPHRASE` to the passphrase you specified
+4. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands) 
+5. Transfer some Ether to the account using a Ropsten faucet
+6. Execute `make run`
 
 ## Run in container mode
 
-Acquire a passphrase for the Ropsten test account (message the channel `#dev-protocol`) and set environment variable `ETH_PASSPHRASE`
-and execute 
-
-```
-make run-docker
-```
+Steps are similar to the above (e.g., acquiring the passphrase) but instead of `make run`, do `make run-docker`.
 
 ## Run tests in container mode
 
@@ -108,6 +110,10 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing
 1. To promote a dev environment to production, go to [Application versions](https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/application/versions?applicationName=qsp-protocol-node), select the desired artifact, click `Deploy`, and select `qsp-protocol-node-prod` in the dropdown.
 
 1. To add a new deployment method, add another subfolder to `deployment`.
+
+1. The [end-to-end test](https://console.aws.amazon.com/codepipeline/home?region=us-east-1#/view/qsp-protocol-end-to-end-test-dev) runs periodically against the Dev stack and posts any failures to the channel `#qsp-monitoring-dev`. To run the test outside of the regular schedule, go to the test link and do `Release change`.
+
+1. [Audit node logs](https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logStream:group=/aws/elasticbeanstalk/qsp-protocol-dev/all.log)
 
 ## SSH to instance and container
 1. Go [EC2 Dashboard](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#Instances:sort=tag:Name)

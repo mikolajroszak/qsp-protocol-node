@@ -205,3 +205,11 @@ class TestConfigUtil(unittest.TestCase):
         self.assertIsNotNone(config_dict, "Configuration dictionary was not loaded")
         self.assertTrue("evt_db_path" in config_dict.keys(),
                         "Key evt_db_path is missing from loaded data")
+
+    def test_create_contract(self):
+        account = "Account"
+        eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
+        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
+        abi_uri = "file://tests/resources/QuantstampAudit.abi.json"
+        address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
+        self.config_utils.create_audit_contract(client, abi_uri, address)
