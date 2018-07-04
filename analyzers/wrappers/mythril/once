@@ -3,10 +3,5 @@
 # Imports common definitions
 source "$WRAPPER_HOME"/utils/common
 
-# If storage dir does not exist, create it
-if [[ ! -d "$STORAGE_DIR" ]] ; then
-    mkdir "$STORAGE_DIR" || exit 1
-fi
-
 # Pull mythrils's docker image
 docker pull "$DOCKER_IMAGE" || exit 1
