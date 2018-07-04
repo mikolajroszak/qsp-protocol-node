@@ -173,6 +173,7 @@ class QSPAuditNode:
         """
         try:
             any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='pending')
+            # TODO make constant once the smart contract is fixed
             if any_request_available == 1:
                 self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()

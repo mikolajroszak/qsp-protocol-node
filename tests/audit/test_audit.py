@@ -313,7 +313,6 @@ class TestQSPAuditNode(unittest.TestCase):
         request_id = 1
         requester = self.__config.account
         auditor = self.__config.account
-        transaction_fee = 123
         timestamp = 40
 
         # Emulates assigning a request for a given target contract by submitting the appropriate event.
@@ -323,7 +322,6 @@ class TestQSPAuditNode(unittest.TestCase):
             auditor,
             contract_uri,
             price,
-            transaction_fee,
             timestamp).transact({"from": self.__config.account})
 
 

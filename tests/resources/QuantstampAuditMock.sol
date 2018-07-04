@@ -44,7 +44,6 @@ contract QuantstampAudit {
     address requestor,
     string uri,
     uint256 price,
-    uint256 transactionFee,
     uint256 requestTimestamp
   );
 
@@ -54,7 +53,6 @@ contract QuantstampAudit {
       address requestor,
       string uri,
       uint256 price,
-      uint256 transactionFee,
       uint256 requestTimestamp);
   event LogReportSubmissionError_InvalidAuditor(uint256 requestId, address auditor);
   event LogReportSubmissionError_InvalidState(uint256 requestId, address auditor, AuditState state);
@@ -82,12 +80,12 @@ contract QuantstampAudit {
     emit LogAuditFinished(requestId, auditor, auditResult, reportUri, reportHash, reportTimestamp);
   }
 
-  function emitLogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price, uint256 transactionFee, uint256 requestTimestamp) {
-    emit LogAuditRequested(requestId, requestor, uri, price, transactionFee, requestTimestamp);
+  function emitLogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price, uint256 requestTimestamp) {
+    emit LogAuditRequested(requestId, requestor, uri, price, requestTimestamp);
   }
 
-  function emitLogAuditAssigned(uint256 requestId, address auditor, address requestor, string uri, uint256 price, uint256 transactionFee, uint256 requestTimestamp) {
-    emit LogAuditAssigned(requestId, auditor, requestor, uri, price, transactionFee, requestTimestamp);
+  function emitLogAuditAssigned(uint256 requestId, address auditor, address requestor, string uri, uint256 price, uint256 requestTimestamp) {
+    emit LogAuditAssigned(requestId, auditor, requestor, uri, price, requestTimestamp);
   }
 
   function emitLogReportSubmissionError_InvalidAuditor(uint256 requestId, address auditor) {
