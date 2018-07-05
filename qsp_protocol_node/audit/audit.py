@@ -176,8 +176,13 @@ class QSPAuditNode:
         Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
+            pending_requests_count = self.__config.event_pool_manager.get_pending_requests_count()
+            if pending_requests_count > self.__config.max_assigned_requests:
+                self.__logger.debug("Skip bidding the request as currently processing {0} requests".format(
+                    str(undone_requests_count)))
+                return
+
             any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='pending')
-            # TODO make constant once the smart contract is fixed
             if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
                 self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()

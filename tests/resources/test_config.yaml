@@ -5,6 +5,7 @@ local:
   # audit_contract_abi: The contract is injected in tests
   min_price: !!int 0
   gas_price_wei: !!int 0
+  max_assigned_requests: !!int 1
   evt_polling_sec: !!int 5
   is_mined_polling_sec: !!int 5
   analyzers:
