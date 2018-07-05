@@ -177,9 +177,9 @@ class QSPAuditNode:
         """
         try:
             pending_requests_count = self.__config.event_pool_manager.get_pending_requests_count()
-            if pending_requests_count > self.__config.max_assigned_requests:
+            if pending_requests_count >= self.__config.max_assigned_requests:
                 self.__logger.debug("Skip bidding the request as currently processing {0} requests".format(
-                    str(undone_requests_count)))
+                    str(pending_requests_count)))
                 return
 
             any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='pending')

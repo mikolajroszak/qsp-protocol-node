@@ -17,7 +17,7 @@ setup:
 
 test:
 	pip install web3[tester] ; \
-	PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/audit/test_audit.py
+	PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc)$$" | xargs rm -rf

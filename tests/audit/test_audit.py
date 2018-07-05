@@ -244,13 +244,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditFinished(
-                self.__REQUEST_ID,
-                self.__config.account,
-                0,
-                "",
-                "",
-                0).transact({"from": self.__config.account})
+            self.__sendDoneMessage(self.__REQUEST_ID)
         )
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS, "reports/DAOBug.json")
 
@@ -269,12 +263,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID,
-                                                                        self.__config.account,
-                                                                        0,
-                                                                        "",
-                                                                        "",
-                                                                        0).transact({"from": self.__config.account})
+            self.__sendDoneMessage(self.__REQUEST_ID)
         )
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/BasicToken.json")
@@ -294,15 +283,38 @@ class TestQSPAuditNode(unittest.TestCase):
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID,
-                                                                        self.__config.account,
-                                                                        0,
-                                                                        "",
-                                                                        "",
-                                                                        0).transact({"from": self.__config.account})
+            self.__sendDoneMessage(self.__REQUEST_ID)
         )
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/DappBinWallet.json")
+
+    @timeout(80, timeout_exception=StopIteration)
+    def test_restricting_local_max_assigned(self):
+        """
+        Tests if the local maximum assigned request limitation is in effect
+        """
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_READY).transact(
+                {"from": self.__config.account})
+        )
+
+        self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+
+        self.evt_wait_loop(self.__getNextAuditRequest_filter)
+
+        buggy_contract = resource_uri("DappBinWallet.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendRequestMessage(self.__REQUEST_ID, buggy_contract, self.__PRICE, 100)
+        )
+
+        self.evt_wait_loop(self.__submitReport_filter)
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendDoneMessage(self.__REQUEST_ID)
+        )
+
+        # This is a critical line to be called as the node did all it audits
+        self.evt_wait_loop(self.__getNextAuditRequest_filter)
 
     def __requestAudit(self, contract_uri, price):
         """
@@ -322,19 +334,36 @@ class TestQSPAuditNode(unittest.TestCase):
         )
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
 
-        request_id = 1
-        requester = self.__config.account
-        auditor = self.__config.account
         timestamp = 40
 
-        # Emulates assigning a request for a given target contract by submitting the appropriate event.
+        return self.__sendRequestMessage(
+            self.__REQUEST_ID,
+            contract_uri,
+            price,
+            timestamp)
+
+    def __sendRequestMessage(self, request_id, contract_uri, price, timestamp):
+        """
+        Emulates assigning a request for a given target contract by submitting the appropriate event.
+        """
+        requester = self.__config.account
+        auditor = self.__config.account
         return self.__config.audit_contract.functions.emitLogAuditAssigned(
             request_id,
             requester,
             auditor,
             contract_uri,
             price,
-            timestamp).transact({"from": self.__config.account})
+            timestamp).transact({"from": requester})
+
+    def __sendDoneMessage(self, request_id):
+        return self.__config.audit_contract.functions.emitLogAuditFinished(
+            request_id,
+            self.__config.account,
+            0,
+            "",
+            "",
+            0).transact({"from": self.__config.account})
 
 
 if __name__ == '__main__':
