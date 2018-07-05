@@ -34,6 +34,8 @@ import json
 class TestQSPAuditNode(unittest.TestCase):
     __AUDIT_STATE_SUCCESS = 4
     __AUDIT_STATE_ERROR = 5
+    __AVAILABLE_AUDIT__STATE_READY = 1
+    __AVAILABLE_AUDIT__STATE_ERROR = 0
     __REQUEST_ID = 1
     __PRICE = 100
 
@@ -307,7 +309,7 @@ class TestQSPAuditNode(unittest.TestCase):
         Emulates requesting for a new audit.
         """
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.setAnyRequestAvailableResult(1).transact(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_READY).transact(
                 {"from": self.__config.account})
         )
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
@@ -315,7 +317,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.evt_wait_loop(self.__getNextAuditRequest_filter)
 
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.setAnyRequestAvailableResult(0).transact(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
                 {"from": self.__config.account})
         )
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
