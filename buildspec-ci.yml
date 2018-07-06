@@ -34,4 +34,4 @@ phases:
       - pip3 install coveralls==1.3.0
       - sed -i -e "s@/app/@$PWD/@g" ./tests/coverage/.coverage # container paths -> host paths
       - cat ./tests/coverage/.coverage
-      - coveralls --nogit
+      - coveralls debug --nogit
