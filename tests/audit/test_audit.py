@@ -288,11 +288,25 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/DappBinWallet.json")
 
+    # Variable to be passed to the mocked function
+    # TODO find out if there is better way to pass a parameter to the mocked fucntion
+    __mocked__get_next_audit_request_called = False
+
     @timeout(80, timeout_exception=StopIteration)
     def test_restricting_local_max_assigned(self):
         """
-        Tests if the local maximum assigned request limitation is in effect
+        Tests if the limitation on the local maximum assigned requests is in effect
         """
+
+        # Mocking the QSPAuditNode.__get_next_audit_request. This function is supposed to be called if
+        # the limit is not reached.
+        _QSPAuditNode__get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
+
+        def mocked__get_next_audit_request():
+            # this should be unreachable when the limit is reached
+            self.__mocked__get_next_audit_request_called = True
+
+        # Make sure there anyAvailableRequest returns ready state
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_READY).transact(
                 {"from": self.__config.account})
@@ -307,14 +321,25 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__sendRequestMessage(self.__REQUEST_ID, buggy_contract, self.__PRICE, 100)
         )
 
-        self.evt_wait_loop(self.__submitReport_filter)
+        # Node should not ask for further request
+        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
 
+        # Make sure there is enough time for mining poll to call QSPAuditNode.__check_then_bid_audit_request
+        sleep(self.__config.is_mined_polling + 1)
+
+        self.evt_wait_loop(self.__submitReport_filter)
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__sendDoneMessage(self.__REQUEST_ID)
         )
 
+        # Restore QSPAuditNode.__get_next_audit_request actual implementation
+        self.__audit_node._QSPAuditNode__get_next_audit_request = _QSPAuditNode__get_next_audit_request
+
         # This is a critical line to be called as the node did all it audits
         self.evt_wait_loop(self.__getNextAuditRequest_filter)
+
+        # an extra call to get_next_audit is no accepted
+        self.assertFalse(self.__mocked__get_next_audit_request_called)
 
     def __requestAudit(self, contract_uri, price):
         """
