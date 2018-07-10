@@ -13,11 +13,6 @@ from tempfile import gettempdir
 from streaming import CloudWatchProvider
 from upload import S3Provider
 from time import sleep
-from utils.eth import (
-    WalletSessionManager,
-    DummyWalletSessionManager,
-)
-
 from web3 import (
     Web3,
     TestRPCProvider,
@@ -85,13 +80,6 @@ class ConfigUtils:
             return TestRPCProvider(**args)
 
         ConfigUtils.raise_err(True, "Unknown/Unsupported provider: {0}".format(provider))
-
-    def create_wallet_session_manager(self, eth_provider_name, client=None, account=None,
-                                      passwd=None):
-        if eth_provider_name in ("EthereumTesterProvider", "TestRPCProvider"):
-            return DummyWalletSessionManager()
-        else:
-            return WalletSessionManager(client, account, passwd)
 
     def create_web3_client(self, eth_provider, account, account_passwd, max_attempts=30):
         """

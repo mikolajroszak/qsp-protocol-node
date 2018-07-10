@@ -70,6 +70,10 @@
         {
           "sourceVolume": "tmp",
           "containerPath": "/tmp"
+        },
+        {
+          "sourceVolume": "geth-keystore",
+          "containerPath": "/app/keystore"
         }
       ]
     },
@@ -83,10 +87,6 @@
         {
           "sourceVolume": "geth",
           "containerPath": "/root/.ethereum/testnet/geth"
-        },
-        {
-          "sourceVolume": "geth-keystore",
-          "containerPath": "/root/.ethereum/testnet/keystore"
         },
         {
           "sourceVolume": "geth-config",

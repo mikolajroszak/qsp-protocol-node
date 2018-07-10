@@ -4,8 +4,6 @@ from config import ConfigUtils
 from config import ConfigurationException
 from upload import S3Provider
 from helpers.resource import resource_uri
-from utils.eth.wallet_session_manager import DummyWalletSessionManager
-from utils.eth.wallet_session_manager import WalletSessionManager
 from streaming import CloudWatchProvider
 from web3 import (
     Web3,
@@ -82,28 +80,6 @@ class TestConfigUtil(unittest.TestCase):
         except ConfigurationException:
             # expected
             pass
-
-    def test_create_wallet_session_manager_dummy(self):
-        """
-        Tests that testing ETH provider names create dummy wallet managers.
-        """
-        name = "EthereumTesterProvider"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, DummyWalletSessionManager),
-                        "The wallet manager is not a DummyWalletSessionManager")
-        name = "TestRPCProvider"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, DummyWalletSessionManager),
-                        "The wallet manager is not a DummyWalletSessionManager")
-
-    def test_create_wallet_session_manager_real(self):
-        """
-        Tests that anything but testing ETH provider creates a WalletSessionManager instance.
-        """
-        name = "anything_else"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, WalletSessionManager),
-                        "The wallet manager is not a WalletSessionManager")
 
     def test_configure_logging_no_stream(self):
         """

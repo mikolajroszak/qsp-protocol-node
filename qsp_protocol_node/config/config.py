@@ -62,7 +62,7 @@ class Config:
         self.__analyzers = []
         self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False, )
         self.__account = config_value(cfg, '/account/id', )
-        self.__account_ttl = config_value(cfg, '/account/ttl', 600, )
+        self.__account_keystore_file = config_value(cfg, '/account/keystore_file', None, )
         self.__default_gas = config_value(cfg, '/default_gas')
         self.__evt_db_path = config_value(cfg, '/evt_db_path', expanduser("~") + "/" + ".audit_node.db", )
         self.__submission_timeout_limit_blocks = config_value(cfg, '/submission_timeout_limit_blocks', 10, )
@@ -118,10 +118,6 @@ class Config:
         """
         return config_utils.create_analyzers(self.analyzers_config, self.logger)
 
-    def __create_wallet_session_manager(self, config_utils):
-        return config_utils.create_wallet_session_manager(self.eth_provider_name, self.web3_client, self.account,
-                                                          self.account_passwd)
-
     def __configure_logging(self, config_utils):
         """
         Configures and logging and creates a logger and logging streaming provider.
@@ -154,7 +150,6 @@ class Config:
         if self.has_audit_contract_abi:
             self.__audit_contract = self.__create_audit_contract(config_utils)
         self.__analyzers = self.__create_analyzers(config_utils)
-        self.__wallet_session_manager = self.__create_wallet_session_manager(config_utils)
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
@@ -180,8 +175,8 @@ class Config:
         self.__audit_contract_abi_uri = None
         self.__audit_contract = None
         self.__account = None
+        self.__account_keystore_file = None
         self.__account_passwd = None
-        self.__account_ttl = 600
         self.__cfg_dict = None
         self.__config_file_uri = None
         self.__default_gas = 0
@@ -206,7 +201,6 @@ class Config:
         self.__report_uploader_provider_args = None
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
-        self.__wallet_session_manager = None
 
     @property
     def eth_provider(self):
@@ -265,11 +259,11 @@ class Config:
         return self.__account
 
     @property
-    def account_ttl(self):
+    def account_keystore_file(self):
         """
-        Returns the account TTL.
+        Returns the account keystore file path.
         """
-        return self.__account_ttl
+        return self.__account_keystore_file
 
     @property
     def account_passwd(self):
@@ -319,10 +313,6 @@ class Config:
         Returns the analyzer object built from the given YAML configuration file.
         """
         return self.__analyzers
-
-    @property
-    def wallet_session_manager(self):
-        return self.__wallet_session_manager
 
     @property
     def env(self):
