@@ -157,6 +157,66 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node.stop()
         TestQSPAuditNode.__clean_up_pool_db(self.__config.evt_db_path)
 
+    @timeout(10, timeout_exception=StopIteration)
+    def test_on_audit_requested_exceptions(self):
+        # The following causes an exception in the auditing node, but it should be caught and should not propagate
+        self.__audit_node._QSPAuditNode__on_audit_requested({})
+        # This causes the price be too low
+        evt = {'args': {'requestId': 1, 'price': -100}}
+        self.__audit_node._QSPAuditNode__on_audit_requested(evt)
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_on_audit_assigned(self):
+        # The following causes an exception in the auditing node, but it should be caught and should not propagate
+        self.__audit_node._QSPAuditNode__on_audit_assigned({})
+        # This causes an auditor id mismatch
+        evt = {'args': {'auditor': 'this is not me', 'requestId': 1}}
+        self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
+        # test real auditor id with case mismatch and successful submit
+        buggy_contract = resource_uri("DAOBug.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__requestAudit(buggy_contract, self.__PRICE)
+        )
+        sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
+        while True:
+            row = get_first(sql3lite_worker.execute("select * from audit_evt where request_id = 1"))
+            if row != {}:
+                sql3lite_worker.execute("update audit_evt set fk_status = 'RQ' where request_id = 1")
+                break
+            else:
+                sleep(1)
+        auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
+        evt = {'args': {'auditor': auditor_id, 'requestId': 1}}
+        self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
+        row = get_first(sql3lite_worker.execute("select * from audit_evt where request_id = 1"))
+        self.assertEqual(row['fk_status'], 'AS')
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_on_report_submitted(self):
+        # The following causes an exception in the auditing node, but it should be caught and should not propagate
+        self.__audit_node._QSPAuditNode__on_report_submitted({})
+        # This causes an auditor id mismatch
+        evt = {'args': {'auditor': 'this is not me', 'requestId': 1}}
+        self.__audit_node._QSPAuditNode__on_report_submitted(evt)
+        # test real auditor id with case mismatch and successful submit
+        buggy_contract = resource_uri("DAOBug.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__requestAudit(buggy_contract, self.__PRICE)
+        )
+        sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
+        while True:
+            row = get_first(sql3lite_worker.execute("select * from audit_evt where request_id = 1"))
+            if row != {}:
+                sql3lite_worker.execute("update audit_evt set fk_status = 'AS' where request_id = 1")
+                break
+            else:
+                sleep(1)
+        auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
+        evt = {'args': {'auditor': auditor_id, 'requestId': 1}}
+        self.__audit_node._QSPAuditNode__on_report_submitted(evt)
+        row = get_first(sql3lite_worker.execute("select * from audit_evt where request_id = 1"))
+        self.assertEqual(row['fk_status'], 'DN')
+
     def __assert_audit_request(self, request_id, expected_audit_state, report_file_path):
         sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
 
@@ -169,7 +229,7 @@ class TestQSPAuditNode(unittest.TestCase):
             if row != {} and row['request_id'] == request_id:
                 break
             else:
-                sleep(5)
+                sleep(1)
         self.assertEqual(row['evt_name'], "LogAuditAssigned")
 
         # FIXME: add range validation
@@ -192,30 +252,29 @@ class TestQSPAuditNode(unittest.TestCase):
         actual_json = load_json(audit_file)
         expected_json = load_json(fetch_file(resource_uri(report_file_path)))
         diff = DeepDiff(actual_json,
-            expected_json,
-            exclude_paths={
-                # path is different depending on whether running inside Docker
-                "root['contract_uri']",
-                "root['timestamp']",
-                "root['start_time']",
-                "root['end_time']",
-                "root['analyzers_reports'][0]['coverages'][0]['file']",
-                "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
-                "root['analyzers_reports'][0]['start_time']",
-                "root['analyzers_reports'][0]['end_time']",
-                "root['analyzers_reports'][0]['hash']",
-                "root['analyzers_reports'][1]['analyzer']['command']",
-                "root['analyzers_reports'][1]['coverages'][0]['file']",
-                "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
-                "root['analyzers_reports'][1]['start_time']",
-                "root['analyzers_reports'][1]['end_time']",
-                "root['analyzers_reports'][1]['hash']",
-            }
-        )
+                        expected_json,
+                        exclude_paths={
+                            "root['contract_uri']",  # path is different depending on whether running inside Docker
+                            "root['timestamp']",
+                            "root['start_time']",
+                            "root['end_time']",
+                            "root['analyzers_reports'][0]['coverages'][0]['file']",
+                            "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
+                            "root['analyzers_reports'][0]['start_time']",
+                            "root['analyzers_reports'][0]['end_time']",
+                            "root['analyzers_reports'][0]['hash']",
+                            "root['analyzers_reports'][1]['analyzer']['command']",
+                            "root['analyzers_reports'][1]['coverages'][0]['file']",
+                            "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
+                            "root['analyzers_reports'][1]['start_time']",
+                            "root['analyzers_reports'][1]['end_time']",
+                            "root['analyzers_reports'][1]['hash']",
+                        }
+                        )
         pprint(diff)
         self.assertEqual(diff, {})
         self.assertEqual(ntpath.basename(actual_json['contract_uri']),
-            ntpath.basename(expected_json['contract_uri']))
+                         ntpath.basename(expected_json['contract_uri']))
 
     def evt_wait_loop(self, current_filter):
         wait = True
