@@ -35,6 +35,7 @@ class Wrapper:
         Wrapper.__check_for_executable_script(run_script)
 
         self.__run_script = run_script
+        # print("RUN WRAPPER: " + str(run_script))
         self.__logger = logger
 
     @property
@@ -87,10 +88,10 @@ class Wrapper:
         except Exception as inner_error:
             # This should never occur; the wrapper should never
             # throw an exception, i.e., if an error occurs it should
-            # be wrapper according to the integration schema.
+            # be wrapped according to the integration schema.
 
             # But, for whatever reason an error does occur (e.g.,
-            # subprocess failes creating a new analyzer thread),
+            # subprocess fails creating a new analyzer thread),
             # then produce a minimal report with whatever information
             # is known at this point.
             error = True
