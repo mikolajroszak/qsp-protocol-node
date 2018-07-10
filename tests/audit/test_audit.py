@@ -5,9 +5,7 @@ their flow within the QSP audit node
 import contextlib
 import os
 import subprocess
-import tempfile
 import unittest
-import yaml
 import ntpath
 
 from timeout_decorator import timeout
@@ -28,8 +26,6 @@ from utils.db import get_first
 from deepdiff import DeepDiff
 from pprint import pprint
 
-import json
-
 
 class TestQSPAuditNode(unittest.TestCase):
     __AUDIT_STATE_SUCCESS = 4
@@ -44,7 +40,8 @@ class TestQSPAuditNode(unittest.TestCase):
             os.remove(evt_db_path)
 
     @staticmethod
-    def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name, constructor_from):
+    def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
+                                       constructor_from):
         """
         Loads the QuantstampAuditMock contract from source code returning the (address, contract) pair.
         """
@@ -74,7 +71,8 @@ class TestQSPAuditNode(unittest.TestCase):
     def fetch_config(cls):
         # create config from file, the contract is not provided and will be injected separately
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file("local", config_file_uri, validate_contract_settings=False)
+        config = ConfigFactory.create_from_file("local", config_file_uri,
+                                                validate_contract_settings=False)
         # compile and inject contract
         contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
         contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
@@ -122,7 +120,8 @@ class TestQSPAuditNode(unittest.TestCase):
             if once_process.returncode == 1:
                 # An error occurred
                 raise Exception(
-                    "Error invoking once (return value is not 0). Output is {0}".format(once_process.stdout))
+                    "Error invoking once (return value is not 0). Output is {0}".format(
+                        once_process.stdout))
 
             i += 1
 
@@ -181,7 +180,8 @@ class TestQSPAuditNode(unittest.TestCase):
         while True:
             row = get_first(sql3lite_worker.execute("select * from audit_evt where request_id = 1"))
             if row != {}:
-                sql3lite_worker.execute("update audit_evt set fk_status = 'RQ' where request_id = 1")
+                sql3lite_worker.execute(
+                    "update audit_evt set fk_status = 'RQ' where request_id = 1")
                 break
             else:
                 sleep(1)
@@ -207,7 +207,8 @@ class TestQSPAuditNode(unittest.TestCase):
         while True:
             row = get_first(sql3lite_worker.execute("select * from audit_evt where request_id = 1"))
             if row != {}:
-                sql3lite_worker.execute("update audit_evt set fk_status = 'AS' where request_id = 1")
+                sql3lite_worker.execute(
+                    "update audit_evt set fk_status = 'AS' where request_id = 1")
                 break
             else:
                 sleep(1)
@@ -225,7 +226,8 @@ class TestQSPAuditNode(unittest.TestCase):
         row = None
 
         while True:
-            row = get_first(sql3lite_worker.execute("select * from audit_evt where fk_status = 'DN'"))
+            row = get_first(
+                sql3lite_worker.execute("select * from audit_evt where fk_status = 'DN'"))
             if row != {} and row['request_id'] == request_id:
                 break
             else:
@@ -254,7 +256,8 @@ class TestQSPAuditNode(unittest.TestCase):
         diff = DeepDiff(actual_json,
                         expected_json,
                         exclude_paths={
-                            "root['contract_uri']",  # path is different depending on whether running inside Docker
+                            "root['contract_uri']",
+                        # path is different depending on whether running inside Docker
                             "root['timestamp']",
                             "root['start_time']",
                             "root['end_time']",
@@ -305,10 +308,14 @@ class TestQSPAuditNode(unittest.TestCase):
         self.evt_wait_loop(self.__submitReport_filter)
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID, self.__config.account, 0, "",
-                                                                        "", 0).transact({"from": self.__config.account})
+            self.__config.audit_contract.functions.emitLogAuditFinished(self.__REQUEST_ID,
+                                                                        self.__config.account, 0,
+                                                                        "",
+                                                                        "", 0).transact(
+                {"from": self.__config.account})
         )
-        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS, "reports/DAOBug.json")
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS,
+                                    "reports/DAOBug.json")
 
     @timeout(80, timeout_exception=StopIteration)
     def test_buggy_contract_audit_request(self):
@@ -335,10 +342,12 @@ class TestQSPAuditNode(unittest.TestCase):
                                                                         0,
                                                                         "",
                                                                         "",
-                                                                        0).transact({"from": self.__config.account})
+                                                                        0).transact(
+                {"from": self.__config.account})
         )
 
-        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/BasicToken.json")
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
+                                    "reports/BasicToken.json")
 
     @timeout(80, timeout_exception=StopIteration)
     def test_target_contract_in_non_raw_text_file(self):
@@ -367,10 +376,12 @@ class TestQSPAuditNode(unittest.TestCase):
                                                                         0,
                                                                         "",
                                                                         "",
-                                                                        0).transact({"from": self.__config.account})
+                                                                        0).transact(
+                {"from": self.__config.account})
         )
 
-        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/DappBinWallet.json")
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
+                                    "reports/DappBinWallet.json")
 
     def __requestAudit(self, contract_uri, price):
         """
@@ -389,6 +400,29 @@ class TestQSPAuditNode(unittest.TestCase):
             transaction_fee,
             timestamp
         ).transact({"from": self.__config.account})
+
+    @timeout(5, timeout_exception=StopIteration)
+    def test_run_audit_evt_thread(self):
+        """
+        Tests that the run_evt_thread dies upon an internal exception
+        """
+        # An exception should be re-thrown inside the thread
+        thread = self.__audit_node._QSPAuditNode__run_audit_evt_thread(None, None, None)
+        thread.join()
+        self.assertFalse(thread.is_alive(), "Thread was supposed be terminated by an exception")
+
+    def test_run_multiple_instances_expecting_fail(self):
+        """
+        Tests that a second instance of the node cannot be started
+        """
+        thrown = True
+        try:
+            self.__audit_node.run()
+            thrown = False
+        except Exception:
+            # the exception is too generic to use self.fail
+            pass
+        self.assertTrue(thrown, "No exception was thrown when starting multiple instances")
 
 
 if __name__ == '__main__':

@@ -71,11 +71,16 @@ class QSPAuditNode:
 
     def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler):
         def exec():
-            while self.__exec:
-                for evt in evt_filter.get_new_entries():
-                    evt_handler(evt)
+            try:
+                while self.__exec:
+                    for evt in evt_filter.get_new_entries():
+                        evt_handler(evt)
 
-                sleep(self.__config.evt_polling)
+                    sleep(self.__config.evt_polling)
+            except Exception as error:
+                self.__logger.exception(
+                    "Error in the audit event thread {0}: {1}".format(evt_name, str(error)))
+                raise error
 
         evt_thread = Thread(target=exec, name="{0} thread".format(evt_name))
         evt_thread.start()
@@ -235,6 +240,7 @@ class QSPAuditNode:
                 "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
+            self.__config.event_pool_manager.set_evt_to_error(evt)
 
     def __run_perform_audit_thread(self):
         def process_audit_request(evt):
@@ -384,15 +390,18 @@ class QSPAuditNode:
                     "Unexpected error when monitoring timeout: {0}".format(error))
 
         def exec():
-            while self.__exec:
-                # Checks for a potential timeouts
-                block = self.__config.web3_client.eth.blockNumber
-                self.__config.event_pool_manager.process_submission_events(
-                    monitor_submission_timeout,
-                    block,
-                )
+            try:
+                while self.__exec:
+                    # Checks for a potential timeouts
+                    block = self.__config.web3_client.eth.blockNumber
+                    self.__config.event_pool_manager.process_submission_events(
+                        monitor_submission_timeout,
+                        block,
+                    )
 
-                sleep(self.__config.evt_polling)
+                    sleep(self.__config.evt_polling)
+            except Exception as error:
+                self.__logger.exception("Error in the monitor thread: {0}".format(str(error)))
 
         monitor_thread = Thread(target=exec, name="monitor thread")
         self.__internal_threads.append(monitor_thread)
