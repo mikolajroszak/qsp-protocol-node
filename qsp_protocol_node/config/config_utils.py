@@ -131,7 +131,7 @@ class ConfigUtils:
             try:
                 with open(keystore_file) as keyfile:
                     encrypted_key = keyfile.read()
-                    new_private_key = config.web3_client.eth.account.decrypt(encrypted_key, account_passwd)
+                    new_private_key = web3_client.eth.account.decrypt(encrypted_key, account_passwd)
             except Exception as exception:
                 raise ConfigurationException("Error reading or decrypting the keystore file '{0}': {1}".format(
                     keystore_file,

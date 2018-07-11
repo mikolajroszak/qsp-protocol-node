@@ -4,6 +4,7 @@ from config import ConfigUtils
 from config import ConfigurationException
 from upload import S3Provider
 from helpers.resource import resource_uri
+import utils.io as io_utils
 from streaming import CloudWatchProvider
 from web3 import (
     Web3,
@@ -169,6 +170,27 @@ class TestConfigUtil(unittest.TestCase):
             client, new_account, new_private_key = self.config_utils.create_web3_client(None, None, None, None, 2)
             self.fail("No exception was thrown even though the eth provider does not exist and web3 cannot connect")
         except ConfigurationException:
+            # Expected
+            pass
+        
+    def test_create_web3_client_private_key(self):
+        """
+        Test that private key is instantiated correctly when creating web3 client
+        """
+        eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
+        account = "Account"
+        private_key = "0xc2fd94c5216e754d3eb8f4f34017120fef318c50780ce408b54db575b120229f"
+        passphrase = "abc123ropsten"
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, passphrase,
+            io_utils.fetch_file(resource_uri("mykey.json")), 2)
+        self.assertEqual(private_key, Web3.toHex(new_private_key), "Private key was not decrypted correctly")
+        # None ETH provider will make this fail
+        try:
+            client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, "incorrect-passphrase", 
+                io_utils.fetch_file(resource_uri("mykey.json")), 2)
+            self.fail("No exception was thrown even though the private key isn't correct")
+        except ConfigurationException as e:
+            self.assertTrue("MAC mismatch" in str(e), "Expected the MAC mismatch exception")
             # Expected
             pass
 
