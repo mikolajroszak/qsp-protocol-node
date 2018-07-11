@@ -34,8 +34,8 @@ class QSPAuditNode:
     # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
     __AUDIT_STATE_ERROR = 5
 
-    # must be in sync with TODO update the link after the pr approval
-    # https://github.com/quantstamp/qsp-protocol-audit-contract/pull/26/commits/dc73420869dc2a98fa64df6b1a80494cc090ce48#diff-e1347329d2f063a381f17b599eb35520R84
+    # must be in sync with
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L80
     __AVAILABLE_AUDIT__STATE_READY = 1
 
     __PROTOCOL_VERSION = '1.0'
@@ -177,8 +177,7 @@ class QSPAuditNode:
         Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
-            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='pending')
-            # TODO make constant once the smart contract is fixed
+            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='latest')
             if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
                 self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
