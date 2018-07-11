@@ -72,13 +72,13 @@ Initialization entails changing your `~/.bash_profile` (if not already done so):
 ## Run in regular mode
 
 1. One-time only: create and configure a new account:
-    1. Create a new account (e.g., using MyEtherWallet). Record the passphrase, the new account Ethereum address, and store the keystore file to an accessible location
+    1. Create a new account (e.g., using MyEtherWallet). Record the passphrase, the new account Ethereum address, and store the keystore file in an accessible location
     2. In `config.yaml/local/account/id`, specify the Ethereum address and in `config.yaml/local/account/keystore_file`, specify the path to the keystore file. Example:
-    ```
-    account:
+        ```
+        account:
           id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
           keystore_file: !!str "./keystore/mykey.json"
-    ```
+        ```
     3. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account
     4. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands) 
     5. Transfer some Ether to the account (for Ropsten, use a Ropsten faucet)
