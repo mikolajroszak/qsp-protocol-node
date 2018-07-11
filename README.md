@@ -4,6 +4,7 @@
 
 Implements the QSP audit node in the Quantstamp network.
 
+
 ## Development setup
 
 All instructions must be run from the project's root folder.
