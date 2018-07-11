@@ -23,7 +23,6 @@ from utils.metrics import MetricCollector
 
 
 class QSPAuditNode:
-    __EVT_AUDIT_REQUESTED = "LogAuditRequested"
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
 
@@ -98,7 +97,7 @@ class QSPAuditNode:
         def exec():
             current_block = 0
             while self.__exec:
-                sleep(self.__config.is_mined_polling)
+                sleep(self.__config.block_mined_polling)
                 if current_block < self.__config.web3_client.eth.blockNumber:
                     current_block = self.__config.web3_client.eth.blockNumber
                     self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
@@ -137,12 +136,6 @@ class QSPAuditNode:
         self.__internal_threads.append(self.__run_block_mined_thread(
             "check_available_requests",
             self.__check_then_request_audit_request
-        ))
-        self.__internal_threads.append(self.__run_audit_evt_thread(
-            QSPAuditNode.__EVT_AUDIT_REQUESTED,
-            self.__config.audit_contract.events.LogAuditRequested.createFilter(
-                fromBlock=start_block),
-            self.__on_audit_requested,
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_AUDIT_ASSIGNED,
@@ -194,37 +187,6 @@ class QSPAuditNode:
         except Exception as error:
             self.__logger.exception(
                 "Error when calling to get a review {0}".format(str(error))
-            )
-
-    # TODO decide on whether this function should be kept. The function currently does not initiate any
-    # action responding its appropriate event other than logging the event. The log might be informative for the
-    # the node user, but its management might be a hassle in terms of event-thread management.
-    def __on_audit_requested(self, evt):
-        """
-        Records an audit upon an audit request event.
-        """
-        request_id = None
-        try:
-            price = evt['args']['price']
-            request_id = str(evt['args']['requestId'])
-            if (price >= self.__config.min_price):
-                self.__logger.debug("A new audit request is showed up within a price range: {0}.)".format(
-                    str(evt)), requestId=request_id)
-            else:
-                self.__logger.debug(
-                    "Not enough incentive for processing the new audit request: {0}. ".format(
-                        str(evt)
-                    ),
-                    requestId=request_id,
-                )
-        except KeyError as error:
-            self.__logger.exception(
-                "KeyError when processing audit request event: {0}".format(str(error))
-            )
-        except Exception as error:
-            self.__logger.exception(
-                "Error when processing audit request event {0}: {1}".format(str(evt), str(error)),
-                requestId=request_id,
             )
 
     def __on_audit_assigned(self, evt):

@@ -180,14 +180,6 @@ class TestQSPAuditNode(unittest.TestCase):
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
 
-    @timeout(10, timeout_exception=StopIteration)
-    def test_on_audit_requested_exceptions(self):
-        # The following causes an exception in the auditing node, but it should be caught and should not propagate
-        self.__audit_node._QSPAuditNode__on_audit_requested({})
-        # This causes the price be too low
-        evt = {'args': {'requestId': 1, 'price': -100}}
-        self.__audit_node._QSPAuditNode__on_audit_requested(evt)
-
     @timeout(20, timeout_exception=StopIteration)
     def test_on_audit_assigned(self):
         # The following causes an exception in the auditing node, but it should be caught and should not propagate

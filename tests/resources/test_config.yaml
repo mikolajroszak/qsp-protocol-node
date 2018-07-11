@@ -6,7 +6,7 @@ local:
   min_price: !!int 0
   gas_price_wei: !!int 0
   evt_polling_sec: !!int 5
-  is_mined_polling_sec: !!int 5
+  block_mined_polling_interval_sec: !!int 5
   analyzers:
     - oyente:
         args: "-ce"
