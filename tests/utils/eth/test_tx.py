@@ -2,30 +2,34 @@ import unittest
 
 from utils.eth.tx import mk_args, send_signed_transaction
 
+
 class AccountMock:
     def __init__(self):
         self.signed_tx = None
         self.signed_private_key = None
-        
+
     def signTransaction(self, tx, private_key):
         self.signed_private_key = private_key
         tx.sign()
         return tx
 
+
 class EthMock:
     def __init__(self):
         self.account = AccountMock()
         self.transaction_sent = None
-        
+
     def getTransactionCount(self, account_number):
         return 123
-    
+
     def sendRawTransaction(self, tx):
         return tx
+
 
 class Web3ClientMock:
     def __init__(self):
         self.eth = EthMock()
+
 
 class SimpleTransactionMock:
     def __init__(self):
@@ -40,17 +44,18 @@ class SimpleTransactionMock:
     def transact(self, args):
         self.transact_args = args
         return self
-    
+
     @property
     def rawTransaction(self):
         return self
-    
+
     def sign(self):
         self.__is_signed = True
-    
+
     @property
     def is_signed(self):
         return self.__is_signed
+
 
 class SimpleConfigMock:
     def __init__(self, gas_price_wei, default_gas, private_key=None):
@@ -71,7 +76,7 @@ class SimpleConfigMock:
     @property
     def account(self):
         return self.__account
-    
+
     @property
     def account_private_key(self):
         return self.__account_private_key
@@ -79,6 +84,7 @@ class SimpleConfigMock:
     @property
     def web3_client(self):
         return self.__web3_client
+
 
 class TestFile(unittest.TestCase):
 
@@ -141,7 +147,7 @@ class TestFile(unittest.TestCase):
         except ValueError:
             # Expected
             pass
-        
+
     def test_send_signed_transaction_local_signing(self):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
@@ -150,7 +156,7 @@ class TestFile(unittest.TestCase):
         private_key = "abc"
         config = SimpleConfigMock(4000000000, 0, private_key)
         result = send_signed_transaction(config, transaction)
-        
+
         self.assertTrue(result.is_signed)
         self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
         self.assertEqual(123, result.build_args['nonce'])
@@ -164,7 +170,7 @@ class TestFile(unittest.TestCase):
         private_key = "abc"
         config = SimpleConfigMock(4000000000, 0)
         result = send_signed_transaction(config, transaction)
-        
+
         self.assertFalse(result.is_signed)
         self.assertIsNone(config.web3_client.eth.account.signed_private_key)
         self.assertIsNone(result.build_args)

@@ -273,7 +273,7 @@ class Config:
         Returns the account associated password.
         """
         return self.__account_passwd
-    
+
     @property
     def account_keystore_file(self):
         """

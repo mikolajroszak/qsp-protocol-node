@@ -137,7 +137,7 @@ class ConfigUtils:
                     keystore_file,
                     exception)
                 )
-                
+
         return web3_client, new_account, new_private_key
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,

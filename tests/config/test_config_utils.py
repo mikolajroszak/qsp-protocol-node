@@ -172,7 +172,7 @@ class TestConfigUtil(unittest.TestCase):
         except ConfigurationException:
             # Expected
             pass
-        
+
     def test_create_web3_client_private_key(self):
         """
         Test that private key is instantiated correctly when creating web3 client
@@ -186,7 +186,7 @@ class TestConfigUtil(unittest.TestCase):
         self.assertEqual(private_key, Web3.toHex(new_private_key), "Private key was not decrypted correctly")
         # None ETH provider will make this fail
         try:
-            client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, "incorrect-passphrase", 
+            client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, "incorrect-passphrase",
                 io_utils.fetch_file(resource_uri("mykey.json")), 2)
             self.fail("No exception was thrown even though the private key isn't correct")
         except ConfigurationException as e:
