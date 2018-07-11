@@ -71,23 +71,25 @@ Initialization entails changing your `~/.bash_profile` (if not already done so):
 
 ## Run in regular mode
 
-1. acquire a passphrase for the Ropsten test account (message the channel `#dev-protocol`) and set the environment variable `ETH_PASSPHRASE`
+1. One-time only: create and configure a new account:
+    1. Create a new account (e.g., using MyEtherWallet). Record the passphrase, the new account Ethereum address, and store the keystore file to an accessible location
+    2. In `config.yaml/local/account/id`, specify the Ethereum address and in `config.yaml/local/account/keystore_file`, specify the path to the keystore file. Example:
+    ```
+    account:
+          id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
+          keystore_file: !!str "./keystore/mykey.json"
+    ```
+    3. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account
+    4. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands) 
+    5. Transfer some Ether to the account (for Ropsten, use a Ropsten faucet)
+
 2. `make run`
 
-The default account is whitelisted, but double-check that it has enough Ropsten ether. By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. A task is created to make local test environment more isolated.
-
-### Run with a new account address
-
-1. `geth attach` to the Ropsten node specified in `config.yaml` and do `personal.newAccount()`. Come up with a passphrase and record the new address.
-2. In `config.yaml/local/account/id`, specify the Ethereum address
-3. Set the environment variable `ETH_PASSPHRASE` to the passphrase you specified
-4. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands) 
-5. Transfer some Ether to the account using a Ropsten faucet
-6. Execute `make run`
+By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. A task is created to make local test environment more isolated.
 
 ## Run in container mode
 
-Steps are similar to the above (e.g., acquiring the passphrase) but instead of `make run`, do `make run-docker`.
+Steps are similar to the above (e.g., configuring the account) but instead of `make run`, do `make run-docker`.
 
 ## Run tests in container mode
 
