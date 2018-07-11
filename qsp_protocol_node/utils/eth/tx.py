@@ -15,15 +15,10 @@ def mk_args(config):
 
 def send_signed_transaction(config, transaction):
     args = mk_args(config)
-    private_key = None
-    if config.account_keystore_file is None: # using the default account
+    if config.account_private_key is None: # no local signing (in case of tests)
         return transaction.transact(args)
-    else:        
+    else:
         args['nonce'] = config.web3_client.eth.getTransactionCount(config.account)
-        tx = transaction.buildTransaction(args)    
-        with open(config.account_keystore_file) as keyfile:
-            encrypted_key = keyfile.read()
-            private_key = config.web3_client.eth.account.decrypt(encrypted_key, config.account_passwd)
-            
-        signed_tx = config.web3_client.eth.account.signTransaction(tx, private_key=private_key)
+        tx = transaction.buildTransaction(args)            
+        signed_tx = config.web3_client.eth.account.signTransaction(tx, private_key=config.account_private_key)
         return config.web3_client.eth.sendRawTransaction(signed_tx.rawTransaction)

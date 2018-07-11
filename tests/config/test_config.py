@@ -87,8 +87,8 @@ class ConfigUtilsMock:
         arguments_to_check = ['web3_client', 'audit_contract_abi_uri', 'audit_contract_address']
         return self.call('create_audit_contract', arguments_to_check, locals())
 
-    def create_web3_client(self, eth_provider, account, account_passwd, max_attempts=30):
-        arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'max_attempts']
+    def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
+        arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'keystore_file', 'max_attempts']
         return self.call('create_web3_client', arguments_to_check, locals())
 
 
@@ -264,15 +264,17 @@ class TestConfig(unittest.TestCase):
         eth_provider = "eth_provider"
         account = "account"
         account_passwd = "account password"
+        account_keystore_file = "./mykey.json"
         created_web3_provider = "created provider"
         config = ConfigFactory.create_empty_config()
         config._Config__eth_provider = eth_provider
         config._Config__account = account
         config._Config__account_passwd = account_passwd
+        config._Config__account_keystore_file = account_keystore_file
         utils = ConfigUtilsMock()
         utils.expect('create_web3_client',
                      {'eth_provider': eth_provider, 'account': account, 'account_passwd': account_passwd,
-                      'max_attempts': 30},
+                      'keystore_file': account_keystore_file, 'max_attempts': 30},
                      created_web3_provider)
         result = config._Config__create_web3_client(utils)
         self.assertEqual(created_web3_provider, result)
@@ -292,6 +294,8 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.report_uploader)
         self.assertIsNone(config.account)
         self.assertIsNone(config.account_passwd)
+        self.assertIsNone(config.account_keystore_file)
+        self.assertIsNone(config.account_private_key)
         self.assertIsNone(config.audit_contract_abi_uri)
         self.assertFalse(config.has_audit_contract_abi)
         self.assertIsNone(config.web3_client)
@@ -328,6 +332,8 @@ class TestConfig(unittest.TestCase):
         account = "account"
         new_account = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         account_passwd = "account password"
+        account_keystore_file = "./mykey.json"
+        new_private_key = "abcdefg"
         analyzers_config = "config list"
         created_analyzers = "analyzers"
         report_uploader_provider_name = "uploader provider name"
@@ -345,6 +351,7 @@ class TestConfig(unittest.TestCase):
         config._Config__eth_provider_args = eth_provider_args
         config._Config__account = account
         config._Config__account_passwd = account_passwd
+        config._Config__account_keystore_file = account_keystore_file
         config._Config__analyzers_config = analyzers_config
         config._Config__evt_db_path = "/tmp/evts.test"
         config._Config__report_uploader_provider_name = report_uploader_provider_name
@@ -364,8 +371,8 @@ class TestConfig(unittest.TestCase):
                      created_eth_provider)
         utils.expect('create_web3_client',
                      {'eth_provider': created_eth_provider, 'account': account, 'account_passwd': account_passwd,
-                      'max_attempts': 30},
-                     (created_web3_client, new_account))
+                      'keystore_file': account_keystore_file, 'max_attempts': 30},
+                     (created_web3_client, new_account, new_private_key))
         utils.expect('create_audit_contract',
                      {'web3_client': created_web3_client, 'audit_contract_abi_uri': audit_contract_abi_uri,
                       'audit_contract_address': audit_contract_address},

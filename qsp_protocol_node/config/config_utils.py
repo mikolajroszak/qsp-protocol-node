@@ -81,7 +81,7 @@ class ConfigUtils:
 
         ConfigUtils.raise_err(True, "Unknown/Unsupported provider: {0}".format(provider))
 
-    def create_web3_client(self, eth_provider, account, account_passwd, max_attempts=30):
+    def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
         """
         Creates a Web3 client from the already set Ethereum provider, and creates and account.
         """
@@ -93,6 +93,7 @@ class ConfigUtils:
         # 3) Otherwise, keep trying at most max_attempts, waiting 10s per each iteration
         web3_client = Web3(eth_provider)
         new_account = account
+        new_private_key = None
         connected = False
         while attempts < max_attempts and not connected:
             try:
@@ -120,14 +121,24 @@ class ConfigUtils:
         # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
         if account is None:
             if len(web3_client.eth.accounts) == 0:
-                new_account = web3_client.personal.newAccount(account_passwd)
-                self.__logger.debug("No account was provided, using a newly created one",
-                                    account=new_account)
+                raise ConfigurationException("No account was provided. Please provide an account")
             else:
                 new_account = web3_client.eth.accounts[0]
                 self.__logger.debug("No account was provided, using the account at index [0]",
                                     account=new_account)
-        return web3_client, new_account
+
+        if not (keystore_file is None):
+            try:
+                with open(keystore_file) as keyfile:
+                    encrypted_key = keyfile.read()
+                    new_private_key = config.web3_client.eth.account.decrypt(encrypted_key, account_passwd)
+            except Exception as exception:
+                raise ConfigurationException("Error reading or decrypting the keystore file '{0}': {1}".format(
+                    keystore_file,
+                    exception)
+                )
+                
+        return web3_client, new_account, new_private_key
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
                           logging_streaming_provider_args):
@@ -165,6 +176,18 @@ class ConfigUtils:
                                   )
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
+
+    def decrypt_private_key(self, web3_client, keystore_file):
+        """
+        Decrypts a private key
+        """
+        abi_file = io_utils.fetch_file(audit_contract_abi_uri)
+        abi_json = io_utils.load_json(abi_file)
+
+        return web3_client.eth.contract(
+            address=audit_contract_address,
+            abi=abi_json,
+        )
 
     def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
         """

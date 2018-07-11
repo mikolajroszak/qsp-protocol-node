@@ -158,15 +158,15 @@ class TestConfigUtil(unittest.TestCase):
         """
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
         account = "Account"
-        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertEqual(account, new_account, "Account was recreated even though it was not None")
-        client, new_account = self.config_utils.create_web3_client(eth_provider, None, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, None, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertIsNotNone(new_account, "The account was none and was not created")
         # None ETH provider will make this fail
         try:
-            client, new_account = self.config_utils.create_web3_client(None, None, None, 2)
+            client, new_account, new_private_key = self.config_utils.create_web3_client(None, None, None, None, 2)
             self.fail("No exception was thrown even though the eth provider does not exist and web3 cannot connect")
         except ConfigurationException:
             # Expected
@@ -185,7 +185,7 @@ class TestConfigUtil(unittest.TestCase):
     def test_create_contract(self):
         account = "Account"
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
-        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
         abi_uri = "file://tests/resources/QuantstampAudit.abi.json"
         address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         self.config_utils.create_audit_contract(client, abi_uri, address)
