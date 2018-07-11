@@ -177,18 +177,6 @@ class ConfigUtils:
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
 
-    def decrypt_private_key(self, web3_client, keystore_file):
-        """
-        Decrypts a private key
-        """
-        abi_file = io_utils.fetch_file(audit_contract_abi_uri)
-        abi_json = io_utils.load_json(abi_file)
-
-        return web3_client.eth.contract(
-            address=audit_contract_address,
-            abi=abi_json,
-        )
-
     def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
         """
         Creates the audit contract either from ABI.
