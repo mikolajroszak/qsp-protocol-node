@@ -16,7 +16,7 @@ from utils.io import (
     digest,
     digest_file,
 )
-from utils.eth import mk_args
+from utils.eth import send_signed_transaction
 
 from threading import Thread
 from utils.metrics import MetricCollector
@@ -436,7 +436,6 @@ class QSPAuditNode:
         self.__internal_threads = []
 
         # Close resources
-        self.__config.wallet_session_manager.lock()
         self.__config.event_pool_manager.close()
 
     def audit(self, requestor, uri, request_id):
@@ -579,19 +578,15 @@ class QSPAuditNode:
         """
         Attempts to get a request from the audit request queue.
         """
-        tx_args = mk_args(self.__config)
-        self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
-        return self.__config.audit_contract.functions.getNextAuditRequest().transact(tx_args)
+        return send_signed_transaction(self.__config, self.__config.audit_contract.functions.getNextAuditRequest())
 
     def __submit_report(self, request_id, audit_state, audit_uri, audit_hash):
         """
         Submits the audit report to the entire QSP network.
         """
-        tx_args = mk_args(self.__config)
-        self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
-        return self.__config.audit_contract.functions.submitReport(
+        return send_signed_transaction(self.__config, self.__config.audit_contract.functions.submitReport(
             request_id,
             audit_state,
             audit_uri,
             audit_hash
-        ).transact(tx_args)
+        ))
