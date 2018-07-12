@@ -85,10 +85,6 @@ class EventPoolManager:
     def sql3lite_worker(self):
         return self.__sqlworker
 
-    def get_pending_requests_count(self):
-        row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_count_of_pending_events'))
-        return EventPoolManager.__decode(row).get('pending_count')
-
     def get_latest_block_number(self):
         row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_latest_block_number'))
         return EventPoolManager.__decode(row).get('block_nbr')
