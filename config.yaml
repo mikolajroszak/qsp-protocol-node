@@ -9,7 +9,7 @@ local:
   min_price: !!int 0
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
-  is_mined_polling_sec: !!int 1
+  block_mined_polling_interval_sec: !!int 1
   analyzers:
     - oyente:
         args: "-ce"
@@ -51,7 +51,7 @@ dev:
   min_price: !!int 0
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
-  is_mined_polling_sec: !!int 1
+  block_mined_polling_interval_sec: !!int 1
   analyzers:
     - oyente: 
         args: "-ce"
@@ -95,7 +95,7 @@ prod:
   min_price: !!int 0
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
-  is_mined_polling_sec: !!int 1
+  block_mined_polling_interval_sec: !!int 1
   analyzers:
     - oyente:
         args: "-ce"

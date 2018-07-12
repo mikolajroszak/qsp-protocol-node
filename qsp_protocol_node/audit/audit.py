@@ -23,8 +23,6 @@ from utils.metrics import MetricCollector
 
 
 class QSPAuditNode:
-
-    __EVT_AUDIT_REQUESTED = "LogAuditRequested"
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
 
@@ -36,8 +34,8 @@ class QSPAuditNode:
     # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
     __AUDIT_STATE_ERROR = 5
 
-    # must be in sync with TODO update the link after the pr approval
-    # https://github.com/quantstamp/qsp-protocol-audit-contract/pull/26/commits/dc73420869dc2a98fa64df6b1a80494cc090ce48#diff-e1347329d2f063a381f17b599eb35520R84
+    # must be in sync with
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L80
     __AVAILABLE_AUDIT__STATE_READY = 1
 
     __PROTOCOL_VERSION = '1.0'
@@ -76,11 +74,16 @@ class QSPAuditNode:
 
     def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler):
         def exec():
-            while self.__exec:
-                for evt in evt_filter.get_new_entries():
-                    evt_handler(evt)
+            try:
+                while self.__exec:
+                    for evt in evt_filter.get_new_entries():
+                        evt_handler(evt)
 
-                sleep(self.__config.evt_polling)
+                    sleep(self.__config.evt_polling)
+            except Exception as error:
+                self.__logger.exception(
+                    "Error in the audit event thread {0}: {1}".format(evt_name, str(error)))
+                raise error
 
         evt_thread = Thread(target=exec, name="{0} thread".format(evt_name))
         evt_thread.start()
@@ -94,7 +97,7 @@ class QSPAuditNode:
         def exec():
             current_block = 0
             while self.__exec:
-                sleep(self.__config.is_mined_polling)
+                sleep(self.__config.block_mined_polling)
                 if current_block < self.__config.web3_client.eth.blockNumber:
                     current_block = self.__config.web3_client.eth.blockNumber
                     self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
@@ -118,7 +121,7 @@ class QSPAuditNode:
 
         self.__exec = True
 
-        if (self.__config.metric_collection_is_enabled):
+        if self.__config.metric_collection_is_enabled:
             self.__metric_collector = MetricCollector(self.__config)
             self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
@@ -132,21 +135,18 @@ class QSPAuditNode:
 
         self.__internal_threads.append(self.__run_block_mined_thread(
             "check_available_requests",
-            self.__check_then_bid_audit_request
-        ))
-        self.__internal_threads.append(self.__run_audit_evt_thread(
-            QSPAuditNode.__EVT_AUDIT_REQUESTED,
-            self.__config.audit_contract.events.LogAuditRequested.createFilter(fromBlock=start_block),
-            self.__on_audit_requested,
+            self.__check_then_request_audit_request
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_AUDIT_ASSIGNED,
-            self.__config.audit_contract.events.LogAuditAssigned.createFilter(fromBlock=start_block),
+            self.__config.audit_contract.events.LogAuditAssigned.createFilter(
+                fromBlock=start_block),
             self.__on_audit_assigned,
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_REPORT_SUBMITTED,
-            self.__config.audit_contract.events.LogAuditFinished.createFilter(fromBlock=start_block),
+            self.__config.audit_contract.events.LogAuditFinished.createFilter(
+                fromBlock=start_block),
             self.__on_report_submitted,
         ))
 
@@ -166,12 +166,13 @@ class QSPAuditNode:
             # Checking if all threads are still alive
             for thread in self.__internal_threads:
                 if not thread.is_alive():
-                    self.__logger.debug("Cannot proceed execution. At least one internal thread is lost")
+                    self.__logger.debug(
+                        "Cannot proceed execution. At least one internal thread is lost")
                     self.stop()
 
             sleep(health_check_interval_sec)
 
-    def __check_then_bid_audit_request(self):
+    def __check_then_request_audit_request(self):
         """
         Checks first an audit is assignable; then, bids to get an audit request.
         """
@@ -182,7 +183,7 @@ class QSPAuditNode:
                     str(pending_requests_count)))
                 return
 
-            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='pending')
+            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='latest')
             if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
                 self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
@@ -193,36 +194,10 @@ class QSPAuditNode:
                 "Error when calling to get a review {0}".format(str(error))
             )
 
-    # TODO decide on whether this function should be kept. The function currently does not initiate any
-    # action responding its appropriate event other than logging the event. The log might be informative for the
-    # the node user, but its management might be a hassle in terms of event-thread management.
-    def __on_audit_requested(self, evt):
-        """
-        Records an audit upon an audit request event.
-        """
-        try:
-            price = evt['args']['price']
-            request_id = str(evt['args']['requestId'])
-
-            if (price >= self.__config.min_price):
-                self.__logger.debug("A new audit request is showed up within a price range: {0}.)".format(
-                    str(evt)), requestId=request_id)
-            else:
-                self.__logger.debug(
-                    "Not enough incentive for processing the new audit request: {0}. ".format(
-                        str(evt)
-                    ),
-                    requestId=request_id,
-                )
-        except Exception as error:
-            self.__logger.exception(
-                "Error when processing audit request event {0}: {1}".format(str(evt), str(error)),
-                requestId=request_id,
-            )
-
     def __on_audit_assigned(self, evt):
-        request_id = str(evt['args']['requestId'])
+        request_id = None
         try:
+            request_id = str(evt['args']['requestId'])
             target_auditor = evt['args']['auditor']
 
             # If an audit request is not targeted to the
@@ -257,14 +232,20 @@ class QSPAuditNode:
             self.__config.event_pool_manager.add_evt_to_be_assigned(
                 audit_evt
             )
+        except KeyError as error:
+            self.__logger.exception(
+                "KeyError when processing audit assigned event: {0}".format(str(error))
+            )
         except Exception as error:
             self.__logger.exception(
                 "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
+            self.__config.event_pool_manager.set_evt_to_error(evt)
 
     def __run_perform_audit_thread(self):
         def process_audit_request(evt):
+            request_id = None
             try:
                 requestor = evt['requestor']
                 request_id = evt['request_id']
@@ -286,10 +267,14 @@ class QSPAuditNode:
                         ), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
-
+            except KeyError as error:
+                self.__logger.exception(
+                    "KeyError when processing audit for request event: {0}".format(str(error))
+                )
             except Exception as error:
                 self.__logger.exception(
-                    "Error when performing audit for request event {0}: {1}".format(str(evt), str(error)),
+                    "Error when performing audit for request event {0}: {1}".format(str(evt),
+                                                                                    str(error)),
                     requestId=request_id,
                 )
                 evt['status_info'] = traceback.format_exc()
@@ -320,14 +305,17 @@ class QSPAuditNode:
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
-
+            except KeyError as error:
+                self.__logger.exception(
+                    "KeyError when processing submission event: {0}".format(str(error))
+                )
             except Exception as error:
                 self.__logger.exception(
-                  "Error when processing submission event {0}: {1}.".format(
-                    str(evt),
-                    str(error),
-                  ),
-                  requestId=evt['request_id'],
+                    "Error when processing submission event {0}: {1}.".format(
+                        str(evt),
+                        str(error),
+                    ),
+                    requestId=evt['request_id'],
                 )
                 evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
@@ -346,6 +334,8 @@ class QSPAuditNode:
         return submission_thread
 
     def __on_report_submitted(self, evt):
+        audit_evt = None
+        request_id = None
         try:
             request_id = str(evt['args']['requestId'])
             target_auditor = evt['args']['auditor']
@@ -362,12 +352,16 @@ class QSPAuditNode:
                 return
 
             audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
-              request_id
+                request_id
             )
             if audit_evt != {}:
                 audit_evt['status_info'] = 'Report successfully submitted'
                 self.__config.event_pool_manager.set_evt_to_done(
                     audit_evt
+                )
+        except KeyError as error:
+            self.__logger.exception(
+                "KeyError when processing submission event: {0}".format(str(error))
             )
         except Exception as error:
             self.__logger.exception(
@@ -387,21 +381,28 @@ class QSPAuditNode:
                 if (current_block - evt['block_nbr']) > timeout_limit:
                     evt['status_info'] = "Submission timeout"
                     self.__config.event_pool_manager.set_evt_to_error(evt)
-
-                # TODO How to inform the network of a submission timeout?
+            except KeyError as error:
+                self.__logger.exception(
+                    "KeyError when monitoring timeout: {0}".format(str(error))
+                )
             except Exception as error:
-                self.__logger.exception("Unexpected error when monitoring timeout")
+                # TODO How to inform the network of a submission timeout?
+                self.__logger.exception(
+                    "Unexpected error when monitoring timeout: {0}".format(error))
 
         def exec():
-            while self.__exec:
-                # Checks for a potential timeouts
-                block = self.__config.web3_client.eth.blockNumber
-                self.__config.event_pool_manager.process_submission_events(
-                    monitor_submission_timeout,
-                    block,
-                )
+            try:
+                while self.__exec:
+                    # Checks for a potential timeouts
+                    block = self.__config.web3_client.eth.blockNumber
+                    self.__config.event_pool_manager.process_submission_events(
+                        monitor_submission_timeout,
+                        block,
+                    )
 
-                sleep(self.__config.evt_polling)
+                    sleep(self.__config.evt_polling)
+            except Exception as error:
+                self.__logger.exception("Error in the monitor thread: {0}".format(str(error)))
 
         monitor_thread = Thread(target=exec, name="monitor thread")
         self.__internal_threads.append(monitor_thread)

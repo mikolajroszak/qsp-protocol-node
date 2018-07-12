@@ -3,24 +3,12 @@ Tests different scenarios for retrieving configuration values.
 """
 import unittest
 import yaml
+
 from tempfile import NamedTemporaryFile
 from config import config_value, Config, ConfigFactory
+from helpers.function_call import FunctionCall
 from helpers.resource import resource_uri
 from utils.io import fetch_file
-
-
-class FunctionCall:
-
-    def __init__(self, function_name, params, return_value):
-        self.params = params
-        self.function_name = function_name
-        self.return_value = return_value
-
-    def __str__(self):
-        return self.function_name
-
-    def __repr__(self):
-        return self.function_name
 
 
 class ConfigUtilsMock:

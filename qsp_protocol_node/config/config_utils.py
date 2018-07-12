@@ -1,5 +1,4 @@
-import logging
-import logging.config
+import config
 import structlog
 import utils.io as io_utils
 import yaml
@@ -18,10 +17,7 @@ from utils.eth import (
     WalletSessionManager,
     DummyWalletSessionManager,
 )
-from structlog import configure_once
-from structlog import processors
-from structlog import stdlib
-from structlog import threadlocal
+
 from web3 import (
     Web3,
     TestRPCProvider,
@@ -121,7 +117,8 @@ class ConfigUtils:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
-                self.__logger.debug("Connection attempt ({0}) failed. Retrying in 10 seconds".format(attempts))
+                self.__logger.debug(
+                    "Connection attempt ({0}) failed. Retrying in 10 seconds".format(attempts))
                 sleep(10)
 
         if not connected:
@@ -144,55 +141,10 @@ class ConfigUtils:
                                     account=new_account)
         return web3_client, new_account
 
-    def configure_basic_logging(self, verbose=False):
-        logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-        logging.getLogger('botocore').setLevel(logging.CRITICAL)
-
-        configure_once(
-            context_class=threadlocal.wrap_dict(dict),
-            logger_factory=stdlib.LoggerFactory(),
-            wrapper_class=stdlib.BoundLogger,
-            processors=[
-                stdlib.filter_by_level,
-                stdlib.add_logger_name,
-                stdlib.add_log_level,
-                stdlib.PositionalArgumentsFormatter(),
-                processors.TimeStamper(fmt="iso"),
-                processors.StackInfoRenderer(),
-                processors.format_exc_info,
-                processors.UnicodeDecoder(),
-                stdlib.render_to_log_kwargs]
-        )
-
-        dict_config = {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'json': {
-                    'format': '%(message)s %(threadName)s %(lineno)d %(pathname)s ',
-                    'class': 'pythonjsonlogger.jsonlogger.JsonFormatter'
-                }
-            },
-            'handlers': {
-                'json': {
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'json'
-                }
-            },
-            'loggers': {
-                '': {
-                    'handlers': ['json'],
-                    'level': logging.DEBUG if verbose else logging.INFO
-                }
-            }
-        }
-
-        logging.config.dictConfig(dict_config)
-
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
                           logging_streaming_provider_args):
         if logging_is_verbose:
-            self.configure_basic_logging(verbose=True)
+            config.configure_basic_logging(verbose=True)
         logger = structlog.getLogger("audit")
         logging_streaming_provider = None
         if logging_streaming_provider_name is not None:

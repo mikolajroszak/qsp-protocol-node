@@ -60,7 +60,7 @@ class Config:
         self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
         self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False, )
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False, )
-        self.__is_mined_polling_sec = config_value(cfg, '/is_mined_polling_sec', accept_none=False, )
+        self.__block_mined_polling_interval_sec = config_value(cfg, '/block_mined_polling_interval_sec', accept_none=False, )
         self.__analyzers = []
         self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False, )
         self.__account = config_value(cfg, '/account/id', )
@@ -260,11 +260,11 @@ class Config:
         return self.__evt_polling_sec
 
     @property
-    def is_mined_polling(self):
+    def block_mined_polling(self):
         """
         Returns the polling for checking if a new block is mined (given in seconds).
         """
-        return self.__is_mined_polling_sec
+        return self.__block_mined_polling_interval_sec
 
     @property
     def report_uploader(self):
