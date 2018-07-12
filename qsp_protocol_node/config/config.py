@@ -66,6 +66,7 @@ class Config:
         self.__default_gas = config_value(cfg, '/default_gas')
         self.__evt_db_path = config_value(cfg, '/evt_db_path', expanduser("~") + "/" + ".audit_node.db", )
         self.__submission_timeout_limit_blocks = config_value(cfg, '/submission_timeout_limit_blocks', 10, )
+        self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0, )
         self.__default_gas = config_value(cfg, '/default_gas', )
         self.__gas_price_wei = config_value(cfg, '/gas_price_wei', )
         self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', )
@@ -204,6 +205,7 @@ class Config:
         self.__report_uploader = None
         self.__report_uploader_provider_name = None
         self.__report_uploader_provider_args = None
+        self.__start_n_block_in_the_past = 0
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
         self.__wallet_session_manager = None
@@ -365,6 +367,13 @@ class Config:
         Returns the event pool database path.
         """
         return self.__submission_timeout_limit_blocks
+
+    @property
+    def start_n_block_in_the_past(self):
+        """
+        Returns how many blocks in the past should be considered if an empty database
+        """
+        return self.__start_n_blocks_in_the_past
 
     @property
     def event_pool_manager(self):

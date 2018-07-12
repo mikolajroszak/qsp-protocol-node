@@ -23,3 +23,4 @@ local:
     # No provided account hex (use the first one by default)
     ttl: 600
   evt_db_path: "/tmp/evts.test"
+  start_n_blocks_in_the_past: !!int 25

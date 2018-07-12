@@ -104,7 +104,9 @@ class QSPAuditNode:
         # If no block has currently been processed, start from zero
         start_block = self.__config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
-            start_block = self.__config.web3_client.eth.blockNumber
+            # the database is empty, either start from zero,
+            # unless start_n_blocks_in_past is defined in the configuration
+            start_block = max(self.__config.web3_client.eth.blockNumber - self.__config.start_n_block_in_the_past, 0)
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
