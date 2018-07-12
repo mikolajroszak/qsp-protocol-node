@@ -238,14 +238,14 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__requestAudit(buggy_contract, self.__PRICE)
         )
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestIds(1))
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(1))
 
         self.evt_wait_loop(self.__submitReport_filter)
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestIds(0))
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS,
                                     "reports/DAOBug.json")
@@ -261,14 +261,14 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__requestAudit(buggy_contract, self.__PRICE)
         )
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestIds(1))
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(1))
 
         self.evt_wait_loop(self.__submitReport_filter)
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestIds(0))
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
                                     "reports/BasicToken.json")
@@ -284,14 +284,14 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__requestAudit(buggy_contract, self.__PRICE)
         )
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestIds(1))
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(1))
 
         self.evt_wait_loop(self.__submitReport_filter)
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
 
-        self.__setAssignedRequestIds(0)
+        self.__setAssignedRequestCount(0)
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
                                     "reports/DappBinWallet.json")
@@ -352,7 +352,7 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__sendRequestMessage(self.__REQUEST_ID, buggy_contract, self.__PRICE, 100)
         )
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestIds(1))
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(1))
 
         # Node should not ask for further request
         self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
@@ -365,7 +365,7 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__sendDoneMessage(self.__REQUEST_ID)
         )
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestIds(0))
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
         # Restore QSPAuditNode.__get_next_audit_request actual implementation
         self.__audit_node._QSPAuditNode__get_next_audit_request = original__get_next_audit_request
@@ -495,8 +495,8 @@ class TestQSPAuditNode(unittest.TestCase):
             "",
             0).transact({"from": self.__config.account})
 
-    def __setAssignedRequestIds(self, num):
-        return self.__config.audit_contract.functions.setAssignedRequestIds(self.__config.account, num).transact(
+    def __setAssignedRequestCount(self, num):
+        return self.__config.audit_contract.functions.setAssignedRequestCount(self.__config.account, num).transact(
                 {"from": self.__config.account})
 
 

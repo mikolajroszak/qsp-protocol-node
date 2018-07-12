@@ -177,7 +177,7 @@ class QSPAuditNode:
         Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
-            pending_requests_count = self.__config.audit_contract.functions.assignedRequestIds(
+            pending_requests_count = self.__config.audit_contract.functions.assignedRequestCount(
                 self.__config.account).call()
             if pending_requests_count >= self.__config.max_assigned_requests:
                 self.__logger.debug("Skip bidding the request as currently processing {0} requests".format(

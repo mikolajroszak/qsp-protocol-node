@@ -7,7 +7,7 @@ pragma solidity 0.4.24;
 contract QuantstampAudit {
 
   // mapping from an auditor address to the number of requests that it currently processes
-  mapping(address => uint256) public assignedRequestIds;
+  mapping(address => uint256) public assignedRequestCount;
 
   // state of audit requests submitted to the contract
   enum AuditState {
@@ -166,9 +166,9 @@ contract QuantstampAudit {
     emit setAnyRequestAvailableResult_called();
   }
 
-  event setAssignedRequestIds_called();
-  function setAssignedRequestIds(address auditor, uint256 num) {
-    assignedRequestIds[auditor] = num;
-    emit setAssignedRequestIds_called();
+  event setAssignedRequestCount_called();
+  function setAssignedRequestCount(address auditor, uint256 num) {
+      assignedRequestCount[auditor] = num;
+    emit setAssignedRequestCount_called();
   }
 }
