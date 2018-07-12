@@ -23,8 +23,9 @@ local:
       args:
         bucket_name: "qsp-protocol-reports-dev"
   account:
-    id: !!str "0x4e3277806890f7bbb665b13d5baeb75a9f47d2c3"
-    ttl: 600
+    id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b" # replace with your account id
+    # specify a path to a valid keystore file that can be decrypted using ETH_PASSPHRASE
+    # keystore_file: !!str "./tests/resources/mykey.json"
   default_gas: !!int 500000
   gas_price_wei: !!int 8000000000
   logging:
@@ -64,8 +65,8 @@ dev:
       args:
         bucket_name: "qsp-protocol-reports-dev"
   account:
-    id: !!str "0x57b23a26d231d98623be7af8d6098be6fb719034"
-    ttl: 600
+    id: !!str "0x9bf5e4620db5944bccf0a1e6a6b72a430c5a0126"
+    keystore_file: !!str "/app/keystore/UTC--2018-07-12T00-58-35.172Z--9bf5e4620db5944bccf0a1e6a6b72a430c5a0126"
   default_gas: !!int 700000
   gas_price_wei: !!int 4000000000
   evt_db_path: "/app/audit-db/audit_node.db"

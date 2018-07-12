@@ -12,3 +12,14 @@ def mk_args(config):
             raise ValueError("The gas value is negative: " + str(gas_value))
 
     return args
+
+
+def send_signed_transaction(config, transaction):
+    args = mk_args(config)
+    if config.account_private_key is None:  # no local signing (in case of tests)
+        return transaction.transact(args)
+    else:
+        args['nonce'] = config.web3_client.eth.getTransactionCount(config.account)
+        tx = transaction.buildTransaction(args)
+        signed_tx = config.web3_client.eth.account.signTransaction(tx, private_key=config.account_private_key)
+        return config.web3_client.eth.sendRawTransaction(signed_tx.rawTransaction)
