@@ -58,6 +58,7 @@ class Config:
         self.__eth_provider = None
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {}, )
         self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
+        self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False, )
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False, )
         self.__block_mined_polling_interval_sec = config_value(cfg, '/block_mined_polling_interval_sec', accept_none=False, )
         self.__analyzers = []
@@ -236,9 +237,16 @@ class Config:
     @property
     def min_price(self):
         """
-        Return the minimum QSP price for accepting an audit.
+        Returns the minimum QSP price for accepting an audit.
         """
         return self.__min_price
+
+    @property
+    def max_assigned_requests(self):
+        """
+        Returns the maximum number of undone requests
+        """
+        return self.__max_assigned_requests
 
     @property
     def evt_polling(self):
