@@ -23,7 +23,6 @@ from utils.metrics import MetricCollector
 
 
 class QSPAuditNode:
-    __EVT_AUDIT_REQUESTED = "LogAuditRequested"
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
 
@@ -34,6 +33,10 @@ class QSPAuditNode:
     # must be in sync with
     # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
     __AUDIT_STATE_ERROR = 5
+
+    # must be in sync with
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L80
+    __AVAILABLE_AUDIT__STATE_READY = 1
 
     __PROTOCOL_VERSION = '1.0'
 
@@ -87,6 +90,24 @@ class QSPAuditNode:
 
         return evt_thread
 
+    def __run_block_mined_thread(self, handler_name, handler):
+        """
+        Checks if a new block is mined. Reacting to a new block the handler is called.
+        """
+        def exec():
+            current_block = 0
+            while self.__exec:
+                sleep(self.__config.block_mined_polling)
+                if current_block < self.__config.web3_client.eth.blockNumber:
+                    current_block = self.__config.web3_client.eth.blockNumber
+                    self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
+                    handler()
+
+        new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
+        new_block_monitor_thread.start()
+
+        return new_block_monitor_thread
+
     @property
     def config(self):
         return self.__config
@@ -112,11 +133,9 @@ class QSPAuditNode:
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
-        self.__internal_threads.append(self.__run_audit_evt_thread(
-            QSPAuditNode.__EVT_AUDIT_REQUESTED,
-            self.__config.audit_contract.events.LogAuditRequested.createFilter(
-                fromBlock=start_block),
-            self.__on_audit_requested,
+        self.__internal_threads.append(self.__run_block_mined_thread(
+            "check_available_requests",
+            self.__check_then_request_audit_request
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_AUDIT_ASSIGNED,
@@ -153,49 +172,20 @@ class QSPAuditNode:
 
             sleep(health_check_interval_sec)
 
-    def __on_audit_requested(self, evt):
+    def __check_then_request_audit_request(self):
         """
-        Bids for an audit upon an audit request event.
+        Checks first an audit is assignable; then, bids to get an audit request.
         """
-        request_id = None
         try:
-            # Bids for audit requests whose reward is at least as
-            # high as given by the configured min_price
-            price = evt['args']['price']
-            request_id = str(evt['args']['requestId'])
-
-            if price >= self.__config.min_price:
-                self.__logger.debug(
-                    "Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
-                        str(evt)), requestId=request_id)
-                audit_evt = {
-                    'request_id': request_id,
-                    'requestor': str(evt['args']['requestor']),
-                    'contract_uri': str(evt['args']['uri']),
-                    'evt_name': QSPAuditNode.__EVT_AUDIT_REQUESTED,
-                    'block_nbr': evt['blockNumber'],
-                    'status_info': "Audit requested",
-                    'price': str(evt['args']['price']),
-                }
-                self.__config.event_pool_manager.add_evt_to_be_processed(
-                    audit_evt
-                )
+            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call(block_identifier='latest')
+            if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
+                self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
             else:
-                self.__logger.debug(
-                    "Declining processing audit request: {0}. Not enough incentive".format(
-                        str(evt)
-                    ),
-                    requestId=request_id,
-                )
-        except KeyError as error:
-            self.__logger.exception(
-                "KeyError when processing audit request event: {0}".format(str(error))
-            )
+                self.__logger.debug("No request were available as the contract returned {0}.".format(str(any_request_available)))
         except Exception as error:
             self.__logger.exception(
-                "Error when processing audit request event {0}: {1}".format(str(evt), str(error)),
-                requestId=request_id,
+                "Error when calling to get a review {0}".format(str(error))
             )
 
     def __on_audit_assigned(self, evt):
@@ -203,7 +193,7 @@ class QSPAuditNode:
         try:
             request_id = str(evt['args']['requestId'])
             target_auditor = evt['args']['auditor']
-            # TODO: sanity check that the audit request is already in the DB
+
             # If an audit request is not targeted to the
             # running audit node, just disconsider it
             if target_auditor.lower() != self.__config.account.lower():
@@ -222,13 +212,18 @@ class QSPAuditNode:
                 requestId=request_id,
             )
 
+            price = evt['args']['price']
+            request_id = str(evt['args']['requestId'])
             audit_evt = {
                 'request_id': request_id,
+                'requestor': str(evt['args']['requestor']),
+                'contract_uri': str(evt['args']['uri']),
                 'evt_name': QSPAuditNode.__EVT_AUDIT_ASSIGNED,
+                'block_nbr': evt['blockNumber'],
                 'status_info': "Audit Assigned",
+                'price': str(price),
             }
-
-            self.__config.event_pool_manager.set_evt_to_assigned(
+            self.__config.event_pool_manager.add_evt_to_be_assigned(
                 audit_evt
             )
         except KeyError as error:

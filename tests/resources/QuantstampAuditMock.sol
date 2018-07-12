@@ -44,11 +44,16 @@ contract QuantstampAudit {
     address requestor,
     string uri,
     uint256 price,
-    uint256 transactionFee,
     uint256 requestTimestamp
   );
 
-  event LogAuditAssigned(uint256 requestId, address auditor);
+  // TODO update the smart contract appropriately
+  event LogAuditAssigned(uint256 requestId,
+      address auditor,
+      address requestor,
+      string uri,
+      uint256 price,
+      uint256 requestTimestamp);
   event LogReportSubmissionError_InvalidAuditor(uint256 requestId, address auditor);
   event LogReportSubmissionError_InvalidState(uint256 requestId, address auditor, AuditState state);
   event LogAuditQueueIsEmpty();
@@ -75,12 +80,12 @@ contract QuantstampAudit {
     emit LogAuditFinished(requestId, auditor, auditResult, reportUri, reportHash, reportTimestamp);
   }
 
-  function emitLogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price, uint256 transactionFee, uint256 requestTimestamp) {
-    emit LogAuditRequested(requestId, requestor, uri, price, transactionFee, requestTimestamp);
+  function emitLogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price, uint256 requestTimestamp) {
+    emit LogAuditRequested(requestId, requestor, uri, price, requestTimestamp);
   }
 
-  function emitLogAuditAssigned(uint256 requestId, address auditor) {
-    emit LogAuditAssigned(requestId, auditor);
+  function emitLogAuditAssigned(uint256 requestId, address auditor, address requestor, string uri, uint256 price, uint256 requestTimestamp) {
+    emit LogAuditAssigned(requestId, auditor, requestor, uri, price, requestTimestamp);
   }
 
   function emitLogReportSubmissionError_InvalidAuditor(uint256 requestId, address auditor) {
@@ -144,5 +149,17 @@ contract QuantstampAudit {
   event submitReport_called();
   function submitReport(uint256 requestId, AuditState auditResult, string reportUri, string reportHash){
     emit submitReport_called();
+  }
+
+  uint256 anyRequestAvailable_mocked_result = 0;
+
+  function anyRequestAvailable() public view returns(uint256) {
+    return anyRequestAvailable_mocked_result;
+  }
+
+  event setAnyRequestAvailableResult_called();
+  function setAnyRequestAvailableResult(uint256 _anyRequestAvailable_mocked_result) {
+    anyRequestAvailable_mocked_result = _anyRequestAvailable_mocked_result;
+    emit setAnyRequestAvailableResult_called();
   }
 }

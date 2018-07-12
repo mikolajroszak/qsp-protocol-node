@@ -59,6 +59,7 @@ class Config:
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {}, )
         self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False, )
+        self.__block_mined_polling_interval_sec = config_value(cfg, '/block_mined_polling_interval_sec', accept_none=False, )
         self.__analyzers = []
         self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False, )
         self.__account = config_value(cfg, '/account/id', )
@@ -245,6 +246,13 @@ class Config:
         Returns the polling for audit requests frequency (given in seconds).
         """
         return self.__evt_polling_sec
+
+    @property
+    def block_mined_polling(self):
+        """
+        Returns the polling for checking if a new block is mined (given in seconds).
+        """
+        return self.__block_mined_polling_interval_sec
 
     @property
     def report_uploader(self):
