@@ -46,13 +46,6 @@ class ConfigUtilsMock:
         self.expected = self.expected[1:]
         return first_call.return_value
 
-    def create_wallet_session_manager(self, eth_provider_name, client=None, account=None, passwd=None):
-        """
-        A stub for the create_wallet_session_manager method.
-        """
-        arguments_to_check = ['eth_provider_name', 'client', 'account', 'passwd']
-        return self.call('create_wallet_session_manager', arguments_to_check, locals())
-
     def create_report_uploader_provider(self, report_uploader_provider_name, report_uploader_provider_args):
         """
         A stub for the report_uploader_provider method.
@@ -94,8 +87,8 @@ class ConfigUtilsMock:
         arguments_to_check = ['web3_client', 'audit_contract_abi_uri', 'audit_contract_address']
         return self.call('create_audit_contract', arguments_to_check, locals())
 
-    def create_web3_client(self, eth_provider, account, account_passwd, max_attempts=30):
-        arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'max_attempts']
+    def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
+        arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'keystore_file', 'max_attempts']
         return self.call('create_web3_client', arguments_to_check, locals())
 
 
@@ -203,25 +196,6 @@ class TestConfig(unittest.TestCase):
         target_file.write(dump)
         target_file.flush()
 
-    def test_create_wallet_session_manager(self):
-        account = "some account"
-        passwd = "some passwd"
-        web3_client = "some client"
-        provider = "some name"
-        return_value = "value"
-        config = ConfigFactory.create_empty_config()
-        config._Config__eth_provider_name = provider
-        config._Config__account = account
-        config._Config__web3_client = web3_client
-        config._Config__account_passwd = passwd
-        utils = ConfigUtilsMock()
-        utils.expect('create_wallet_session_manager',
-                     {'eth_provider_name': provider, 'client': web3_client, 'account': account, 'passwd': passwd},
-                     return_value)
-        result = config._Config__create_wallet_session_manager(utils)
-        self.assertEqual(return_value, result)
-        utils.verify()
-
     def test_create_report_uploader_provider(self):
         report_uploader_provider_name = "provider name"
         report_uploader_provider_args = "arguments"
@@ -290,15 +264,17 @@ class TestConfig(unittest.TestCase):
         eth_provider = "eth_provider"
         account = "account"
         account_passwd = "account password"
+        account_keystore_file = "./mykey.json"
         created_web3_provider = "created provider"
         config = ConfigFactory.create_empty_config()
         config._Config__eth_provider = eth_provider
         config._Config__account = account
         config._Config__account_passwd = account_passwd
+        config._Config__account_keystore_file = account_keystore_file
         utils = ConfigUtilsMock()
         utils.expect('create_web3_client',
                      {'eth_provider': eth_provider, 'account': account, 'account_passwd': account_passwd,
-                      'max_attempts': 30},
+                      'keystore_file': account_keystore_file, 'max_attempts': 30},
                      created_web3_provider)
         result = config._Config__create_web3_client(utils)
         self.assertEqual(created_web3_provider, result)
@@ -317,15 +293,15 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, config.evt_polling)
         self.assertIsNone(config.report_uploader)
         self.assertIsNone(config.account)
-        self.assertEqual(600, config.account_ttl)
         self.assertIsNone(config.account_passwd)
+        self.assertIsNone(config.account_keystore_file)
+        self.assertIsNone(config.account_private_key)
         self.assertIsNone(config.audit_contract_abi_uri)
         self.assertFalse(config.has_audit_contract_abi)
         self.assertIsNone(config.web3_client)
         self.assertIsNone(config.audit_contract)
         self.assertIsNone(config.audit_contract_name)
         self.assertEqual(0, len(config.analyzers))
-        self.assertIsNone(config.wallet_session_manager)
         self.assertEqual(0, config.default_gas)
         self.assertIsNone(config.env)
         self.assertEqual(0, config.gas_price_wei)
@@ -356,9 +332,10 @@ class TestConfig(unittest.TestCase):
         account = "account"
         new_account = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         account_passwd = "account password"
+        account_keystore_file = "./mykey.json"
+        new_private_key = "abcdefg"
         analyzers_config = "config list"
         created_analyzers = "analyzers"
-        created_wallet_session_manager = "wallet session manager"
         report_uploader_provider_name = "uploader provider name"
         report_uploader_provider_args = "uploadervarguments"
         report_uploader = "created report uploader"
@@ -374,6 +351,7 @@ class TestConfig(unittest.TestCase):
         config._Config__eth_provider_args = eth_provider_args
         config._Config__account = account
         config._Config__account_passwd = account_passwd
+        config._Config__account_keystore_file = account_keystore_file
         config._Config__analyzers_config = analyzers_config
         config._Config__evt_db_path = "/tmp/evts.test"
         config._Config__report_uploader_provider_name = report_uploader_provider_name
@@ -393,8 +371,8 @@ class TestConfig(unittest.TestCase):
                      created_eth_provider)
         utils.expect('create_web3_client',
                      {'eth_provider': created_eth_provider, 'account': account, 'account_passwd': account_passwd,
-                      'max_attempts': 30},
-                     (created_web3_client, new_account))
+                      'keystore_file': account_keystore_file, 'max_attempts': 30},
+                     (created_web3_client, new_account, new_private_key))
         utils.expect('create_audit_contract',
                      {'web3_client': created_web3_client, 'audit_contract_abi_uri': audit_contract_abi_uri,
                       'audit_contract_address': audit_contract_address},
@@ -402,10 +380,6 @@ class TestConfig(unittest.TestCase):
         utils.expect('create_analyzers',
                      {'analyzers_config': analyzers_config, 'logger': logger},
                      created_analyzers)
-        utils.expect('create_wallet_session_manager',
-                     {'eth_provider_name': eth_provider_name, 'client': created_web3_client, 'account': new_account,
-                      'passwd': account_passwd},
-                     created_wallet_session_manager)
         utils.expect('create_report_uploader_provider',
                      {'report_uploader_provider_name': report_uploader_provider_name,
                       'report_uploader_provider_args': report_uploader_provider_args},
@@ -417,7 +391,6 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(created_web3_client, config.web3_client)
         self.assertEqual(new_account, config.account)
         self.assertEqual(created_analyzers, config.analyzers)
-        self.assertEqual(created_wallet_session_manager, config.wallet_session_manager)
         self.assertEqual(report_uploader, config.report_uploader)
         self.assertEqual(created_audit_contract, config.audit_contract)
         utils.verify()
@@ -431,7 +404,6 @@ class TestConfig(unittest.TestCase):
         self.assertIsNotNone(config.web3_client)
         self.assertIsNotNone(config.account)
         self.assertIsNotNone(config.analyzers)
-        self.assertIsNotNone(config.wallet_session_manager)
         self.assertIsNotNone(config.report_uploader)
         self.assertEqual(0, config.min_price)
         self.assertEqual(0, config.gas_price_wei)

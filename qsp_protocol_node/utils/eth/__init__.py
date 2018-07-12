@@ -1,4 +1,2 @@
-from .tx import mk_args
-from .wallet_session_manager import DummyWalletSessionManager
-from .wallet_session_manager import WalletSessionManager
+from .tx import send_signed_transaction
 from .address import mk_checksum_address
