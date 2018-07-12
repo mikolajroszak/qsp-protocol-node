@@ -5,7 +5,7 @@ import json
 import sys
 
 
-class MyhtrilIssue:
+class MythrilIssue:
     """
     A replica of the issue class from the Mythril repository on Github with some added custom code
     https://github.com/ConsenSys/mythril/blob/master/mythril/analysis/report.py
@@ -69,7 +69,7 @@ class MyhtrilIssue:
 
     @staticmethod
     def from_dict(**dictionary):
-        issue = MyhtrilIssue(None, None, None, None)
+        issue = MythrilIssue(None, None, None, None)
         issue.__dict__.update(dictionary)
         return issue
 
@@ -146,7 +146,7 @@ def main(argv):
         report_file.close()
         if report_dict['success']:
             for issue in report_dict['issues']:
-                mythril_issue = MyhtrilIssue.from_dict(**issue)
+                mythril_issue = MythrilIssue.from_dict(**issue)
                 vulnerability = mythril_issue.as_vulnerability(issue_reference, vulnerability_mapping)
                 potential_vulnerabilities.append(vulnerability)
                 issue_reference += 1

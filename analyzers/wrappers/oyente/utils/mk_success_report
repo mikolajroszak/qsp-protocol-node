@@ -79,7 +79,6 @@ def load_list(input_list):
 def main(argv):
     if len(sys.argv) < 2:
         print("Error: expecting at least one .json file as input")
-
     parser = argparse.ArgumentParser(description='Report formatting of Oyente results')
 
     parser.add_argument(

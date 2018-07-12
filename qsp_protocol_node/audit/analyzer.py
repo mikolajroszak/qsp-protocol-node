@@ -34,6 +34,18 @@ class Analyzer:
     def wrapper(self):
         return self.__wrapper
 
+    def get_metadata(self, contract_path, request_id):
+        """
+        Returns the metadata {name, version, vulnerabilities_checked, command}
+        associated with a call to the analyzer.
+        """
+        self.__logger.debug("Getting {0}'s metadata. About to check {1}".format(
+                self.__wrapper.analyzer_name, contract_path
+            ),
+            requestId=request_id,
+        )
+        return self.__wrapper.get_metadata(contract_path, request_id)
+
     def check(self, contract_path, request_id):
         """
         Checks for potential vulnerabilities in a target contract writen in a given
@@ -47,8 +59,6 @@ class Analyzer:
 
         json_report = self.__wrapper.check(contract_path, request_id)
         str_report = json.dumps(json_report)
-        json_report['hash'] = digest(str_report)
-
         self.__logger.debug("{0}'s wrapper finished execution. Produced report is {1}".format(
                 self.__wrapper.analyzer_name,
                 str_report,
