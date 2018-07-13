@@ -242,10 +242,9 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.evt_wait_loop(self.__submitReport_filter)
 
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
-
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS,
                                     "reports/DAOBug.json")
@@ -268,8 +267,6 @@ class TestQSPAuditNode(unittest.TestCase):
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
-
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
                                     "reports/BasicToken.json")
 
@@ -288,10 +285,10 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.evt_wait_loop(self.__submitReport_filter)
 
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
+
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
-
-        self.__setAssignedRequestCount(0)
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
                                     "reports/DappBinWallet.json")
@@ -361,11 +358,10 @@ class TestQSPAuditNode(unittest.TestCase):
         sleep(self.__config.block_mined_polling + 1)
 
         self.evt_wait_loop(self.__submitReport_filter)
-        self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__sendDoneMessage(self.__REQUEST_ID)
-        )
 
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
 
         # Restore QSPAuditNode.__get_next_audit_request actual implementation
         self.__audit_node._QSPAuditNode__get_next_audit_request = original__get_next_audit_request
@@ -375,6 +371,28 @@ class TestQSPAuditNode(unittest.TestCase):
 
         # an extra call to get_next_audit is no accepted
         self.assertFalse(self.__mocked__get_next_audit_request_called)
+
+    @timeout(90, timeout_exception=StopIteration)
+    def test_timeout_on_complex_file(self):
+        """
+        Tests if the analyzer throttles the execution and generates error message
+        """
+
+        contract = resource_uri("kyber.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__requestAudit(contract, self.__PRICE)
+        )
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(1))
+
+        self.evt_wait_loop(self.__submitReport_filter)
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
+
+        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
+
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/kyber.json")
 
     def __assert_audit_request(self, request_id, expected_audit_state, report_file_path):
         sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
@@ -405,7 +423,6 @@ class TestQSPAuditNode(unittest.TestCase):
         audit_uri = row['audit_uri']
         audit_state = row['audit_state']
         audit_file = fetch_file(audit_uri)
-
         self.assertEqual(digest_file(audit_file), row['audit_hash'])
         self.assertEqual(audit_state, expected_audit_state)
 

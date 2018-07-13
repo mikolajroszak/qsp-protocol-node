@@ -491,7 +491,7 @@ class QSPAuditNode:
                 analyzers_reports[i]['errors'] = [
                     "Time out occurred. Could not finish {0} within {1} seconds".format(
                         analyzer_name,
-                        self.__config.analyzers[i].timeout_sec,
+                        self.config.analyzers[i].wrapper.timeout_sec,
                     )
                 ]
                 analyzers_reports[i]['status'] = 'error'
