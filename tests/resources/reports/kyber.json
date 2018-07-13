@@ -1,0 +1,182 @@
+{
+  "timestamp": 1531516961,
+  "contract_uri": "file:///app/tests/helpers/../resources/kyber.sol",
+  "contract_hash": "078d9f89b908e63b53388579e7a86db29fa713e66d9c06fcfd7a908bbed11339",
+  "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "request_id": 1,
+  "version": "1.0",
+  "audit_state": 5,
+  "analyzers_reports": [
+    {
+      "start_time": 1531516901,
+      "analyzer": "oyente",
+      "errors": [
+        "Time out occurred. Could not finish oyente within 60 seconds"
+      ],
+      "status": "error"
+    },
+    {
+      "analyzer": {
+        "name": "mythril",
+        "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
+        "vulnerabilities_checked": [
+          "call_data_forwarded",
+          "dependence_on_environment_variable",
+          "call_to_a_user-supplied_address",
+          "use_of_tx_origin",
+          "ether_send",
+          "exception_state",
+          "message_call_to_external_contract",
+          "state_change_after_external_call",
+          "integer_overflow",
+          "integer_underflow",
+          "multiple_calls",
+          "unchecked_suicide",
+          "transaction_order_dependence",
+          "unchecked_call_return_value"
+        ],
+        "command": "docker run -v \"/tmp/.mythril/867\":/shared/ -i \"mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882\" -o json -x \"/shared/kyber.sol\""
+      },
+      "status": "success",
+      "potential_vulnerabilities": [
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `_function_0x27a099d8`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 0,
+              "start_line": 141
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `_function_0x7c423f54`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 1,
+              "start_line": 145
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `_function_0x27a099d8`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 2,
+              "start_line": 142
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `_function_0x27a099d8`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 3,
+              "start_line": 142
+            }
+          ]
+        },
+        {
+          "name": "Message call to external contract",
+          "type": "message_call_to_external_contract",
+          "file": "/shared/kyber.sol",
+          "description": "This contract executes a message call to an address provided as a function argument. Generally, it is not recommended to call user-supplied addresses using Solidity's call() construct. Note that attackers might leverage reentrancy attacks to exploit race conditions or manipulate this contract's state.",
+          "instances": [
+            {
+              "ref_id": 4,
+              "start_line": 158
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `addAlerter(address)`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 5,
+              "start_line": 1
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `_function_0x7c423f54`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 6,
+              "start_line": 146
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `_function_0x7c423f54`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 7,
+              "start_line": 146
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `addOperator(address)`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 8,
+              "start_line": 1
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `_function_0x01a12fd3`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 9,
+              "start_line": 150
+            }
+          ]
+        },
+        {
+          "name": "Integer Overflow ",
+          "type": "other",
+          "file": "/shared/kyber.sol",
+          "description": "A possible integer overflow exists in the function `_function_0x01a12fd3`.\nThe addition or multiplication may result in a value higher than the maximum representable integer.",
+          "instances": [
+            {
+              "ref_id": 10,
+              "start_line": 150
+            }
+          ]
+        }
+      ],
+      "count_potential_vulnerabilities": 11,
+      "hash": "86e050762ebe0586a2f78cd385dcbeca8c80702359378f6a1d26c0941adf98b4",
+      "start_time": 1531516901,
+      "end_time": 1531516961
+    }
+  ]
+}
