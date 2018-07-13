@@ -264,7 +264,6 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.evt_wait_loop(self.__submitReport_filter)
 
-        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
