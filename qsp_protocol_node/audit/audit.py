@@ -6,11 +6,7 @@ import json
 import time
 import traceback
 
-from queue import Queue
-from datetime import datetime
-from tempfile import mkstemp
 from time import sleep
-from hashlib import sha256
 from utils.io import (
     fetch_file,
     digest,
@@ -20,6 +16,8 @@ from utils.eth import send_signed_transaction
 
 from threading import Thread
 from utils.metrics import MetricCollector
+from solc import compile_standard
+from solc.exceptions import ContractsNotFound, SolcError
 
 
 class QSPAuditNode:
@@ -448,6 +446,44 @@ class QSPAuditNode:
         )
 
         target_contract = fetch_file(uri)
+
+        warnings, errors = self.check_compilation(target_contract, request_id)
+        audit_report = {}
+        if len(errors) != 0:
+            audit_report = self.__create_err_result(errors, warnings, request_id, requestor, uri,
+                                                    target_contract)
+        else:
+            audit_report = self.get_audit_report_from_analyzers(target_contract, requestor, uri,
+                                                                request_id)
+            if len(warnings) != 0:
+                audit_report['compilation_warnings'] = warnings
+
+        self.__logger.info(
+            "Analyzer report contents",
+            requestId=request_id,
+            contents=audit_report,
+        )
+
+        audit_report_str = json.dumps(audit_report, indent=2)
+
+        upload_result = self.__config.report_uploader.upload(audit_report_str)
+
+        self.__logger.info(
+            "Report upload result: {0}".format(upload_result),
+            requestId=request_id,
+        )
+
+        if not upload_result['success']:
+            raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
+
+        return {
+            'audit_state': audit_report['audit_state'],
+            'audit_uri': upload_result['url'],
+            'audit_hash': digest(audit_report_str),
+        }
+
+    def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
+
         number_of_analyzers = len(self.__config.analyzers)
         analyzers_reports = [{}] * number_of_analyzers
 
@@ -551,28 +587,7 @@ class QSPAuditNode:
         if len(analyzers_reports) > 0:
             audit_report['analyzers_reports'] = analyzers_reports
 
-        self.__logger.info(
-            "Analyzer report contents",
-            requestId=request_id,
-            contents=audit_report,
-        )
-
-        audit_report_str = json.dumps(audit_report, indent=2)
-        upload_result = self.__config.report_uploader.upload(audit_report_str)
-
-        self.__logger.info(
-            "Report upload result: {0}".format(upload_result),
-            requestId=request_id,
-        )
-
-        if not upload_result['success']:
-            raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
-
-        return {
-            'audit_state': audit_report['audit_state'],
-            'audit_uri': upload_result['url'],
-            'audit_hash': digest(audit_report_str),
-        }
+        return audit_report
 
     def __get_next_audit_request(self):
         """
@@ -590,3 +605,67 @@ class QSPAuditNode:
             audit_uri,
             audit_hash
         ))
+
+    def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
+        result = {
+            'timestamp': calendar.timegm(time.gmtime()),
+            'contract_uri': uri,
+            'contract_hash': digest_file(target_contract),
+            'requestor': requestor,
+            'auditor': self.__config.account,
+            'request_id': request_id,
+            'version': QSPAuditNode.__PROTOCOL_VERSION,
+            'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR
+        }
+        if errors is not None and len(errors) != 0:
+            result['compilation_errors'] = errors
+        if warnings is not None and len(warnings) != 0:
+            result['compilation_warnings'] = warnings
+
+        return result
+
+    def check_compilation(self, contract, request_id):
+        self.__logger.debug("Running compilation check. About to check {0}".format(contract),
+                            requestId=request_id)
+        data = ""
+        with open(contract, 'r') as myfile:
+            data = myfile.read()
+        warnings = []
+        errors = []
+        try:
+            # Attempts to compile the target contract. If it fails, a ContractsNotFound
+            # exception is thrown
+            file_name = contract[contract.rfind('/') + 1:]
+            output = compile_standard({'language': 'Solidity',
+                                       'sources': {
+                                           file_name: {'content': data}}}
+                                      )
+            for err in output['errors']:
+                if err["severity"] == "warning":
+                    warnings += [err['formattedMessage']]
+                else:
+                    errors += [err['formattedMessage']]
+
+        except ContractsNotFound as error:
+            self.__logger.debug(
+                "ContractsNotFound before calling analyzers: {0}".format(str(error)),
+                requestId=request_id)
+            errors += [str(error)]
+        except SolcError as error:
+            self.__logger.debug(
+                "SolcError before calling analyzers: {0}".format(str(error)),
+                requestId=request_id)
+            errors += [str(error)]
+        except KeyError as error:
+            self.__logger.debug(
+                "KeyError when calling analyzers: {0}".format(str(error)),
+                requestId=request_id)
+            # This is thrown because a bug in our own code. We only log, but do not record the error
+            # so that the analyzers are still executed.
+        except Exception as error:
+            self.__logger.debug(
+                "Error before calling analyzers: {0}".format(str(error)),
+                requestId=request_id)
+            errors += [str(error)]
+
+        return warnings, errors
