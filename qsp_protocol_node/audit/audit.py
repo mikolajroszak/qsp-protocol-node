@@ -2,9 +2,11 @@
 Provides the QSP Audit node implementation.
 """
 import calendar
+import copy
 import json
 import time
 import traceback
+import threading
 
 from queue import Queue
 from datetime import datetime
@@ -451,10 +453,17 @@ class QSPAuditNode:
         number_of_analyzers = len(self.__config.analyzers)
         analyzers_reports = [{}] * number_of_analyzers
 
+        analyzers_reports_locks = []
+        for i in range(0, number_of_analyzers):
+            analyzers_reports_locks.append(threading.RLock())
+
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
             result = analyzer.check(target_contract, request_id)
+            # Make sure no race-condition between the wrappers and
+            analyzers_reports_locks[analyzer_id].acquire()
             analyzers_reports[analyzer_id] = result
+            analyzers_reports_locks[analyzer_id].release()
 
         analyzers_threads = []
         analyzers_timeouts = []
@@ -464,21 +473,31 @@ class QSPAuditNode:
         for i, analyzer in enumerate(self.__config.analyzers):
             analyzer_thread = Thread(target=check_contract, args=[i])
             analyzers_threads.append(analyzer_thread)
-            analyzers_timeouts.append(analyzer.wrapper.timeout_sec)
+            analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
+            timeout_sec = int(self.__config.analyzers_config[i][analyzer_name]['timeout_sec'])
+            analyzers_timeouts.append(timeout_sec)
 
             start_time = calendar.timegm(time.gmtime())
             analyzers_start_times.append(start_time)
             analyzer_thread.start()
 
+        local_analyzers_reports = [{}] * number_of_analyzers
+
         for i in range(0, number_of_analyzers):
             analyzers_threads[i].join(analyzers_timeouts[i])
+
+            # Make sure there is no race condition between the current thread
+            # and wrapper thread in overwriting on analyzers_reports
+            analyzers_reports_locks[i].acquire()
+            local_analyzers_reports[i] = copy.deepcopy(analyzers_reports[i])
+            analyzers_reports_locks[i].release()
 
             # NOTE
             # Due to timeout issues, one has to account for start/end
             # times at this point, rather than the wrapper itself
 
             start_time = analyzers_start_times[i]
-            analyzers_reports[i]['start_time'] = start_time
+            local_analyzers_reports[i]['start_time'] = start_time
 
             # If thread is still alive, it means a timeout has
             # occurred
@@ -487,18 +506,19 @@ class QSPAuditNode:
                 # timed out analyzers
 
                 analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-                analyzers_reports[i]['analyzer'] = analyzer_name
-                analyzers_reports[i]['errors'] = [
+                local_analyzers_reports[i]['analyzer'] = analyzer_name
+                local_analyzers_reports[i]['errors'] = [
                     "Time out occurred. Could not finish {0} within {1} seconds".format(
                         analyzer_name,
                         self.config.analyzers[i].wrapper.timeout_sec,
                     )
                 ]
-                analyzers_reports[i]['status'] = 'error'
+
+                local_analyzers_reports[i]['status'] = 'error'
             else:
                 # A timeout has not occurred. Register the end time
                 end_time = calendar.timegm(time.gmtime())
-                analyzers_reports[i]['end_time'] = end_time
+                local_analyzers_reports[i]['end_time'] = end_time
 
         audit_report = {
             'timestamp': calendar.timegm(time.gmtime()),
@@ -516,7 +536,7 @@ class QSPAuditNode:
         # or fails otherwise.
         audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
 
-        for i, analyzer_report in enumerate(analyzers_reports):
+        for i, analyzer_report in enumerate(local_analyzers_reports):
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
 
             # The next two fail safe checks should never kick in
@@ -548,8 +568,8 @@ class QSPAuditNode:
 
         audit_report['audit_state'] = audit_state
 
-        if len(analyzers_reports) > 0:
-            audit_report['analyzers_reports'] = analyzers_reports
+        if len(local_analyzers_reports) > 0:
+            audit_report['analyzers_reports'] = local_analyzers_reports
 
         self.__logger.info(
             "Analyzer report contents",
