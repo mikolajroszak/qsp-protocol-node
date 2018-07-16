@@ -75,7 +75,7 @@ cat "$LOG_OUTPUT" | grep "\"success\": true" >/dev/null || \
 
 ANALYZER_CMD="docker run -v \"$TMP_FOLDER\":/shared/ -i \"$DOCKER_IMAGE\" -o json -x \"/shared/$CONTRACT_FILENAME\""
 "$WRAPPER_HOME/utils/mk_success_report" "${ANALYZER_VERSION}" "${ANALYZER_CMD}" "${ANALYZER_VULNERABILITIES}"  \
-    "${LOG_OUTPUT}" || \
+    "${ORIGINAL_NAME}" "${LOG_OUTPUT}" || \
         { report_errors "$LOG_OUTPUT"; exit 1; }
 
 # Exit with a success status code

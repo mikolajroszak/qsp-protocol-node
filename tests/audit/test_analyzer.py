@@ -40,7 +40,7 @@ class TestOyenteAnalyzer(unittest.TestCase):
 
         buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
         request_id = random.randrange(1, 100)
-        report = analyzer.check(buggy_contract, request_id)
+        report = analyzer.check(buggy_contract, request_id, "DAOBug.sol")
 
         # Asserts some result produced
         self.assertTrue(report)
@@ -63,7 +63,7 @@ class TestOyenteAnalyzer(unittest.TestCase):
         analyzer = TestOyenteAnalyzer.__new_oyente_analyzer()
 
         request_id = random.randrange(1, 100)
-        report = analyzer.check(inexistent_file, request_id)
+        report = analyzer.check(inexistent_file, request_id, inexistent_file)
 
         self.assertTrue(report['status'], 'error')
 
@@ -77,7 +77,7 @@ class TestOyenteAnalyzer(unittest.TestCase):
         analyzer = TestOyenteAnalyzer.__new_oyente_analyzer()
 
         request_id = random.randrange(1, 100)
-        report = analyzer.check(old_contract, request_id)
+        report = analyzer.check(old_contract, request_id, "DAOBugOld.sol")
 
         self.assertTrue(report['status'], 'error')
 
@@ -91,7 +91,7 @@ class TestOyenteAnalyzer(unittest.TestCase):
         analyzer = TestOyenteAnalyzer.__new_oyente_analyzer()
 
         request_id = random.randrange(1, 100)
-        report = analyzer.check(old_contract, request_id)
+        report = analyzer.check(old_contract, request_id, "DAOBugOld-Caret.sol")
 
         self.assertTrue(report['status'], 'success')
 

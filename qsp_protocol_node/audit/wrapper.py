@@ -61,13 +61,14 @@ class Wrapper:
     def timeout_sec(self):
         return self.__timeout_sec
 
-    def setup_environment(self, contract_path):
+    def setup_environment(self, contract_path, original_file_name):
         env_vars = os.environ.copy()
         env_vars['STORAGE_DIR'] = self.__storage_dir
 
         env_vars['WRAPPER_HOME'] = self.__home
         env_vars['ANALYZER_NAME'] = self.__analyzer_name
         env_vars['CONTRACT_PATH'] = contract_path
+        env_vars['ORIGINAL_NAME'] = original_file_name
         env_vars['ANALYZER_ARGS'] = self.__args
         return env_vars
 
@@ -89,9 +90,9 @@ class Wrapper:
         metadata['vulnerabilities_checked'] = [v for v in vulnerability_list if v != ""]
         return {'analyzer': metadata}
 
-    def get_metadata(self, contract_path, request_id):
+    def get_metadata(self, contract_path, request_id, original_file_name):
         try:
-            env_vars = self.setup_environment(contract_path)
+            env_vars = self.setup_environment(contract_path, original_file_name)
             self.__logger.debug("Getting metadata as subprocess", requestId=request_id)
             analyzer = subprocess.run(
                 self.__metadata_script,
@@ -113,13 +114,13 @@ class Wrapper:
 
         return json_report
 
-    def check(self, contract_path, request_id):
+    def check(self, contract_path, request_id, original_file_name):
         analyzer = None
         start_time = None
         end_time = None
         error = False
         try:
-            env_vars = self.setup_environment(contract_path)
+            env_vars = self.setup_environment(contract_path, original_file_name)
             self.__logger.debug("Invoking wrapper as subprocess", requestId=request_id)
 
             analyzer = subprocess.run(

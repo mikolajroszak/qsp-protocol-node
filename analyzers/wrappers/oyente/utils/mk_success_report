@@ -99,7 +99,12 @@ def main(argv):
         type=str,
         help='file containing all vulnerability names (one per line) supported in this version of oyente'
     )
-
+    parser.add_argument(
+        'original_filename',
+        metavar='original_filename',
+        type=str,
+        help='the original name of the file that is being analyzed'
+    )
     parser.add_argument(
         'warnings',
         metavar='warnings',
@@ -141,7 +146,7 @@ def main(argv):
         solidity_file = params[0]        
 
         (vulnerabilities, coverage, new_count) = get_potential_vulnerabilities(                        
-            solidity_file,
+            args.original_filename,
             contract_name,
             report,
             count,
@@ -150,7 +155,7 @@ def main(argv):
         potential_vulnerabilities = potential_vulnerabilities + vulnerabilities
         coverages.append({
             'percentage': coverage,
-            'file': solidity_file,
+            'file': args.original_filename,
             'contract': contract_name,
         })
 
