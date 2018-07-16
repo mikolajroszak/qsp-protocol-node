@@ -460,7 +460,7 @@ class QSPAuditNode:
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
             result = analyzer.check(target_contract, request_id)
-            # Make sure no race-condition between the wrappers and
+            # Make sure no race-condition between the wrappers and other threads
             analyzers_reports_locks[analyzer_id].acquire()
             analyzers_reports[analyzer_id] = result
             analyzers_reports_locks[analyzer_id].release()

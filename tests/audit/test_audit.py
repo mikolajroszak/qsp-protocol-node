@@ -379,9 +379,12 @@ class TestQSPAuditNode(unittest.TestCase):
         # rewiring configs
         original_timeouts = []
         for i in range(0, len(self.__config.analyzers)):
+            # It's an expected behaviour
+            analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
+            self.assertEqual(self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec,
+                             self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name]['timeout_sec'])
             original_timeouts.append(self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec)
             self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = 6
-            analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
             self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name]['timeout_sec'] = 3
 
         contract = resource_uri("kyber.sol")
