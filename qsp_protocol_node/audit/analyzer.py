@@ -34,7 +34,7 @@ class Analyzer:
     def wrapper(self):
         return self.__wrapper
 
-    def check(self, contract_path, request_id):
+    def check(self, contract_path, request_id, original_name):
         """
         Checks for potential vulnerabilities in a target contract writen in a given
         version of Solidity, writing the result in a json report.
@@ -45,7 +45,7 @@ class Analyzer:
             requestId=request_id,
         )
 
-        json_report = self.__wrapper.check(contract_path, request_id)
+        json_report = self.__wrapper.check(contract_path, request_id, original_name)
         str_report = json.dumps(json_report)
         json_report['hash'] = digest(str_report)
 

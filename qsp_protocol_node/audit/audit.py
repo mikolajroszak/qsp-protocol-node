@@ -5,6 +5,8 @@ import calendar
 import json
 import time
 import traceback
+import urllib.parse
+import os
 
 from time import sleep
 from utils.io import (
@@ -447,7 +449,7 @@ class QSPAuditNode:
 
         target_contract = fetch_file(uri)
 
-        warnings, errors = self.check_compilation(target_contract, request_id)
+        warnings, errors = self.check_compilation(target_contract, request_id, uri)
         audit_report = {}
         if len(errors) != 0:
             audit_report = self.__create_err_result(errors, warnings, request_id, requestor, uri,
@@ -486,10 +488,12 @@ class QSPAuditNode:
 
         number_of_analyzers = len(self.__config.analyzers)
         analyzers_reports = [{}] * number_of_analyzers
+        parse_uri = urllib.parse.urlparse(uri)
+        original_filename = os.path.basename(parse_uri.path)
 
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
-            result = analyzer.check(target_contract, request_id)
+            result = analyzer.check(target_contract, request_id, original_filename)
             analyzers_reports[analyzer_id] = result
 
         analyzers_threads = []
@@ -624,9 +628,12 @@ class QSPAuditNode:
 
         return result
 
-    def check_compilation(self, contract, request_id):
+    def check_compilation(self, contract, request_id, uri):
         self.__logger.debug("Running compilation check. About to check {0}".format(contract),
                             requestId=request_id)
+        parse_uri = urllib.parse.urlparse(uri)
+        original_filename = os.path.basename(parse_uri.path)
+        temp_filename = os.path.basename(contract)
         data = ""
         with open(contract, 'r') as myfile:
             data = myfile.read()
@@ -642,9 +649,9 @@ class QSPAuditNode:
                                       )
             for err in output['errors']:
                 if err["severity"] == "warning":
-                    warnings += [err['formattedMessage']]
+                    warnings += [err['formattedMessage'].replace(temp_filename, original_filename)]
                 else:
-                    errors += [err['formattedMessage']]
+                    errors += [err['formattedMessage'].replace(temp_filename, original_filename)]
 
         except ContractsNotFound as error:
             self.__logger.debug(

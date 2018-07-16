@@ -39,7 +39,7 @@ class TestAnalyzerOyente(unittest.TestCase):
 
         buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
         request_id = 15
-        report = analyzer.check(buggy_contract, request_id)
+        report = analyzer.check(buggy_contract, request_id, "DAOBug.sol")
 
         # Asserts some result produced
         self.assertTrue(report)
@@ -62,7 +62,7 @@ class TestAnalyzerOyente(unittest.TestCase):
         no_file = str(random()) + ".sol"
         analyzer = TestAnalyzerOyente.__new_analyzer()
         request_id = 15
-        report = analyzer.check(no_file, request_id)
+        report = analyzer.check(no_file, request_id, no_file)
 
         self.assertTrue(report['status'], 'error')
         self.assertTrue("No such file or directory" in report['errors'][0])
@@ -76,7 +76,7 @@ class TestAnalyzerOyente(unittest.TestCase):
         old_contract = fetch_file(resource_uri("DAOBugOld.sol"))
         analyzer = TestAnalyzerOyente.__new_analyzer()
         request_id = 15
-        report = analyzer.check(old_contract, request_id)
+        report = analyzer.check(old_contract, request_id, "DAOBugOld.sol")
 
         self.assertTrue(report['status'], 'error')
         self.assertTrue(1, len(report['errors']))
@@ -91,7 +91,7 @@ class TestAnalyzerOyente(unittest.TestCase):
         old_contract = fetch_file(resource_uri("DAOBugOld-Caret.sol"))
         analyzer = TestAnalyzerOyente.__new_analyzer()
         request_id = 15
-        report = analyzer.check(old_contract, request_id)
+        report = analyzer.check(old_contract, request_id, "DAOBugOld-Caret.sol")
 
         self.assertTrue(report['status'], 'success')
         self.assertEquals(1, len(report['potential_vulnerabilities']))
