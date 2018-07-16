@@ -4,7 +4,6 @@ create table evt_status (
 );
 
 insert into evt_status(id, description) values
-    ('RQ', 'Requested'),
     ('AS', 'Assigned'),
     ('TS', 'To be submitted'),
     ('SB', 'Submitted'),

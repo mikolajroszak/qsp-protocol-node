@@ -4,8 +4,7 @@ from config import ConfigUtils
 from config import ConfigurationException
 from upload import S3Provider
 from helpers.resource import resource_uri
-from utils.eth.wallet_session_manager import DummyWalletSessionManager
-from utils.eth.wallet_session_manager import WalletSessionManager
+import utils.io as io_utils
 from streaming import CloudWatchProvider
 from web3 import (
     Web3,
@@ -82,28 +81,6 @@ class TestConfigUtil(unittest.TestCase):
         except ConfigurationException:
             # expected
             pass
-
-    def test_create_wallet_session_manager_dummy(self):
-        """
-        Tests that testing ETH provider names create dummy wallet managers.
-        """
-        name = "EthereumTesterProvider"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, DummyWalletSessionManager),
-                        "The wallet manager is not a DummyWalletSessionManager")
-        name = "TestRPCProvider"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, DummyWalletSessionManager),
-                        "The wallet manager is not a DummyWalletSessionManager")
-
-    def test_create_wallet_session_manager_real(self):
-        """
-        Tests that anything but testing ETH provider creates a WalletSessionManager instance.
-        """
-        name = "anything_else"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, WalletSessionManager),
-                        "The wallet manager is not a WalletSessionManager")
 
     def test_configure_logging_no_stream(self):
         """
@@ -182,17 +159,38 @@ class TestConfigUtil(unittest.TestCase):
         """
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
         account = "Account"
-        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertEqual(account, new_account, "Account was recreated even though it was not None")
-        client, new_account = self.config_utils.create_web3_client(eth_provider, None, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, None, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertIsNotNone(new_account, "The account was none and was not created")
         # None ETH provider will make this fail
         try:
-            client, new_account = self.config_utils.create_web3_client(None, None, None, 2)
+            client, new_account, new_private_key = self.config_utils.create_web3_client(None, None, None, None, 2)
             self.fail("No exception was thrown even though the eth provider does not exist and web3 cannot connect")
         except ConfigurationException:
+            # Expected
+            pass
+
+    def test_create_web3_client_private_key(self):
+        """
+        Test that private key is instantiated correctly when creating web3 client
+        """
+        eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
+        account = "Account"
+        private_key = "0xc2fd94c5216e754d3eb8f4f34017120fef318c50780ce408b54db575b120229f"
+        passphrase = "abc123ropsten"
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, passphrase,
+            io_utils.fetch_file(resource_uri("mykey.json")), 2)
+        self.assertEqual(private_key, Web3.toHex(new_private_key), "Private key was not decrypted correctly")
+        # None ETH provider will make this fail
+        try:
+            client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, "incorrect-passphrase",
+                io_utils.fetch_file(resource_uri("mykey.json")), 2)
+            self.fail("No exception was thrown even though the private key isn't correct")
+        except ConfigurationException as e:
+            self.assertTrue("MAC mismatch" in str(e), "Expected the MAC mismatch exception")
             # Expected
             pass
 
@@ -209,7 +207,7 @@ class TestConfigUtil(unittest.TestCase):
     def test_create_contract(self):
         account = "Account"
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
-        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
         abi_uri = "file://tests/resources/QuantstampAudit.abi.json"
         address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         self.config_utils.create_audit_contract(client, abi_uri, address)
