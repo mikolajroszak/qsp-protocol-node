@@ -204,7 +204,7 @@ class Config:
         self.__report_uploader = None
         self.__report_uploader_provider_name = None
         self.__report_uploader_provider_args = None
-        self.__start_n_block_in_the_past = 0
+        self.__start_n_blocks_in_the_past = 0
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
 
@@ -384,7 +384,7 @@ class Config:
         return self.__submission_timeout_limit_blocks
 
     @property
-    def start_n_block_in_the_past(self):
+    def start_n_blocks_in_the_past(self):
         """
         Returns how many blocks in the past should be considered if an empty database
         """
