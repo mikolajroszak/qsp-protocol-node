@@ -58,11 +58,14 @@ class Config:
         self.__eth_provider = None
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {}, )
         self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
+        self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False, )
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False, )
+        self.__block_mined_polling_interval_sec = config_value(cfg, '/block_mined_polling_interval_sec', accept_none=False, )
         self.__analyzers = []
         self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False, )
         self.__account = config_value(cfg, '/account/id', )
-        self.__account_ttl = config_value(cfg, '/account/ttl', 600, )
+        self.__account_keystore_file = config_value(cfg, '/account/keystore_file', None, )
+        self.__account_private_key = None
         self.__default_gas = config_value(cfg, '/default_gas')
         self.__evt_db_path = config_value(cfg, '/evt_db_path', expanduser("~") + "/" + ".audit_node.db", )
         self.__submission_timeout_limit_blocks = config_value(cfg, '/submission_timeout_limit_blocks', 10, )
@@ -102,7 +105,7 @@ class Config:
         """
         Creates a Web3 client from the already set Ethereum provider.
         """
-        return config_utils.create_web3_client(self.eth_provider, self.account, self.account_passwd)
+        return config_utils.create_web3_client(self.eth_provider, self.account, self.account_passwd, self.account_keystore_file)
 
     def __create_audit_contract(self, config_utils):
         """
@@ -117,10 +120,6 @@ class Config:
         Creates an instance of the each target analyzer that should be verifying a given contract.
         """
         return config_utils.create_analyzers(self.analyzers_config, self.logger)
-
-    def __create_wallet_session_manager(self, config_utils):
-        return config_utils.create_wallet_session_manager(self.eth_provider_name, self.web3_client, self.account,
-                                                          self.account_passwd)
 
     def __configure_logging(self, config_utils):
         """
@@ -139,7 +138,7 @@ class Config:
 
         # Creation of internal components
         self.__eth_provider = self.__create_eth_provider(config_utils)
-        self.__web3_client, self.__account = self.__create_web3_client(config_utils)
+        self.__web3_client, self.__account, self.__account_private_key = self.__create_web3_client(config_utils)
 
         # After having a web3 client object, use it to put addresses in a canonical format
         self.__audit_contract_address = mk_checksum_address(
@@ -154,7 +153,6 @@ class Config:
         if self.has_audit_contract_abi:
             self.__audit_contract = self.__create_audit_contract(config_utils)
         self.__analyzers = self.__create_analyzers(config_utils)
-        self.__wallet_session_manager = self.__create_wallet_session_manager(config_utils)
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
@@ -180,8 +178,9 @@ class Config:
         self.__audit_contract_abi_uri = None
         self.__audit_contract = None
         self.__account = None
+        self.__account_keystore_file = None
+        self.__account_private_key = None
         self.__account_passwd = None
-        self.__account_ttl = 600
         self.__cfg_dict = None
         self.__config_file_uri = None
         self.__default_gas = 0
@@ -206,7 +205,6 @@ class Config:
         self.__report_uploader_provider_args = None
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
-        self.__wallet_session_manager = None
 
     @property
     def eth_provider(self):
@@ -239,9 +237,16 @@ class Config:
     @property
     def min_price(self):
         """
-        Return the minimum QSP price for accepting an audit.
+        Returns the minimum QSP price for accepting an audit.
         """
         return self.__min_price
+
+    @property
+    def max_assigned_requests(self):
+        """
+        Returns the maximum number of undone requests
+        """
+        return self.__max_assigned_requests
 
     @property
     def evt_polling(self):
@@ -249,6 +254,13 @@ class Config:
         Returns the polling for audit requests frequency (given in seconds).
         """
         return self.__evt_polling_sec
+
+    @property
+    def block_mined_polling(self):
+        """
+        Returns the polling for checking if a new block is mined (given in seconds).
+        """
+        return self.__block_mined_polling_interval_sec
 
     @property
     def report_uploader(self):
@@ -265,11 +277,11 @@ class Config:
         return self.__account
 
     @property
-    def account_ttl(self):
+    def account_private_key(self):
         """
-        Returns the account TTL.
+        Returns the account private key.
         """
-        return self.__account_ttl
+        return self.__account_private_key
 
     @property
     def account_passwd(self):
@@ -277,6 +289,13 @@ class Config:
         Returns the account associated password.
         """
         return self.__account_passwd
+
+    @property
+    def account_keystore_file(self):
+        """
+        Returns the account keystore file.
+        """
+        return self.__account_keystore_file
 
     @property
     def audit_contract_abi_uri(self):
@@ -319,10 +338,6 @@ class Config:
         Returns the analyzer object built from the given YAML configuration file.
         """
         return self.__analyzers
-
-    @property
-    def wallet_session_manager(self):
-        return self.__wallet_session_manager
 
     @property
     def env(self):

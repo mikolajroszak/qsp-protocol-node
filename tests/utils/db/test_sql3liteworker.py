@@ -62,7 +62,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         """
         self.assertFalse(self.logger_mock.logged)
         result = self.worker.execute("select * from evt_status")
-        self.assertEqual(len(result), 6,
+        self.assertEqual(len(result), 5,
                          'We are expecting 5 event type records. There are {0}'.format(len(result)))
         self.assertFalse(self.logger_mock.logged)
 
@@ -78,15 +78,15 @@ class TestSqlLite3Worker(unittest.TestCase):
         # The result is string if the database is locked (caused by previously failed tests)
         self.assertFalse(isinstance(result, str))
         self.assertFalse(self.logger_mock.logged)
-        original_value = [x for x in result if x['id'] == 'RQ'][0]
+        original_value = [x for x in result if x['id'] == 'AS'][0]
         # Inserts a repeated primary key
-        self.worker.execute("insert into evt_status values ('RQ', 'Updated received')")
+        self.worker.execute("insert into evt_status values ('AS', 'Updated received')")
         result = self.worker.execute("select * from evt_status")
         # The result is string if the database is locked (caused by previously failed tests)
         self.assertFalse(isinstance(result, str))
-        self.assertEqual(len(result), 6,
+        self.assertEqual(len(result), 5,
                          'We are expecting 5 event type records. There are {0}'.format(len(result)))
-        new_value = [x for x in result if x['id'] == 'RQ'][0]
+        new_value = [x for x in result if x['id'] == 'AS'][0]
         self.assertEqual(new_value, original_value,
                          "The original value changed after the insert")
         # This should stay at the very end after the worker thread has been merged
