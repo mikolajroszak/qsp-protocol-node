@@ -1,41 +1,11 @@
 {
-  "analyzers_reports": [
-    {
-      "end_time": 1530192830,
-      "errors":  [
-        "root:/shared/DappBinWallet.sol:7:1: Error: Expected pragma, import directive or contract/interface/library definition.\n",
-        "root:Solidity compilation failed.\n"
-      ],
-      "hash": "85014ee689bc0d6a89f553b9cfe9de2bebde9cf27d9b6bf9f7390bcf0bb90833",
-      "start_time": 1530192828,
-      "status": "error",
-      "warnings": [
-        "root:You are using evm version 1.8.2. The supported version is 1.7.3\n",
-        "root:You are using solc version 0.4.21, The latest supported version is 0.4.19\n"
-      ],
-      "analyzer": {
-        "name": "oyente"
-      }
-    },
-    {
-      "end_time": 1530192831,
-      "errors": [
-        "{\"success\": false, \"error\": \"Solc experienced a fatal error (code 1).\\n\\n/shared/DappBinWallet.sol:7:1: Error: Expected pragma, import directive or contract/interface/library definition.\\n<!DOCTYPE html>\\n^\\n\", \"issues\": []}\n"
-      ],
-      "hash": "2581a9867896152cd6800535d6e930cb5e5d560ffa9b870e5f605caad40113b0",
-      "start_time": 1530192828,
-      "status": "error",
-      "analyzer": {
-        "name": "mythril"
-      }
-    }
-  ],
-  "audit_state": 5,
-  "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-  "contract_hash": "75e2e6ae496eb7efeda9e66a6019e9bf7cc254f72d58d70565244044fd78134b",
+  "timestamp": 1530814752,
   "contract_uri": "file:///app/tests/helpers/../resources/DappBinWallet.sol",
-  "request_id": 1,
+  "contract_hash": "75e2e6ae496eb7efeda9e66a6019e9bf7cc254f72d58d70565244044fd78134b",
   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-  "timestamp": 1530192831,
-  "version": "1.0"
+  "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "request_id": 1,
+  "version": "1.0",
+  "audit_state": 5,
+  "compilation_errors": ["DappBinWallet.sol:7:1: ParserError: Expected pragma, import directive or contract/interface/library definition.\n<!DOCTYPE html>\n^\n\n        > command: `solc --standard-json`\n        > return code: `0`\n        > stderr:\n        {\"contracts\":{},\"errors\":[{\"component\":\"general\",\"formattedMessage\":\"DappBinWallet.sol:7:1: ParserError: Expected pragma, import directive or contract/interface/library definition.\\n<!DOCTYPE html>\\n^\\n\",\"message\":\"Expected pragma, import directive or contract/interface/library definition.\",\"severity\":\"error\",\"sourceLocation\":{\"end\":7,\"file\":\"DappBinWallet.sol\",\"start\":6},\"type\":\"ParserError\"}],\"sources\":{}}\n\n        > stdout:"]
 }

@@ -29,7 +29,7 @@
       "potential_vulnerabilities": [
         {
           "contract": "SendBalance",
-          "file": "/tmp/.oyente/400/DAOBug.sol",
+          "file": "DAOBug.sol",
           "instances": [
             {
               "end_line": 17,
@@ -75,7 +75,7 @@
       "potential_vulnerabilities": [
         {
           "description": "In the function `withdrawBalance()` a non-zero amount of Ether is sent to msg.sender.\nIt seems that this function can be called without restrictions.",
-          "file": "/shared/DAOBug.sol",
+          "file": "DAOBug.sol",
           "instances": [
             {
               "ref_id": 0,
@@ -87,7 +87,7 @@
         },
         {
           "description": "This contract executes a message call to the address of the transaction sender. Generally, it is not recommended to call user-supplied addresses using Solidity's call() construct. Note that attackers might leverage reentrancy attacks to exploit race conditions or manipulate this contract's state.",
-          "file": "/shared/DAOBug.sol",
+          "file": "DAOBug.sol",
           "instances": [
             {
               "ref_id": 1,
@@ -99,7 +99,7 @@
         },
         {
           "description": "The contract account state is changed after an external call. Consider that the called contract could re-enter the function before this state change takes place. This can lead to business logic vulnerabilities.",
-          "file": "/shared/DAOBug.sol",
+          "file": "DAOBug.sol",
           "instances": [
             {
               "ref_id": 2,
@@ -121,5 +121,6 @@
   "request_id": 1,
   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "timestamp": 1530192805,
-  "version": "1.0"
+  "version": "1.0",
+  "compilation_warnings": ["DAOBug.sol:18:7: Warning: \"throw\" is deprecated in favour of \"revert()\", \"require()\" and \"assert()\".\n      throw;\n      ^---^\n", "DAOBug.sol:8:3: Warning: No visibility specified. Defaulting to \"public\". \n  function getBalance(address u) constant returns (uint) {\n  ^ (Relevant source part starts here and spans across multiple lines).\n", "DAOBug.sol:12:3: Warning: No visibility specified. Defaulting to \"public\". \n  function addToBalance() {\n  ^ (Relevant source part starts here and spans across multiple lines).\n", "DAOBug.sol:13:33: Warning: \"msg.value\" used in non-payable function. Do you want to add the \"payable\" modifier to this function?\n    userBalances[msg.sender] += msg.value;\n                                ^-------^\n", "DAOBug.sol:16:3: Warning: No visibility specified. Defaulting to \"public\". \n  function withdrawBalance() {\n  ^ (Relevant source part starts here and spans across multiple lines).\n"]
 }

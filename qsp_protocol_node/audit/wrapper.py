@@ -57,7 +57,7 @@ class Wrapper:
     def timeout_sec(self):
         return self.__timeout_sec
 
-    def check(self, contract_path, request_id):
+    def check(self, contract_path, request_id, original_file_name):
         analyzer = None
         start_time = None
         end_time = None
@@ -69,6 +69,7 @@ class Wrapper:
             env_vars['WRAPPER_HOME'] = self.__home
             env_vars['ANALYZER_NAME'] = self.__analyzer_name
             env_vars['CONTRACT_PATH'] = contract_path
+            env_vars['ORIGINAL_NAME'] = original_file_name
             env_vars['ANALYZER_ARGS'] = self.__args
 
             self.__logger.debug("Invoking wrapper as subprocess", requestId=request_id)

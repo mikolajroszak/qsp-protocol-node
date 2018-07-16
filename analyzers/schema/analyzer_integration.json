@@ -19,6 +19,20 @@
             "pattern": "^[A-Fa-f0-9]{64}$",
             "description": "Hash digest (sha256) of the target contract" 
         },
+        "compilation_errors": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "The list of compilation errors preventing the code from compiling"
+        },
+        "compilation_warnings": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "The list of compilation warnings that do not prevent the code from compiling"
+        },
         "requestor": {
             "type": "string",
             "pattern": "^(0x)?[A-Fa-f0-9]{40}$",
