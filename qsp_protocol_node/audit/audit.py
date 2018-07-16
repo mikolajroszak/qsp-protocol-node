@@ -555,7 +555,6 @@ class QSPAuditNode:
         # successful or not. Either it is fully successful (all analyzer produce a result),
         # or fails otherwise.
         audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
-        print("Reports", analyzers_reports)
         for i, analyzer_report in enumerate(analyzers_reports):
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
 

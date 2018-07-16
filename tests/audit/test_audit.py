@@ -296,6 +296,21 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
                                     "reports/DappBinWallet.json")
 
+    @timeout(80, timeout_exception=StopIteration)
+    def test_analyzer_produces_metadata_for_errors(self):
+        """
+        Tests that analyzers produce their metadata even when failure occurs
+        """
+        buggy_contract = resource_uri("BasicToken.sol")
+        buggy_contract_file = fetch_file(buggy_contract)
+        # directly calling this function to avoid compilation checks;
+        # this will cause error states for the analyzers
+        report = self.__audit_node.get_audit_report_from_analyzers(buggy_contract_file,
+                                                                   "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+                                                                   buggy_contract,
+                                                                   1)
+        self.__compare_json(report, "reports/BasicTokenErrorWithMetadata.json", json_loaded=True)
+
     @timeout(5, timeout_exception=StopIteration)
     def test_run_audit_evt_thread(self):
         """
@@ -376,6 +391,38 @@ class TestQSPAuditNode(unittest.TestCase):
         # an extra call to get_next_audit is no accepted
         self.assertFalse(self.__mocked__get_next_audit_request_called)
 
+    def __compare_json(self, audit_file, report_file_path, json_loaded=False):
+        if not json_loaded:
+            actual_json = load_json(audit_file)
+        else:
+            actual_json = audit_file
+        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
+        diff = DeepDiff(actual_json,
+                        expected_json,
+                        exclude_paths={
+                            "root['contract_uri']",
+                            # path is different depending on whether running inside Docker
+                            "root['timestamp']",
+                            "root['start_time']",
+                            "root['end_time']",
+                            "root['analyzers_reports'][0]['coverages'][0]['file']",
+                            "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
+                            "root['analyzers_reports'][0]['start_time']",
+                            "root['analyzers_reports'][0]['end_time']",
+                            "root['analyzers_reports'][0]['hash']",
+                            "root['analyzers_reports'][1]['analyzer']['command']",
+                            "root['analyzers_reports'][1]['coverages'][0]['file']",
+                            "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
+                            "root['analyzers_reports'][1]['start_time']",
+                            "root['analyzers_reports'][1]['end_time']",
+                            "root['analyzers_reports'][1]['hash']",
+                        }
+                        )
+        pprint(diff)
+        self.assertEqual(diff, {})
+        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
+                         ntpath.basename(expected_json['contract_uri']))
+
     def __assert_audit_request(self, request_id, expected_audit_state, report_file_path):
         sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
 
@@ -409,33 +456,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(digest_file(audit_file), row['audit_hash'])
         self.assertEqual(audit_state, expected_audit_state)
 
-        actual_json = load_json(audit_file)
-        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
-        diff = DeepDiff(actual_json,
-                        expected_json,
-                        exclude_paths={
-                            "root['contract_uri']",
-                        # path is different depending on whether running inside Docker
-                            "root['timestamp']",
-                            "root['start_time']",
-                            "root['end_time']",
-                            "root['analyzers_reports'][0]['coverages'][0]['file']",
-                            "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][0]['start_time']",
-                            "root['analyzers_reports'][0]['end_time']",
-                            "root['analyzers_reports'][0]['hash']",
-                            "root['analyzers_reports'][1]['analyzer']['command']",
-                            "root['analyzers_reports'][1]['coverages'][0]['file']",
-                            "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][1]['start_time']",
-                            "root['analyzers_reports'][1]['end_time']",
-                            "root['analyzers_reports'][1]['hash']",
-                        }
-                        )
-        pprint(diff)
-        self.assertEqual(diff, {})
-        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
-                         ntpath.basename(expected_json['contract_uri']))
+        self.__compare_json(audit_file, report_file_path)
 
     def evt_wait_loop(self, current_filter):
         wait = True
