@@ -410,6 +410,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, config.gas_price_wei)
         self.assertEqual(5, config.evt_polling)
         self.assertEqual(2, len(config.analyzers))
+        self.assertEqual(25, config.start_n_blocks_in_the_past)
 
 
 if __name__ == '__main__':
