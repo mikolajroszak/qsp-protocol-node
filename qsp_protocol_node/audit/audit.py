@@ -489,7 +489,8 @@ class QSPAuditNode:
     def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
 
         number_of_analyzers = len(self.__config.analyzers)
-        analyzers_reports = [{}] * number_of_analyzers
+        # This array is shared between the current thread and wrappers
+        shared_analyzers_reports = [{}] * number_of_analyzers
         parse_uri = urllib.parse.urlparse(uri)
         original_filename = os.path.basename(parse_uri.path)
 
@@ -500,9 +501,9 @@ class QSPAuditNode:
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
             result = analyzer.check(target_contract, request_id, original_filename)
-            # Make sure no race-condition between the wrappers and other threads
+            # Make sure no race-condition between the wrappers and the current thread
             analyzers_reports_locks[analyzer_id].acquire()
-            analyzers_reports[analyzer_id] = result
+            shared_analyzers_reports[analyzer_id] = result
             analyzers_reports_locks[analyzer_id].release()
 
         analyzers_threads = []
@@ -521,6 +522,7 @@ class QSPAuditNode:
             analyzers_start_times.append(start_time)
             analyzer_thread.start()
 
+        # This array should only be accessible from the current thread
         local_analyzers_reports = [{}] * number_of_analyzers
 
         for i in range(0, number_of_analyzers):
@@ -529,7 +531,7 @@ class QSPAuditNode:
             # Make sure there is no race condition between the current thread
             # and wrapper thread in overwriting on analyzers_reports
             analyzers_reports_locks[i].acquire()
-            local_analyzers_reports[i] = copy.deepcopy(analyzers_reports[i])
+            local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
             analyzers_reports_locks[i].release()
 
             # NOTE
