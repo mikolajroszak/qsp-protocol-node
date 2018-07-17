@@ -23,6 +23,7 @@ from pathlib import Path
 from solc import compile_files
 from utils.io import fetch_file, digest_file, load_json
 from utils.db import get_first
+from utils.db import Sqlite3Worker
 from deepdiff import DeepDiff
 from pprint import pprint
 
@@ -244,6 +245,42 @@ class TestQSPAuditNode(unittest.TestCase):
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
+
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS,
+                                    "reports/DAOBug.json")
+
+    @timeout(80, timeout_exception=StopIteration)
+    def test_contract_audit_request_not_in_db(self):
+        """
+        Tests the entire flow of a successful audit request when the request is not stored in the
+        database prior to being assigned.
+        """
+        # since we're mocking the smart contract, we should explicitly call its internals
+        worker = Sqlite3Worker(self.__config.logger, self.__config.evt_db_path)
+        buggy_contract = resource_uri("DAOBug.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(1))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__assignAudit(self.__REQUEST_ID, buggy_contract, self.__PRICE, 0))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__assignAudit(12, buggy_contract, self.__PRICE, 0))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__assignAudit(9, buggy_contract, self.__PRICE, 0))
+        result = worker.execute("select * from audit_evt")
+        while len(result) != 3:
+            sleep(1)
+            result = worker.execute("select * from audit_evt")
+        ids = [x['request_id'] for x in result]
+        self.assertTrue(self.__REQUEST_ID in ids)
+        self.assertTrue(9 in ids)
+        self.assertTrue(12 in ids)
+
+        self.evt_wait_loop(self.__submitReport_filter)
+
+        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendDoneMessage(self.__REQUEST_ID))
 
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
@@ -498,6 +535,14 @@ class TestQSPAuditNode(unittest.TestCase):
     def __setAssignedRequestCount(self, num):
         return self.__config.audit_contract.functions.setAssignedRequestCount(self.__config.account, num).transact(
                 {"from": self.__config.account})
+
+    def __assignAudit(self, request_id, uri, price, timestamp):
+        return self.__config.audit_contract.functions.emitLogAuditAssigned(request_id,
+                                                                           self.__config.account,
+                                                                           self.__config.account,
+                                                                           uri, price,
+                                                                           timestamp).transact(
+            {"from": self.__config.account})
 
 
 if __name__ == '__main__':
