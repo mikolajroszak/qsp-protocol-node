@@ -36,7 +36,8 @@ class TestConfigUtil(unittest.TestCase):
         Tests that the S3Provider can be created and is properly returend.
         """
         report_uploader_provider_name = "S3Provider"
-        report_uploader_provider_args = {"bucket_name": "test-bucket"}
+        report_uploader_provider_args = {"bucket_name": "test-bucket",
+                                         "contract_bucket_name": "contract_test-bucket"}
         result = self.config_utils.create_report_uploader_provider(report_uploader_provider_name,
                                                                    report_uploader_provider_args)
         self.assertTrue(isinstance(result, S3Provider), "The created provider is not an S3Provider")

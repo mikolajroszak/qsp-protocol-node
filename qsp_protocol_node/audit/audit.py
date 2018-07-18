@@ -96,6 +96,7 @@ class QSPAuditNode:
         """
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
+
         def exec():
             current_block = 0
             while self.__exec:
@@ -182,8 +183,9 @@ class QSPAuditNode:
             pending_requests_count = self.__config.audit_contract.functions.assignedRequestCount(
                 self.__config.account).call()
             if pending_requests_count >= self.__config.max_assigned_requests:
-                self.__logger.debug("Skip bidding the request as currently processing {0} requests".format(
-                    str(pending_requests_count)))
+                self.__logger.debug(
+                    "Skip bidding the request as currently processing {0} requests".format(
+                        str(pending_requests_count)))
                 return
 
             any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call()
@@ -191,7 +193,9 @@ class QSPAuditNode:
                 self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
             else:
-                self.__logger.debug("No request were available as the contract returned {0}.".format(str(any_request_available)))
+                self.__logger.debug(
+                    "No request were available as the contract returned {0}.".format(
+                        str(any_request_available)))
         except Exception as error:
             self.__logger.exception(
                 "Error when calling to get a review {0}".format(str(error))
@@ -480,6 +484,23 @@ class QSPAuditNode:
         if not upload_result['success']:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
+        parse_uri = urllib.parse.urlparse(uri)
+        original_filename = os.path.basename(parse_uri.path)
+        contract_upload_result = self.__config.report_uploader.upload_contract(request_id,
+                                                                               target_contract,
+                                                                               original_filename)
+        if not contract_upload_result['success']:
+            self.__logger.info(
+                "Contract upload result: {0}".format(contract_upload_result),
+                requestId=request_id,
+            )
+        else:
+            # We just log on error, not raise an exception
+            self.__logger.error(
+                "Contract upload result: {0}".format(contract_upload_result),
+                requestId=request_id,
+            )
+
         return {
             'audit_state': audit_report['audit_state'],
             'audit_uri': upload_result['url'],
@@ -619,18 +640,20 @@ class QSPAuditNode:
         """
         Attempts to get a request from the audit request queue.
         """
-        return send_signed_transaction(self.__config, self.__config.audit_contract.functions.getNextAuditRequest())
+        return send_signed_transaction(self.__config,
+                                       self.__config.audit_contract.functions.getNextAuditRequest())
 
     def __submit_report(self, request_id, audit_state, audit_uri, audit_hash):
         """
         Submits the audit report to the entire QSP network.
         """
-        return send_signed_transaction(self.__config, self.__config.audit_contract.functions.submitReport(
-            request_id,
-            audit_state,
-            audit_uri,
-            audit_hash
-        ))
+        return send_signed_transaction(self.__config,
+                                       self.__config.audit_contract.functions.submitReport(
+                                           request_id,
+                                           audit_state,
+                                           audit_uri,
+                                           audit_hash
+                                       ))
 
     def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
         result = {
