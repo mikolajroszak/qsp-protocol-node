@@ -52,7 +52,7 @@ class ConfigUtils:
             "Unknown/Unsupported provider: {0}".format(report_uploader_provider_name))
 
     def create_logging_streaming_provider(self, logging_streaming_provider_name,
-                                          logging_streaming_provider_args):
+                                          logging_streaming_provider_args, account):
         """
         Creates a logging streaming provider.
         """
@@ -61,7 +61,7 @@ class ConfigUtils:
         # CloudWatchProvider
 
         if logging_streaming_provider_name == "CloudWatchProvider":
-            return CloudWatchProvider(**logging_streaming_provider_args)
+            return CloudWatchProvider(account, **logging_streaming_provider_args)
 
         raise ConfigurationException(
             "Unknown/Unsupported provider: {0}".format(logging_streaming_provider_name))
@@ -141,7 +141,7 @@ class ConfigUtils:
         return web3_client, new_account, new_private_key
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                          logging_streaming_provider_args):
+                          logging_streaming_provider_args, account):
         if logging_is_verbose:
             config.configure_basic_logging(verbose=True)
         logger = structlog.getLogger("audit")
@@ -149,7 +149,8 @@ class ConfigUtils:
         if logging_streaming_provider_name is not None:
             logging_streaming_provider = \
                 self.create_logging_streaming_provider(logging_streaming_provider_name,
-                                                       logging_streaming_provider_args)
+                                                       logging_streaming_provider_args,
+                                                       account)
             logger.addHandler(logging_streaming_provider.get_handler())
         return logger, logging_streaming_provider
 

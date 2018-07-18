@@ -63,7 +63,8 @@ class TestConfigUtil(unittest.TestCase):
         streaming_provider_args = {'log_group': 'grp', 'log_stream': 'stream',
                                    'send_interval_seconds': 10}
         result = self.config_utils.create_logging_streaming_provider(streaming_provider_name,
-                                                                     streaming_provider_args)
+                                                                     streaming_provider_args,
+                                                                     '0x12345')
         self.assertTrue(isinstance(result, CloudWatchProvider),
                         "The created provider is not a CloudWatchProvider")
 
@@ -76,7 +77,8 @@ class TestConfigUtil(unittest.TestCase):
                                    'send_interval_seconds': 10}
         try:
             self.config_utils.create_logging_streaming_provider(streaming_provider_name,
-                                                                streaming_provider_args)
+                                                                streaming_provider_args,
+                                                                '0x12345')
             self.fail("Succeeded to create streaming provider without proper provider name.")
         except ConfigurationException:
             # expected
@@ -86,10 +88,11 @@ class TestConfigUtil(unittest.TestCase):
         """
         Tests that logging can be configured properly without throwing exceptions.
         """
-        self.config_utils.configure_logging(True, None, {})
-        self.config_utils.configure_logging(False, None, {})
+        account = "0x12345"
+        self.config_utils.configure_logging(True, None, {}, account)
+        self.config_utils.configure_logging(False, None, {}, account)
         args = {'log_group': 'grp', 'log_stream': 'stream', 'send_interval_seconds': 10}
-        self.config_utils.configure_logging(True, "CloudWatchProvider", args)
+        self.config_utils.configure_logging(True, "CloudWatchProvider", args, account)
 
     def test_raise_error(self):
         """

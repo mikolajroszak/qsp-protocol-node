@@ -61,12 +61,12 @@ class ConfigUtilsMock:
         return self.call('create_eth_provider', arguments_to_check, locals())
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                          logging_streaming_provider_args):
+                          logging_streaming_provider_args, account):
         """
         A stub for configure_logging method.
         """
         arguments_to_check = ['logging_is_verbose', 'logging_streaming_provider_name',
-                              'logging_streaming_provider_args']
+                              'logging_streaming_provider_args', 'account']
         return self.call('configure_logging', arguments_to_check, locals())
 
     def create_analyzers(self, analyzers_config, logger):
@@ -232,14 +232,16 @@ class TestConfig(unittest.TestCase):
         args = "arguments"
         return_value = "value"
         verbose = False
+        account = "0x12345"
         config = ConfigFactory.create_empty_config()
         config._Config__logging_is_verbose = verbose
         config._Config__logging_streaming_provider_name = name
         config._Config__logging_streaming_provider_args = args
+        config._Config__account = account
         utils = ConfigUtilsMock()
         utils.expect('configure_logging',
                      {'logging_is_verbose': verbose, 'logging_streaming_provider_name': name,
-                      'logging_streaming_provider_args': args},
+                      'logging_streaming_provider_args': args, 'account': account},
                      return_value)
         result = config._Config__configure_logging(utils)
         self.assertEqual(return_value, result)
@@ -334,6 +336,7 @@ class TestConfig(unittest.TestCase):
         account_passwd = "account password"
         account_keystore_file = "./mykey.json"
         new_private_key = "abcdefg"
+        account = "0x12345"
         analyzers_config = "config list"
         created_analyzers = "analyzers"
         report_uploader_provider_name = "uploader provider name"
@@ -361,7 +364,7 @@ class TestConfig(unittest.TestCase):
         utils = ConfigUtilsMock()
         utils.expect('configure_logging',
                      {'logging_is_verbose': verbose, 'logging_streaming_provider_name': logging_provider_name,
-                      'logging_streaming_provider_args': logging_provider_args},
+                      'logging_streaming_provider_args': logging_provider_args, 'account': account},
                      (logger, streaming_provider))
         utils.expect('check_audit_contract_settings',
                      {'config': config},

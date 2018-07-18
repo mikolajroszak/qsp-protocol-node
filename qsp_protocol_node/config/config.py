@@ -126,7 +126,7 @@ class Config:
         Configures and logging and creates a logger and logging streaming provider.
         """
         return config_utils.configure_logging(self.logging_is_verbose, self.logging_streaming_provider_name,
-                                              self.logging_streaming_provider_args)
+                                              self.logging_streaming_provider_args, self.account)
 
     def __create_components(self, config_utils, validate_contract_settings=True):
         # Setup followed by verification
