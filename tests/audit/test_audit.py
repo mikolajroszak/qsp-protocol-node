@@ -169,13 +169,15 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_READY).transact(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+                self.__AVAILABLE_AUDIT__STATE_READY).transact(
                 {"from": self.__config.account})
         )
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
         self.__audit_node._QSPAuditNode__check_then_request_audit_request()
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+                self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
                 {"from": self.__config.account})
         )
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
@@ -194,7 +196,8 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__requestAudit(buggy_contract, self.__PRICE)
         )
         auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
-        evt = {'args': {'auditor': auditor_id, 'requestId': 1, 'price': self.__PRICE, 'requestor': auditor_id, 'uri': buggy_contract}, 'blockNumber': 1}
+        evt = {'args': {'auditor': auditor_id, 'requestId': 1, 'price': self.__PRICE,
+                        'requestor': auditor_id, 'uri': buggy_contract}, 'blockNumber': 1}
         self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
         sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
         row = get_first(sql3lite_worker.execute("select * from audit_evt"))
@@ -244,12 +247,14 @@ class TestQSPAuditNode(unittest.TestCase):
         self.evt_wait_loop(self.__submitReport_filter)
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendDoneMessage(self.__REQUEST_ID))
 
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS,
                                     "reports/DAOBug.json")
+        self.__assert_all_analyzers(self.__REQUEST_ID)
 
     @timeout(80, timeout_exception=StopIteration)
     def test_contract_audit_request_not_in_db(self):
@@ -286,6 +291,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS,
                                     "reports/DAOBug.json")
+        self.__assert_all_analyzers(self.__REQUEST_ID)
 
     @timeout(80, timeout_exception=StopIteration)
     def test_buggy_contract_audit_request(self):
@@ -303,7 +309,8 @@ class TestQSPAuditNode(unittest.TestCase):
         self.evt_wait_loop(self.__submitReport_filter)
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendDoneMessage(self.__REQUEST_ID))
 
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
@@ -326,7 +333,8 @@ class TestQSPAuditNode(unittest.TestCase):
         self.evt_wait_loop(self.__submitReport_filter)
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendDoneMessage(self.__REQUEST_ID))
 
         self.__setAssignedRequestCount(0)
 
@@ -377,7 +385,8 @@ class TestQSPAuditNode(unittest.TestCase):
 
         # Make sure there anyAvailableRequest returns ready state
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_READY).transact(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+                self.__AVAILABLE_AUDIT__STATE_READY).transact(
                 {"from": self.__config.account})
         )
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
@@ -452,7 +461,7 @@ class TestQSPAuditNode(unittest.TestCase):
                         expected_json,
                         exclude_paths={
                             "root['contract_uri']",
-                        # path is different depending on whether running inside Docker
+                            # path is different depending on whether running inside Docker
                             "root['timestamp']",
                             "root['start_time']",
                             "root['end_time']",
@@ -474,6 +483,31 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(ntpath.basename(actual_json['contract_uri']),
                          ntpath.basename(expected_json['contract_uri']))
 
+    def __assert_all_analyzers(self, request_id):
+        """
+        Asserts that all configured analyzers were executed and are included in the report.
+        """
+        sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
+
+        # Busy waits on receiving events up to the configured
+        # timeout (60s)
+        row = None
+        while True:
+            row = get_first(
+                sql3lite_worker.execute("select * from audit_evt where fk_status = 'DN'"))
+            if row != {} and row['request_id'] == request_id:
+                break
+            else:
+                sleep(1)
+
+        audit_uri = row['audit_uri']
+        audit_file = fetch_file(audit_uri)
+        actual_json = load_json(audit_file)
+        executed_analyzers = [x['analyzer']['name'] for x in actual_json['analyzers_reports']]
+        for analyzer in self.__config.analyzers_config:
+            name, conf = list(analyzer.items())[0]
+            self.assertTrue(name in executed_analyzers)
+
     def evt_wait_loop(self, current_filter):
         wait = True
         while wait:
@@ -488,7 +522,8 @@ class TestQSPAuditNode(unittest.TestCase):
         Emulates requesting for a new audit.
         """
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_READY).transact(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+                self.__AVAILABLE_AUDIT__STATE_READY).transact(
                 {"from": self.__config.account})
         )
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
@@ -496,7 +531,8 @@ class TestQSPAuditNode(unittest.TestCase):
         self.evt_wait_loop(self.__getNextAuditRequest_filter)
 
         self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__config.audit_contract.functions.setAnyRequestAvailableResult(self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+                self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
                 {"from": self.__config.account})
         )
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
@@ -533,8 +569,9 @@ class TestQSPAuditNode(unittest.TestCase):
             0).transact({"from": self.__config.account})
 
     def __setAssignedRequestCount(self, num):
-        return self.__config.audit_contract.functions.setAssignedRequestCount(self.__config.account, num).transact(
-                {"from": self.__config.account})
+        return self.__config.audit_contract.functions.setAssignedRequestCount(self.__config.account,
+                                                                              num).transact(
+            {"from": self.__config.account})
 
     def __assignAudit(self, request_id, uri, price, timestamp):
         return self.__config.audit_contract.functions.emitLogAuditAssigned(request_id,
