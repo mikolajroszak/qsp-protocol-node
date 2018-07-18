@@ -495,7 +495,8 @@ class QSPAuditNode:
             analyzer = self.__config.analyzers[analyzer_id]
             metadata = analyzer.get_metadata(target_contract, request_id, original_filename)
             # in case of time out, declare the metadata as the report now
-            analyzers_reports[analyzer_id] = metadata
+            str_metadata = json.dumps(metadata)
+            analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
             result = analyzer.check(target_contract, request_id, original_filename)
             report = {**metadata, **result}
             str_report = json.dumps(report)
