@@ -20,10 +20,14 @@ class ConfigStub:
     TODO(mderka): Replace this with real config class when it become available in later PRs
     """
 
-    def __init__(self, abi, abi_uri, contract_address):
+    def __init__(self, abi, abi_uri, contract_address,
+                 submission_timeout_limit_blocks=10,
+                 start_n_blocks_in_the_past=5):
         self.has_audit_contract_abi = abi
         self.audit_contract_abi_uri = abi_uri
         self.audit_contract_address = contract_address
+        self.submission_timeout_limit_blocks = submission_timeout_limit_blocks
+        self.start_n_blocks_in_the_past = start_n_blocks_in_the_past
 
 
 class TestConfigUtil(unittest.TestCase):
@@ -130,6 +134,13 @@ class TestConfigUtil(unittest.TestCase):
         try:
             self.config_utils.check_audit_contract_settings(none)
             self.fail("Neither ABI is not present but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStub(True, True, True, 10, 20)
+        try:
+            self.config_utils.check_audit_contract_settings(abi_faulty)
+            self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass

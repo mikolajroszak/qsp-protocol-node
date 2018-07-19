@@ -129,10 +129,12 @@ class QSPAuditNode:
             self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
 
-        # If no block has currently been processed, start from zero
+        # If no block has currently been processed, start from the current block
+        # Note: this default behavior will prevent the node from finding existing audit transactions
         start_block = self.__config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
-            start_block = self.__config.web3_client.eth.blockNumber
+            # the database is empty
+            start_block = max(0, self.__config.web3_client.eth.blockNumber - self.__config.start_n_blocks_in_the_past)
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
