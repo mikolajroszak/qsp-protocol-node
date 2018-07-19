@@ -521,10 +521,19 @@ class QSPAuditNode:
 
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
+            metadata = analyzer.get_metadata(target_contract, request_id, original_filename)
+            # in case of time out, declare the metadata as the report now
+            str_metadata = json.dumps(metadata)
+            analyzers_reports_locks[analyzer_id].acquire()
+            shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
+            analyzers_reports_locks[analyzer_id].release()
             result = analyzer.check(target_contract, request_id, original_filename)
+            report = {**metadata, **result}
+            str_report = json.dumps(report)
+            report['hash'] = digest(str_report)
             # Make sure no race-condition between the wrappers and the current thread
             analyzers_reports_locks[analyzer_id].acquire()
-            shared_analyzers_reports[analyzer_id] = result
+            shared_analyzers_reports[analyzer_id] = report
             analyzers_reports_locks[analyzer_id].release()
 
         analyzers_threads = []
@@ -565,9 +574,7 @@ class QSPAuditNode:
             # If thread is still alive, it means a timeout has
             # occurred
             if analyzers_threads[i].is_alive():
-                # An empty dictionary exists by default for the given
-                # timed out analyzers
-
+                # In case of time out, the metadata should exist as the report, unless that somehow failed too
                 analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
                 local_analyzers_reports[i]['analyzer'] = analyzer_name
                 local_analyzers_reports[i]['errors'] = [
@@ -621,13 +628,6 @@ class QSPAuditNode:
 
             if analyzer_report['status'] == 'error':
                 audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
-
-            # FIXME
-            # The audit receives a report, which among other things, receives metadata from the wrapper plugin.
-            # The issue, however, is that if the wrapper fails, this metadata is never returned. To account for this case,
-            # there has to be a declaration file somewhere stating this metadata. The audit node, in turn, would fetch it
-            # and always make it part of the final report, even in the case of a fatal error.
-            # https://quantstamp.atlassian.net/browse/QSP-469
 
         audit_report['audit_state'] = audit_state
 
