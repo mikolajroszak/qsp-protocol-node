@@ -2,11 +2,13 @@
 Provides the QSP Audit node implementation.
 """
 import calendar
+import copy
 import json
+import os
+import threading
 import time
 import traceback
 import urllib.parse
-import os
 
 from time import sleep
 from utils.io import (
@@ -94,6 +96,7 @@ class QSPAuditNode:
         """
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
+
         def exec():
             current_block = 0
             while self.__exec:
@@ -180,8 +183,9 @@ class QSPAuditNode:
             pending_requests_count = self.__config.audit_contract.functions.assignedRequestCount(
                 self.__config.account).call()
             if pending_requests_count >= self.__config.max_assigned_requests:
-                self.__logger.debug("Skip bidding the request as currently processing {0} requests".format(
-                    str(pending_requests_count)))
+                self.__logger.debug(
+                    "Skip bidding the request as currently processing {0} requests".format(
+                        str(pending_requests_count)))
                 return
 
             any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call()
@@ -189,7 +193,9 @@ class QSPAuditNode:
                 self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
             else:
-                self.__logger.debug("No request were available as the contract returned {0}.".format(str(any_request_available)))
+                self.__logger.debug(
+                    "No request were available as the contract returned {0}.".format(
+                        str(any_request_available)))
         except Exception as error:
             self.__logger.exception(
                 "Error when calling to get a review {0}".format(str(error))
@@ -478,6 +484,23 @@ class QSPAuditNode:
         if not upload_result['success']:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
+        parse_uri = urllib.parse.urlparse(uri)
+        original_filename = os.path.basename(parse_uri.path)
+        contract_upload_result = self.__config.report_uploader.upload_contract(request_id,
+                                                                               target_contract,
+                                                                               original_filename)
+        if not contract_upload_result['success']:
+            self.__logger.info(
+                "Contract upload result: {0}".format(contract_upload_result),
+                requestId=request_id,
+            )
+        else:
+            # We just log on error, not raise an exception
+            self.__logger.error(
+                "Contract upload result: {0}".format(contract_upload_result),
+                requestId=request_id,
+            )
+
         return {
             'audit_state': audit_report['audit_state'],
             'audit_uri': upload_result['url'],
@@ -487,21 +510,31 @@ class QSPAuditNode:
     def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
 
         number_of_analyzers = len(self.__config.analyzers)
-        analyzers_reports = [{}] * number_of_analyzers
+        # This array is shared between the current thread and wrappers
+        shared_analyzers_reports = [{}] * number_of_analyzers
         parse_uri = urllib.parse.urlparse(uri)
         original_filename = os.path.basename(parse_uri.path)
+
+        analyzers_reports_locks = []
+        for i in range(0, number_of_analyzers):
+            analyzers_reports_locks.append(threading.RLock())
 
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
             metadata = analyzer.get_metadata(target_contract, request_id, original_filename)
             # in case of time out, declare the metadata as the report now
             str_metadata = json.dumps(metadata)
-            analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
+            analyzers_reports_locks[analyzer_id].acquire()
+            shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
+            analyzers_reports_locks[analyzer_id].release()
             result = analyzer.check(target_contract, request_id, original_filename)
             report = {**metadata, **result}
             str_report = json.dumps(report)
             report['hash'] = digest(str_report)
-            analyzers_reports[analyzer_id] = report
+            # Make sure no race-condition between the wrappers and the current thread
+            analyzers_reports_locks[analyzer_id].acquire()
+            shared_analyzers_reports[analyzer_id] = report
+            analyzers_reports_locks[analyzer_id].release()
 
         analyzers_threads = []
         analyzers_timeouts = []
@@ -511,39 +544,51 @@ class QSPAuditNode:
         for i, analyzer in enumerate(self.__config.analyzers):
             analyzer_thread = Thread(target=check_contract, args=[i])
             analyzers_threads.append(analyzer_thread)
-            analyzers_timeouts.append(analyzer.wrapper.timeout_sec)
+            analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
+            timeout_sec = int(self.__config.analyzers_config[i][analyzer_name]['timeout_sec'])
+            analyzers_timeouts.append(timeout_sec)
 
             start_time = calendar.timegm(time.gmtime())
             analyzers_start_times.append(start_time)
             analyzer_thread.start()
 
+        # This array should only be accessible from the current thread
+        local_analyzers_reports = [{}] * number_of_analyzers
+
         for i in range(0, number_of_analyzers):
             analyzers_threads[i].join(analyzers_timeouts[i])
+
+            # Make sure there is no race condition between the current thread
+            # and wrapper thread in overwriting on analyzers_reports
+            analyzers_reports_locks[i].acquire()
+            local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
+            analyzers_reports_locks[i].release()
 
             # NOTE
             # Due to timeout issues, one has to account for start/end
             # times at this point, rather than the wrapper itself
 
             start_time = analyzers_start_times[i]
-            analyzers_reports[i]['start_time'] = start_time
+            local_analyzers_reports[i]['start_time'] = start_time
 
             # If thread is still alive, it means a timeout has
             # occurred
             if analyzers_threads[i].is_alive():
                 # In case of time out, the metadata should exist as the report, unless that somehow failed too
                 analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-                analyzers_reports[i]['analyzer'] = analyzer_name
-                analyzers_reports[i]['errors'] = [
+                local_analyzers_reports[i]['analyzer'] = analyzer_name
+                local_analyzers_reports[i]['errors'] = [
                     "Time out occurred. Could not finish {0} within {1} seconds".format(
                         analyzer_name,
-                        self.__config.analyzers[i].timeout_sec,
+                        self.config.analyzers[i].wrapper.timeout_sec,
                     )
                 ]
-                analyzers_reports[i]['status'] = 'error'
+
+                local_analyzers_reports[i]['status'] = 'error'
             else:
                 # A timeout has not occurred. Register the end time
                 end_time = calendar.timegm(time.gmtime())
-                analyzers_reports[i]['end_time'] = end_time
+                local_analyzers_reports[i]['end_time'] = end_time
 
         audit_report = {
             'timestamp': calendar.timegm(time.gmtime()),
@@ -560,7 +605,8 @@ class QSPAuditNode:
         # successful or not. Either it is fully successful (all analyzer produce a result),
         # or fails otherwise.
         audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
-        for i, analyzer_report in enumerate(analyzers_reports):
+
+        for i, analyzer_report in enumerate(local_analyzers_reports):
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
 
             # The next two fail safe checks should never kick in
@@ -585,8 +631,8 @@ class QSPAuditNode:
 
         audit_report['audit_state'] = audit_state
 
-        if len(analyzers_reports) > 0:
-            audit_report['analyzers_reports'] = analyzers_reports
+        if len(local_analyzers_reports) > 0:
+            audit_report['analyzers_reports'] = local_analyzers_reports
 
         return audit_report
 
@@ -594,18 +640,20 @@ class QSPAuditNode:
         """
         Attempts to get a request from the audit request queue.
         """
-        return send_signed_transaction(self.__config, self.__config.audit_contract.functions.getNextAuditRequest())
+        return send_signed_transaction(self.__config,
+                                       self.__config.audit_contract.functions.getNextAuditRequest())
 
     def __submit_report(self, request_id, audit_state, audit_uri, audit_hash):
         """
         Submits the audit report to the entire QSP network.
         """
-        return send_signed_transaction(self.__config, self.__config.audit_contract.functions.submitReport(
-            request_id,
-            audit_state,
-            audit_uri,
-            audit_hash
-        ))
+        return send_signed_transaction(self.__config,
+                                       self.__config.audit_contract.functions.submitReport(
+                                           request_id,
+                                           audit_state,
+                                           audit_uri,
+                                           audit_hash
+                                       ))
 
     def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
         result = {
