@@ -6,6 +6,7 @@ import utils.io as io_utils
 
 from os.path import expanduser
 from dpath.util import get
+
 from evt import EventPoolManager
 from utils.eth import (
     mk_checksum_address,
