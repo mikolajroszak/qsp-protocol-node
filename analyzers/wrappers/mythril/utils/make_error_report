@@ -23,7 +23,7 @@ def main(argv):
     warnings = []
     try:
         if len(argv) != 2:
-            raise Exception("Missing argumet error. Usage: mk_error <errros file>")
+            raise Exception("Missing argument error. Usage: mk_error <errors file>")
         with open(argv[1]) as errors_file:
             errors = [error for error in errors_file]
 

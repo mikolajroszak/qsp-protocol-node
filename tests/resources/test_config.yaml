@@ -21,5 +21,7 @@ local:
       provider: !!str "S3Provider"
       args:
             bucket_name: "qsp-protocol-reports-dev"
+            contract_bucket_name: "qsp-protocol-reports-dev"
   #account: No provided account hex (use the first one by default)
   evt_db_path: "/tmp/evts.test"
+  start_n_blocks_in_the_past: !!int 25

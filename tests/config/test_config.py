@@ -321,6 +321,7 @@ class TestConfig(unittest.TestCase):
         self.assertFalse(config.logging_is_verbose)
         self.assertIsNone(config.logging_streaming_provider_name)
         self.assertIsNone(config.logging_streaming_provider_args)
+        self.assertEqual(0, config.start_n_blocks_in_the_past)
 
     def test_create_components(self):
         logging_provider_name = "provider name"
@@ -412,6 +413,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, config.gas_price_wei)
         self.assertEqual(5, config.evt_polling)
         self.assertEqual(2, len(config.analyzers))
+        self.assertEqual(25, config.start_n_blocks_in_the_past)
 
 
 if __name__ == '__main__':

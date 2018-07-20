@@ -166,9 +166,9 @@ class ConfigUtils:
 
     def check_audit_contract_settings(self, config):
         """
-        Checks the contact configuration values provided in the YAML configuration file. The
-        contract ABI and source code are mutually exclusive, but one has to be provided.
+        Checks the configuration values provided in the YAML configuration file.
         """
+        # The contract ABI and source code are mutually exclusive, but one has to be provided.
         if config.has_audit_contract_abi:
             has_uri = bool(config.audit_contract_abi_uri)
             has_addr = bool(config.audit_contract_address)
@@ -177,6 +177,8 @@ class ConfigUtils:
                                   )
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
+        # start_n_blocks_in_the_past should never exceed the submission timeout
+        ConfigUtils.raise_err(config.start_n_blocks_in_the_past > config.submission_timeout_limit_blocks)
 
     def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
         """
