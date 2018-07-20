@@ -36,12 +36,6 @@
       "host": {
         "sourcePath": "/var/run/docker.sock"
       }
-    },
-    {
-      "name": "node-key",
-      "host": {
-        "sourcePath": "/var/.node.key"
-      }
     }
   ],
   "containerDefinitions": [
@@ -58,10 +52,6 @@
         {
           "sourceVolume": "audit-db",
           "containerPath": "/app/audit-db"
-        },
-        {
-          "sourceVolume": "node-key",
-          "containerPath": "/app/.node.key"
         },
         {
           "sourceVolume": "docker-sock",
