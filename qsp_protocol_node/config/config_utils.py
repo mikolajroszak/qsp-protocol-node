@@ -102,12 +102,12 @@ class ConfigUtils:
                 web3_client.eth.accounts
                 connected = True
                 self.__logger.debug("Connected on attempt {0}".format(attempts))
-            except Exception:
+            except Exception as e:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
                 self.__logger.debug(
-                    "Connection attempt ({0}) failed. Retrying in 10 seconds".format(attempts))
+                    "Connection attempt ({0}) failed due to {1}. Retrying in 10 seconds".format(attempts, str(e)))
                 sleep(10)
 
         if not connected:

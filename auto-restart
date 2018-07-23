@@ -1,6 +1,6 @@
 #!/bin/bash
 
-QSP_NODE="python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py"
+QSP_NODE="make run"
 
 # Must be kept in synch with the return codes given in 
 # qsp_protocol_node/qsp_protocol_node.py.
@@ -10,7 +10,6 @@ ERR_EXCEPTION="1"
 ERR_INVALID_ARGS="2"
 
 # Invokes the audit node.
-date
 $QSP_NODE $@
 
 # Stores the exit code of invoking the audit node.

@@ -1,9 +1,16 @@
 # qsp-protocol-node
 
-![Build status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoib0RlSkZ0M0I5aGZVKzNYS2lyWnFaaEhJTlR0ZlpSTHU5YkwxbUFYQS8zY1AwZTVwQ0Y2cGJqTHA0ZllHMzhhMlpvV1lYdlJweWcwZ2MyQWpXUS9UYWJjPSIsIml2UGFyYW1ldGVyU3BlYyI6IitaMjBqcUVneSt6MlZmWVUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop)
+![Build status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiZDlrWUpGTmt1Y0RsdXpvbVdOdHhNUlVxWjlkYnd3VXBsbDBhRXc0RGg0S2FCOEpxaTBhbHpGRDRjSm5OTDE1S0laQnViU1JTVW1ZODJ5NUMxSHdnTzc0PSIsIml2UGFyYW1ldGVyU3BlYyI6IlpIRFRacVlPcUF3S1EybmoiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop)
 
 Implements the QSP audit node in the Quantstamp network.
 
+## Run a QSP node locally
+
+- To run the latest containerized version hosted on Quantstamp's private Docker repository,
+go to `deployment/local` and follow the steps in the dedicated [README](deployment/local/README.md).
+
+- To build and run the node from the source code, scroll down to `Run in regular mode`
+and `Run in container mode` in the current README.
 
 ## Development setup
 

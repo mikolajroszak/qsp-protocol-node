@@ -8,6 +8,9 @@ ETH_PASSPHRASE ?= \"\"
 run: # printing "date" is important due to the logic CloudWatch uses to distinguish log files
 	date; python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(ETH_PASSPHRASE)" $(ENV) $(CONFIG)
 
+run-with-auto-restart:
+	./auto-restart
+
 setup:
 	pyenv uninstall -f 3.6.4 ; \
 	ln -s -f $(shell git rev-parse --show-toplevel)/pre-commit $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \
