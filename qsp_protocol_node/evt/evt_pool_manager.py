@@ -103,11 +103,11 @@ class EventPoolManager:
         row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_latest_request_id'))
         return EventPoolManager.__decode(row).get('request_id')
 
-    def add_evt_to_be_processed(self, evt):
+    def add_evt_to_be_assigned(self, evt):
         encoded_evt = EventPoolManager.__encode(evt)
         EventPoolManager.__exec_sql(
             self.__sqlworker,
-            'add_evt_to_be_processed',
+            'add_evt_to_be_assigned',
             values=(
                 encoded_evt['request_id'],
                 encoded_evt['requestor'],
@@ -151,14 +151,6 @@ class EventPoolManager:
             'get_events_to_be_monitored',
             monitor_fct,
             fct_kwargs=kw_args,
-        )
-
-    def set_evt_to_assigned(self, evt):
-        encoded_evt = EventPoolManager.__encode(evt)
-        EventPoolManager.__exec_sql(
-            self.__sqlworker,
-            'set_evt_to_assigned',
-            (encoded_evt['evt_name'], encoded_evt['status_info'], encoded_evt['request_id'],),
         )
 
     def set_evt_to_be_submitted(self, evt):

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Imports common definitions
+source "$WRAPPER_HOME"/utils/common
+
+CONTRACT_FILENAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
+
+ANALYZER_VULNERABILITIES="$WRAPPER_HOME"/resources/vulnerabilities
+ANALYZER_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':' -f2)
+ANALYZER_CMD="docker run -v \"$TMP_FOLDER\":/shared/ -i \"$DOCKER_IMAGE\" -o json -x \"/shared/$CONTRACT_FILENAME\""
+
+echo "mythril"
+echo ${ANALYZER_VERSION}
+echo ${ANALYZER_CMD}
+cat ${ANALYZER_VULNERABILITIES} | awk -F= '{print $2}'

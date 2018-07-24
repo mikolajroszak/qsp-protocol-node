@@ -40,7 +40,7 @@ class TestAnalyzerMythril(unittest.TestCase):
 
         buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
         request_id = 15
-        report = analyzer.check(buggy_contract, request_id)
+        report = analyzer.check(buggy_contract, request_id, "DAOBug.sol")
 
         # Asserts some result produced
         self.assertTrue(report)
@@ -62,7 +62,7 @@ class TestAnalyzerMythril(unittest.TestCase):
         no_file = str(random()) + ".sol"
         analyzer = TestAnalyzerMythril.__new_analyzer()
         request_id = 15
-        report = analyzer.check(no_file, request_id)
+        report = analyzer.check(no_file, request_id, no_file)
 
         self.assertTrue(report['status'], 'error')
         self.assertTrue(1, len(report['errors']))
@@ -77,7 +77,7 @@ class TestAnalyzerMythril(unittest.TestCase):
         old_contract = fetch_file(resource_uri("DAOBugOld.sol"))
         analyzer = TestAnalyzerMythril.__new_analyzer()
         request_id = 15
-        report = analyzer.check(old_contract, request_id)
+        report = analyzer.check(old_contract, request_id, "DAOBugOld.sol")
 
         self.assertTrue(report['status'], 'error')
         self.assertTrue(1, len(report['errors']))
@@ -92,7 +92,7 @@ class TestAnalyzerMythril(unittest.TestCase):
         old_contract = fetch_file(resource_uri("DAOBugOld-Caret.sol"))
         analyzer = TestAnalyzerMythril.__new_analyzer()
         request_id = 15
-        report = analyzer.check(old_contract, request_id)
+        report = analyzer.check(old_contract, request_id, "DAOBugOld-Caret.sol")
 
         self.assertTrue(report['status'], 'success')
         self.assertEquals(3, len(report['potential_vulnerabilities']))

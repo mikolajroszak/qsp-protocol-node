@@ -2,28 +2,29 @@
 Provides the QSP Audit node implementation.
 """
 import calendar
+import copy
 import json
+import os
+import threading
 import time
 import traceback
+import urllib.parse
 
-from queue import Queue
-from datetime import datetime
-from tempfile import mkstemp
 from time import sleep
-from hashlib import sha256
 from utils.io import (
     fetch_file,
     digest,
     digest_file,
 )
-from utils.eth import mk_args
+from utils.eth import send_signed_transaction
 
 from threading import Thread
 from utils.metrics import MetricCollector
+from solc import compile_standard
+from solc.exceptions import ContractsNotFound, SolcError
 
 
 class QSPAuditNode:
-    __EVT_AUDIT_REQUESTED = "LogAuditRequested"
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
 
@@ -34,6 +35,10 @@ class QSPAuditNode:
     # must be in sync with
     # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
     __AUDIT_STATE_ERROR = 5
+
+    # must be in sync with
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L80
+    __AVAILABLE_AUDIT__STATE_READY = 1
 
     __PROTOCOL_VERSION = '1.0'
 
@@ -71,16 +76,40 @@ class QSPAuditNode:
 
     def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler):
         def exec():
-            while self.__exec:
-                for evt in evt_filter.get_new_entries():
-                    evt_handler(evt)
+            try:
+                while self.__exec:
+                    for evt in evt_filter.get_new_entries():
+                        evt_handler(evt)
 
-                sleep(self.__config.evt_polling)
+                    sleep(self.__config.evt_polling)
+            except Exception as error:
+                self.__logger.exception(
+                    "Error in the audit event thread {0}: {1}".format(evt_name, str(error)))
+                raise error
 
         evt_thread = Thread(target=exec, name="{0} thread".format(evt_name))
         evt_thread.start()
 
         return evt_thread
+
+    def __run_block_mined_thread(self, handler_name, handler):
+        """
+        Checks if a new block is mined. Reacting to a new block the handler is called.
+        """
+
+        def exec():
+            current_block = 0
+            while self.__exec:
+                sleep(self.__config.block_mined_polling)
+                if current_block < self.__config.web3_client.eth.blockNumber:
+                    current_block = self.__config.web3_client.eth.blockNumber
+                    self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
+                    handler()
+
+        new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
+        new_block_monitor_thread.start()
+
+        return new_block_monitor_thread
 
     @property
     def config(self):
@@ -100,18 +129,18 @@ class QSPAuditNode:
             self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
 
-        # If no block has currently been processed, start from zero
+        # If no block has currently been processed, start from the current block
+        # Note: this default behavior will prevent the node from finding existing audit transactions
         start_block = self.__config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
-            start_block = self.__config.web3_client.eth.blockNumber
+            # the database is empty
+            start_block = max(0, self.__config.web3_client.eth.blockNumber - self.__config.start_n_blocks_in_the_past)
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
-        self.__internal_threads.append(self.__run_audit_evt_thread(
-            QSPAuditNode.__EVT_AUDIT_REQUESTED,
-            self.__config.audit_contract.events.LogAuditRequested.createFilter(
-                fromBlock=start_block),
-            self.__on_audit_requested,
+        self.__internal_threads.append(self.__run_block_mined_thread(
+            "check_available_requests",
+            self.__check_then_request_audit_request
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_AUDIT_ASSIGNED,
@@ -148,49 +177,30 @@ class QSPAuditNode:
 
             sleep(health_check_interval_sec)
 
-    def __on_audit_requested(self, evt):
+    def __check_then_request_audit_request(self):
         """
-        Bids for an audit upon an audit request event.
+        Checks first an audit is assignable; then, bids to get an audit request.
         """
-        request_id = None
         try:
-            # Bids for audit requests whose reward is at least as
-            # high as given by the configured min_price
-            price = evt['args']['price']
-            request_id = str(evt['args']['requestId'])
-
-            if price >= self.__config.min_price:
+            pending_requests_count = self.__config.audit_contract.functions.assignedRequestCount(
+                self.__config.account).call()
+            if pending_requests_count >= self.__config.max_assigned_requests:
                 self.__logger.debug(
-                    "Accepted processing audit event: {0}. Bidding for it (if not already done so)".format(
-                        str(evt)), requestId=request_id)
-                audit_evt = {
-                    'request_id': request_id,
-                    'requestor': str(evt['args']['requestor']),
-                    'contract_uri': str(evt['args']['uri']),
-                    'evt_name': QSPAuditNode.__EVT_AUDIT_REQUESTED,
-                    'block_nbr': evt['blockNumber'],
-                    'status_info': "Audit requested",
-                    'price': str(evt['args']['price']),
-                }
-                self.__config.event_pool_manager.add_evt_to_be_processed(
-                    audit_evt
-                )
+                    "Skip bidding the request as currently processing {0} requests".format(
+                        str(pending_requests_count)))
+                return
+
+            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call()
+            if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
+                self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
             else:
                 self.__logger.debug(
-                    "Declining processing audit request: {0}. Not enough incentive".format(
-                        str(evt)
-                    ),
-                    requestId=request_id,
-                )
-        except KeyError as error:
-            self.__logger.exception(
-                "KeyError when processing audit request event: {0}".format(str(error))
-            )
+                    "No request were available as the contract returned {0}.".format(
+                        str(any_request_available)))
         except Exception as error:
             self.__logger.exception(
-                "Error when processing audit request event {0}: {1}".format(str(evt), str(error)),
-                requestId=request_id,
+                "Error when calling to get a review {0}".format(str(error))
             )
 
     def __on_audit_assigned(self, evt):
@@ -198,7 +208,7 @@ class QSPAuditNode:
         try:
             request_id = str(evt['args']['requestId'])
             target_auditor = evt['args']['auditor']
-            # TODO: sanity check that the audit request is already in the DB
+
             # If an audit request is not targeted to the
             # running audit node, just disconsider it
             if target_auditor.lower() != self.__config.account.lower():
@@ -217,13 +227,18 @@ class QSPAuditNode:
                 requestId=request_id,
             )
 
+            price = evt['args']['price']
+            request_id = str(evt['args']['requestId'])
             audit_evt = {
                 'request_id': request_id,
+                'requestor': str(evt['args']['requestor']),
+                'contract_uri': str(evt['args']['uri']),
                 'evt_name': QSPAuditNode.__EVT_AUDIT_ASSIGNED,
+                'block_nbr': evt['blockNumber'],
                 'status_info': "Audit Assigned",
+                'price': str(price),
             }
-
-            self.__config.event_pool_manager.set_evt_to_assigned(
+            self.__config.event_pool_manager.add_evt_to_be_assigned(
                 audit_evt
             )
         except KeyError as error:
@@ -235,6 +250,7 @@ class QSPAuditNode:
                 "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
+            self.__config.event_pool_manager.set_evt_to_error(evt)
 
     def __run_perform_audit_thread(self):
         def process_audit_request(evt):
@@ -384,15 +400,18 @@ class QSPAuditNode:
                     "Unexpected error when monitoring timeout: {0}".format(error))
 
         def exec():
-            while self.__exec:
-                # Checks for a potential timeouts
-                block = self.__config.web3_client.eth.blockNumber
-                self.__config.event_pool_manager.process_submission_events(
-                    monitor_submission_timeout,
-                    block,
-                )
+            try:
+                while self.__exec:
+                    # Checks for a potential timeouts
+                    block = self.__config.web3_client.eth.blockNumber
+                    self.__config.event_pool_manager.process_submission_events(
+                        monitor_submission_timeout,
+                        block,
+                    )
 
-                sleep(self.__config.evt_polling)
+                    sleep(self.__config.evt_polling)
+            except Exception as error:
+                self.__logger.exception("Error in the monitor thread: {0}".format(str(error)))
 
         monitor_thread = Thread(target=exec, name="monitor thread")
         self.__internal_threads.append(monitor_thread)
@@ -425,7 +444,6 @@ class QSPAuditNode:
         self.__internal_threads = []
 
         # Close resources
-        self.__config.wallet_session_manager.lock()
         self.__config.event_pool_manager.close()
 
     def audit(self, requestor, uri, request_id):
@@ -438,13 +456,87 @@ class QSPAuditNode:
         )
 
         target_contract = fetch_file(uri)
+
+        warnings, errors = self.check_compilation(target_contract, request_id, uri)
+        audit_report = {}
+        if len(errors) != 0:
+            audit_report = self.__create_err_result(errors, warnings, request_id, requestor, uri,
+                                                    target_contract)
+        else:
+            audit_report = self.get_audit_report_from_analyzers(target_contract, requestor, uri,
+                                                                request_id)
+            if len(warnings) != 0:
+                audit_report['compilation_warnings'] = warnings
+
+        self.__logger.info(
+            "Analyzer report contents",
+            requestId=request_id,
+            contents=audit_report,
+        )
+
+        audit_report_str = json.dumps(audit_report, indent=2)
+
+        upload_result = self.__config.report_uploader.upload(audit_report_str)
+
+        self.__logger.info(
+            "Report upload result: {0}".format(upload_result),
+            requestId=request_id,
+        )
+
+        if not upload_result['success']:
+            raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
+
+        parse_uri = urllib.parse.urlparse(uri)
+        original_filename = os.path.basename(parse_uri.path)
+        contract_upload_result = self.__config.report_uploader.upload_contract(request_id,
+                                                                               target_contract,
+                                                                               original_filename)
+        if not contract_upload_result['success']:
+            self.__logger.info(
+                "Contract upload result: {0}".format(contract_upload_result),
+                requestId=request_id,
+            )
+        else:
+            # We just log on error, not raise an exception
+            self.__logger.error(
+                "Contract upload result: {0}".format(contract_upload_result),
+                requestId=request_id,
+            )
+
+        return {
+            'audit_state': audit_report['audit_state'],
+            'audit_uri': upload_result['url'],
+            'audit_hash': digest(audit_report_str),
+        }
+
+    def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
+
         number_of_analyzers = len(self.__config.analyzers)
-        analyzers_reports = [{}] * number_of_analyzers
+        # This array is shared between the current thread and wrappers
+        shared_analyzers_reports = [{}] * number_of_analyzers
+        parse_uri = urllib.parse.urlparse(uri)
+        original_filename = os.path.basename(parse_uri.path)
+
+        analyzers_reports_locks = []
+        for i in range(0, number_of_analyzers):
+            analyzers_reports_locks.append(threading.RLock())
 
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
-            result = analyzer.check(target_contract, request_id)
-            analyzers_reports[analyzer_id] = result
+            metadata = analyzer.get_metadata(target_contract, request_id, original_filename)
+            # in case of time out, declare the metadata as the report now
+            str_metadata = json.dumps(metadata)
+            analyzers_reports_locks[analyzer_id].acquire()
+            shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
+            analyzers_reports_locks[analyzer_id].release()
+            result = analyzer.check(target_contract, request_id, original_filename)
+            report = {**metadata, **result}
+            str_report = json.dumps(report)
+            report['hash'] = digest(str_report)
+            # Make sure no race-condition between the wrappers and the current thread
+            analyzers_reports_locks[analyzer_id].acquire()
+            shared_analyzers_reports[analyzer_id] = report
+            analyzers_reports_locks[analyzer_id].release()
 
         analyzers_threads = []
         analyzers_timeouts = []
@@ -454,41 +546,51 @@ class QSPAuditNode:
         for i, analyzer in enumerate(self.__config.analyzers):
             analyzer_thread = Thread(target=check_contract, args=[i])
             analyzers_threads.append(analyzer_thread)
-            analyzers_timeouts.append(analyzer.wrapper.timeout_sec)
+            analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
+            timeout_sec = int(self.__config.analyzers_config[i][analyzer_name]['timeout_sec'])
+            analyzers_timeouts.append(timeout_sec)
 
             start_time = calendar.timegm(time.gmtime())
             analyzers_start_times.append(start_time)
             analyzer_thread.start()
 
+        # This array should only be accessible from the current thread
+        local_analyzers_reports = [{}] * number_of_analyzers
+
         for i in range(0, number_of_analyzers):
             analyzers_threads[i].join(analyzers_timeouts[i])
+
+            # Make sure there is no race condition between the current thread
+            # and wrapper thread in overwriting on analyzers_reports
+            analyzers_reports_locks[i].acquire()
+            local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
+            analyzers_reports_locks[i].release()
 
             # NOTE
             # Due to timeout issues, one has to account for start/end
             # times at this point, rather than the wrapper itself
 
             start_time = analyzers_start_times[i]
-            analyzers_reports[i]['start_time'] = start_time
+            local_analyzers_reports[i]['start_time'] = start_time
 
             # If thread is still alive, it means a timeout has
             # occurred
             if analyzers_threads[i].is_alive():
-                # An empty dictionary exists by default for the given
-                # timed out analyzers
-
+                # In case of time out, the metadata should exist as the report, unless that somehow failed too
                 analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-                analyzers_reports[i]['analyzer'] = analyzer_name
-                analyzers_reports[i]['errors'] = [
+                local_analyzers_reports[i]['analyzer'] = analyzer_name
+                local_analyzers_reports[i]['errors'] = [
                     "Time out occurred. Could not finish {0} within {1} seconds".format(
                         analyzer_name,
-                        self.__config.analyzers[i].timeout_sec,
+                        self.config.analyzers[i].wrapper.timeout_sec,
                     )
                 ]
-                analyzers_reports[i]['status'] = 'error'
+
+                local_analyzers_reports[i]['status'] = 'error'
             else:
                 # A timeout has not occurred. Register the end time
                 end_time = calendar.timegm(time.gmtime())
-                analyzers_reports[i]['end_time'] = end_time
+                local_analyzers_reports[i]['end_time'] = end_time
 
         audit_report = {
             'timestamp': calendar.timegm(time.gmtime()),
@@ -506,7 +608,7 @@ class QSPAuditNode:
         # or fails otherwise.
         audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
 
-        for i, analyzer_report in enumerate(analyzers_reports):
+        for i, analyzer_report in enumerate(local_analyzers_reports):
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
 
             # The next two fail safe checks should never kick in
@@ -529,58 +631,95 @@ class QSPAuditNode:
             if analyzer_report['status'] == 'error':
                 audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
 
-            # FIXME
-            # The audit receives a report, which among other things, receives metadata from the wrapper plugin.
-            # The issue, however, is that if the wrapper fails, this metadata is never returned. To account for this case,
-            # there has to be a declaration file somewhere stating this metadata. The audit node, in turn, would fetch it
-            # and always make it part of the final report, even in the case of a fatal error.
-            # https://quantstamp.atlassian.net/browse/QSP-469
-
         audit_report['audit_state'] = audit_state
 
-        if len(analyzers_reports) > 0:
-            audit_report['analyzers_reports'] = analyzers_reports
+        if len(local_analyzers_reports) > 0:
+            audit_report['analyzers_reports'] = local_analyzers_reports
 
-        self.__logger.info(
-            "Analyzer report contents",
-            requestId=request_id,
-            contents=audit_report,
-        )
-
-        audit_report_str = json.dumps(audit_report, indent=2)
-        upload_result = self.__config.report_uploader.upload(audit_report_str)
-
-        self.__logger.info(
-            "Report upload result: {0}".format(upload_result),
-            requestId=request_id,
-        )
-
-        if not upload_result['success']:
-            raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
-
-        return {
-            'audit_state': audit_report['audit_state'],
-            'audit_uri': upload_result['url'],
-            'audit_hash': digest(audit_report_str),
-        }
+        return audit_report
 
     def __get_next_audit_request(self):
         """
         Attempts to get a request from the audit request queue.
         """
-        tx_args = mk_args(self.__config)
-        self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
-        return self.__config.audit_contract.functions.getNextAuditRequest().transact(tx_args)
+        return send_signed_transaction(self.__config,
+                                       self.__config.audit_contract.functions.getNextAuditRequest())
 
     def __submit_report(self, request_id, audit_state, audit_uri, audit_hash):
         """
         Submits the audit report to the entire QSP network.
         """
-        tx_args = mk_args(self.__config)
-        self.__config.wallet_session_manager.unlock(self.__config.account_ttl)
-        return self.__config.audit_contract.functions.submitReport(
-            request_id,
-            audit_state,
-            audit_uri,
-            audit_hash
-        ).transact(tx_args)
+        return send_signed_transaction(self.__config,
+                                       self.__config.audit_contract.functions.submitReport(
+                                           request_id,
+                                           audit_state,
+                                           audit_uri,
+                                           audit_hash
+                                       ))
+
+    def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
+        result = {
+            'timestamp': calendar.timegm(time.gmtime()),
+            'contract_uri': uri,
+            'contract_hash': digest_file(target_contract),
+            'requestor': requestor,
+            'auditor': self.__config.account,
+            'request_id': request_id,
+            'version': QSPAuditNode.__PROTOCOL_VERSION,
+            'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR
+        }
+        if errors is not None and len(errors) != 0:
+            result['compilation_errors'] = errors
+        if warnings is not None and len(warnings) != 0:
+            result['compilation_warnings'] = warnings
+
+        return result
+
+    def check_compilation(self, contract, request_id, uri):
+        self.__logger.debug("Running compilation check. About to check {0}".format(contract),
+                            requestId=request_id)
+        parse_uri = urllib.parse.urlparse(uri)
+        original_filename = os.path.basename(parse_uri.path)
+        temp_filename = os.path.basename(contract)
+        data = ""
+        with open(contract, 'r') as myfile:
+            data = myfile.read()
+        warnings = []
+        errors = []
+        try:
+            # Attempts to compile the target contract. If it fails, a ContractsNotFound
+            # exception is thrown
+            file_name = contract[contract.rfind('/') + 1:]
+            output = compile_standard({'language': 'Solidity',
+                                       'sources': {
+                                           file_name: {'content': data}}}
+                                      )
+            for err in output['errors']:
+                if err["severity"] == "warning":
+                    warnings += [err['formattedMessage'].replace(temp_filename, original_filename)]
+                else:
+                    errors += [err['formattedMessage'].replace(temp_filename, original_filename)]
+
+        except ContractsNotFound as error:
+            self.__logger.debug(
+                "ContractsNotFound before calling analyzers: {0}".format(str(error)),
+                requestId=request_id)
+            errors += [str(error)]
+        except SolcError as error:
+            self.__logger.debug(
+                "SolcError before calling analyzers: {0}".format(str(error)),
+                requestId=request_id)
+            errors += [str(error)]
+        except KeyError as error:
+            self.__logger.debug(
+                "KeyError when calling analyzers: {0}".format(str(error)),
+                requestId=request_id)
+            # This is thrown because a bug in our own code. We only log, but do not record the error
+            # so that the analyzers are still executed.
+        except Exception as error:
+            self.__logger.debug(
+                "Error before calling analyzers: {0}".format(str(error)),
+                requestId=request_id)
+            errors += [str(error)]
+
+        return warnings, errors

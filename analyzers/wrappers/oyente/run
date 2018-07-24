@@ -89,7 +89,7 @@ if [[ "x$OYENTE_REPORTS" == "x" || "x$(cat $OYENTE_ERRORS)" != "x" ]] ; then
 fi
 
 "$WRAPPER_HOME/utils/mk_success_report" "${OYENTE_VERSION}" "${OYENTE_CMD}" "${OYENTE_VULNERABILITIES}" \
-    "$OYENTE_WARNINGS" $OYENTE_REPORTS || \
+    "${ORIGINAL_NAME}" "$OYENTE_WARNINGS" $OYENTE_REPORTS || \
        { error "$LOG_OUTPUT"; exit 1; }
 
 # Exit with a success status code

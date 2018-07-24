@@ -4,8 +4,7 @@ from config import ConfigUtils
 from config import ConfigurationException
 from upload import S3Provider
 from helpers.resource import resource_uri
-from utils.eth.wallet_session_manager import DummyWalletSessionManager
-from utils.eth.wallet_session_manager import WalletSessionManager
+import utils.io as io_utils
 from streaming import CloudWatchProvider
 from web3 import (
     Web3,
@@ -21,10 +20,14 @@ class ConfigStub:
     TODO(mderka): Replace this with real config class when it become available in later PRs
     """
 
-    def __init__(self, abi, abi_uri, contract_address):
+    def __init__(self, abi, abi_uri, contract_address,
+                 submission_timeout_limit_blocks=10,
+                 start_n_blocks_in_the_past=5):
         self.has_audit_contract_abi = abi
         self.audit_contract_abi_uri = abi_uri
         self.audit_contract_address = contract_address
+        self.submission_timeout_limit_blocks = submission_timeout_limit_blocks
+        self.start_n_blocks_in_the_past = start_n_blocks_in_the_past
 
 
 class TestConfigUtil(unittest.TestCase):
@@ -37,7 +40,8 @@ class TestConfigUtil(unittest.TestCase):
         Tests that the S3Provider can be created and is properly returend.
         """
         report_uploader_provider_name = "S3Provider"
-        report_uploader_provider_args = {"bucket_name": "test-bucket"}
+        report_uploader_provider_args = {"bucket_name": "test-bucket",
+                                         "contract_bucket_name": "contract_test-bucket"}
         result = self.config_utils.create_report_uploader_provider(report_uploader_provider_name,
                                                                    report_uploader_provider_args)
         self.assertTrue(isinstance(result, S3Provider), "The created provider is not an S3Provider")
@@ -64,7 +68,8 @@ class TestConfigUtil(unittest.TestCase):
         streaming_provider_args = {'log_group': 'grp', 'log_stream': 'stream',
                                    'send_interval_seconds': 10}
         result = self.config_utils.create_logging_streaming_provider(streaming_provider_name,
-                                                                     streaming_provider_args)
+                                                                     streaming_provider_args,
+                                                                     '0x12345')
         self.assertTrue(isinstance(result, CloudWatchProvider),
                         "The created provider is not a CloudWatchProvider")
 
@@ -77,42 +82,22 @@ class TestConfigUtil(unittest.TestCase):
                                    'send_interval_seconds': 10}
         try:
             self.config_utils.create_logging_streaming_provider(streaming_provider_name,
-                                                                streaming_provider_args)
+                                                                streaming_provider_args,
+                                                                '0x12345')
             self.fail("Succeeded to create streaming provider without proper provider name.")
         except ConfigurationException:
             # expected
             pass
 
-    def test_create_wallet_session_manager_dummy(self):
-        """
-        Tests that testing ETH provider names create dummy wallet managers.
-        """
-        name = "EthereumTesterProvider"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, DummyWalletSessionManager),
-                        "The wallet manager is not a DummyWalletSessionManager")
-        name = "TestRPCProvider"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, DummyWalletSessionManager),
-                        "The wallet manager is not a DummyWalletSessionManager")
-
-    def test_create_wallet_session_manager_real(self):
-        """
-        Tests that anything but testing ETH provider creates a WalletSessionManager instance.
-        """
-        name = "anything_else"
-        result = self.config_utils.create_wallet_session_manager(name)
-        self.assertTrue(isinstance(result, WalletSessionManager),
-                        "The wallet manager is not a WalletSessionManager")
-
     def test_configure_logging_no_stream(self):
         """
         Tests that logging can be configured properly without throwing exceptions.
         """
-        self.config_utils.configure_logging(True, None, {})
-        self.config_utils.configure_logging(False, None, {})
+        account = "0x12345"
+        self.config_utils.configure_logging(True, None, {}, account)
+        self.config_utils.configure_logging(False, None, {}, account)
         args = {'log_group': 'grp', 'log_stream': 'stream', 'send_interval_seconds': 10}
-        self.config_utils.configure_logging(True, "CloudWatchProvider", args)
+        self.config_utils.configure_logging(True, "CloudWatchProvider", args, account)
 
     def test_raise_error(self):
         """
@@ -155,6 +140,13 @@ class TestConfigUtil(unittest.TestCase):
         except ConfigurationException:
             # Expected
             pass
+        abi_faulty = ConfigStub(True, True, True, 10, 20)
+        try:
+            self.config_utils.check_audit_contract_settings(abi_faulty)
+            self.fail("ABI is missing configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
 
     def test_create_eth_provider(self):
         """
@@ -182,17 +174,38 @@ class TestConfigUtil(unittest.TestCase):
         """
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
         account = "Account"
-        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertEqual(account, new_account, "Account was recreated even though it was not None")
-        client, new_account = self.config_utils.create_web3_client(eth_provider, None, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, None, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertIsNotNone(new_account, "The account was none and was not created")
         # None ETH provider will make this fail
         try:
-            client, new_account = self.config_utils.create_web3_client(None, None, None, 2)
+            client, new_account, new_private_key = self.config_utils.create_web3_client(None, None, None, None, 2)
             self.fail("No exception was thrown even though the eth provider does not exist and web3 cannot connect")
         except ConfigurationException:
+            # Expected
+            pass
+
+    def test_create_web3_client_private_key(self):
+        """
+        Test that private key is instantiated correctly when creating web3 client
+        """
+        eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
+        account = "Account"
+        private_key = "0xc2fd94c5216e754d3eb8f4f34017120fef318c50780ce408b54db575b120229f"
+        passphrase = "abc123ropsten"
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, passphrase,
+            io_utils.fetch_file(resource_uri("mykey.json")), 2)
+        self.assertEqual(private_key, Web3.toHex(new_private_key), "Private key was not decrypted correctly")
+        # None ETH provider will make this fail
+        try:
+            client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, "incorrect-passphrase",
+                io_utils.fetch_file(resource_uri("mykey.json")), 2)
+            self.fail("No exception was thrown even though the private key isn't correct")
+        except ConfigurationException as e:
+            self.assertTrue("MAC mismatch" in str(e), "Expected the MAC mismatch exception")
             # Expected
             pass
 
@@ -209,7 +222,7 @@ class TestConfigUtil(unittest.TestCase):
     def test_create_contract(self):
         account = "Account"
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
-        client, new_account = self.config_utils.create_web3_client(eth_provider, account, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
         abi_uri = "file://tests/resources/QuantstampAudit.abi.json"
         address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         self.config_utils.create_audit_contract(client, abi_uri, address)

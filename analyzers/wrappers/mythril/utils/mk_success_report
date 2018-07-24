@@ -5,7 +5,7 @@ import json
 import sys
 
 
-class MyhtrilIssue:
+class MythrilIssue:
     """
     A replica of the issue class from the Mythril repository on Github with some added custom code
     https://github.com/ConsenSys/mythril/blob/master/mythril/analysis/report.py
@@ -68,9 +68,10 @@ class MyhtrilIssue:
         return vulnerability_report
 
     @staticmethod
-    def from_dict(**dictionary):
-        issue = MyhtrilIssue(None, None, None, None)
+    def from_dict(original_name, **dictionary):
+        issue = MythrilIssue(None, None, None, None)
         issue.__dict__.update(dictionary)
+        issue.filename = original_name
         return issue
 
 
@@ -109,6 +110,12 @@ def main(argv):
         help='file containing all vulnerability names (one per line) supported in this version of mythril'
     )
     parser.add_argument(
+        'original_filename',
+        metavar='original_filename',
+        type=str,
+        help='the original name of the file that is being analyzed'
+    )
+    parser.add_argument(
         'solidity_files',
         metavar='solidity_files',
         nargs='+',
@@ -140,13 +147,13 @@ def main(argv):
     # starts converting issues
     issue_reference = 0
     potential_vulnerabilities = []
-    for report in argv[4:]:
+    for report in argv[5:]:
         report_file = open(report)
         report_dict = json.loads(report_file.read())
         report_file.close()
         if report_dict['success']:
             for issue in report_dict['issues']:
-                mythril_issue = MyhtrilIssue.from_dict(**issue)
+                mythril_issue = MythrilIssue.from_dict(args.original_filename, **issue)
                 vulnerability = mythril_issue.as_vulnerability(issue_reference, vulnerability_mapping)
                 potential_vulnerabilities.append(vulnerability)
                 issue_reference += 1
