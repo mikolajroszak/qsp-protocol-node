@@ -2,7 +2,7 @@ local:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "http://eth.quantstamp.com:8888/geth/http/ropsten"
+      endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token=${token}"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
@@ -46,7 +46,7 @@ dev:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "http://eth.quantstamp.com:8888/geth/http/ropsten"
+      endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token=${token}"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"

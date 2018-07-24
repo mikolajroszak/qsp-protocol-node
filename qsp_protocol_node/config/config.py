@@ -64,10 +64,7 @@ class Config:
         # Makes sure the endpoint URL contains the authentication token
         endpoint = self.__eth_provider_args.get('endpoint_uri')
         if endpoint is not None:
-            self.__eth_provider_args['endpoint_uri'] = urljoin(
-                endpoint,
-                "?token={0}".format(self.auth_token),
-            )
+            self.__eth_provider_args['endpoint_uri'] = endpoint.replace("${token}", self.auth_token)
 
         self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
         self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False)
