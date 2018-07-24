@@ -196,7 +196,7 @@ class QSPAuditNode:
                 self.__get_next_audit_request()
             else:
                 self.__logger.debug(
-                    "No request were available as the contract returned {0}.".format(
+                    "No request available as the contract returned {0}.".format(
                         str(any_request_available)))
         except Exception as error:
             self.__logger.exception(

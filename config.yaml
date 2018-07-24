@@ -108,7 +108,7 @@ prod:
       provider: !!str "S3Provider"
       args:
         bucket_name: "qsp-protocol-reports-prod"
-        contract_bucket_name: "qsp-protocol-reports-dev"
+        contract_bucket_name: "qsp-protocol-reports-prod"
   account:
     ttl: 600
   default_gas: !!int 700000
