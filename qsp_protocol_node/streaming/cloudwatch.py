@@ -5,6 +5,7 @@ from pythonjsonlogger.jsonlogger import JsonFormatter
 
 
 class CloudWatchProvider:
+
     def __init__(self, account, log_group, log_stream, send_interval_seconds):
         self.__stream_name = log_stream.replace('{id}', account)
         self.__log_group = log_group

@@ -2,7 +2,7 @@ local:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/"
+      endpoint_uri: !!str "http://eth.quantstamp.com:8888/geth/http/ropsten"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
@@ -23,10 +23,11 @@ local:
       provider: !!str "S3Provider"
       args:
         bucket_name: "qsp-protocol-reports-dev"
+        contract_bucket_name: "qsp-protocol-reports-dev"
   account:
     id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b" # replace with your account id
     # specify a path to a valid keystore file that can be decrypted using ETH_PASSPHRASE
-    # keystore_file: !!str "./tests/resources/mykey.json"
+    keystore_file: !!str "./tests/resources/mykey.json"
   default_gas: !!int 500000
   gas_price_wei: !!int 8000000000
   logging:
@@ -45,7 +46,7 @@ dev:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/"
+      endpoint_uri: !!str "http://eth.quantstamp.com:8888/geth/http/ropsten"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
@@ -66,6 +67,7 @@ dev:
       provider: !!str "S3Provider"
       args:
         bucket_name: "qsp-protocol-reports-dev"
+        contract_bucket_name: "qsp-protocol-reports-dev"
   account:
     id: !!str "0x9bf5e4620db5944bccf0a1e6a6b72a430c5a0126"
     keystore_file: !!str "/app/keystore/UTC--2018-07-12T00-58-35.172Z--9bf5e4620db5944bccf0a1e6a6b72a430c5a0126"
@@ -89,8 +91,6 @@ prod:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      # TODO This must be changed to point to a node relying on a secure
-      # connection.
       endpoint_uri: !!str "http://geth:8545"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-prod/QuantstampAudit.abi.json"
@@ -108,6 +108,7 @@ prod:
       provider: !!str "S3Provider"
       args:
         bucket_name: "qsp-protocol-reports-prod"
+        contract_bucket_name: "qsp-protocol-reports-dev"
   account:
     ttl: 600
   default_gas: !!int 700000

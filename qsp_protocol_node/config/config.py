@@ -312,6 +312,7 @@ class Config:
         """
         return self.__auth_token
 
+    @property
     def account_keystore_file(self):
         """
         Returns the account keystore file.
