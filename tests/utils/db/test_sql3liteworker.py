@@ -4,6 +4,7 @@ Tests our assumptions about the database client and SQLite3 engine.
 import unittest
 import yaml
 import apsw
+import time
 
 from config import config_value
 from helpers.resource import resource_uri
@@ -15,12 +16,11 @@ from utils.io import fetch_file
 class LoggerMock:
 
     def __init__(self):
-        self.logged = False
+        self.logged_error = False
+        self.logged_warning = False
         self.err = None
 
-    def error(self, msg, query, values, err):
-        self.err = err
-        self.logged = True
+    def output(self, msg, query, values, err):
         print(msg)
         print(query)
         print(values)
@@ -29,6 +29,16 @@ class LoggerMock:
             print("NOTE: If the error appears to be 'BusyError', your test failed mid-execution. "
                   "You might need to delete the test database file defined in test_config.yaml "
                   "(currently set to /tmp/evts.test) in order to resume test execution.")
+
+    def error(self, msg, query, values, err):
+        self.err = err
+        self.logged_error = True
+        self.output(msg, query, values, err)
+
+    def warning(self, msg, query, values, err):
+        self.err = err
+        self.logged_warning = True
+        self.output(msg, query, values, err)
 
 
 class TestSqlLite3Worker(unittest.TestCase):
@@ -60,11 +70,11 @@ class TestSqlLite3Worker(unittest.TestCase):
         Tests that the worker is capable of creating the database and insert items by executing a
         script.
         """
-        self.assertFalse(self.logger_mock.logged)
+        self.assertFalse(self.logger_mock.logged_error)
         result = self.worker.execute("select * from evt_status")
         self.assertEqual(len(result), 5,
                          'We are expecting 5 event type records. There are {0}'.format(len(result)))
-        self.assertFalse(self.logger_mock.logged)
+        self.assertFalse(self.logger_mock.logged_error)
 
     @timeout(3, timeout_exception=StopIteration)
     def test_inserting_duplicates_primary_key(self):
@@ -73,11 +83,11 @@ class TestSqlLite3Worker(unittest.TestCase):
         primary key are inserted in the database. Also tests that if such an insert is invoked, the
         existing values remain the same.
         """
-        self.assertFalse(self.logger_mock.logged)
+        self.assertFalse(self.logger_mock.logged_error)
         result = self.worker.execute("select * from evt_status")
         # The result is string if the database is locked (caused by previously failed tests)
         self.assertFalse(isinstance(result, str))
-        self.assertFalse(self.logger_mock.logged)
+        self.assertFalse(self.logger_mock.logged_error)
         original_value = [x for x in result if x['id'] == 'AS'][0]
         # Inserts a repeated primary key
         self.worker.execute("insert into evt_status values ('AS', 'Updated received')")
@@ -92,20 +102,43 @@ class TestSqlLite3Worker(unittest.TestCase):
         # This should stay at the very end after the worker thread has been merged
         self.worker.close()
         self.assertTrue(isinstance(self.logger_mock.err, apsw.ConstraintError))
-        self.assertTrue(self.logger_mock.logged)
+        self.assertTrue(self.logger_mock.logged_error)
+
+    @timeout(3, timeout_exception=StopIteration)
+    def test_inserting_duplicates_events(self):
+        """
+        Tests that the worker does not propagate raised exception when two records with the same
+        primary key are inserted in the database. Also tests that if such an insert is invoked, the
+        existing values remain the same.
+        """
+        self.assertFalse(self.logger_mock.logged_warning)
+        self.worker.execute_script(
+            fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
+            values=(1, 'x', 'x', 'x', 10, 'x', 12)
+        )
+        self.assertFalse(self.logger_mock.logged_warning)
+        self.worker.execute_script(
+            fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
+            values=(1, 'x', 'x', 'x', 10, 'x', 12)
+        )
+        # ensure that threads were merged before assertions
+        self.worker.close()
+        self.assertFalse(self.logger_mock.logged_error)
+        self.assertTrue(self.logger_mock.logged_warning)
+        self.assertTrue(isinstance(self.logger_mock.err, apsw.ConstraintError))
 
     @timeout(3, timeout_exception=StopIteration)
     def test_wrong_select(self):
         """
         Tests that wrong select returns string and logs an error.
         """
-        self.assertFalse(self.logger_mock.logged)
+        self.assertFalse(self.logger_mock.logged_error)
         result = self.worker.execute("select * from nonexistent_table")
         # The result is string if the database is locked (caused by previously failed tests)
         self.assertTrue(isinstance(result, str))
         # This should stay at the very end after the worker thread has been merged
         self.worker.close()
-        self.assertTrue(self.logger_mock.logged)
+        self.assertTrue(self.logger_mock.logged_error)
 
     @staticmethod
     def read_yaml_setup(config_path):
