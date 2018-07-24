@@ -2,7 +2,7 @@ local:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "http://eth.quantstamp.com:8888/geth/http/ropsten"
+      endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
@@ -42,7 +42,7 @@ dev:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "http://eth.quantstamp.com:8888/geth/http/ropsten"
+      endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
@@ -84,6 +84,8 @@ prod:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
+      # TODO This must be changed to point to a node relying on a secure
+      # connection.
       endpoint_uri: !!str "http://geth:8545"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-prod/QuantstampAudit.abi.json"
