@@ -1,4 +1,4 @@
-from config import config_value
+import config
 import structlog
 import utils.io as io_utils
 import yaml

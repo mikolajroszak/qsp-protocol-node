@@ -77,6 +77,12 @@ def main():
         audit_node.run()
 
     except Exception as error:
+        # Useful for debugging. Enable the following
+        # two commented lines
+
+        # import sys, traceback
+        # traceback.print_exc(file=sys.stdout)
+
         Stop.error(err=error, code=ERR_EXCEPTION)
 
 
