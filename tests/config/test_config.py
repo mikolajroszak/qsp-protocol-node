@@ -8,7 +8,46 @@ from tempfile import NamedTemporaryFile
 from config import config_value, Config, ConfigFactory
 from helpers.function_call import FunctionCall
 from helpers.resource import resource_uri
-from utils.io import fetch_file
+from utils.io import (
+    fetch_file,
+    load_json,
+    load_yaml,
+)
+
+
+class DummyLogger:
+    def debug(self, message):
+        print(message)
+
+
+class ConfigUtilsDummy:
+    def __init__(self, return_values):
+        self.return_values = return_values
+
+    def create_report_uploader_provider(self, report_uploader_provider_name, report_uploader_provider_args):
+        return self.return_values.get('create_report_uploader_provider', None)
+
+    def create_eth_provider(self, provider, args):
+        return self.return_values.get('create_eth_provider', None)
+
+    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
+                    logging_streaming_provider_args, account):
+        return self.return_values.get('configure_logging', (DummyLogger(), None))
+
+    def create_analyzers(self, analyzers_config, logger):
+        return self.return_values.get('create_analyzers', None)
+
+    def check_audit_contract_settings(self):
+        return self.return_values.get('check_audit_contract_settings', None)
+
+    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+        return self.return_values.get('create_audit_contract', None)
+
+    def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
+        return self.return_values.get('create_web3_client', (None, None, None))
+
+    def load_config(self, config_file_uri, environment):
+        return self.return_values.get('load_config', None)
 
 
 class ConfigUtilsMock:
@@ -30,7 +69,7 @@ class ConfigUtilsMock:
         Verifies that all the expected calls were performed.
         """
         if len(self.expected) != 0:
-            raise Exception('Some excpected calls were left over: ' + str(self.expected))
+            raise Exception('Some expected calls were left over: ' + str(self.expected))
 
     def call(self, function_name, arguments_to_check, local_values):
         """
@@ -41,7 +80,7 @@ class ConfigUtilsMock:
             raise Exception('{0} call expected'.format(function_name))
         for argument in arguments_to_check:
             if first_call.params[argument] != local_values[argument]:
-                msg = 'Value of {0} is not {1} as expected but {2}'
+                msg = 'Value of {0} is not {1} as expected, but {2}'
                 raise Exception(msg.format(argument, first_call.params[argument], local_values[argument]))
         self.expected = self.expected[1:]
         return first_call.return_value
@@ -185,7 +224,7 @@ class TestConfig(unittest.TestCase):
         with open(test_config) as yaml_file:
             cfg = yaml.load(yaml_file)
 
-        tmp = NamedTemporaryFile(mode='w+t', delete=False)  # <<<====
+        tmp = NamedTemporaryFile(mode='w+t', delete=False)
         yaml.dump(cfg, tmp, default_flow_style=False)
 
         return tmp, cfg
@@ -414,6 +453,26 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(5, config.evt_polling)
         self.assertEqual(2, len(config.analyzers))
         self.assertEqual(25, config.start_n_blocks_in_the_past)
+
+    def test_inject_token_auth(self):
+        auth_token = "abc123456"
+        endpoint = "https://test.com/?token={0}".format(auth_token)
+        target_env = "local"
+
+        # Sets the dictionary to be returned by a call to load_config
+        config_file = fetch_file(resource_uri("test_config_with_auth_token.yaml"))
+        config_yaml = load_yaml(config_file)
+        dummy_utils = ConfigUtilsDummy({'load_config': config_yaml[target_env]})
+
+        config = ConfigFactory.create_from_file(
+            environment=target_env,
+            config_file_uri="some dummy uri",
+            auth_token=auth_token,
+            validate_contract_settings=False,
+            config_utils=dummy_utils,
+        )
+        self.assertEqual(config.auth_token, auth_token)
+        self.assertEqual(config.eth_provider_args['endpoint_uri'], endpoint)
 
 
 if __name__ == '__main__':

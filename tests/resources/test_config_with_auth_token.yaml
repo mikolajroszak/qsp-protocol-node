@@ -1,0 +1,26 @@
+local:
+    eth_node:
+        provider: !!str "HTTPProvider"
+        args:
+            endpoint_uri: !!str "https://test.com/?token=${token}"
+    min_price: !!int 0
+    gas_price_wei: !!int 0
+    max_assigned_requests: !!int 1
+    evt_polling_sec: !!int 5
+    block_mined_polling_interval_sec: !!int 5
+    analyzers:
+        - oyente:
+            args: "-ce"
+            storage_dir: /tmp/.oyente
+            timeout_sec: 120
+        - mythril:
+            args: "" # No args provided; rely on defaults for now
+            storage_dir: /tmp/.mythril
+            timeout_sec: 120
+    report_uploader:
+        provider: !!str "S3Provider"
+        args:
+            bucket_name: "qsp-protocol-reports-dev"
+            contract_bucket_name: "qsp-protocol-reports-dev"
+    evt_db_path: "/tmp/evts.test"
+    start_n_blocks_in_the_past: !!int 25
