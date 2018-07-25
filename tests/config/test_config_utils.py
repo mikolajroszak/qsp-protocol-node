@@ -2,6 +2,7 @@ import unittest
 
 from config import ConfigUtils
 from config import ConfigurationException
+from config import configure_basic_logging
 from upload import S3Provider
 from helpers.resource import resource_uri
 import utils.io as io_utils
@@ -98,6 +99,8 @@ class TestConfigUtil(unittest.TestCase):
         self.config_utils.configure_logging(False, None, {}, account)
         args = {'log_group': 'grp', 'log_stream': 'stream', 'send_interval_seconds': 10}
         self.config_utils.configure_logging(True, "CloudWatchProvider", args, account)
+        # this has to stay in order to disable streaming again
+        configure_basic_logging()
 
     def test_raise_error(self):
         """
