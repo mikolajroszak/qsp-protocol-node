@@ -343,7 +343,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.audit_contract)
         self.assertIsNone(config.audit_contract_name)
         self.assertEqual(0, len(config.analyzers))
-        self.assertEqual(0, config.default_gas)
+        self.assertEqual(0, config.gas)
         self.assertIsNone(config.env)
         self.assertEqual(0, config.gas_price_wei)
         self.assertIsNone(config.config_file_uri)

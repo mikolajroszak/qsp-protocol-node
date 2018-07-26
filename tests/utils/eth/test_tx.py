@@ -58,9 +58,9 @@ class SimpleTransactionMock:
 
 
 class SimpleConfigMock:
-    def __init__(self, gas_price_wei, default_gas, private_key=None):
+    def __init__(self, gas_price_wei, gas, private_key=None):
         self.__gas_price_wei = gas_price_wei
-        self.__default_gas = default_gas
+        self.__gas = gas
         self.__account = "account"
         self.__account_private_key = private_key
         self.__web3_client = Web3ClientMock()
@@ -70,8 +70,8 @@ class SimpleConfigMock:
         return self.__gas_price_wei
 
     @property
-    def default_gas(self):
-        return self.__default_gas
+    def gas(self):
+        return self.__gas
 
     @property
     def account(self):
