@@ -1,6 +1,6 @@
 ENV ?= local
 CONFIG ?= config.yaml
-ETH_PASSPHRASE ?= \"\"
+ETH_PASSPHRASE ?= \"abc123ropsten\"
 ETH_AUTH_TOKEN ?= \"\"
 
 # NOTE: if running outside a container, assume all required environment variables are configured properly.
