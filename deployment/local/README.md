@@ -60,9 +60,8 @@ Record for next steps:
 ```
 account:
     id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
-    keystore_file: !!str "/app/keystore/mykey.json"
+    keystore_file: !!str "./keystore/mykey.json"
 ```
-(note the `/app/` prefix for the keystore file, due to containerization)
 
 1. Configure other settings as necessary, e.g., `gas_price`.
 

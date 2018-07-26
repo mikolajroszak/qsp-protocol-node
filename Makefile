@@ -12,9 +12,6 @@ run: # printing "date" is important due to the logic CloudWatch uses to distingu
 run-with-auto-restart:
 	./auto-restart
 
-run-with-auto-restart:
-	./auto-restart
-
 setup:
 	pyenv uninstall -f 3.6.4 ; \
 	ln -s -f $(shell git rev-parse --show-toplevel)/pre-commit $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \

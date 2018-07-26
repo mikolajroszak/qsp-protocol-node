@@ -9,8 +9,8 @@ Implements the QSP audit node in the Quantstamp network.
 - To run the latest containerized version hosted on Quantstamp's private Docker repository,
 go to `deployment/local` and follow the steps in the dedicated [README](deployment/local/README.md).
 
-- To build and run the node from the source code, scroll down to `Run in regular mode`
-and `Run in container mode` in the current README.
+- To build and run the node from the source code, follow the instructions
+from the `Development setup` section and then refer to the `Run locally` subsection.
 
 ## Development setup
 
