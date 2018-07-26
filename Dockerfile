@@ -35,5 +35,6 @@ RUN pip install web3[tester]
 COPY . .
 
 RUN find "./analyzers/wrappers" -type f -exec chmod +x {} \;
+RUN chmod +x auto-restart
 
 CMD [ "make", "run" ]
