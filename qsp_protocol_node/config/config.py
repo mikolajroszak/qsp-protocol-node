@@ -8,6 +8,7 @@ from os.path import expanduser
 from dpath.util import get
 
 from evt import EventPoolManager
+from urllib.parse import urljoin
 from utils.eth import (
     mk_checksum_address,
 )
@@ -51,32 +52,39 @@ class Config:
 
     def __setup_values(self, cfg):
         audit_contract_metadata = self.__fetch_audit_contract_metadata(cfg)
-        self.__audit_contract_name = config_value(audit_contract_metadata, '/contractName', )
-        self.__audit_contract_address = config_value(audit_contract_metadata, '/contractAddress', )
+        self.__audit_contract_name = config_value(audit_contract_metadata, '/contractName')
+        self.__audit_contract_address = config_value(audit_contract_metadata, '/contractAddress')
         self.__audit_contract = None
-        self.__audit_contract_abi_uri = config_value(cfg, '/audit_contract_abi/uri', )
-        self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False, )
+        self.__audit_contract_abi_uri = config_value(cfg, '/audit_contract_abi/uri')
+        self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
-        self.__eth_provider_args = config_value(cfg, '/eth_node/args', {}, )
+
+        self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
+
+        # Makes sure the endpoint URL contains the authentication token
+        endpoint = self.__eth_provider_args.get('endpoint_uri')
+        if endpoint is not None:
+            self.__eth_provider_args['endpoint_uri'] = endpoint.replace("${token}", self.auth_token)
+
         self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
-        self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False, )
-        self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False, )
-        self.__block_mined_polling_interval_sec = config_value(cfg, '/block_mined_polling_interval_sec', accept_none=False, )
+        self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False)
+        self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
+        self.__block_mined_polling_interval_sec = config_value(cfg, '/block_mined_polling_interval_sec', accept_none=False)
         self.__analyzers = []
-        self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False, )
+        self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False)
         self.__account = config_value(cfg, '/account/id', )
-        self.__account_keystore_file = config_value(cfg, '/account/keystore_file', None, )
+        self.__account_keystore_file = config_value(cfg, '/account/keystore_file', None)
         self.__account_private_key = None
         self.__default_gas = config_value(cfg, '/default_gas')
-        self.__evt_db_path = config_value(cfg, '/evt_db_path', expanduser("~") + "/" + ".audit_node.db", )
-        self.__submission_timeout_limit_blocks = config_value(cfg, '/submission_timeout_limit_blocks', 10, )
-        self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0, )
-        self.__default_gas = config_value(cfg, '/default_gas', )
-        self.__gas_price_wei = config_value(cfg, '/gas_price_wei', )
-        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', )
+        self.__evt_db_path = config_value(cfg, '/evt_db_path', expanduser("~") + "/" + ".audit_node.db")
+        self.__submission_timeout_limit_blocks = config_value(cfg, '/submission_timeout_limit_blocks', 10)
+        self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0)
+        self.__default_gas = config_value(cfg, '/default_gas')
+        self.__gas_price_wei = config_value(cfg, '/gas_price_wei')
+        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider')
         self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
         self.__logging_is_verbose = config_value(cfg, '/logging/is_verbose', False)
-        self.__logging_streaming_provider_name = config_value(cfg, '/logging/streaming/provider', )
+        self.__logging_streaming_provider_name = config_value(cfg, '/logging/streaming/provider')
         self.__logging_streaming_provider_args = config_value(cfg, '/logging/streaming/args', {})
         self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled', False)
         self.__metric_collection_interval_seconds = config_value(cfg, '/metric_collection/interval_seconds', 30)
@@ -158,10 +166,11 @@ class Config:
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
-    def load_config(self, config_utils, env, config_file_uri, account_passwd="", validate_contract_settings=True):
+    def load_config(self, config_utils, env, config_file_uri, account_passwd="", auth_token="", validate_contract_settings=True):
         self.__config_file_uri = config_file_uri
         self.__env = env
         self.__account_passwd = account_passwd
+        self.__auth_token = auth_token
         cfg = config_utils.load_config(config_file_uri, env)
         self.__setup_values(cfg)
         self.__create_components(config_utils, validate_contract_settings)
@@ -292,6 +301,13 @@ class Config:
         Returns the account associated password.
         """
         return self.__account_passwd
+
+    @property
+    def auth_token(self):
+        """
+        Returns the authentication token required to access the provider endpoint.
+        """
+        return self.__auth_token
 
     @property
     def account_keystore_file(self):

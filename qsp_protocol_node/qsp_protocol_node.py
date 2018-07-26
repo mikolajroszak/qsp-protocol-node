@@ -38,6 +38,11 @@ def main():
             type=str, default='',
             help='password for unlocking wallet account',
         )
+        parser.add_argument(
+            '-t', '--auth-token',
+            type=str, default='',
+            help='token for accessing the geth endpoint',
+        )
 
         # Validates input arguments
         args = parser.parse_args()
@@ -48,7 +53,7 @@ def main():
     try:
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
-        cfg = ConfigFactory.create_from_file(args.environment, args.config_yaml, args.password)
+        cfg = ConfigFactory.create_from_file(args.environment, args.config_yaml, args.password, args.auth_token)
 
         cfg.logger.info("Initializing QSP Audit Node")
         cfg.logger.debug("account: {0}".format(str(cfg.account)))
@@ -72,6 +77,12 @@ def main():
         audit_node.run()
 
     except Exception as error:
+        # Useful for debugging. Enable the following
+        # two commented lines
+
+        # import sys, traceback
+        # traceback.print_exc(file=sys.stdout)
+
         Stop.error(err=error, code=ERR_EXCEPTION)
 
 

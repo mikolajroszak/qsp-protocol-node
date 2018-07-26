@@ -69,6 +69,12 @@ resource "aws_elastic_beanstalk_environment" "audit" {
     name = "ETH_PASSPHRASE"
     value = "${var.ETH_PASSPHRASE}"
   }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "ETH_AUTH_TOKEN"
+    value = "${var.ETH_AUTH_TOKEN}"
+  }
   
   tags {
     Name = "${var.environment}-node-beanstalk-app"

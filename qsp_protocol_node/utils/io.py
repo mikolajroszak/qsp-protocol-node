@@ -4,6 +4,7 @@ Provides utility methods for performing I/O-related tasks.
 import codecs
 import os
 import re
+import yaml
 
 from urllib.parse import urlparse
 from urllib import request
@@ -34,12 +35,20 @@ def load_json(json_file_path):
     return json_dict
 
 
+def load_yaml(yaml_file_path):
+    """
+    Loads a YAML file as a in-memory dictionary
+    """
+    with open(yaml_file_path) as yaml_file:
+        yaml_config = yaml.load(yaml_file)
+    return yaml_config
+
+
 def has_matching_line(file, regex):
     with open(file) as f:
         for line in f:
             if re.match(regex, line):
                 return True
-
     return False
 
 

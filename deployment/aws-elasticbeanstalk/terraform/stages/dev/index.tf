@@ -12,6 +12,7 @@ terraform {
 }
 
 variable "ETH_PASSPHRASE" {}
+variable "ETH_AUTH_TOKEN" {}
 
 module "main" {
   source = "../../modules/main"
@@ -22,4 +23,5 @@ module "main" {
   node_instance_type_audit = "m4.large"
   
   ETH_PASSPHRASE = "${var.ETH_PASSPHRASE}"
+  ETH_AUTH_TOKEN = "${var.ETH_AUTH_TOKEN}"
 }

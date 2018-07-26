@@ -22,6 +22,10 @@ variable "ETH_PASSPHRASE" {
   description = "The passphrase for the keystore file"
 }
 
+variable "ETH_AUTH_TOKEN" {
+  description = "The authorization token for accessing the provider endpoint"
+}
+
 variable "volume_size" {
   description = "Volume size (GB) for each node"
   default = 50
