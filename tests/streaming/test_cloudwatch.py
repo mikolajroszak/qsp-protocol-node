@@ -2,6 +2,7 @@ import unittest
 
 from streaming import CloudWatchProvider
 
+
 class TestCloudWatchProvider(unittest.TestCase):
     def test_init(self):
         """

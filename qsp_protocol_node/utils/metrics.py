@@ -3,7 +3,9 @@ import boto3
 import socket
 import os
 
+
 class MetricCollector:
+
     def __init__(self, config):
         self.__client = boto3.client('cloudwatch')
         self.__config = config

@@ -99,7 +99,7 @@ class ConfigUtils:
             try:
                 web3_client = Web3(eth_provider)
                 # the following throws if Geth is not reachable
-                web3_client.eth.accounts
+                _ = web3_client.eth.accounts
                 connected = True
                 self.__logger.debug("Connected on attempt {0}".format(attempts))
             except Exception as e:
@@ -158,11 +158,9 @@ class ConfigUtils:
         """
         Loads config from file and returns.
         """
-        config_file = io_utils.fetch_file(config_file_uri)
-
-        with open(config_file) as yaml_file:
-            new_cfg_dict = yaml.load(yaml_file)[environment]
-        return new_cfg_dict
+        config_file_path = io_utils.fetch_file(config_file_uri)
+        config_file = io_utils.load_yaml(config_file_path)
+        return config_file[environment]
 
     def check_audit_contract_settings(self, config):
         """

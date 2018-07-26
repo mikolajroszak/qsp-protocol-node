@@ -143,12 +143,23 @@ class Sqlite3Worker(threading.Thread):
                 self.sqlite3_cursor.execute("commit")
             except apsw.Error as err:
                 self.sqlite3_cursor.execute("rollback")
-                self.logger.error(
-                    "Query returned error: %s: %s: %s",
-                    query,
-                    values,
-                    err,
-                )
+                if query.lower().strip().startswith("insert") \
+                        and isinstance(err, apsw.ConstraintError) \
+                        and "audit_evt.request_id" in str(err):
+                    # this error was caused by the event already existing
+                    self.logger.warning(
+                        "Audit request already exists: %s: %s: %s",
+                        query,
+                        values,
+                        err,
+                    )
+                else:
+                    self.logger.error(
+                        "Query returned error: %s: %s: %s",
+                        query,
+                        values,
+                        err,
+                    )
 
     def close(self):
         """Close down the thread and close the sqlite3 database file."""

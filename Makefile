@@ -1,12 +1,16 @@
 ENV ?= local
 CONFIG ?= config.yaml
-ETH_PASSPHRASE ?= \"\"
+ETH_PASSPHRASE ?= \"abc123ropsten\"
+ETH_AUTH_TOKEN ?= \"\"
 
 # NOTE: if running outside a container, assume all required environment variables are configured properly.
 
 # Default target
 run: # printing "date" is important due to the logic CloudWatch uses to distinguish log files
-	date; python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(ETH_PASSPHRASE)" $(ENV) $(CONFIG)
+	date; python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(ETH_PASSPHRASE)" -t "$(ETH_AUTH_TOKEN)" $(ENV) $(CONFIG)
+
+run-with-auto-restart:
+	./auto-restart
 
 run-with-auto-restart:
 	./auto-restart
@@ -33,6 +37,7 @@ run-docker:
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		-e ETH_PASSPHRASE="$(ETH_PASSPHRASE)" \
+		-e ETH_AUTH_TOKEN="$(ETH_AUTH_TOKEN)" \
 		qsp-protocol-node sh -c "make run"
 
 test-docker:

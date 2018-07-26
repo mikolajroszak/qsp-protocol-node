@@ -86,6 +86,9 @@ class EventPoolManager:
         return self.__sqlworker
 
     def get_latest_block_number(self):
+        """
+        Returns the block number of the latest event in the database or -1 if the database is empty.
+        """
         row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_latest_block_number'))
         return EventPoolManager.__decode(row).get('block_nbr')
 
@@ -100,6 +103,9 @@ class EventPoolManager:
         return current + 1
 
     def get_latest_request_id(self):
+        """
+        Returns the request id of the latest event in the database or -1 if the database is empty.
+        """
         row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_latest_request_id'))
         return EventPoolManager.__decode(row).get('request_id')
 

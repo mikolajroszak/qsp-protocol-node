@@ -75,35 +75,35 @@ Initialization entails changing your `~/.bash_profile` (if not already done so):
     make test
     ```
 
-2. To access the HTML coverage report, after running tests, open `tests/coverage/htmlcov/index.html`.
+2. To access the HTML coverage report, after running tests, open `tests/coverage/htmlcov/index.html`
 
-## Run in regular mode
-
-1. One-time only: create and configure a new account:
-    1. Create a new account (e.g., using MyEtherWallet). Record the passphrase, the new account Ethereum address, and store the keystore file in an accessible location
-    2. In `config.yaml/local/account/id`, specify the Ethereum address and in `config.yaml/local/account/keystore_file`, specify the path to the keystore file. Example:
-        ```
-        account:
-          id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
-          keystore_file: !!str "./keystore/mykey.json"
-        ```
-    3. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account
-    4. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands) 
-    5. Transfer some Ether to the account (for Ropsten, use a Ropsten faucet)
-
-2. `make run`
-
-By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. A task is created to make local test environment more isolated.
-
-## Run in container mode
-
-Steps are similar to the above (e.g., configuring the account) but instead of `make run`, do `make run-docker`.
-
-## Run tests in container mode
-
+3. To run tests inside a container, run
 ```
 make test-docker
 ```
+
+### Run locally
+
+1. Set the environment `ETH_AUTH_TOKEN` to the Ethereum node's authentication token
+1. `make run`. Alternatively:
+    - `make run-docker` to run as a container
+    - `make run-with-auto-restart` to leverage the auto-restart feature.
+
+This will run the node using the default (test) account for Ropsten. This is suitable for quick local run but not recommended for thorough testing. 
+To run with a custom account:
+
+1. Create a new account (e.g., using MyEtherWallet). Record the passphrase, the new account Ethereum address, and store the keystore file in an accessible location
+1. In `config.yaml/local/account/id`, specify the Ethereum address and in `config.yaml/local/account/keystore_file`, specify the path to the keystore file. Example:
+    ```
+    account:
+      id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
+      keystore_file: !!str "./keystore/mykey.json"
+    ```
+1. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account
+1. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands) 
+1. Transfer some Ether to the account (for Ropsten, use a Ropsten faucet)
+
+By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. A task is created to make local test environment more isolated.
 
 ## CI and deployment pipeline
 
