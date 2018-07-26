@@ -1,6 +1,6 @@
 #!/bin/bash
 
-QSP_NODE="python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py"
+QSP_NODE="make run"
 
 # Must be kept in synch with the return codes given in 
 # qsp_protocol_node/qsp_protocol_node.py.

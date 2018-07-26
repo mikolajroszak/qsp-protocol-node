@@ -78,7 +78,9 @@ make test-docker
 ### Run locally
 
 1. Set the environment `ETH_AUTH_TOKEN` to the Ethereum node's authentication token
-1. `make run` or `make run-docker` (to run inside container)
+1. `make run`. Alternatively:
+    - `make run-docker` to run as a container
+    - `make run-with-auto-restart` to leverage the auto-restart feature.
 
 This will run the node using the default (test) account for Ropsten. This is suitable for quick local run but not recommended for thorough testing. 
 To run with a custom account:
