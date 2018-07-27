@@ -4,14 +4,15 @@ This folder contains the scripts and instructions necessary for
 a node operator to spin up a QSP node.
 
 The node runs as a Docker container. The image is hosted on Quantstamp's private repository.
+The steps assume a Unix-like operating system.
 
 ### Quick start
 If you want to run the node with default settings, default account
 (`0x60463b7ee0c3d33def3a05313597b1300f6de62b`) that's already whitelisted for
-`testnet`, make sure the requirements in `Install prerequisites` are satisfied, 
-and then do `make download && make run`.
+`testnet`, make sure the requirements in `Install dependencies` are satisfied, 
+and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
 
-### Install prerequisites
+### Install dependencies
 
 1. Install `make`, unless installed already.
     - Verify: `make` outputs `make: *** No targets specified and no makefile found.  Stop.`.
@@ -45,17 +46,27 @@ Record for next steps:
 
 ### Get whitelisted
 
-Ask Quantstamp to whitelist your Ethereum address and generate AWS credentials for your account.
+Contact Quantstamp to whitelist your Ethereum address and generate AWS credentials for your account.
 
 Record for next steps:
 - AWS access key id, e.g., `AKIAIOSFODNN7EXAMPLE`
-- AWS secret access key, e.g., `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`.
+- AWS secret access key, e.g., `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
+- If provided, Ethereum node token, e.g., `8a7b2d9f0e0b9e7a6a7b8a7b2d9f0e0b9e7a6a7b8a7b2d9f`
 
 ### Configure
 
 1. Set the environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to the provided AWS credentials. Alternatively, do `aws configure` to specify them at the user level.
 1. Set `ENV` to `testnet` (default) or `betanet`
-1. Set `ETH_PASSPHRASE` to the passphrase of your account    
+1. Set `ETH_PASSPHRASE` to the passphrase of your account
+1. In `config.yaml`, specify the endpoint for the Ethereum node you want the QSP node to connect to:
+```
+eth_node:
+    provider: !!str "HTTPProvider"
+    args:
+        endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token={token}"
+```
+
+If your Ethereum node requires an auth token, set `ETH_AUTH_TOKEN`, and QSP node will substitute the placeholder `{token}` with the value of `ETH_AUTH_TOKEN`.
 1. In `config.yaml`, edit the `account` section:
 ```
 account:
