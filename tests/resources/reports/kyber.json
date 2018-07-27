@@ -7,10 +7,25 @@
   "request_id": 1,
   "version": "1.0",
   "audit_state": 5,
+  "status": "error",
   "analyzers_reports": [
     {
       "start_time": 1531778658,
-      "analyzer": "oyente",
+      "analyzer": {
+        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/kyber.sol",
+        "name": "oyente",
+        "version": "16c74d21e997cffe9a7480cb140ee6c05b7ba608e1b878df90f585b4710e41b0",
+        "vulnerabilities_checked": [
+          "integer_underflow",
+          "integer_overflow",
+          "callstack",
+          "money_concurrency",
+          "time_dependency",
+          "reentrancy",
+          "parity_multisig_bug_2",
+          "assertion_failure"
+        ]
+      },
       "errors": [
         "Time out occurred. Could not finish oyente within 6 seconds"
       ],
@@ -18,7 +33,27 @@
     },
     {
       "start_time": 1531778658,
-      "analyzer": "mythril",
+      "analyzer": {
+        "command": "docker run -v \"/tmp/.mythril/403\":/shared/ -i \"mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882\" -o json -x \"/shared/kyber.sol\"",
+        "name": "mythril",
+        "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
+        "vulnerabilities_checked": [
+          "call_data_forwarded",
+          "dependence_on_environment_variable",
+          "call_to_a_user-supplied_address",
+          "use_of_tx_origin",
+          "ether_send",
+          "exception_state",
+          "message_call_to_external_contract",
+          "state_change_after_external_call",
+          "integer_overflow",
+          "integer_underflow",
+          "multiple_calls",
+          "unchecked_suicide",
+          "transaction_order_dependence",
+          "unchecked_call_return_value"
+        ]
+      },
       "errors": [
         "Time out occurred. Could not finish mythril within 6 seconds"
       ],

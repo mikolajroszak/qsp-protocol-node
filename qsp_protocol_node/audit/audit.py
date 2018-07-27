@@ -9,6 +9,7 @@ import threading
 import time
 import traceback
 import urllib.parse
+import jsonschema
 
 from time import sleep
 from utils.io import (
@@ -29,16 +30,19 @@ class QSPAuditNode:
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
 
     # must be in sync with
-    # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAuditData.sol#L25
     __AUDIT_STATE_SUCCESS = 4
 
     # must be in sync with
-    # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAuditData.sol#L26
     __AUDIT_STATE_ERROR = 5
 
     # must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L80
     __AVAILABLE_AUDIT__STATE_READY = 1
+
+    __AUDIT_STATUS_ERROR = "error"
+    __AUDIT_STATUS_SUCCESS = "success"
 
     __PROTOCOL_VERSION = '1.0'
 
@@ -446,6 +450,24 @@ class QSPAuditNode:
         # Close resources
         self.__config.event_pool_manager.close()
 
+    def __validate_json(self, report, request_id):
+        """
+        Validate that the report conforms to the schema.
+        """
+        try:
+            file_path = os.path.realpath(__file__)
+            schema_file = '{0}/../../analyzers/schema/analyzer_integration.json'.format(os.path.dirname(file_path))
+            with open(schema_file) as schema_data:
+                schema = json.load(schema_data)
+            jsonschema.validate(report, schema)
+            return report
+        except jsonschema.ValidationError as e:
+            self.__logger.exception(
+                "Error: JSON could not be validated: {0}.".format(str(e)),
+                requestId=request_id,
+            )
+            raise Exception("JSON could not be validated") from e
+
     def audit(self, requestor, uri, request_id):
         """
         Audits a target contract.
@@ -474,8 +496,9 @@ class QSPAuditNode:
             contents=audit_report,
         )
 
-        audit_report_str = json.dumps(audit_report, indent=2)
+        self.__validate_json(audit_report, request_id)
 
+        audit_report_str = json.dumps(audit_report, indent=2)
         upload_result = self.__config.report_uploader.upload(audit_report_str)
 
         self.__logger.info(
@@ -530,7 +553,8 @@ class QSPAuditNode:
             shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
             analyzers_reports_locks[analyzer_id].release()
             result = analyzer.check(target_contract, request_id, original_filename)
-            report = {**metadata, **result}
+            # the values from metadata will overwrite those of report
+            report = {**result, **metadata}
             str_report = json.dumps(report)
             report['hash'] = digest(str_report)
             # Make sure no race-condition between the wrappers and the current thread
@@ -578,7 +602,10 @@ class QSPAuditNode:
             if analyzers_threads[i].is_alive():
                 # In case of time out, the metadata should exist as the report, unless that somehow failed too
                 analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-                local_analyzers_reports[i]['analyzer'] = analyzer_name
+                if shared_analyzers_reports[i]:
+                    local_analyzers_reports[i] = shared_analyzers_reports[i]
+                else:
+                    local_analyzers_reports[i]['analyzer'] = {'name': analyzer_name}
                 local_analyzers_reports[i]['errors'] = [
                     "Time out occurred. Could not finish {0} within {1} seconds".format(
                         analyzer_name,
@@ -607,7 +634,7 @@ class QSPAuditNode:
         # successful or not. Either it is fully successful (all analyzer produce a result),
         # or fails otherwise.
         audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
-
+        audit_status = QSPAuditNode.__AUDIT_STATUS_SUCCESS
         for i, analyzer_report in enumerate(local_analyzers_reports):
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
 
@@ -630,12 +657,11 @@ class QSPAuditNode:
 
             if analyzer_report['status'] == 'error':
                 audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
-
+                audit_status = QSPAuditNode.__AUDIT_STATUS_ERROR
         audit_report['audit_state'] = audit_state
-
+        audit_report['status'] = audit_status
         if len(local_analyzers_reports) > 0:
             audit_report['analyzers_reports'] = local_analyzers_reports
-
         return audit_report
 
     def __get_next_audit_request(self):
@@ -666,7 +692,8 @@ class QSPAuditNode:
             'auditor': self.__config.account,
             'request_id': request_id,
             'version': QSPAuditNode.__PROTOCOL_VERSION,
-            'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR
+            'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR,
+            'status': QSPAuditNode.__AUDIT_STATUS_ERROR,
         }
         if errors is not None and len(errors) != 0:
             result['compilation_errors'] = errors

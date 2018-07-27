@@ -53,7 +53,6 @@ def get_potential_vulnerabilities(solidity_file, contract_name, json_report_file
                         'end_line': line,
                     })
             vulnerability_count = vulnerability_count + 1
-
         else:            
             for instance in instances:
                 line = get_vulnerability_line(instance)
@@ -63,7 +62,8 @@ def get_potential_vulnerabilities(solidity_file, contract_name, json_report_file
                     'end_line': line,
                 })
                 vulnerability_count = vulnerability_count + 1
-            
+
+
         vulnerability_report['instances'] = instances_found
         reports.append(vulnerability_report)
 

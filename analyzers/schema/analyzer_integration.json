@@ -5,10 +5,21 @@
     "type": "object",
     "title": "Audit report",
     "description": "API schema defining the expected output format of an audit report",
+    "additionalProperties": false,
     "properties": {
         "timestamp": {
-            "type": "string",
+            "type": "integer",
             "description": "The UTC time in which in this report was produced"
+        },
+        "audit_state": {
+            "type": "integer",
+            "description": "The AuditState of the report, as defined in QuantstampAuditData",
+            "minimum": 0,
+            "maximum": 6
+        },
+        "version": {
+            "type": "string",
+            "description": "The version of the audit network"
         },
         "contract_uri": {
             "type": "string",
@@ -46,7 +57,15 @@
         "request_id": {
             "type": "integer"
         },
-        "report": {
+        "status": {
+            "type": "string",
+            "enum": [
+                "success",
+                "error"
+            ],
+            "description": "Status result of whether the audit was successfully produced or not"
+        },
+        "analyzers_reports": {
             "type": "array",
             "items": {
                 "type": "object",
@@ -78,7 +97,7 @@
                             "version": {
                                 "description": "Analyzer's version",
                                 "type": "string",
-                                "maxLength": 20
+                                "maxLength": 64
                             },
                             "vulnerabilities_checked": {
                                 "type": "array",
@@ -94,7 +113,7 @@
                         }
                     },
                     "status": {
-                        "enum": ["success", "failed"],
+                        "enum": ["success", "error"],
                         "description": "Status result of whether the analyzer succeeded or not"
                     },
                     "errors": {
@@ -119,9 +138,7 @@
                                     "type": "number",
                                     "description": "The percentage value of bytecode statements covered during the audit",
                                     "minimum": 0,
-                                    "maximum": 100,
-                                    "multipleOf": "0.1"
-
+                                    "maximum": 100
                                 },
                                 "file": {
                                     "type": "string",
@@ -166,7 +183,7 @@
                                             "ref_id": {
                                                 "type": "integer",
                                                 "description": "Reference identifier associated with this instance",
-                                                "minimum": 1
+                                                "minimum": 0
                                             },
                                             "start_line": {
                                                 "type": "integer",
@@ -177,8 +194,7 @@
                                                 "type": "integer",
                                                 "description": "The end line where the vulnerability was found",
                                                 "minimum": 1
-                                            },
-                                            "additionalProperties": true
+                                            }
                                         }
                                     }
                                 }

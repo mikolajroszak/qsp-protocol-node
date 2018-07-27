@@ -1,5 +1,6 @@
+
 {
-  "analyzers_reports": [
+  "bug_this_should_be_analyzers_reports": [
     {
       "analyzer": {
         "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/DAOBug.sol",

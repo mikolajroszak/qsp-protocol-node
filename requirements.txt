@@ -28,3 +28,4 @@ watchtower==0.5.3
 psutil==5.4.5
 pycodestyle==2.4.0
 deepdiff==3.3.0
+jsonschema==2.6.0

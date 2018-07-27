@@ -60,6 +60,7 @@
     }
   ],
   "audit_state": 5,
+  "status": "error",
   "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "contract_hash": "2662ea846c0c6ca2bd32dfdb97ab20ae4108e7abade53962f146f634e9f4eba7",
   "contract_uri": "file:///app/tests/helpers/../resources/BasicToken.sol",
