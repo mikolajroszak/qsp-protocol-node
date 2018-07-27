@@ -59,20 +59,20 @@ Record for next steps:
 1. Set `ENV` to `testnet` (default) or `betanet`
 1. Set `ETH_PASSPHRASE` to the passphrase of your account
 1. In `config.yaml`, specify the endpoint for the Ethereum node you want the QSP node to connect to:
-```
-eth_node:
-    provider: !!str "HTTPProvider"
-    args:
-        endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token={token}"
-```
+    ```
+    eth_node:
+        provider: !!str "HTTPProvider"
+        args:
+            endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token={token}"
+    ```
+    If your Ethereum node requires an auth token, set `ETH_AUTH_TOKEN`, and QSP node will substitute the placeholder `{token}` with the value of `ETH_AUTH_TOKEN`.
 
-If your Ethereum node requires an auth token, set `ETH_AUTH_TOKEN`, and QSP node will substitute the placeholder `{token}` with the value of `ETH_AUTH_TOKEN`.
 1. In `config.yaml`, edit the `account` section:
-```
-account:
-    id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
-    keystore_file: !!str "./keystore/mykey.json"
-```
+    ```
+    account:
+        id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
+        keystore_file: !!str "./keystore/mykey.json"
+    ```
 
 1. Configure other settings as necessary, e.g., `gas_price`.
 
