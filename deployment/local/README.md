@@ -46,7 +46,7 @@ Record for next steps:
 
 ### Get whitelisted
 
-Contact Quantstamp to whitelist your Ethereum address and generate AWS credentials for your account.
+Contact Quantstamp (the Protocol team) to whitelist your Ethereum address and generate AWS credentials for your account.
 
 Record for next steps:
 - AWS access key id, e.g., `AKIAIOSFODNN7EXAMPLE`
