@@ -1,5 +1,5 @@
-ENV ?= local
-CONFIG ?= config.yaml
+ENV ?= testnet
+CONFIG ?= deployment/local/config.yaml
 ETH_PASSPHRASE ?= \"abc123ropsten\"
 ETH_AUTH_TOKEN ?= \"\"
 

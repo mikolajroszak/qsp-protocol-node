@@ -2,15 +2,9 @@
   "AWSEBDockerrunVersion": "2",
   "volumes": [
     {
-      "name": "geth",
+      "name": "node-config",
       "host": {
-        "sourcePath": "/var/geth"
-      }
-    },
-    {
-      "name": "geth-config",
-      "host": {
-        "sourcePath": "/var/geth-config"
+        "sourcePath": "/var/node-config"
       }
     },
     {
@@ -45,13 +39,14 @@
       "command": ["make", "run"],
       "essential": true,
       "memory": 2048,
-      "links": [
-        "geth"
-      ],
       "mountPoints": [
         {
           "sourceVolume": "audit-db",
           "containerPath": "/app/audit-db"
+        },
+        {
+          "sourceVolume": "node-config",
+          "containerPath": "/app/node-config"
         },
         {
           "sourceVolume": "docker-sock",
@@ -64,24 +59,6 @@
         {
           "sourceVolume": "geth-keystore",
           "containerPath": "/app/keystore"
-        }
-      ]
-    },
-    {
-      "name": "geth",
-      "image": "ethereum/client-go:v1.8.7",
-      "command": ["--testnet", "--config=/root/.ethereum/testnet/geth-config/audit-fullnode.toml"],
-      "essential": true,
-      "memory": 2048,
-      "mountPoints": [
-        {
-          "sourceVolume": "geth",
-          "containerPath": "/root/.ethereum/testnet/geth"
-        },
-        {
-          "sourceVolume": "geth-config",
-          "containerPath": "/root/.ethereum/testnet/geth-config",
-          "readOnly": true
         }
       ]
     },
