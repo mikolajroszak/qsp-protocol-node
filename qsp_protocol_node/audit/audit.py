@@ -131,12 +131,16 @@ class QSPAuditNode:
             self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
 
+        # Upon restart, before processing, set all events that timed out to err.
+        self.__timeout_stale_requests()
+
         # If no block has currently been processed, start from the current block
         # Note: this default behavior will prevent the node from finding existing audit transactions
         start_block = self.__config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
             # the database is empty
-            start_block = max(0, self.__config.web3_client.eth.blockNumber - self.__config.start_n_blocks_in_the_past)
+            start_block = max(0, self.__config.web3_client.eth.blockNumber -
+                              self.__config.start_n_blocks_in_the_past)
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
@@ -178,6 +182,27 @@ class QSPAuditNode:
                     self.stop()
 
             sleep(health_check_interval_sec)
+
+    def __timeout_stale_requests(self):
+        first_valid_block = self.__config.web3_client.eth.blockNumber - \
+                            self.__config.submission_timeout_limit_blocks + \
+                            self.__config.block_discard_on_restart
+
+        def timeout_event(evt):
+            try:
+                if first_valid_block >= evt['block_nbr']:
+                    evt['status_info'] = "Submission timeout"
+                    self.__config.event_pool_manager.set_evt_to_error(evt)
+            except KeyError as error:
+                self.__logger.exception(
+                    "KeyError when handling timeout on restart: {0}".format(str(error))
+                )
+            except Exception as error:
+                self.__logger.exception(
+                    "Unexpected error when handling timeout on restart: {0}".format(error))
+
+        self.__config.event_pool_manager.process_incoming_events(timeout_event)
+        self.__config.event_pool_manager.process_events_to_be_submitted(timeout_event)
 
     def __check_then_request_audit_request(self):
         """
@@ -272,10 +297,10 @@ class QSPAuditNode:
                     evt['audit_hash'] = audit_result['audit_hash']
                     evt['audit_state'] = audit_result['audit_state']
                     evt['status_info'] = "Sucessfully generated report"
+                    msg = "Generated report URI is {0}. Saving it in the internal database " \
+                          "(if not previously saved)"
                     self.__logger.debug(
-                        "Generated report URI is {0}. Saving it in the internal database (if not previously saved)".format(
-                            str(evt['audit_uri'])
-                        ), requestId=request_id, evt=evt
+                        msg.format(str(evt['audit_uri'])), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except KeyError as error:
@@ -598,7 +623,8 @@ class QSPAuditNode:
             # If thread is still alive, it means a timeout has
             # occurred
             if analyzers_threads[i].is_alive():
-                # In case of time out, the metadata should exist as the report, unless that somehow failed too
+                # In case of time out, the metadata should exist as the report, unless that somehow
+                # failed too
                 analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
                 if shared_analyzers_reports[i]:
                     local_analyzers_reports[i] = shared_analyzers_reports[i]

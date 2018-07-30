@@ -59,7 +59,6 @@ class Config:
         self.__audit_contract_abi_uri = config_utils.resolve_version(config_value(cfg, '/audit_contract_abi/uri'))
         self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
-
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
 
         # Makes sure the endpoint URL contains the authentication token
@@ -67,6 +66,7 @@ class Config:
         if endpoint is not None:
             self.__eth_provider_args['endpoint_uri'] = endpoint.replace("${token}", self.auth_token)
 
+        self.__block_discard_on_restart = config_value(cfg, '/block_discard_on_restart', 0)
         self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
         self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False)
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
@@ -219,6 +219,7 @@ class Config:
         self.__start_n_blocks_in_the_past = 0
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
+        self.__block_discard_on_restart = 0
         self.__contract_version = None
 
     @property
@@ -241,6 +242,14 @@ class Config:
         Returns the arguments required for instantiating the target Ethereum provider.
         """
         return self.__eth_provider_args
+
+    @property
+    def block_discard_on_restart(self):
+        """
+        Returns the number of blocks needed to be available for a request to be analyzed upon
+        restart of the auditing node.
+        """
+        return self.__block_discard_on_restart
 
     @property
     def audit_contract_address(self):

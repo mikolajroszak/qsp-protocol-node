@@ -46,7 +46,8 @@ class TestQSPAuditNode(unittest.TestCase):
     def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
                                        constructor_from):
         """
-        Loads the QuantstampAuditMock contract from source code returning the (address, contract) pair.
+        Loads the QuantstampAuditMock contract from source code returning the (address, contract)
+        pair.
         """
         audit_contract_src = fetch_file(contract_src_uri)
         contract_dict = compile_files([audit_contract_src])
@@ -159,9 +160,63 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node.stop()
         TestQSPAuditNode.__clean_up_pool_db(self.__config.evt_db_path)
 
+    @timeout(5, timeout_exception=StopIteration)
+    def test_timeout_stale_evets(self):
+        class Eth:
+            def __init__(self):
+                self.blockNumber = 100
+
+        self.__audit_node._QSPAuditNode__config.web3_client.eth = Eth()
+        self.__audit_node._QSPAuditNode__config._Config__submission_timeout_limit_blocks = 10
+        self.__audit_node._QSPAuditNode__config._Config__block_discard_on_restart = 2
+        # certainly times out
+        evt_first = {'request_id': 1,
+                     'requestor': 'x',
+                     'contract_uri': 'x',
+                     'evt_name': 'x',
+                     'block_nbr': 10,
+                     'status_info': 'x',
+                     'price': 12}
+        # last block to time out
+        evt_second = {'request_id': 17,
+                      'requestor': 'x',
+                      'contract_uri': 'x',
+                      'evt_name': 'x',
+                      'block_nbr': 90 + 2,
+                      'status_info': 'x',
+                      'price': 12}
+        # first block not to time out
+        evt_third = {'request_id': 18,
+                     'requestor': 'x',
+                     'contract_uri': 'x',
+                     'evt_name': 'x',
+                     'block_nbr': 91 + 2,
+                     'status_info': 'x',
+                     'price': 12}
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_first)
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(
+            evt_second
+        )
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_third)
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker.execute(
+            "update audit_evt set fk_status = 'TS' where request_id = 1"
+        )
+        self.__audit_node._QSPAuditNode__timeout_stale_requests()
+        fst = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+            evt_first['request_id'])
+        snd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+            evt_second['request_id'])
+        thrd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+            evt_third['request_id'])
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
+        self.assertEqual(fst['fk_status'], 'ER')
+        self.assertEqual(snd['fk_status'], 'ER')
+        self.assertEqual(thrd['fk_status'], 'AS')
+
     @timeout(10, timeout_exception=StopIteration)
     def test__check_then_request_audit_request_exceptions(self):
-        # The following causes an exception in the auditing node, but it should be caught and should not propagate
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
         get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
 
         def mocked__get_next_audit_request():
@@ -185,7 +240,8 @@ class TestQSPAuditNode(unittest.TestCase):
 
     @timeout(20, timeout_exception=StopIteration)
     def test_on_audit_assigned(self):
-        # The following causes an exception in the auditing node, but it should be caught and should not propagate
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
         self.__audit_node._QSPAuditNode__on_audit_assigned({})
         # This causes an auditor id mismatch
         evt = {'args': {'auditor': 'this is not me', 'requestId': 1}}
@@ -205,7 +261,8 @@ class TestQSPAuditNode(unittest.TestCase):
 
     @timeout(20, timeout_exception=StopIteration)
     def test_on_report_submitted(self):
-        # The following causes an exception in the auditing node, but it should be caught and should not propagate
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
         self.__audit_node._QSPAuditNode__on_report_submitted({})
         # This causes an auditor id mismatch
         evt = {'args': {'auditor': 'this is not me', 'requestId': 1}}
@@ -312,9 +369,11 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendDoneMessage(self.__REQUEST_ID))
 
-        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/BasicToken.json")
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
+                                    "reports/BasicToken.json")
 
     @timeout(80, timeout_exception=StopIteration)
     def test_target_contract_in_non_raw_text_file(self):
@@ -337,7 +396,8 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__sendDoneMessage(self.__REQUEST_ID))
 
-        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/DappBinWallet.json")
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
+                                    "reports/DappBinWallet.json")
 
     @timeout(80, timeout_exception=StopIteration)
     def test_analyzer_produces_metadata_for_errors(self):
@@ -416,14 +476,16 @@ class TestQSPAuditNode(unittest.TestCase):
         # Node should not ask for further request
         self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
 
-        # Make sure there is enough time for mining poll to call QSPAuditNode.__check_then_bid_audit_request
+        # Make sure there is enough time for mining poll to call QSPAuditNode.__check_then_bid_audit
+        # request
         sleep(self.__config.block_mined_polling + 1)
 
         self.evt_wait_loop(self.__submitReport_filter)
 
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendDoneMessage(self.__REQUEST_ID))
 
         # Restore QSPAuditNode.__get_next_audit_request actual implementation
         self.__audit_node._QSPAuditNode__get_next_audit_request = original__get_next_audit_request
@@ -477,14 +539,19 @@ class TestQSPAuditNode(unittest.TestCase):
         for i in range(0, len(self.__config.analyzers)):
             # It's an expected behaviour
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-            self.assertEqual(self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec,
-                             self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name]['timeout_sec'])
-            original_timeouts.append(self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec)
+            self.assertEqual(
+                self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec,
+                self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name][
+                    'timeout_sec'])
+            original_timeouts.append(
+                self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec)
             self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = 6
-            self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name]['timeout_sec'] = 3
+            self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name][
+                'timeout_sec'] = 3
 
         contract = resource_uri("kyber.sol")
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__requestAudit(contract, self.__PRICE))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__requestAudit(contract, self.__PRICE))
 
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(1))
 
@@ -492,15 +559,19 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(0))
 
-        self.__config.web3_client.eth.waitForTransactionReceipt(self.__sendDoneMessage(self.__REQUEST_ID))
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__sendDoneMessage(self.__REQUEST_ID))
 
-        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/kyber.json")
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
+                                    "reports/kyber.json")
 
         # setting back the configurations
         for i in range(0, len(original_timeouts)):
-            self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = original_timeouts[i]
+            self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = \
+                original_timeouts[i]
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-            self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name]['timeout_sec'] = \
+            self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name][
+                'timeout_sec'] = \
                 original_timeouts[i]
 
     def __assert_audit_request(self, request_id, expected_audit_state, report_file_path):
