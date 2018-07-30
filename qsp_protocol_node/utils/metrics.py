@@ -20,6 +20,8 @@ class MetricCollector:
                                ethBlockNumber=self.__config.web3_client.eth.blockNumber,
                                ethNodeVersion=self.__config.web3_client.version.node,
                                ethProtocolVersion=self.__config.web3_client.version.ethereum,
+                               contractVersion=self.__config.contract_version,
+                               nodeVersion=self.__config.node_version,
                                hostCpu=psutil.cpu_percent(),
                                hostMemory=psutil.virtual_memory().percent,
                                hostDisk=psutil.disk_usage('/').percent,

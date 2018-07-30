@@ -1,3 +1,4 @@
 {
-    "contractName": "QuantstampAudit"
+    "contractName": "QuantstampAudit",
+    "version": "1.0.0"
 }

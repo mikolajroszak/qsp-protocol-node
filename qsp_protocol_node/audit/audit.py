@@ -9,6 +9,7 @@ import threading
 import time
 import traceback
 import urllib.parse
+import jsonschema
 
 from time import sleep
 from utils.io import (
@@ -29,18 +30,19 @@ class QSPAuditNode:
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
 
     # must be in sync with
-    # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L16
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAuditData.sol#L25
     __AUDIT_STATE_SUCCESS = 4
 
     # must be in sync with
-    # https://github.com/quantstamp/qsp-network-contract-interface/blob/4381a01f8714efe125699b047e8348e9e2f2a243/contracts/QuantstampAudit.sol#L17
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAuditData.sol#L26
     __AUDIT_STATE_ERROR = 5
 
     # must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L80
     __AVAILABLE_AUDIT__STATE_READY = 1
 
-    __PROTOCOL_VERSION = '1.0'
+    __AUDIT_STATUS_ERROR = "error"
+    __AUDIT_STATUS_SUCCESS = "success"
 
     def __init__(self, config):
         """
@@ -129,12 +131,16 @@ class QSPAuditNode:
             self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
 
+        # Upon restart, before processing, set all events that timed out to err.
+        self.__timeout_stale_requests()
+
         # If no block has currently been processed, start from the current block
         # Note: this default behavior will prevent the node from finding existing audit transactions
         start_block = self.__config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
             # the database is empty
-            start_block = max(0, self.__config.web3_client.eth.blockNumber - self.__config.start_n_blocks_in_the_past)
+            start_block = max(0, self.__config.web3_client.eth.blockNumber -
+                              self.__config.start_n_blocks_in_the_past)
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
@@ -176,6 +182,27 @@ class QSPAuditNode:
                     self.stop()
 
             sleep(health_check_interval_sec)
+
+    def __timeout_stale_requests(self):
+        first_valid_block = self.__config.web3_client.eth.blockNumber - \
+                            self.__config.submission_timeout_limit_blocks + \
+                            self.__config.block_discard_on_restart
+
+        def timeout_event(evt):
+            try:
+                if first_valid_block >= evt['block_nbr']:
+                    evt['status_info'] = "Submission timeout"
+                    self.__config.event_pool_manager.set_evt_to_error(evt)
+            except KeyError as error:
+                self.__logger.exception(
+                    "KeyError when handling timeout on restart: {0}".format(str(error))
+                )
+            except Exception as error:
+                self.__logger.exception(
+                    "Unexpected error when handling timeout on restart: {0}".format(error))
+
+        self.__config.event_pool_manager.process_incoming_events(timeout_event)
+        self.__config.event_pool_manager.process_events_to_be_submitted(timeout_event)
 
     def __check_then_request_audit_request(self):
         """
@@ -270,10 +297,10 @@ class QSPAuditNode:
                     evt['audit_hash'] = audit_result['audit_hash']
                     evt['audit_state'] = audit_result['audit_state']
                     evt['status_info'] = "Sucessfully generated report"
+                    msg = "Generated report URI is {0}. Saving it in the internal database " \
+                          "(if not previously saved)"
                     self.__logger.debug(
-                        "Generated report URI is {0}. Saving it in the internal database (if not previously saved)".format(
-                            str(evt['audit_uri'])
-                        ), requestId=request_id, evt=evt
+                        msg.format(str(evt['audit_uri'])), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except KeyError as error:
@@ -446,6 +473,24 @@ class QSPAuditNode:
         # Close resources
         self.__config.event_pool_manager.close()
 
+    def __validate_json(self, report, request_id):
+        """
+        Validate that the report conforms to the schema.
+        """
+        try:
+            file_path = os.path.realpath(__file__)
+            schema_file = '{0}/../../analyzers/schema/analyzer_integration.json'.format(os.path.dirname(file_path))
+            with open(schema_file) as schema_data:
+                schema = json.load(schema_data)
+            jsonschema.validate(report, schema)
+            return report
+        except jsonschema.ValidationError as e:
+            self.__logger.exception(
+                "Error: JSON could not be validated: {0}.".format(str(e)),
+                requestId=request_id,
+            )
+            raise Exception("JSON could not be validated") from e
+
     def audit(self, requestor, uri, request_id):
         """
         Audits a target contract.
@@ -474,8 +519,9 @@ class QSPAuditNode:
             contents=audit_report,
         )
 
-        audit_report_str = json.dumps(audit_report, indent=2)
+        self.__validate_json(audit_report, request_id)
 
+        audit_report_str = json.dumps(audit_report, indent=2)
         upload_result = self.__config.report_uploader.upload(audit_report_str)
 
         self.__logger.info(
@@ -530,7 +576,8 @@ class QSPAuditNode:
             shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
             analyzers_reports_locks[analyzer_id].release()
             result = analyzer.check(target_contract, request_id, original_filename)
-            report = {**metadata, **result}
+            # the values from metadata will overwrite those of report
+            report = {**result, **metadata}
             str_report = json.dumps(report)
             report['hash'] = digest(str_report)
             # Make sure no race-condition between the wrappers and the current thread
@@ -576,9 +623,13 @@ class QSPAuditNode:
             # If thread is still alive, it means a timeout has
             # occurred
             if analyzers_threads[i].is_alive():
-                # In case of time out, the metadata should exist as the report, unless that somehow failed too
+                # In case of time out, the metadata should exist as the report, unless that somehow
+                # failed too
                 analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-                local_analyzers_reports[i]['analyzer'] = analyzer_name
+                if shared_analyzers_reports[i]:
+                    local_analyzers_reports[i] = shared_analyzers_reports[i]
+                else:
+                    local_analyzers_reports[i]['analyzer'] = {'name': analyzer_name}
                 local_analyzers_reports[i]['errors'] = [
                     "Time out occurred. Could not finish {0} within {1} seconds".format(
                         analyzer_name,
@@ -599,7 +650,7 @@ class QSPAuditNode:
             'requestor': requestor,
             'auditor': self.__config.account,
             'request_id': request_id,
-            'version': QSPAuditNode.__PROTOCOL_VERSION,
+            'version': self.__config.node_version,
         }
 
         # FIXME
@@ -607,7 +658,7 @@ class QSPAuditNode:
         # successful or not. Either it is fully successful (all analyzer produce a result),
         # or fails otherwise.
         audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
-
+        audit_status = QSPAuditNode.__AUDIT_STATUS_SUCCESS
         for i, analyzer_report in enumerate(local_analyzers_reports):
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
 
@@ -630,12 +681,11 @@ class QSPAuditNode:
 
             if analyzer_report['status'] == 'error':
                 audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
-
+                audit_status = QSPAuditNode.__AUDIT_STATUS_ERROR
         audit_report['audit_state'] = audit_state
-
+        audit_report['status'] = audit_status
         if len(local_analyzers_reports) > 0:
             audit_report['analyzers_reports'] = local_analyzers_reports
-
         return audit_report
 
     def __get_next_audit_request(self):
@@ -665,8 +715,9 @@ class QSPAuditNode:
             'requestor': requestor,
             'auditor': self.__config.account,
             'request_id': request_id,
-            'version': QSPAuditNode.__PROTOCOL_VERSION,
-            'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR
+            'version': self.__config.node_version,
+            'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR,
+            'status': QSPAuditNode.__AUDIT_STATUS_ERROR,
         }
         if errors is not None and len(errors) != 0:
             result['compilation_errors'] = errors

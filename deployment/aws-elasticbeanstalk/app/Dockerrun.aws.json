@@ -22,7 +22,7 @@
     {
       "name": "audit-db",
       "host": {
-        "sourcePath": "/var/audit-db-v1p0"
+        "sourcePath": "/var/audit-db-v1p1"
       }
     },
     {

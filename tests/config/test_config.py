@@ -49,6 +49,9 @@ class ConfigUtilsDummy:
     def load_config(self, config_file_uri, environment):
         return self.return_values.get('load_config', None)
 
+    def resolve_version(self, input):
+        return self.return_values.get('resolve_version', None)
+
 
 class ConfigUtilsMock:
     """
@@ -343,7 +346,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.audit_contract)
         self.assertIsNone(config.audit_contract_name)
         self.assertEqual(0, len(config.analyzers))
-        self.assertEqual(0, config.default_gas)
+        self.assertEqual(0, config.gas)
         self.assertIsNone(config.env)
         self.assertEqual(0, config.gas_price_wei)
         self.assertIsNone(config.config_file_uri)
@@ -361,6 +364,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.logging_streaming_provider_name)
         self.assertIsNone(config.logging_streaming_provider_args)
         self.assertEqual(0, config.start_n_blocks_in_the_past)
+        self.assertEqual(0, config.block_discard_on_restart)
 
     def test_create_components(self):
         logging_provider_name = "provider name"
@@ -453,6 +457,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(5, config.evt_polling)
         self.assertEqual(2, len(config.analyzers))
         self.assertEqual(25, config.start_n_blocks_in_the_past)
+        self.assertEqual(1, config.block_discard_on_restart)
 
     def test_inject_token_auth(self):
         auth_token = "abc123456"

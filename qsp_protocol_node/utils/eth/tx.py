@@ -1,5 +1,5 @@
 def mk_args(config):
-    gas = config.default_gas
+    gas = config.gas
     gas_price_wei = config.gas_price_wei
 
     if gas is None:

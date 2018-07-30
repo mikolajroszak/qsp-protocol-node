@@ -7,6 +7,7 @@ import os
 from audit import (
     Analyzer,
     Wrapper,
+    QSPAuditNode
 )
 from pathlib import Path
 from tempfile import gettempdir
@@ -33,7 +34,8 @@ class ConfigUtils:
     A utility class that helps with creating the configuration object.
     """
 
-    def __init__(self):
+    def __init__(self, node_version):
+        self.__node_version = node_version
         self.__logger = structlog.getLogger("config_utils")
 
     def create_report_uploader_provider(self, report_uploader_provider_name,
@@ -102,12 +104,12 @@ class ConfigUtils:
                 _ = web3_client.eth.accounts
                 connected = True
                 self.__logger.debug("Connected on attempt {0}".format(attempts))
-            except Exception as e:
+            except Exception as exception:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
                 self.__logger.debug(
-                    "Connection attempt ({0}) failed due to {1}. Retrying in 10 seconds".format(attempts, str(e)))
+                    "Connection attempt ({0}) failed due to {1}. Retrying in 10 seconds".format(attempts, str(exception)))
                 sleep(10)
 
         if not connected:
@@ -190,6 +192,16 @@ class ConfigUtils:
             abi=abi_json,
         )
 
+    def resolve_version(self, input):
+        """
+        Instruments a given string with the version of the protocol
+        """
+        major_version = self.__node_version[0:self.__node_version.index('.')]
+        result = None
+        if input is not None:
+            result = input.replace('{major-version}', major_version)
+        return result
+
     def create_analyzers(self, analyzers_config, logger):
         """
         Creates an instance of the each target analyzer that should be verifying a given contract.
@@ -207,7 +219,6 @@ class ConfigUtils:
             # Gets ths single key in the dictionart (the name of the analyzer)
             analyzer_name = list(analyzer_config_dict.keys())[0]
             analyzer_config = analyzers_config[i][analyzer_name]
-
             script_path = os.path.realpath(__file__)
             wrappers_dir = '{0}/../../analyzers/wrappers'.format(os.path.dirname(script_path))
 
