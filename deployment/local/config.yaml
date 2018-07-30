@@ -4,12 +4,13 @@ testnet:
     args:
       endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token={token}"
   audit_contract_abi:
-    uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.abi.json"
-    metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract-abi-dev/QuantstampAudit.meta.json"
+    uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-abi.json"
+    metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-meta.json"
   min_price: !!int 0
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 1
+  block_discard_on_restart: !!int 1
   analyzers:
     - oyente:
         args: "-ce"
