@@ -42,7 +42,7 @@ and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
 Record for next steps:
 - Your public Ethereum address, e.g., `0x60463b7ee0c3d33def3a05313597b1300f6de62b`
 - The passphrase for your key
-- Location of your keystore (JSON) file, e.g., `./keystore/mykey.json`
+- Location of your keystore (JSON) file, e.g., `./keystore/default.json`
 
 ### Get whitelisted
 
@@ -71,7 +71,7 @@ Record for next steps:
     ```
     account:
         id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
-        keystore_file: !!str "./keystore/mykey.json"
+        keystore_file: !!str "./keystore/default.json"
     ```
 
 1. Configure other settings as necessary, e.g., `gas_price`.

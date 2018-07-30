@@ -97,7 +97,7 @@ To run with a custom account:
     ```
     account:
       id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
-      keystore_file: !!str "./keystore/mykey.json"
+      keystore_file: !!str "./keystore/default.json"
     ```
 1. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account
 1. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands) 
