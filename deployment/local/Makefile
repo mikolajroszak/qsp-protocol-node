@@ -21,4 +21,4 @@ run:
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		-e ETH_PASSPHRASE="$(ETH_PASSPHRASE)" \
 		-e ETH_AUTH_TOKEN="$(ETH_AUTH_TOKEN)" \
-		qsp-protocol-node sh -c "make run-with-auto-restart"
+		"$(IMAGE)" sh -c "make run-with-auto-restart"
