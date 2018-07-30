@@ -93,7 +93,7 @@ This will run the node using the default (test) account for Ropsten. This is sui
 To run with a custom account:
 
 1. Create a new account (e.g., using MyEtherWallet). Record the passphrase, the new account Ethereum address, and store the keystore file in an accessible location
-1. In `config.yaml/local/account/id`, specify the Ethereum address and in `config.yaml/local/account/keystore_file`, specify the path to the keystore file. Example:
+1. In `deployment/local/config.yaml/testnet/account/id`, specify the Ethereum address and in `deployment/local/config.yaml/testnet/account/keystore_file`, specify the path to the keystore file. Example:
     ```
     account:
       id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
@@ -150,7 +150,7 @@ pushes it to AWS Docker repository, creates a build artifact (a ZIP containing
 
 * Main file: `qsp_protocol_audit.py`
 
-* Target environments are defined in `config.yaml`
+* Target environments are defined in `deployment/local/config.yaml`
 
 * QSPAuditNode gets params from YAML
   - `config.py`
