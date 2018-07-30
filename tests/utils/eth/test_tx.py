@@ -23,6 +23,11 @@ class EthMock:
         return 123
 
     def sendRawTransaction(self, tx):
+        # TODO(mderka): Replace behaviour with mocking library
+        if tx.error_to_throw is not None:
+            to_throw = tx.error_to_throw
+            tx.error_to_throw = None
+            raise to_throw
         return tx
 
 
@@ -32,10 +37,11 @@ class Web3ClientMock:
 
 
 class SimpleTransactionMock:
-    def __init__(self):
+    def __init__(self, error_to_throw=None):
         self.transact_args = None
         self.build_args = None
         self.__is_signed = False
+        self.error_to_throw = error_to_throw
 
     def buildTransaction(self, args):
         self.build_args = args
@@ -57,6 +63,16 @@ class SimpleTransactionMock:
         return self.__is_signed
 
 
+class DummyLogger:
+    # TODO(mderka): Replace behaviour with mocking library
+
+    def debug(self, message):
+        print(message)
+
+    def error(self, message):
+        print(message)
+
+
 class SimpleConfigMock:
     def __init__(self, gas_price_wei, gas, private_key=None):
         self.__gas_price_wei = gas_price_wei
@@ -64,6 +80,7 @@ class SimpleConfigMock:
         self.__account = "account"
         self.__account_private_key = private_key
         self.__web3_client = Web3ClientMock()
+        self.__logger = DummyLogger()
 
     @property
     def gas_price_wei(self):
@@ -84,6 +101,10 @@ class SimpleConfigMock:
     @property
     def web3_client(self):
         return self.__web3_client
+
+    @property
+    def logger(self):
+        return self.__logger
 
 
 class TestFile(unittest.TestCase):
@@ -148,6 +169,72 @@ class TestFile(unittest.TestCase):
             # Expected
             pass
 
+    def test_send_signed_transaction_local_signing_with_unknown_error(self):
+        """
+        Tests the case when the transaction is signed locally (the private key is provided).
+        """
+        error = ValueError("unknown error")
+        transaction = SimpleTransactionMock(error_to_throw=error)
+        private_key = "abc"
+        config = SimpleConfigMock(4000000000, 0, private_key)
+        try:
+            send_signed_transaction(config, transaction)
+            self.fail("An error was expected")
+        except ValueError as e:
+            self.assertTrue(e is error)
+
+        self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
+
+    def test_send_signed_transaction_local_signing_with_known_transaction(self):
+        """
+        Tests the case when the transaction is signed locally (the private key is provided).
+        """
+        error = ValueError("known transaction")
+        transaction = SimpleTransactionMock(error_to_throw=error)
+        private_key = "abc"
+        config = SimpleConfigMock(4000000000, 0, private_key)
+        try:
+            send_signed_transaction(config, transaction)
+            self.fail("An error was expected")
+        except ValueError as e:
+            # the error is supposed to be re-raised for de-duplication
+            self.assertTrue(e is error)
+
+        self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
+
+    def test_send_signed_transaction_local_signing_with_replacement(self):
+        """
+        Tests the case when the transaction is signed locally (the private key is provided).
+        """
+        error = ValueError("replacement transaction underpriced")
+        transaction = SimpleTransactionMock(error_to_throw=error)
+        private_key = "abc"
+        config = SimpleConfigMock(4000000000, 0, private_key)
+        result = send_signed_transaction(config, transaction)
+
+        self.assertTrue(result.is_signed)
+        self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
+        # the nonce has been incremented once
+        self.assertEqual(124, result.build_args['nonce'])
+        self.assertIsNone(result.transact_args)
+
+    def test_send_signed_transaction_local_signing_out_of_retries(self):
+        """
+        Tests the case when the transaction is signed locally (the private key is provided).
+        """
+        error = ValueError("replacement transaction underpriced")
+        transaction = SimpleTransactionMock(error_to_throw=error)
+        private_key = "abc"
+        config = SimpleConfigMock(4000000000, 0, private_key)
+        try:
+            send_signed_transaction(config, transaction, attempts=1)
+            self.fail("An error was expected")
+        except ValueError as e:
+            # the error is supposed to be re-raised because we are out of retries
+            self.assertTrue(e is error)
+
+        self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
+
     def test_send_signed_transaction_local_signing(self):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
@@ -164,7 +251,8 @@ class TestFile(unittest.TestCase):
 
     def test_send_signed_transaction_remote_signing(self):
         """
-        Tests the case when the transaction is not signed locally (when the private key is not provided).
+        Tests the case when the transaction is not signed locally (when the private key is not
+        provided).
         """
         transaction = SimpleTransactionMock()
         private_key = "abc"
