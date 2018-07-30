@@ -44,8 +44,6 @@ class QSPAuditNode:
     __AUDIT_STATUS_ERROR = "error"
     __AUDIT_STATUS_SUCCESS = "success"
 
-    __PROTOCOL_VERSION = '1.0'
-
     def __init__(self, config):
         """
         Builds a QSPAuditNode object from the given input parameters.
@@ -626,7 +624,7 @@ class QSPAuditNode:
             'requestor': requestor,
             'auditor': self.__config.account,
             'request_id': request_id,
-            'version': QSPAuditNode.__PROTOCOL_VERSION,
+            'version': self.__config.node_version,
         }
 
         # FIXME
@@ -691,7 +689,7 @@ class QSPAuditNode:
             'requestor': requestor,
             'auditor': self.__config.account,
             'request_id': request_id,
-            'version': QSPAuditNode.__PROTOCOL_VERSION,
+            'version': self.__config.node_version,
             'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR,
             'status': QSPAuditNode.__AUDIT_STATUS_ERROR,
         }

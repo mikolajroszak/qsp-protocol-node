@@ -5,7 +5,7 @@
   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "request_id": 1,
-  "version": "1.0",
+  "version": "1.0.0",
   "audit_state": 5,
   "status": "error",
   "compilation_errors": ["DappBinWallet.sol:7:1: ParserError: Expected pragma, import directive or contract/interface/library definition.\n<!DOCTYPE html>\n^\n\n        > command: `solc --standard-json`\n        > return code: `0`\n        > stderr:\n        {\"contracts\":{},\"errors\":[{\"component\":\"general\",\"formattedMessage\":\"DappBinWallet.sol:7:1: ParserError: Expected pragma, import directive or contract/interface/library definition.\\n<!DOCTYPE html>\\n^\\n\",\"message\":\"Expected pragma, import directive or contract/interface/library definition.\",\"severity\":\"error\",\"sourceLocation\":{\"end\":7,\"file\":\"DappBinWallet.sol\",\"start\":6},\"type\":\"ParserError\"}],\"sources\":{}}\n\n        > stdout:"]

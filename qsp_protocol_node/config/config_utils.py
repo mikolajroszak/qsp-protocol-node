@@ -7,6 +7,7 @@ import os
 from audit import (
     Analyzer,
     Wrapper,
+    QSPAuditNode
 )
 from pathlib import Path
 from tempfile import gettempdir
@@ -33,7 +34,8 @@ class ConfigUtils:
     A utility class that helps with creating the configuration object.
     """
 
-    def __init__(self):
+    def __init__(self, node_version):
+        self.__node_version = node_version
         self.__logger = structlog.getLogger("config_utils")
 
     def create_report_uploader_provider(self, report_uploader_provider_name,
@@ -189,6 +191,16 @@ class ConfigUtils:
             address=audit_contract_address,
             abi=abi_json,
         )
+
+    def resolve_version(self, input):
+        """
+        Instruments a given string with the version of the protocol
+        """
+        major_version = self.__node_version[0:self.__node_version.index('.')]
+        result = None
+        if input is not None:
+            result = input.replace('{major-version}', major_version)
+        return result
 
     def create_analyzers(self, analyzers_config, logger):
         """

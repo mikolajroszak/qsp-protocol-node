@@ -49,6 +49,9 @@ class ConfigUtilsDummy:
     def load_config(self, config_file_uri, environment):
         return self.return_values.get('load_config', None)
 
+    def resolve_version(self, input):
+        return self.return_values.get('resolve_version', None)
+
 
 class ConfigUtilsMock:
     """

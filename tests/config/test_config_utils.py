@@ -1,5 +1,6 @@
 import unittest
 
+from audit import QSPAuditNode
 from config import ConfigUtils
 from config import ConfigurationException
 from config import configure_basic_logging
@@ -34,7 +35,8 @@ class ConfigStub:
 class TestConfigUtil(unittest.TestCase):
 
     def setUp(self):
-        self.config_utils = ConfigUtils()
+        dummy_node_version = '1.0.0'
+        self.config_utils = ConfigUtils(dummy_node_version)
 
     def test_create_report_uploader_provider_ok(self):
         """
@@ -229,3 +231,12 @@ class TestConfigUtil(unittest.TestCase):
         abi_uri = "file://tests/resources/QuantstampAudit.abi.json"
         address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         self.config_utils.create_audit_contract(client, abi_uri, address)
+
+    def test_resolve_version(self):
+        config_utils = ConfigUtils('10.0.1')
+        version = config_utils.resolve_version('a-{major-version}-b')
+        self.assertEqual(version, "a-10-b")
+        version = config_utils.resolve_version('a-b')
+        self.assertEqual(version, "a-b")
+        version = config_utils.resolve_version(None)
+        self.assertEqual(version, None)

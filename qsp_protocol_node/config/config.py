@@ -43,19 +43,20 @@ class Config:
     Provides a set of methods for accessing configuration parameters.
     """
 
-    def __fetch_audit_contract_metadata(self, cfg):
-        metadata_uri = config_value(cfg, '/audit_contract_abi/metadata')
+    def __fetch_audit_contract_metadata(self, cfg, config_utils):
+        metadata_uri = config_utils.resolve_version(config_value(cfg, '/audit_contract_abi/metadata'))
         if metadata_uri is not None:
             return io_utils.load_json(
                 io_utils.fetch_file(metadata_uri)
             )
 
-    def __setup_values(self, cfg):
-        audit_contract_metadata = self.__fetch_audit_contract_metadata(cfg)
+    def __setup_values(self, cfg, config_utils):
+        audit_contract_metadata = self.__fetch_audit_contract_metadata(cfg, config_utils)
         self.__audit_contract_name = config_value(audit_contract_metadata, '/contractName')
         self.__audit_contract_address = config_value(audit_contract_metadata, '/contractAddress')
+        self.__contract_version = config_value(audit_contract_metadata, '/version')
         self.__audit_contract = None
-        self.__audit_contract_abi_uri = config_value(cfg, '/audit_contract_abi/uri')
+        self.__audit_contract_abi_uri = config_utils.resolve_version(config_value(cfg, '/audit_contract_abi/uri'))
         self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
 
@@ -172,7 +173,7 @@ class Config:
         self.__account_passwd = account_passwd
         self.__auth_token = auth_token
         cfg = config_utils.load_config(config_file_uri, env)
-        self.__setup_values(cfg)
+        self.__setup_values(cfg, config_utils)
         self.__create_components(config_utils, validate_contract_settings)
         self.__logger.debug("Components successfully created")
         self.__cfg_dict = cfg
@@ -182,6 +183,7 @@ class Config:
         Builds a Config object from a target environment (e.g., test) and an input YAML
         configuration file.
         """
+        self.__node_version = '1.0.0'
         self.__analyzers = []
         self.__analyzers_config = []
         self.__audit_contract_name = None
@@ -217,6 +219,7 @@ class Config:
         self.__start_n_blocks_in_the_past = 0
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
+        self.__contract_version = None
 
     @property
     def eth_provider(self):
@@ -462,3 +465,17 @@ class Config:
     @property
     def logging_streaming_provider_args(self):
         return self.__logging_streaming_provider_args
+
+    @property
+    def contract_version(self):
+        """
+        The version of the associated smart contract
+        """
+        return self.__contract_version
+
+    @property
+    def node_version(self):
+        """
+        The version of the associated smart contract
+        """
+        return self.__node_version
