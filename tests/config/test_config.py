@@ -24,7 +24,7 @@ class ConfigUtilsDummy:
     def __init__(self, return_values):
         self.return_values = return_values
 
-    def create_report_uploader_provider(self, report_uploader_provider_name, report_uploader_provider_args):
+    def create_report_uploader_provider(self, account, report_uploader_provider_name, report_uploader_provider_args):
         return self.return_values.get('create_report_uploader_provider', None)
 
     def create_eth_provider(self, provider, args):
@@ -88,11 +88,13 @@ class ConfigUtilsMock:
         self.expected = self.expected[1:]
         return first_call.return_value
 
-    def create_report_uploader_provider(self, report_uploader_provider_name, report_uploader_provider_args):
+    def create_report_uploader_provider(self, account, report_uploader_provider_name,
+                                        report_uploader_provider_args):
         """
         A stub for the report_uploader_provider method.
         """
-        arguments_to_check = ['report_uploader_provider_name', 'report_uploader_provider_args']
+        arguments_to_check = ['account', 'report_uploader_provider_name',
+                              'report_uploader_provider_args']
         return self.call('create_report_uploader_provider', arguments_to_check, locals())
 
     def create_eth_provider(self, provider, args):
@@ -239,15 +241,18 @@ class TestConfig(unittest.TestCase):
         target_file.flush()
 
     def test_create_report_uploader_provider(self):
+        account = "account"
         report_uploader_provider_name = "provider name"
         report_uploader_provider_args = "arguments"
         report_uploader = "value"
         config = ConfigFactory.create_empty_config()
+        config._Config__account = account
         config._Config__report_uploader_provider_name = report_uploader_provider_name
         config._Config__report_uploader_provider_args = report_uploader_provider_args
         utils = ConfigUtilsMock()
         utils.expect('create_report_uploader_provider',
-                     {'report_uploader_provider_name': report_uploader_provider_name,
+                     {'account': account,
+                      'report_uploader_provider_name': report_uploader_provider_name,
                       'report_uploader_provider_args': report_uploader_provider_args},
                      report_uploader)
         result = config._Config__create_report_uploader_provider(utils)
@@ -375,7 +380,6 @@ class TestConfig(unittest.TestCase):
         eth_provider_name = "eth provider name"
         eth_provider_args = "eth provider arguments"
         created_eth_provider = "created_eth_provider"
-        account = "account"
         new_account = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         account_passwd = "account password"
         account_keystore_file = "./mykey.json"
@@ -428,7 +432,8 @@ class TestConfig(unittest.TestCase):
                      {'analyzers_config': analyzers_config, 'logger': logger},
                      created_analyzers)
         utils.expect('create_report_uploader_provider',
-                     {'report_uploader_provider_name': report_uploader_provider_name,
+                     {'account': new_account,
+                      'report_uploader_provider_name': report_uploader_provider_name,
                       'report_uploader_provider_args': report_uploader_provider_args},
                      report_uploader)
         config._Config__create_components(utils)

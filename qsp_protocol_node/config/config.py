@@ -109,7 +109,8 @@ class Config:
         """
         Creates a report uploader provider.
         """
-        return config_utils.create_report_uploader_provider(self.report_uploader_provider_name,
+        return config_utils.create_report_uploader_provider(self.account,
+                                                            self.report_uploader_provider_name,
                                                             self.report_uploader_provider_args)
 
     def __create_web3_client(self, config_utils):
@@ -194,6 +195,7 @@ class Config:
         self.__account_keystore_file = None
         self.__account_private_key = None
         self.__account_passwd = None
+        self.__auth_token = None
         self.__cfg_dict = None
         self.__config_file_uri = None
         self.__gas = 0

@@ -1,13 +1,11 @@
 import config
 import structlog
 import utils.io as io_utils
-import yaml
 import os
 
 from audit import (
     Analyzer,
-    Wrapper,
-    QSPAuditNode
+    Wrapper
 )
 from pathlib import Path
 from tempfile import gettempdir
@@ -38,7 +36,7 @@ class ConfigUtils:
         self.__node_version = node_version
         self.__logger = structlog.getLogger("config_utils")
 
-    def create_report_uploader_provider(self, report_uploader_provider_name,
+    def create_report_uploader_provider(self, account, report_uploader_provider_name,
                                         report_uploader_provider_args):
         """
         Creates a report uploader provider.
@@ -46,9 +44,10 @@ class ConfigUtils:
         # Supported providers:
         #
         # S3Provider
-
         if report_uploader_provider_name == "S3Provider":
-            return S3Provider(**report_uploader_provider_args)
+            if account is None:
+                raise ConfigurationException("account is None, the upload will not be possible")
+            return S3Provider(account, **report_uploader_provider_args)
 
         raise ConfigurationException(
             "Unknown/Unsupported provider: {0}".format(report_uploader_provider_name))

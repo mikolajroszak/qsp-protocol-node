@@ -3,14 +3,15 @@ import uuid
 
 
 class S3Provider:
-    def __init__(self, bucket_name, contract_bucket_name):
+    def __init__(self, account, bucket_name, contract_bucket_name):
         self.__client = boto3.client('s3')
         self.__bucket_name = bucket_name
         self.__contract_bucket_name = contract_bucket_name
+        self.__account = account
 
     def upload(self, report_as_string):
         try:
-            report_file_name = "{0}.json".format(str(uuid.uuid4()))
+            report_file_name = "{0}/{1}.json".format(self.__account, str(uuid.uuid4()))
             response = self.__client.put_object(
                 Body=str(report_as_string),
                 Bucket=self.__bucket_name,
@@ -43,7 +44,7 @@ class S3Provider:
                 'provider_exception': Exception('The contact bucket name is not configured')
             }
         try:
-            contract_filname = "{0}/{1}".format(request_id, filename)
+            contract_filname = "{0}/{1}/{2}".format(self.__account, request_id, filename)
             response = self.__client.put_object(
                 Body=str(contract_body),
                 Bucket=self.__contract_bucket_name,
