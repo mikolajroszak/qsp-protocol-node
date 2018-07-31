@@ -20,6 +20,7 @@ def send_signed_transaction(config, transaction, attempts=10):
         return transaction.transact(args)
     else:
         nonce = config.web3_client.eth.getTransactionCount(config.account)
+        original_nonce = nonce
         for i in range(attempts):
             try:
                 args['nonce'] = nonce
@@ -35,6 +36,15 @@ def send_signed_transaction(config, transaction, attempts=10):
                 elif "replacement transaction underpriced" in repr(e):
                     config.logger.debug("Another transaction is queued with the same nonce. {}"
                                         .format(e))
+                    nonce += 1
+                elif "nonce too low" in repr(e):
+                    msg = "This nonce is too low {}. Web3 says transaction count is {}. " \
+                          "The original nonce was {}. Error: {}".format(
+                        nonce,
+                        config.web3_client.eth.getTransactionCount(config.account),
+                        original_nonce,
+                        e)
+                    config.logger.debug(msg)
                     nonce += 1
                 elif "known transaction" in repr(e):
                     # the de-duplication is preserved and the exception is re-raised
