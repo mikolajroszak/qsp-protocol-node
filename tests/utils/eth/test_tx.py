@@ -218,6 +218,22 @@ class TestFile(unittest.TestCase):
         self.assertEqual(124, result.build_args['nonce'])
         self.assertIsNone(result.transact_args)
 
+    def test_send_signed_transaction_local_signing_with_low_nonce(self):
+        """
+        Tests the case when the transaction is signed locally (the private key is provided).
+        """
+        error = ValueError("replacement transaction underpriced")
+        transaction = SimpleTransactionMock(error_to_throw=error)
+        private_key = "abc"
+        config = SimpleConfigMock(4000000000, 0, private_key)
+        result = send_signed_transaction(config, transaction)
+
+        self.assertTrue(result.is_signed)
+        self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
+        # the nonce has been incremented once
+        self.assertEqual(124, result.build_args['nonce'])
+        self.assertIsNone(result.transact_args)
+
     def test_send_signed_transaction_local_signing_out_of_retries(self):
         """
         Tests the case when the transaction is signed locally (the private key is provided).

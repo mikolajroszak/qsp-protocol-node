@@ -18,7 +18,7 @@ and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
     - Verify: `make` outputs `make: *** No targets specified and no makefile found.  Stop.`.
 1. Install Docker CE: https://www.docker.com/community-edition
     - Verify: `docker -v` should return `Docker version 17.09.0-ce` or above
-1. Make sure your user is a part of the docker group: `sudo usermod -a -G docker <username>`. This is required for running analyzer containers from within the audit node container.
+1. On Linux environments, ensure your user is a part of the docker group: `sudo usermod -a -G docker <username>`. This is required for running analyzer containers from within the audit node container.
 1. Install AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/installing.html.
     - Verify: typing `aws` should output:
     ```
@@ -42,7 +42,7 @@ and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
 Record for next steps:
 - Your public Ethereum address, e.g., `0x60463b7ee0c3d33def3a05313597b1300f6de62b`
 - The passphrase for your key
-- Location of your keystore (JSON) file, e.g., `./keystore/default.json`. The location is
+- Location of your keystore (JSON) file, e.g., `./keystore/mykey.json`. The location is
 relative to this README's folder.
 
 ### Get whitelisted

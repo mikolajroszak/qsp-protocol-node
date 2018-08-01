@@ -25,7 +25,37 @@ def system(*args, **kwargs):
     return out
 
 
+def check_solidity_versions():
+    try:
+        # Dockerfile
+        result = system("git", "grep", "github.com/ethereum", "Dockerfile").decode("utf-8")
+        dockerfile_version = result.split("/")[7]  # the v0.x.y download version
+        if not dockerfile_version.startswith("v"):
+            raise Exception("Error in pre-commit: check ethereum version in Dockerfile")
+        dockerfile_version = dockerfile_version[1:]
+
+        # QuantstampAuditMock
+        result = system("git", "grep", "pragma", "tests/resources/QuantstampAuditMock.sol").decode("utf-8")
+        quantstamp_mock_version = result.split()[-1].strip(";\\n'")
+
+        # README.md
+        result = str(system("git", "grep", "compiler for Solidity", "README.md"))
+        readme_version = [i for i in result.split() if i.startswith("0")][0].strip(".")
+
+        if dockerfile_version != quantstamp_mock_version or quantstamp_mock_version != readme_version:
+            print("Ensure that the solidity versions in Dockerfile, README.md, and QuantstampAuditMock are in sync.")
+            print("Also ensure that the homebrew-ethereum link in README.md has been updated.")
+            sys.exit(1)
+
+    except Exception as e:
+        print("The format of some files no longer conform to the pre-commit checks.")
+        print("Check '.git/hooks/pre-commit'.")
+        print(e)
+        sys.exit(1)
+
+
 def main():
+    check_solidity_versions()
     modified = re.compile('^[AM]+\s+(?P<name>.*\.py$)', re.MULTILINE)
     files = system('git', 'status', '--porcelain').decode("utf-8")
     files = modified.findall(files)
