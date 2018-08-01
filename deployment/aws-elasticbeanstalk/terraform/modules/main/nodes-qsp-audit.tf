@@ -54,8 +54,8 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name = "NODE_NAME"
-    value = "audit-${var.stage}"
+    name = "CONFIG"
+    value = "/app/node-config/config.yaml"
   }
   
   setting {
