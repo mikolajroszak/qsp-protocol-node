@@ -36,13 +36,14 @@ and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
 - Go to https://www.myetherwallet.com
 - Click on the tab named "New Wallet"
 - Follow the instructions. Give a strong passphrase
-- Make sure to save "Keystore / JSON file" into the `keystore` subfolder
+- Make sure to save "Keystore / JSON file" into the `keystore` subfolder of this README's location
 - Add some Ether to your account (to cover gas costs)
 
 Record for next steps:
 - Your public Ethereum address, e.g., `0x60463b7ee0c3d33def3a05313597b1300f6de62b`
 - The passphrase for your key
-- Location of your keystore (JSON) file, e.g., `./keystore/mykey.json`
+- Location of your keystore (JSON) file, e.g., `./keystore/default.json`. The location is
+relative to this README's folder.
 
 ### Get whitelisted
 
@@ -55,9 +56,9 @@ Record for next steps:
 
 ### Configure
 
-1. Set the environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to the provided AWS credentials. Alternatively, do `aws configure` to specify them at the user level.
-1. Set `ENV` to `testnet` (default) or `betanet`
-1. Set `ETH_PASSPHRASE` to the passphrase of your account
+1. Set the environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to the provided AWS credentials. Alternatively, do `aws configure` to specify them at the user level: when prompted, use `us-east-1` as *Default region name* and leave `None` as *Default output format*
+1. Set environment variable `ENV` to `testnet` (default) or `betanet`
+1. Set environment variable `ETH_PASSPHRASE` to your account's passphrase (or *wallet password*)
 1. In `config.yaml`, specify the endpoint for the Ethereum node you want the QSP node to connect to:
     ```
     eth_node:
@@ -65,9 +66,9 @@ Record for next steps:
         args:
             endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token={token}"
     ```
-    If your Ethereum node requires an auth token, set `ETH_AUTH_TOKEN`, and QSP node will substitute the placeholder `{token}` with the value of `ETH_AUTH_TOKEN`.
+    If your Ethereum node requires an auth token, set environment variable `ETH_AUTH_TOKEN`, and QSP node will substitute the placeholder `{token}`
 
-1. In `config.yaml`, edit the `account` section:
+1. In `config.yaml`, edit the `account` section to specify your account id and, if different from default, keystore file path:
     ```
     account:
         id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
