@@ -10,7 +10,6 @@ ERR_EXCEPTION="1"
 ERR_INVALID_ARGS="2"
 
 # Invokes the audit node.
-date
 $QSP_NODE $@
 
 # Stores the exit code of invoking the audit node.
