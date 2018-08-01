@@ -149,7 +149,7 @@ class Sqlite3Worker(threading.Thread):
 
                     # this error was caused by an already existing event
 
-                    # TODO(mderka): refactor this in such a way that
+                    # TODO(lpassos): refactor this in such a way that
                     # the warning is handled outside the sql3lite.
                     # This error is very specific; sql3liteworker should be
                     # kept as general as possible to promote reuse.
