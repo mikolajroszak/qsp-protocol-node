@@ -42,7 +42,7 @@ and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
 Record for next steps:
 - Your public Ethereum address, e.g., `0x60463b7ee0c3d33def3a05313597b1300f6de62b`
 - The passphrase for your key
-- Location of your keystore (JSON) file, e.g., `./keystore/mykey.json`. The location is
+- Location of your keystore (JSON) file, e.g., `./keystore/default.json`. The location is
 relative to this README's folder.
 
 ### Get whitelisted
