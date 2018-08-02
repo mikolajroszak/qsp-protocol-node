@@ -139,8 +139,9 @@ class QSPAuditNode:
         start_block = self.__config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
             # the database is empty
-            start_block = max(0, self.__config.web3_client.eth.blockNumber -
-                              self.__config.start_n_blocks_in_the_past)
+            current_block_number = self.__config.web3_client.eth.blockNumber
+            n_blocks_in_the_past = self.__config.start_n_blocks_in_the_past
+            start_block = max(0, current_block_number - n_blocks_in_the_past)
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
@@ -177,9 +178,12 @@ class QSPAuditNode:
             # Checking if all threads are still alive
             for thread in self.__internal_threads:
                 if not thread.is_alive():
-                    self.__logger.debug(
-                        "Cannot proceed execution. At least one internal thread is lost")
-                    self.stop()
+                    thread_lost = True
+                    break
+
+            if thread_lost:
+                self.stop()
+                raise Exception("Cannot proceed execution. At least one internal thread is not alive")
 
             sleep(health_check_interval_sec)
 
