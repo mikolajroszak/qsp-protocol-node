@@ -1,6 +1,5 @@
 import unittest
 
-from audit import QSPAuditNode
 from config import ConfigUtils
 from config import ConfigurationException
 from config import configure_basic_logging

@@ -6,18 +6,13 @@ import yaml
 
 from tempfile import NamedTemporaryFile
 from config import config_value, Config, ConfigFactory
-from helpers.function_call import FunctionCall
+from helpers.simple_mock import SimpleMock
 from helpers.resource import resource_uri
 from utils.io import (
     fetch_file,
-    load_json,
     load_yaml,
 )
-
-
-class DummyLogger:
-    def debug(self, message):
-        print(message)
+from unittest.mock import Mock
 
 
 class ConfigUtilsDummy:
@@ -32,7 +27,7 @@ class ConfigUtilsDummy:
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
                     logging_streaming_provider_args, account):
-        return self.return_values.get('configure_logging', (DummyLogger(), None))
+        return self.return_values.get('configure_logging', (Mock(), None))
 
     def create_analyzers(self, analyzers_config, logger):
         return self.return_values.get('create_analyzers', None)
@@ -53,40 +48,10 @@ class ConfigUtilsDummy:
         return self.return_values.get('resolve_version', None)
 
 
-class ConfigUtilsMock:
+class ConfigUtilsMock(SimpleMock):
     """
     A mock class used as stub for the internals of the Web3 provider.
     """
-
-    def __init__(self):
-        self.expected = []
-
-    def expect(self, function, params, return_value):
-        """
-        Adds an expected function call to the queue.
-        """
-        self.expected.append(FunctionCall(function, params, return_value))
-
-    def verify(self):
-        """
-        Verifies that all the expected calls were performed.
-        """
-        if len(self.expected) != 0:
-            raise Exception('Some expected calls were left over: ' + str(self.expected))
-
-    def call(self, function_name, arguments_to_check, local_values):
-        """
-        Simulates call to the specified function while checking the expected parameter values
-        """
-        first_call = self.expected[0]
-        if first_call.function_name != function_name:
-            raise Exception('{0} call expected'.format(function_name))
-        for argument in arguments_to_check:
-            if first_call.params[argument] != local_values[argument]:
-                msg = 'Value of {0} is not {1} as expected, but {2}'
-                raise Exception(msg.format(argument, first_call.params[argument], local_values[argument]))
-        self.expected = self.expected[1:]
-        return first_call.return_value
 
     def create_report_uploader_provider(self, account, report_uploader_provider_name,
                                         report_uploader_provider_args):

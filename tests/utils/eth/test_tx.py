@@ -1,6 +1,7 @@
 import unittest
 
 from utils.eth.tx import mk_args, send_signed_transaction
+from unittest.mock import Mock
 
 
 class AccountMock:
@@ -23,17 +24,11 @@ class EthMock:
         return 123
 
     def sendRawTransaction(self, tx):
-        # TODO(mderka): Replace behaviour with mocking library
         if tx.error_to_throw is not None:
             to_throw = tx.error_to_throw
             tx.error_to_throw = None
             raise to_throw
         return tx
-
-
-class Web3ClientMock:
-    def __init__(self):
-        self.eth = EthMock()
 
 
 class SimpleTransactionMock:
@@ -63,58 +58,25 @@ class SimpleTransactionMock:
         return self.__is_signed
 
 
-class DummyLogger:
-    # TODO(mderka): Replace behaviour with mocking library
-
-    def debug(self, message):
-        print(message)
-
-    def error(self, message):
-        print(message)
-
-
-class SimpleConfigMock:
-    def __init__(self, gas_price_wei, gas, private_key=None):
-        self.__gas_price_wei = gas_price_wei
-        self.__gas = gas
-        self.__account = "account"
-        self.__account_private_key = private_key
-        self.__web3_client = Web3ClientMock()
-        self.__logger = DummyLogger()
-
-    @property
-    def gas_price_wei(self):
-        return self.__gas_price_wei
-
-    @property
-    def gas(self):
-        return self.__gas
-
-    @property
-    def account(self):
-        return self.__account
-
-    @property
-    def account_private_key(self):
-        return self.__account_private_key
-
-    @property
-    def web3_client(self):
-        return self.__web3_client
-
-    @property
-    def logger(self):
-        return self.__logger
-
-
 class TestFile(unittest.TestCase):
+
+    @staticmethod
+    def get_config_mock(gas_price_wei, gas, private_key=None):
+        mock = Mock()
+        mock.gas = gas
+        mock.gas_price_wei = gas_price_wei
+        mock.account = "account"
+        mock.account_private_key = private_key
+        mock.web3_client.eth = EthMock()
+        mock.logger = Mock()
+        return mock
 
     def test_mk_args_none_gas(self):
         """
         If no gas is provided, the arguments do not contain the gas record.
         """
         gas_price_wei = 4000000000
-        config = SimpleConfigMock(gas_price_wei, None)
+        config = TestFile.get_config_mock(gas_price_wei, None)
         result = mk_args(config)
         self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
@@ -130,7 +92,7 @@ class TestFile(unittest.TestCase):
         Tests zero gas case.
         """
         gas_price_wei = 4000000000
-        config = SimpleConfigMock(gas_price_wei, 0)
+        config = TestFile.get_config_mock(gas_price_wei, 0)
         result = mk_args(config)
         self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
@@ -141,7 +103,7 @@ class TestFile(unittest.TestCase):
         Tests positive gas case.
         """
         gas_price_wei = 4000000000
-        config = SimpleConfigMock(gas_price_wei, 7)
+        config = TestFile.get_config_mock(gas_price_wei, 7)
         result = mk_args(config)
         self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
@@ -152,7 +114,7 @@ class TestFile(unittest.TestCase):
         Tests positive gas case where gas is provided as a string.
         """
         gas_price_wei = 4000000000
-        config = SimpleConfigMock(gas_price_wei, '7')
+        config = TestFile.get_config_mock(gas_price_wei, '7')
         result = mk_args(config)
         self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
@@ -162,7 +124,7 @@ class TestFile(unittest.TestCase):
         """
         Tests negative gas case provided as string. The value should not be included.
         """
-        config = SimpleConfigMock(4000000000, '-8')
+        config = TestFile.get_config_mock(4000000000, '-8')
         try:
             mk_args(config)
         except ValueError:
@@ -176,7 +138,7 @@ class TestFile(unittest.TestCase):
         error = ValueError("unknown error")
         transaction = SimpleTransactionMock(error_to_throw=error)
         private_key = "abc"
-        config = SimpleConfigMock(4000000000, 0, private_key)
+        config = TestFile.get_config_mock(4000000000, 0, private_key)
         try:
             send_signed_transaction(config, transaction)
             self.fail("An error was expected")
@@ -192,7 +154,7 @@ class TestFile(unittest.TestCase):
         error = ValueError("known transaction")
         transaction = SimpleTransactionMock(error_to_throw=error)
         private_key = "abc"
-        config = SimpleConfigMock(4000000000, 0, private_key)
+        config = TestFile.get_config_mock(4000000000, 0, private_key)
         try:
             send_signed_transaction(config, transaction)
             self.fail("An error was expected")
@@ -209,7 +171,7 @@ class TestFile(unittest.TestCase):
         error = ValueError("replacement transaction underpriced")
         transaction = SimpleTransactionMock(error_to_throw=error)
         private_key = "abc"
-        config = SimpleConfigMock(4000000000, 0, private_key)
+        config = TestFile.get_config_mock(4000000000, 0, private_key)
         result = send_signed_transaction(config, transaction)
 
         self.assertTrue(result.is_signed)
@@ -225,7 +187,7 @@ class TestFile(unittest.TestCase):
         error = ValueError("replacement transaction underpriced")
         transaction = SimpleTransactionMock(error_to_throw=error)
         private_key = "abc"
-        config = SimpleConfigMock(4000000000, 0, private_key)
+        config = TestFile.get_config_mock(4000000000, 0, private_key)
         result = send_signed_transaction(config, transaction)
 
         self.assertTrue(result.is_signed)
@@ -241,7 +203,7 @@ class TestFile(unittest.TestCase):
         error = ValueError("replacement transaction underpriced")
         transaction = SimpleTransactionMock(error_to_throw=error)
         private_key = "abc"
-        config = SimpleConfigMock(4000000000, 0, private_key)
+        config = TestFile.get_config_mock(4000000000, 0, private_key)
         try:
             send_signed_transaction(config, transaction, attempts=1)
             self.fail("An error was expected")
@@ -257,7 +219,7 @@ class TestFile(unittest.TestCase):
         """
         transaction = SimpleTransactionMock()
         private_key = "abc"
-        config = SimpleConfigMock(4000000000, 0, private_key)
+        config = TestFile.get_config_mock(4000000000, 0, private_key)
         result = send_signed_transaction(config, transaction)
 
         self.assertTrue(result.is_signed)
@@ -272,7 +234,7 @@ class TestFile(unittest.TestCase):
         """
         transaction = SimpleTransactionMock()
         private_key = "abc"
-        config = SimpleConfigMock(4000000000, 0)
+        config = TestFile.get_config_mock(4000000000, 0)
         result = send_signed_transaction(config, transaction)
 
         self.assertFalse(result.is_signed)
