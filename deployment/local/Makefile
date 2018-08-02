@@ -1,3 +1,5 @@
+MAKEFLAGS += --silent
+
 ENV ?= testnet
 CONFIG ?= config.yaml
 IMAGE ?= 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:develop
