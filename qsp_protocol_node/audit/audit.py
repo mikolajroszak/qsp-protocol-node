@@ -522,7 +522,8 @@ class QSPAuditNode:
         self.__validate_json(audit_report, request_id)
 
         audit_report_str = json.dumps(audit_report, indent=2)
-        upload_result = self.__config.report_uploader.upload(audit_report_str)
+        audit_hash = digest(audit_report_str)
+        upload_result = self.__config.report_uploader.upload(audit_report_str, audit_report_hash=audit_hash)
 
         self.__logger.info(
             "Report upload result: {0}".format(upload_result),
@@ -552,7 +553,7 @@ class QSPAuditNode:
         return {
             'audit_state': audit_report['audit_state'],
             'audit_uri': upload_result['url'],
-            'audit_hash': digest(audit_report_str),
+            'audit_hash': audit_hash
         }
 
     def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):

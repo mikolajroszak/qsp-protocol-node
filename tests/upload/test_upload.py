@@ -33,7 +33,8 @@ class TestS3Provider(unittest.TestCase):
         test_account = "test_account"
         bucket = "qsp-protocol-reports-dev"
         provider = S3Provider(test_account, bucket, bucket)
-        result = provider.upload("some testing report")
+        result = provider.upload("some testing report", audit_report_hash="hash-as-filename")
+        self.assertTrue("hash-as-filename" in result["url"], "The hash was not used.")
         self.assertTrue(result["success"], "The result does not indicate a successful upload.")
         self.assertIsNotNone(result["url"], "The url for the report is not set.")
         self.assertIsNotNone(result["provider_response"], "The response for the upload is not set.")
