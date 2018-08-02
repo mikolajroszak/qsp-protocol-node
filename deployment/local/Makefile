@@ -1,4 +1,5 @@
 ENV ?= testnet
+CONFIG ?= config.yaml
 IMAGE ?= 466368306539.dkr.ecr.us-east-1.amazonaws.com/qsp-protocol-node:develop
 ETH_PASSPHRASE ?= \"abc123ropsten\"
 ETH_AUTH_TOKEN ?= \"\"
@@ -16,6 +17,7 @@ run:
 		-v $(PWD)/keystore:/app/keystore \
 		-v $(PWD)/config.yaml:/app/config.yaml \
 		-e ENV="$(ENV)" \
+		-e CONFIG="$(CONFIG)" \
 		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
 		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
