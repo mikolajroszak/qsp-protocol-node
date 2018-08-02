@@ -42,21 +42,28 @@ class Config:
     """
     Provides a set of methods for accessing configuration parameters.
     """
-
-    def __fetch_audit_contract_metadata(self, cfg, config_utils):
-        metadata_uri = config_utils.resolve_version(config_value(cfg, '/audit_contract_abi/metadata'))
+    def __fetch_contract_metadata(self, cfg, config_utils, contract_abi):
+        metadata_uri = config_utils.resolve_version(config_value(cfg, '/' + contract_abi + '/metadata'))
         if metadata_uri is not None:
             return io_utils.load_json(
                 io_utils.fetch_file(metadata_uri)
             )
 
     def __setup_values(self, cfg, config_utils):
-        audit_contract_metadata = self.__fetch_audit_contract_metadata(cfg, config_utils)
+        audit_contract_metadata = self.__fetch_contract_metadata(cfg, config_utils, 'audit_contract_abi')
         self.__audit_contract_name = config_value(audit_contract_metadata, '/contractName')
         self.__audit_contract_address = config_value(audit_contract_metadata, '/contractAddress')
         self.__contract_version = config_value(audit_contract_metadata, '/version')
         self.__audit_contract = None
         self.__audit_contract_abi_uri = config_utils.resolve_version(config_value(cfg, '/audit_contract_abi/uri'))
+
+        audit_data_contract_metadata = self.__fetch_contract_metadata(cfg, config_utils, 'audit_data_contract_abi')
+        self.__audit_data_contract_name = config_value(audit_data_contract_metadata, '/contractName')
+        self.__audit_data_contract_address = config_value(audit_data_contract_metadata, '/contractAddress')
+        self.__audit_data_contract = None
+        self.__audit_data_contract_abi_uri = config_utils.resolve_version(
+            config_value(cfg, '/audit_data_contract_abi/uri'))
+
         self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
@@ -124,8 +131,16 @@ class Config:
         Creates the audit contract either from its ABI or from its source code (whichever is
         available).
         """
-        return config_utils.create_audit_contract(self.web3_client, self.audit_contract_abi_uri,
+        return config_utils.create_contract(self.web3_client, self.audit_contract_abi_uri,
                                                   self.audit_contract_address)
+
+    def __create_audit_data_contract(self, config_utils):
+        """
+        Creates the audit contract either from its ABI or from its source code (whichever is
+        available).
+        """
+        return config_utils.create_contract(self.web3_client, self.audit_data_contract_abi_uri,
+                                                  self.audit_data_contract_address)
 
     def __create_analyzers(self, config_utils):
         """
@@ -143,7 +158,6 @@ class Config:
     def __create_components(self, config_utils, validate_contract_settings=True):
         # Setup followed by verification
         self.__logger, self.__logging_streaming_provider = self.__configure_logging(config_utils)
-
         # Contract settings validation
         if validate_contract_settings:
             config_utils.check_audit_contract_settings(self)
@@ -164,6 +178,10 @@ class Config:
 
         if self.has_audit_contract_abi:
             self.__audit_contract = self.__create_audit_contract(config_utils)
+        if self.has_audit_data_contract_abi:
+            self.__audit_data_contract = self.__create_audit_data_contract(config_utils)
+        if validate_contract_settings:
+            config_utils.check_configuration_settings(self)
         self.__analyzers = self.__create_analyzers(config_utils)
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
@@ -191,6 +209,10 @@ class Config:
         self.__audit_contract_address = None
         self.__audit_contract_abi_uri = None
         self.__audit_contract = None
+        self.__audit_data_contract_name = None
+        self.__audit_data_contract_address = None
+        self.__audit_data_contract_abi_uri = None
+        self.__audit_data_contract = None
         self.__account = None
         self.__account_keystore_file = None
         self.__account_private_key = None
@@ -259,6 +281,13 @@ class Config:
         Returns the audit QSP contract address.
         """
         return self.__audit_contract_address
+
+    @property
+    def audit_data_contract_address(self):
+        """
+        Returns the audit data QSP contract address.
+        """
+        return self.__audit_data_contract_address
 
     @property
     def min_price(self):
@@ -345,6 +374,20 @@ class Config:
         return bool(self.__audit_contract_abi_uri)
 
     @property
+    def audit_data_contract_abi_uri(self):
+        """
+        Returns the audit contract ABI URI.
+        """
+        return self.__audit_data_contract_abi_uri
+
+    @property
+    def has_audit_data_contract_abi(self):
+        """
+        Returns whether the audit contract ABI has been made available.
+        """
+        return bool(self.__audit_data_contract_abi_uri)
+
+    @property
     def web3_client(self):
         """
         Returns the Web3 client object built from the given YAML configuration file.
@@ -364,6 +407,13 @@ class Config:
         Returns the name of the audit contract.
         """
         return self.__audit_contract_name
+
+    @property
+    def audit_data_contract(self):
+        """
+        Returns the audit contract object built from the given YAML configuration file.
+        """
+        return self.__audit_data_contract
 
     @property
     def analyzers(self):

@@ -35,8 +35,8 @@ class ConfigUtilsDummy:
     def check_audit_contract_settings(self):
         return self.return_values.get('check_audit_contract_settings', None)
 
-    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
-        return self.return_values.get('create_audit_contract', None)
+    def create_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+        return self.return_values.get('create_contract', None)
 
     def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
         return self.return_values.get('create_web3_client', (None, None, None))
@@ -92,9 +92,16 @@ class ConfigUtilsMock(SimpleMock):
         arguments_to_check = ['config']
         return self.call('check_audit_contract_settings', arguments_to_check, locals())
 
-    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+    def check_configuration_settings(self, config):
+        """
+        A stub for check_configuration_settings method.
+        """
+        arguments_to_check = ['config']
+        return self.call('check_configuration_settings', arguments_to_check, locals())
+
+    def create_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
         arguments_to_check = ['web3_client', 'audit_contract_abi_uri', 'audit_contract_address']
-        return self.call('create_audit_contract', arguments_to_check, locals())
+        return self.call('create_contract', arguments_to_check, locals())
 
     def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
         arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'keystore_file', 'max_attempts']
@@ -389,10 +396,13 @@ class TestConfig(unittest.TestCase):
                      {'eth_provider': created_eth_provider, 'account': account, 'account_passwd': account_passwd,
                       'keystore_file': account_keystore_file, 'max_attempts': 30},
                      (created_web3_client, new_account, new_private_key))
-        utils.expect('create_audit_contract',
+        utils.expect('create_contract',
                      {'web3_client': created_web3_client, 'audit_contract_abi_uri': audit_contract_abi_uri,
                       'audit_contract_address': audit_contract_address},
                      created_audit_contract)
+        utils.expect('check_configuration_settings',
+                     {'config': config},
+                     None)
         utils.expect('create_analyzers',
                      {'analyzers_config': analyzers_config, 'logger': logger},
                      created_analyzers)
@@ -426,7 +436,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, config.gas_price_wei)
         self.assertEqual(5, config.evt_polling)
         self.assertEqual(2, len(config.analyzers))
-        self.assertEqual(25, config.start_n_blocks_in_the_past)
+        self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
 
     def test_inject_token_auth(self):
