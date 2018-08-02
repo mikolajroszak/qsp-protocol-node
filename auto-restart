@@ -7,7 +7,7 @@ QSP_NODE="make run"
 
 SUCCESS="0"
 ERR_EXCEPTION="1"
-ERR_INVALID_ARGS="2"
+ERR_INVALID_ARGS="17"
 
 # Invokes the audit node.
 $QSP_NODE $@
@@ -44,8 +44,7 @@ while true ; do
     echo ""
         
     # Invokes the audit node.      
-    date
-    $QSP_NODE $@
+    date; $QSP_NODE $@
 
     return_code=$?
 done

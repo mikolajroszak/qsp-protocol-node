@@ -183,7 +183,6 @@ class QSPAuditNode:
                     break
 
             if thread_lost:
-                self.stop()
                 raise Exception("Cannot proceed execution. At least one internal thread is not alive")
 
             sleep(health_check_interval_sec)
