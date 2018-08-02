@@ -174,6 +174,7 @@ class QSPAuditNode:
         # after processing them all.
 
         health_check_interval_sec = 2
+        thread_lost = False
         while self.__exec:
             # Checking if all threads are still alive
             for thread in self.__internal_threads:
