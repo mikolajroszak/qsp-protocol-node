@@ -6,8 +6,8 @@ a node operator to spin up a QSP node.
 The node runs as a Docker container. The image is hosted on Quantstamp's private repository.
 The steps assume a Unix-like operating system.
 
-### Quick start
-If you want to run the node with default settings, default account
+### Quick start (developers)
+If you have AWS crdentials on your machine and would like to run the node with default settings, default account
 (`0x60463b7ee0c3d33def3a05313597b1300f6de62b`) that's already whitelisted for
 `testnet`, make sure the requirements in `Install dependencies` are satisfied, 
 and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
