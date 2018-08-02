@@ -93,7 +93,10 @@ class Wrapper:
     def get_metadata(self, contract_path, request_id, original_file_name):
         try:
             env_vars = self.setup_environment(contract_path, original_file_name)
-            self.__logger.debug("Getting metadata as subprocess", requestId=request_id)
+            self.__logger.debug(
+                "Getting {0}'s metadata as subprocess".format(self.analyzer_name),
+                requestId=request_id,
+            )
             analyzer = subprocess.run(
                 self.__metadata_script,
                 env=env_vars,
@@ -106,11 +109,15 @@ class Wrapper:
             return Wrapper.process_metadata(analyzer.stdout)
 
         except Exception as inner_error:
-            error = True
             json_report = {
                 'analyzer': {'name': self.__analyzer_name}
             }
-            self.__logger.debug("Error running metadata wrapper: {0}".format(str(inner_error)), requestId=request_id)
+            self.__logger.error("Error collecting the metadata from {0}'s wrapper: {1}".format(
+                    self.analyzer_name,
+                    str(inner_error),
+                ),
+                requestId=request_id
+            )
 
         return json_report
 
@@ -121,7 +128,11 @@ class Wrapper:
         error = False
         try:
             env_vars = self.setup_environment(contract_path, original_file_name)
-            self.__logger.debug("Invoking wrapper as subprocess", requestId=request_id)
+            self.__logger.debug("Invoking {0}'s wrapper as subprocess".format(
+                    self.analyzer_name
+                ),
+                requestId=request_id,
+            )
 
             analyzer = subprocess.run(
                 self.__run_script,
@@ -150,7 +161,12 @@ class Wrapper:
                 'errors': [str(inner_error)],
             }
 
-            self.__logger.debug("Error running wrapper: {0}".format(str(inner_error)), requestId=request_id)
+            self.__logger.error("Error running {0}'s wrapper: {1}".format(
+                    self.analyzer_name,
+                    str(inner_error),
+                ),
+                requestId=request_id
+            )
 
         if analyzer is not None:
             self.__logger.debug("Wrapper stdout is: {0}".format(str(analyzer.stdout)), requestId=request_id)
@@ -163,6 +179,6 @@ class Wrapper:
             json_report['end_time'] = end_time
 
         if not error:
-            self.__logger.debug("No error when running the wrapper")
+            self.__logger.debug("{0}'s wrapper successfully executed".format(self.analyzer_name))
 
         return json_report
