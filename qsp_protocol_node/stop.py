@@ -23,7 +23,6 @@ class Stop:
     """
     __objects = []
     __logger = None
-    __sys = sys
 
     @classmethod
     def stop_all(cls):
@@ -66,14 +65,14 @@ class Stop:
         exiting with status code 0.
         """
         Stop.stop_all()
-        Stop.__sys.exit(0)
+        sys.exit(0)
 
     @classmethod
     def sigkill(cls):
         """
         Signals a KILL/TERM stop. Exits the process with a 0 status code.
         """
-        Stop.__sys.exit(0)
+        sys.exit(0)
 
     @classmethod
     def error(cls, err=None, code=1):
@@ -87,7 +86,7 @@ class Stop:
         Stop.stop_all()
         if err is not None:
             print_err(Stop.__logger, err)
-        Stop.__sys.exit(code)
+        sys.exit(code)
 
 
 def __handle_sigkill_signal(signal, frame):

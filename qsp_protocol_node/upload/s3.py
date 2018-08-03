@@ -1,5 +1,6 @@
 import boto3
-import uuid
+
+from utils.io import digest
 
 
 class S3Provider:
@@ -9,9 +10,12 @@ class S3Provider:
         self.__contract_bucket_name = contract_bucket_name
         self.__account = account
 
-    def upload(self, report_as_string):
+    def upload(self, report_as_string, audit_report_hash=None):
+        report_hash = audit_report_hash
+        if audit_report_hash is None:
+            report_hash = digest(report_as_string)
         try:
-            report_file_name = "{0}/{1}.json".format(self.__account, str(uuid.uuid4()))
+            report_file_name = "{0}/{1}.json".format(self.__account, report_hash)
             response = self.__client.put_object(
                 Body=str(report_as_string),
                 Bucket=self.__bucket_name,

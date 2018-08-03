@@ -1,6 +1,5 @@
 import unittest
 
-from audit import QSPAuditNode
 from config import ConfigUtils
 from config import ConfigurationException
 from config import configure_basic_logging
@@ -22,14 +21,13 @@ class ConfigStub:
     TODO(mderka): Replace this with real config class when it become available in later PRs
     """
 
-    def __init__(self, abi, abi_uri, contract_address,
-                 submission_timeout_limit_blocks=10,
-                 start_n_blocks_in_the_past=5):
+    def __init__(self, abi, abi_uri, contract_address, data_abi, data_uri, data_contract_address):
         self.has_audit_contract_abi = abi
         self.audit_contract_abi_uri = abi_uri
         self.audit_contract_address = contract_address
-        self.submission_timeout_limit_blocks = submission_timeout_limit_blocks
-        self.start_n_blocks_in_the_past = start_n_blocks_in_the_past
+        self.has_audit_data_contract_abi = data_abi
+        self.audit_data_contract_abi_uri = data_uri
+        self.audit_data_contract_address = data_contract_address
 
 
 class TestConfigUtil(unittest.TestCase):
@@ -134,33 +132,54 @@ class TestConfigUtil(unittest.TestCase):
         exactly one of the two but not both.
         """
         # Test ABI
-        abi = ConfigStub(True, True, True)
+        abi = ConfigStub(True, True, True, True, True, True)
         self.config_utils.check_audit_contract_settings(abi)
-        abi_faulty = ConfigStub(True, False, True)
+        abi_faulty = ConfigStub(True, False, True, True, True, True)
         try:
             self.config_utils.check_audit_contract_settings(abi_faulty)
             self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        abi_faulty = ConfigStub(True, True, False)
+        abi_faulty = ConfigStub(True, False, True, True, True, True)
         try:
             self.config_utils.check_audit_contract_settings(abi_faulty)
             self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        none = ConfigStub(False, False, False)
+        abi_faulty = ConfigStub(True, True, False, True, True, True)
+        try:
+            self.config_utils.check_audit_contract_settings(abi_faulty)
+            self.fail("ABI is missing configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStub(True, True, True, False, True, True)
+        try:
+            self.config_utils.check_audit_contract_settings(abi_faulty)
+            self.fail("ABI is missing configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStub(True, True, True, True, False, True)
+        try:
+            self.config_utils.check_audit_contract_settings(abi_faulty)
+            self.fail("ABI is missing configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStub(True, True, True, True, True, False)
+        try:
+            self.config_utils.check_audit_contract_settings(abi_faulty)
+            self.fail("ABI is missing configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        none = ConfigStub(False, False, False, False, False, False)
         try:
             self.config_utils.check_audit_contract_settings(none)
             self.fail("Neither ABI is not present but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        abi_faulty = ConfigStub(True, True, True, 10, 20)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
@@ -242,7 +261,7 @@ class TestConfigUtil(unittest.TestCase):
         client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
         abi_uri = "file://tests/resources/QuantstampAudit.abi.json"
         address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
-        self.config_utils.create_audit_contract(client, abi_uri, address)
+        self.config_utils.create_contract(client, abi_uri, address)
 
     def test_resolve_version(self):
         config_utils = ConfigUtils('10.0.1')

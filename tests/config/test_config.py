@@ -6,18 +6,13 @@ import yaml
 
 from tempfile import NamedTemporaryFile
 from config import config_value, Config, ConfigFactory
-from helpers.function_call import FunctionCall
+from helpers.simple_mock import SimpleMock
 from helpers.resource import resource_uri
 from utils.io import (
     fetch_file,
-    load_json,
     load_yaml,
 )
-
-
-class DummyLogger:
-    def debug(self, message):
-        print(message)
+from unittest.mock import Mock
 
 
 class ConfigUtilsDummy:
@@ -32,7 +27,7 @@ class ConfigUtilsDummy:
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
                     logging_streaming_provider_args, account):
-        return self.return_values.get('configure_logging', (DummyLogger(), None))
+        return self.return_values.get('configure_logging', (Mock(), None))
 
     def create_analyzers(self, analyzers_config, logger):
         return self.return_values.get('create_analyzers', None)
@@ -40,8 +35,8 @@ class ConfigUtilsDummy:
     def check_audit_contract_settings(self):
         return self.return_values.get('check_audit_contract_settings', None)
 
-    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
-        return self.return_values.get('create_audit_contract', None)
+    def create_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+        return self.return_values.get('create_contract', None)
 
     def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
         return self.return_values.get('create_web3_client', (None, None, None))
@@ -53,40 +48,10 @@ class ConfigUtilsDummy:
         return self.return_values.get('resolve_version', None)
 
 
-class ConfigUtilsMock:
+class ConfigUtilsMock(SimpleMock):
     """
     A mock class used as stub for the internals of the Web3 provider.
     """
-
-    def __init__(self):
-        self.expected = []
-
-    def expect(self, function, params, return_value):
-        """
-        Adds an expected function call to the queue.
-        """
-        self.expected.append(FunctionCall(function, params, return_value))
-
-    def verify(self):
-        """
-        Verifies that all the expected calls were performed.
-        """
-        if len(self.expected) != 0:
-            raise Exception('Some expected calls were left over: ' + str(self.expected))
-
-    def call(self, function_name, arguments_to_check, local_values):
-        """
-        Simulates call to the specified function while checking the expected parameter values
-        """
-        first_call = self.expected[0]
-        if first_call.function_name != function_name:
-            raise Exception('{0} call expected'.format(function_name))
-        for argument in arguments_to_check:
-            if first_call.params[argument] != local_values[argument]:
-                msg = 'Value of {0} is not {1} as expected, but {2}'
-                raise Exception(msg.format(argument, first_call.params[argument], local_values[argument]))
-        self.expected = self.expected[1:]
-        return first_call.return_value
 
     def create_report_uploader_provider(self, account, report_uploader_provider_name,
                                         report_uploader_provider_args):
@@ -127,9 +92,16 @@ class ConfigUtilsMock:
         arguments_to_check = ['config']
         return self.call('check_audit_contract_settings', arguments_to_check, locals())
 
-    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+    def check_configuration_settings(self, config):
+        """
+        A stub for check_configuration_settings method.
+        """
+        arguments_to_check = ['config']
+        return self.call('check_configuration_settings', arguments_to_check, locals())
+
+    def create_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
         arguments_to_check = ['web3_client', 'audit_contract_abi_uri', 'audit_contract_address']
-        return self.call('create_audit_contract', arguments_to_check, locals())
+        return self.call('create_contract', arguments_to_check, locals())
 
     def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
         arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'keystore_file', 'max_attempts']
@@ -424,10 +396,13 @@ class TestConfig(unittest.TestCase):
                      {'eth_provider': created_eth_provider, 'account': account, 'account_passwd': account_passwd,
                       'keystore_file': account_keystore_file, 'max_attempts': 30},
                      (created_web3_client, new_account, new_private_key))
-        utils.expect('create_audit_contract',
+        utils.expect('create_contract',
                      {'web3_client': created_web3_client, 'audit_contract_abi_uri': audit_contract_abi_uri,
                       'audit_contract_address': audit_contract_address},
                      created_audit_contract)
+        utils.expect('check_configuration_settings',
+                     {'config': config},
+                     None)
         utils.expect('create_analyzers',
                      {'analyzers_config': analyzers_config, 'logger': logger},
                      created_analyzers)
@@ -461,7 +436,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, config.gas_price_wei)
         self.assertEqual(5, config.evt_polling)
         self.assertEqual(2, len(config.analyzers))
-        self.assertEqual(25, config.start_n_blocks_in_the_past)
+        self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
 
     def test_inject_token_auth(self):

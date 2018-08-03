@@ -44,7 +44,7 @@ while true ; do
     echo ""
         
     # Invokes the audit node.      
-    date; $QSP_NODE $@
+    $QSP_NODE $@
 
     return_code=$?
 done

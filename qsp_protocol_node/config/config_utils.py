@@ -31,6 +31,7 @@ class ConfigUtils:
     """
     A utility class that helps with creating the configuration object.
     """
+    __APPROXIMATE_BLOCK_LENGTH_IN_SECONDS = 12
 
     def __init__(self, node_version):
         self.__node_version = node_version
@@ -163,11 +164,34 @@ class ConfigUtils:
         config_file = io_utils.load_yaml(config_file_path)
         return config_file[environment]
 
+    def check_configuration_settings(self, config):
+        """
+        Performs sanity checks on configuration parameters.
+        """
+        # collect state variables from the smart contract
+        contract_audit_timeout_in_blocks = config.audit_data_contract.functions.auditTimeoutInBlocks().call()
+        contract_max_assigned_requests = config.audit_data_contract.functions.maxAssignedRequests().call()
+
+        # start_n_blocks_in_the_past should never exceed the submission timeout
+        ConfigUtils.raise_err(config.start_n_blocks_in_the_past > config.submission_timeout_limit_blocks)
+
+        # the submission timeout limit should not exceed the audit timeout limit
+        ConfigUtils.raise_err(config.submission_timeout_limit_blocks > contract_audit_timeout_in_blocks)
+
+        # the analyzer timeouts should never exceed the audit timeout (converted to seconds)
+        for analyzer in config.analyzers:
+            analyzer_timeout = analyzer.wrapper.timeout_sec
+            ConfigUtils.raise_err(
+                analyzer_timeout > contract_audit_timeout_in_blocks * ConfigUtils.__APPROXIMATE_BLOCK_LENGTH_IN_SECONDS)
+        # max assigned requests should never exceed the limit specified in the contract
+        ConfigUtils.raise_err(config.max_assigned_requests > contract_max_assigned_requests)
+
     def check_audit_contract_settings(self, config):
         """
         Checks the configuration values provided in the YAML configuration file.
+        The contract ABI and source code are mutually exclusive, but one has to be provided.
+        This must similarly be checked for QuantstampAuditData.
         """
-        # The contract ABI and source code are mutually exclusive, but one has to be provided.
         if config.has_audit_contract_abi:
             has_uri = bool(config.audit_contract_abi_uri)
             has_addr = bool(config.audit_contract_address)
@@ -176,18 +200,24 @@ class ConfigUtils:
                                   )
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
-        # start_n_blocks_in_the_past should never exceed the submission timeout
-        ConfigUtils.raise_err(config.start_n_blocks_in_the_past > config.submission_timeout_limit_blocks)
+        if config.has_audit_data_contract_abi:
+            has_uri = bool(config.audit_data_contract_abi_uri)
+            has_addr = bool(config.audit_data_contract_address)
+            ConfigUtils.raise_err(not (has_uri and has_addr),
+                                  "Missing audit data contract ABI URI and address",
+                                  )
+        else:
+            ConfigUtils.raise_err(msg="Missing the audit data contract ABI")
 
-    def create_audit_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
+    def create_contract(self, web3_client, contract_abi_uri, contract_address):
         """
-        Creates the audit contract either from ABI.
+        Creates either the audit or audit_data contract from ABI.
         """
-        abi_file = io_utils.fetch_file(audit_contract_abi_uri)
+        abi_file = io_utils.fetch_file(contract_abi_uri)
         abi_json = io_utils.load_json(abi_file)
 
         return web3_client.eth.contract(
-            address=audit_contract_address,
+            address=contract_address,
             abi=abi_json,
         )
 

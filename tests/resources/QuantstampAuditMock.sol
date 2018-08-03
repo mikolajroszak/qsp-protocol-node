@@ -4,6 +4,14 @@ pragma solidity 0.4.24;
 // For updating the protocol node to use the real QuantstampAudit contract,
 // see notes in https://quantstamp.atlassian.net/browse/QSP-369.
 
+contract QuantstampAuditData{
+  uint256 public auditTimeoutInBlocks = 25;
+  uint256 public maxAssignedRequests = 10;
+
+
+  constructor(){ }
+}
+
 contract QuantstampAudit {
 
   // mapping from an auditor address to the number of requests that it currently processes
@@ -33,6 +41,12 @@ contract QuantstampAudit {
     string reportHash;     // stores the hash of audit report
     uint reportTimestamp;  // approximate time of when the payment and the audit report were submitted
   }
+
+  struct AuditData {
+      uint256 auditTimeoutInBlocks;
+      uint256 maxAssignedRequests;
+  }
+  QuantstampAuditData public auditData;
 
   event LogAuditFinished(
     uint256 requestId,
@@ -76,7 +90,8 @@ contract QuantstampAudit {
   // amount corresponds to the current minPrice of the auditor
   event LogAuditNodePriceHigherThanRequests(address auditor, uint256 amount);
 
-  constructor () public {
+  constructor (address addr) public {
+      auditData = QuantstampAuditData(addr);
   }
 
   function emitLogAuditFinished(uint256 requestId, address auditor, AuditState auditResult, string reportUri, string reportHash, uint256 reportTimestamp) {

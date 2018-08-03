@@ -146,7 +146,16 @@ class Sqlite3Worker(threading.Thread):
                 if query.lower().strip().startswith("insert") \
                         and isinstance(err, apsw.ConstraintError) \
                         and "audit_evt.request_id" in str(err):
-                    # this error was caused by the event already existing
+
+                    # this error was caused by an already existing event
+
+                    # TODO(lpassos): refactor this in such a way that
+                    # the warning is handled outside the sql3lite.
+                    # This error is very specific; sql3liteworker should be
+                    # kept as general as possible to promote reuse.
+                    # See https://quantstamp.atlassian.net/browse/QSP-551
+                    # for further reference
+
                     self.logger.warning(
                         "Audit request already exists: %s: %s: %s",
                         query,

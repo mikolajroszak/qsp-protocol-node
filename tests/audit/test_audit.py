@@ -13,7 +13,7 @@ from threading import Thread
 from time import sleep
 
 from audit import QSPAuditNode
-from config import ConfigFactory
+from config import ConfigFactory, ConfigUtils, ConfigurationException
 from dpath.util import get
 from helpers.resource import (
     resource_uri,
@@ -43,7 +43,7 @@ class TestQSPAuditNode(unittest.TestCase):
             os.remove(evt_db_path)
 
     @staticmethod
-    def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
+    def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name, data_contract_name,
                                        constructor_from):
         """
         Loads the QuantstampAuditMock contract from source code returning the (address, contract)
@@ -55,21 +55,39 @@ class TestQSPAuditNode(unittest.TestCase):
             contract_src_uri,
             contract_name,
         )
+        data_contract_id = "{0}:{1}".format(
+            contract_src_uri,
+            data_contract_name,
+        )
         contract_interface = contract_dict[contract_id]
+        data_contract_interface = contract_dict[data_contract_id]
+
+        # deploy the data contract
+        data_contract = web3_client.eth.contract(
+            abi=data_contract_interface['abi'],
+            bytecode=data_contract_interface['bin']
+        )
+        tx_hash = data_contract.constructor().transact({'from': constructor_from, 'gasPrice': 0})
+        receipt = web3_client.eth.getTransactionReceipt(tx_hash)
+        data_address = receipt['contractAddress']
+        data_contract = web3_client.eth.contract(
+            abi=data_contract_interface['abi'],
+            address=data_address,
+        )
 
         # deploy the audit contract
-        contract = web3_client.eth.contract(
+        audit_contract = web3_client.eth.contract(
             abi=contract_interface['abi'],
             bytecode=contract_interface['bin']
         )
-        tx_hash = contract.constructor().transact({'from': constructor_from, 'gasPrice': 0})
+        tx_hash = audit_contract.constructor(data_address).transact({'from': constructor_from, 'gasPrice': 0})
         receipt = web3_client.eth.getTransactionReceipt(tx_hash)
         address = receipt['contractAddress']
-        contract = web3_client.eth.contract(
+        audit_contract = web3_client.eth.contract(
             abi=contract_interface['abi'],
             address=address,
         )
-        return address, contract
+        return address, audit_contract, data_contract
 
     @classmethod
     def fetch_config(cls):
@@ -80,11 +98,20 @@ class TestQSPAuditNode(unittest.TestCase):
         # compile and inject contract
         contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
         contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
+        data_contract_metadata_uri = "./tests/resources/QuantstampAuditData-metadata.json"
         audit_contract_metadata = load_json(fetch_file(contract_metadata_uri))
+        data_contract_metadata = load_json(fetch_file(data_contract_metadata_uri))
         audit_contract_name = get(audit_contract_metadata, '/contractName')
-        config._Config__audit_contract_address, config._Config__audit_contract = \
+        data_contract_name = get(data_contract_metadata, '/contractName')
+        config._Config__audit_contract_address, config._Config__audit_contract, config._Config__audit_data_contract = \
             TestQSPAuditNode.__load_audit_contract_from_src(
-                config.web3_client, contract_source_uri, audit_contract_name, config.account)
+                config.web3_client,
+                contract_source_uri,
+                audit_contract_name,
+                data_contract_name,
+                config.account,)
+        config_utils = ConfigUtils(config.node_version)
+        config_utils.check_configuration_settings(config)
         return config
 
     @classmethod
@@ -573,6 +600,37 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name][
                 'timeout_sec'] = \
                 original_timeouts[i]
+
+    @timeout(30, timeout_exception=StopIteration)
+    def test_configuration_checks(self):
+        """
+        Tests configuration sanity checks.
+        Since this test requires loading the QuantstampAuditData contract, it is better here than test_config.py.
+        """
+        config = self.__audit_node._QSPAuditNode__config
+        config_utils = ConfigUtils(config.node_version)
+        try:
+            temp = config.submission_timeout_limit_blocks
+            config._Config__submission_timeout_limit_blocks = 2
+            config_utils.check_configuration_settings(config)
+            self.fail("Configuration error should have been raised.")
+        except ConfigurationException:
+            config._Config__submission_timeout_limit_blocks = temp
+        try:
+            temp = config.submission_timeout_limit_blocks
+            config._Config__submission_timeout_limit_blocks = 123
+            config_utils.check_configuration_settings(config)
+            self.fail("Configuration error should have been raised.")
+        except ConfigurationException:
+            config._Config__submission_timeout_limit_blocks = temp
+        for i in range(0, len(self.__audit_node._QSPAuditNode__config.analyzers)):
+            try:
+                temp = self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec
+                self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = 123456
+                config_utils.check_configuration_settings(config)
+                self.fail("Configuration error should have been raised.")
+            except ConfigurationException:
+                self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = temp
 
     def __assert_audit_request(self, request_id, expected_audit_state, report_file_path):
         sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
