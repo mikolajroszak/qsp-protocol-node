@@ -17,7 +17,7 @@ def main():
     """
 
     ERR_EXCEPTION = 1
-    ERR_INVALID_ARGUMENT = 2
+    ERR_INVALID_ARGUMENT = 17
 
     try:
         # Sets the program's arguments
@@ -82,7 +82,6 @@ def main():
 
         # import sys, traceback
         # traceback.print_exc(file=sys.stdout)
-
         Stop.error(err=error, code=ERR_EXCEPTION)
 
 
