@@ -6,6 +6,9 @@ a node operator to spin up a QSP node.
 The node runs as a Docker container. The image is hosted on Quantstamp's private repository.
 The steps assume a Unix-like operating system.
 
+**Note**: all commands should be run from the location of this README document. All paths are relative to this
+README's folder.
+
 ### Quick start (developers)
 If you have AWS crdentials on your machine and would like to run the node with default settings, default account
 (`0x60463b7ee0c3d33def3a05313597b1300f6de62b`) that's already whitelisted for
@@ -15,7 +18,7 @@ and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
 ### Install dependencies
 
 1. Install `make`, unless installed already.
-    - Verify: `make` outputs `make: *** No targets specified and no makefile found.  Stop.`.
+    - Verify: `make -v` should print a version `GNU Make <version> ...`.
 1. Install Docker CE: https://www.docker.com/community-edition
     - Verify: `docker -v` should return `Docker version 17.09.0-ce` or above
 1. On Linux environments, ensure your user is a part of the docker group: `sudo usermod -a -G docker <username>`. This is required for running analyzer containers from within the audit node container.
