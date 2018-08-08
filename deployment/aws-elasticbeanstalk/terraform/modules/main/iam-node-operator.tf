@@ -11,8 +11,6 @@ resource "aws_iam_policy" "node_operator_image_download" {
             "ecr:BatchCheckLayerAvailability",
             "ecr:GetDownloadUrlForLayer",
             "ecr:GetRepositoryPolicy",
-            "ecr:ListImages",
-            "ecr:DescribeImages",
             "ecr:BatchGetImage"
         ],
         "Resource": "*"
