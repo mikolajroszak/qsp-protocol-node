@@ -25,7 +25,7 @@ class MetricCollector:
                                hostCpu=psutil.cpu_percent(),
                                hostMemory=psutil.virtual_memory().percent,
                                hostDisk=psutil.disk_usage('/').percent,
-                               minPrice=self.__config.min_price,
+                               minPrice=self.__config.min_price_in_qsp,
                                account=self.__config.account
                                )
         except Exception as e:

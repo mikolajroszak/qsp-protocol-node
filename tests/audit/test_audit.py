@@ -174,12 +174,23 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__setAnyRequestAvailableResult_filter = self.__config.audit_contract.events.setAnyRequestAvailableResult_called.createFilter(
             fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
         )
+        self.__setAuditNodePrice_filter = self.__config.audit_contract.events.setAuditNodePrice_called.createFilter(
+            fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
+        )
 
         def exec():
             self.__audit_node.run()
 
         audit_node_thread = Thread(target=exec, name="Audit node")
         audit_node_thread.start()
+
+        max_initialization_seconds = 5
+        num_checks = 0
+        while not self.__audit_node.audit_node_initialized:
+            sleep(1)
+            num_checks += 1
+            if num_checks == max_initialization_seconds:
+                raise Exception("Node threads could not be initialized")
 
     def tearDown(self):
         """
@@ -351,7 +362,6 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__requestAudit(buggy_contract, self.__PRICE)
         )
-
         self.__config.web3_client.eth.waitForTransactionReceipt(self.__setAssignedRequestCount(1))
 
         self.evt_wait_loop(self.__submitReport_filter)
@@ -628,6 +638,17 @@ class TestQSPAuditNode(unittest.TestCase):
                 original_timeouts[i]
 
     @timeout(30, timeout_exception=StopIteration)
+    def test_change_min_price(self):
+        """
+        Tests that the node updates the min_price on the blockchain if the config value changes
+        """
+        self.__audit_node._QSPAuditNode__config._Config__min_price_in_qsp = 1
+        self.__audit_node._QSPAuditNode__check_and_update_min_price()
+        events = self.evt_wait_loop(self.__setAuditNodePrice_filter)
+        self.assertEqual(events[0]['args']['price'], 1000000000000000000)
+        self.assertEqual(events[0]['event'], 'setAuditNodePrice_called')
+
+    @timeout(30, timeout_exception=StopIteration)
     def test_configuration_checks(self):
         """
         Tests configuration sanity checks.
@@ -724,6 +745,7 @@ class TestQSPAuditNode(unittest.TestCase):
                 wait = False
                 break
             sleep(1)
+        return events
 
     def __requestAudit(self, contract_uri, price):
         """
@@ -737,7 +759,6 @@ class TestQSPAuditNode(unittest.TestCase):
         self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
 
         self.evt_wait_loop(self.__getNextAuditRequest_filter)
-
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__config.audit_contract.functions.setAnyRequestAvailableResult(
                 self.__AVAILABLE_AUDIT__STATE_ERROR).transact(

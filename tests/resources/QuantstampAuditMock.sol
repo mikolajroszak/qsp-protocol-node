@@ -8,6 +8,18 @@ contract QuantstampAuditData{
   uint256 public auditTimeoutInBlocks = 25;
   uint256 public maxAssignedRequests = 10;
 
+  // map audit nodes to their minimum prices. Defaults to zero: the node accepts all requests.
+  mapping(address => uint256) public minAuditPrice;
+
+  event getMinAuditPrice_called();
+  function getMinAuditPrice(address addr) public view returns(uint256){
+    emit getMinAuditPrice_called();
+    return minAuditPrice[addr];
+  }
+
+  function setMinAuditPrice(address auditor, uint256 price) public {
+    minAuditPrice[auditor] = price;
+  }
 
   constructor(){ }
 }
@@ -16,6 +28,7 @@ contract QuantstampAudit {
 
   // mapping from an auditor address to the number of requests that it currently processes
   mapping(address => uint256) public assignedRequestCount;
+
 
   // state of audit requests submitted to the contract
   enum AuditState {
@@ -183,7 +196,13 @@ contract QuantstampAudit {
 
   event setAssignedRequestCount_called();
   function setAssignedRequestCount(address auditor, uint256 num) {
-      assignedRequestCount[auditor] = num;
+    assignedRequestCount[auditor] = num;
     emit setAssignedRequestCount_called();
+  }
+
+  event setAuditNodePrice_called(uint256 price);
+  function setAuditNodePrice(uint256 price){
+    auditData.setMinAuditPrice(msg.sender, price);
+    emit setAuditNodePrice_called(price);
   }
 }

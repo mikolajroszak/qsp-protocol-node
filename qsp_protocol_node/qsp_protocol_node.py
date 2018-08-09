@@ -61,7 +61,7 @@ def main():
         cfg.logger.debug("audit contract address: {0}".format(str(cfg.audit_contract_address)))
         cfg.logger.debug("analyzers: {0}".format(str(cfg.analyzers)))
 
-        cfg.logger.debug("min_price: {0}".format(str(cfg.min_price)))
+        cfg.logger.debug("min_price_in_qsp: {0}".format(str(cfg.min_price_in_qsp)))
         cfg.logger.debug("evt_polling: {0}".format(str(cfg.evt_polling)))
 
         # Based on the provided configuration, instantiates a new

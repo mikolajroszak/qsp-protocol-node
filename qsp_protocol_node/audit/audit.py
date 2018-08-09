@@ -54,6 +54,7 @@ class QSPAuditNode:
         self.__metric_collector = None
         self.__exec = False
         self.__internal_threads = []
+        self.__audit_node_initialized = False
 
         # There are some important invariants that are to be respected at all
         # times when the audit node (re-)processes events (see associated queries):
@@ -99,7 +100,6 @@ class QSPAuditNode:
         """
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
-
         def exec():
             current_block = 0
             while self.__exec:
@@ -124,8 +124,11 @@ class QSPAuditNode:
         """
         if self.__exec:
             raise Exception("Cannot run audit node thread due to another audit node instance")
-
         self.__exec = True
+
+        # before starting the actual audit process,
+        # ensure that the min_price in the smart contract is up to date
+        self.__check_and_update_min_price()
 
         if self.__config.metric_collection_is_enabled:
             self.__metric_collector = MetricCollector(self.__config)
@@ -174,6 +177,8 @@ class QSPAuditNode:
         # not account for pastEvent threads, which necessarily die
         # after processing them all.
 
+        self.__audit_node_initialized = True
+
         health_check_interval_sec = 2
         thread_lost = False
         while self.__exec:
@@ -182,10 +187,8 @@ class QSPAuditNode:
                 if not thread.is_alive():
                     thread_lost = True
                     break
-
             if thread_lost:
                 raise Exception("Cannot proceed execution. At least one internal thread is not alive")
-
             sleep(health_check_interval_sec)
 
     def __timeout_stale_requests(self):
@@ -238,6 +241,20 @@ class QSPAuditNode:
             self.__logger.exception(
                 "Error when calling to get a review {0}".format(str(error))
             )
+
+    def __check_and_update_min_price(self):
+        """
+        Checks that the minimum price in the audit node's configuration matches the smart contract.
+        """
+        contract_price = self.__config.audit_data_contract.functions.getMinAuditPrice(
+            self.__config.account).call()
+        min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10**18)
+        if min_price_in_mini_qsp != contract_price:
+            self.__logger.info("Local min_price does not match smart contract for address {0}, updating.".format(
+                self.__config.account
+            ))
+            send_signed_transaction(self.__config,
+                                    self.__config.audit_contract.functions.setAuditNodePrice(min_price_in_mini_qsp))
 
     def __on_audit_assigned(self, evt):
         request_id = None
@@ -788,3 +805,7 @@ class QSPAuditNode:
             errors += [str(error)]
 
         return warnings, errors
+
+    @property
+    def audit_node_initialized(self):
+        return self.__audit_node_initialized

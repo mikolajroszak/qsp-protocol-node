@@ -3,7 +3,7 @@ local:
         provider: !!str "HTTPProvider"
         args:
             endpoint_uri: !!str "https://test.com/?token=${token}"
-    min_price: !!int 0
+    min_price_in_qsp: !!int 0
     gas_price_wei: !!int 0
     max_assigned_requests: !!int 1
     evt_polling_sec: !!int 5

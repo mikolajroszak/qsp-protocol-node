@@ -74,7 +74,7 @@ class Config:
             self.__eth_provider_args['endpoint_uri'] = endpoint.replace("${token}", self.auth_token)
 
         self.__block_discard_on_restart = config_value(cfg, '/block_discard_on_restart', 0)
-        self.__min_price = config_value(cfg, '/min_price', accept_none=False, )
+        self.__min_price_in_qsp = config_value(cfg, '/min_price_in_qsp', accept_none=False, )
         self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False)
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
         self.__block_mined_polling_interval_sec = config_value(cfg, '/block_mined_polling_interval_sec', accept_none=False)
@@ -234,7 +234,7 @@ class Config:
         self.__logging_streaming_provider_name = None
         self.__logging_streaming_provider_args = None
         self.__logging_streaming_provider = None
-        self.__min_price = 0
+        self.__min_price_in_qsp = 0
         self.__metric_collection_is_enabled = True
         self.__metric_collection_interval_seconds = 30
         self.__report_uploader = None
@@ -290,11 +290,11 @@ class Config:
         return self.__audit_data_contract_address
 
     @property
-    def min_price(self):
+    def min_price_in_qsp(self):
         """
         Returns the minimum QSP price for accepting an audit.
         """
-        return self.__min_price
+        return self.__min_price_in_qsp
 
     @property
     def max_assigned_requests(self):
