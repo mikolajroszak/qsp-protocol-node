@@ -18,6 +18,7 @@ from utils.io import (
     digest_file,
 )
 from utils.eth import send_signed_transaction
+from utils.eth import DeduplicationException
 
 from threading import Thread
 from utils.metrics import MetricCollector
@@ -229,6 +230,10 @@ class QSPAuditNode:
                 self.__logger.debug(
                     "No request available as the contract returned {0}.".format(
                         str(any_request_available)))
+        except DeduplicationException as error:
+            self.__logger.debug(
+                "Error when calling to get a review {0}".format(str(error))
+            )
         except Exception as error:
             self.__logger.exception(
                 "Error when calling to get a review {0}".format(str(error))
@@ -345,6 +350,10 @@ class QSPAuditNode:
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
+            except DeduplicationException as error:
+                self.__logger.debug(
+                    "Error when calling to get a review {0}".format(str(error))
+                )
             except KeyError as error:
                 self.__logger.exception(
                     "KeyError when processing submission event: {0}".format(str(error))
@@ -542,7 +551,7 @@ class QSPAuditNode:
         contract_upload_result = self.__config.report_uploader.upload_contract(request_id,
                                                                                target_contract,
                                                                                original_filename)
-        if not contract_upload_result['success']:
+        if contract_upload_result['success']:
             self.__logger.info(
                 "Contract upload result: {0}".format(contract_upload_result),
                 requestId=request_id,

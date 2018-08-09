@@ -26,6 +26,7 @@ from utils.db import get_first
 from utils.db import Sqlite3Worker
 from deepdiff import DeepDiff
 from pprint import pprint
+from utils.eth import DeduplicationException
 
 
 class TestQSPAuditNode(unittest.TestCase):
@@ -248,6 +249,31 @@ class TestQSPAuditNode(unittest.TestCase):
 
         def mocked__get_next_audit_request():
             raise Exception('mocked exception')
+
+        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+                self.__AVAILABLE_AUDIT__STATE_READY).transact(
+                {"from": self.__config.account})
+        )
+        self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+        self.__audit_node._QSPAuditNode__check_then_request_audit_request()
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+                self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
+                {"from": self.__config.account})
+        )
+        self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+        self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test__check_then_request_audit_request_deduplication_exceptions(self):
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
+        get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
+
+        def mocked__get_next_audit_request():
+            raise DeduplicationException('mocked exception')
 
         self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
         self.__config.web3_client.eth.waitForTransactionReceipt(

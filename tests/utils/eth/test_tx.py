@@ -1,6 +1,6 @@
 import unittest
 
-from utils.eth.tx import mk_args, send_signed_transaction
+from utils.eth.tx import mk_args, send_signed_transaction, DeduplicationException
 from unittest.mock import Mock
 
 
@@ -158,9 +158,10 @@ class TestFile(unittest.TestCase):
         try:
             send_signed_transaction(config, transaction)
             self.fail("An error was expected")
-        except ValueError as e:
-            # the error is supposed to be re-raised for de-duplication
-            self.assertTrue(e is error)
+        except DeduplicationException as e:
+            # the error is supposed to be re-raised for de-duplication, but wrapped
+            # as DeduplicationException instead of ValueError
+            pass
 
         self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
 

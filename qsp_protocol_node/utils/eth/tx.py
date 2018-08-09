@@ -49,7 +49,11 @@ def send_signed_transaction(config, transaction, attempts=10):
                 elif "known transaction" in repr(e):
                     # the de-duplication is preserved and the exception is re-raised
                     config.logger.debug("Transaction deduplication happened. {}".format(e))
-                    raise e
+                    raise DeduplicationException(e)
                 else:
                     config.logger.error("Unknown error while sending transaction. {}".format(e))
                     raise e
+
+
+class DeduplicationException(Exception):
+    pass
