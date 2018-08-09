@@ -103,7 +103,21 @@ To run with a custom account:
 1. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands)
 1. Transfer some Ether to the account (for Ropsten, use a Ropsten faucet)
 
-By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. A task is created to make local test environment more isolated.
+By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. To run the node in an isolated environment, see the next section.
+
+### Run locally in an isolated environment
+For certain use cases, it is important to run the node in such a way that it doesn't affect
+any other nodes. Currently, the steps are as follows:
+
+1. In the audit contract repository, follow the [steps](https://github.com/quantstamp/qsp-protocol-audit-contract#deploy-to-ropsten-or-main-net-through-metamask) to deploy the smart contracts to a separate stage (e.g., "betanet-test-123"). Do the necessary whitelisting.
+
+2. In config.yaml, replace the contract addresses to point to the new stage, e.g., replace:
+`https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-abi.json`
+with 
+`https://s3.amazonaws.com/qsp-protocol-contract/betanet-test-123/QuantstampAudit-v-{major-version}-abi.json`.
+Do it for all the contract URIs.
+
+3. Run the node.
 
 ## CI and deployment pipeline
 
