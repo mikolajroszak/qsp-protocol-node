@@ -361,7 +361,6 @@ class QSPAuditNode:
                 tx_hash = self.__submit_report(
                     int(evt['request_id']),
                     evt['audit_state'],
-                    evt['audit_uri'],
                     evt['audit_hash'],
                 )
                 evt['tx_hash'] = tx_hash
@@ -726,7 +725,7 @@ class QSPAuditNode:
         return send_signed_transaction(self.__config,
                                        self.__config.audit_contract.functions.getNextAuditRequest())
 
-    def __submit_report(self, request_id, audit_state, audit_uri, audit_hash):
+    def __submit_report(self, request_id, audit_state, audit_hash):
         """
         Submits the audit report to the entire QSP network.
         """
@@ -734,7 +733,6 @@ class QSPAuditNode:
                                        self.__config.audit_contract.functions.submitReport(
                                            request_id,
                                            audit_state,
-                                           audit_uri,
                                            audit_hash
                                        ))
 

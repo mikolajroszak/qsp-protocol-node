@@ -34,7 +34,6 @@ contract QuantstampAuditInternal {
   struct AuditReport {
     uint256 requestId;
     address auditor;
-    string reportUri;
     string reportHash;
   }
 
@@ -48,7 +47,7 @@ contract QuantstampAuditInternal {
 
   event LogAuditQueued(uint256 requestId, address requestor, string uri, uint256 price);
   event LogAuditRequestAssigned(uint256 requestId, address auditor, address requestor, string uri, uint256 price);
-  event LogReportSubmitted(uint256 requestId, address auditor, AuditState auditResult, string reportUri, string reportHash);
+  event LogReportSubmitted(uint256 requestId, address auditor, AuditState auditResult, string reportHash);
   event LogAuditAlreadyExists(uint256 requestId);
   event LogReportSubmissionError_InvalidAuditor(uint256 requestId, address auditor);
   event LogReportSubmissionError_InvalidState(uint256 requestId, AuditState state);
@@ -106,7 +105,7 @@ contract QuantstampAuditInternal {
     );
   }
 
-  function submitReport(uint256 requestId, AuditState auditResult, string reportUri, string reportHash) public {
+  function submitReport(uint256 requestId, AuditState auditResult, string reportHash) public {
     AuditRequest storage request = auditRequests[requestId];
     if (request.state != AuditState.Assigned && request.state != AuditState.Timeout) {
       LogReportSubmissionError_InvalidState(requestId, request.state);
@@ -121,9 +120,9 @@ contract QuantstampAuditInternal {
 
     // if the analysis timeouts, the auditor address is set to 0
     address auditor = auditResult == AuditState.Timeout ? address(0) : msg.sender;
-    auditReports[requestId] = AuditReport(requestId, auditor, reportUri, reportHash);
+    auditReports[requestId] = AuditReport(requestId, auditor, reportHash);
     request.state = auditResult;
-    LogReportSubmitted(requestId, auditor, auditResult, reportUri, reportHash);
+    LogReportSubmitted(requestId, auditor, auditResult, reportHash);
   }
 
   function getAuditState(uint256 requestId) public constant returns(AuditState) {
@@ -175,7 +174,7 @@ contract QuantstampAuditInternal {
       audit.state = AuditState.Timeout;
       audit.auditor = msg.sender;
       // submits a report for timeout
-      submitReport(requestId, AuditState.Timeout, "", "");
+      submitReport(requestId, AuditState.Timeout, "");
     }
   }
 

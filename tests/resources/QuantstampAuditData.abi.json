@@ -196,10 +196,6 @@
         "type": "uint256"
       },
       {
-        "name": "reportUri",
-        "type": "string"
-      },
-      {
         "name": "reportHash",
         "type": "string"
       },
@@ -613,24 +609,6 @@
       }
     ],
     "name": "setAuditAssignTimestamp",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "requestId",
-        "type": "uint256"
-      },
-      {
-        "name": "reportUri",
-        "type": "string"
-      }
-    ],
-    "name": "setAuditReportUri",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
