@@ -123,11 +123,6 @@
       },
       {
         "indexed": false,
-        "name": "reportUri",
-        "type": "string"
-      },
-      {
-        "indexed": false,
         "name": "reportHash",
         "type": "string"
       },
@@ -485,10 +480,6 @@
       {
         "name": "auditResult",
         "type": "uint8"
-      },
-      {
-        "name": "reportUri",
-        "type": "string"
       },
       {
         "name": "reportHash",

@@ -50,7 +50,6 @@ contract QuantstampAudit {
     AuditState state;
     address auditor;       // the address of the node assigned to the audit
     uint assignTimestamp;  // approximate time of when audit was assigned
-    string reportUri;      // stores the audit report URI
     string reportHash;     // stores the hash of audit report
     uint reportTimestamp;  // approximate time of when the payment and the audit report were submitted
   }
@@ -65,7 +64,6 @@ contract QuantstampAudit {
     uint256 requestId,
     address auditor,
     AuditState auditResult,
-    string reportUri,
     string reportHash,
     uint256 reportTimestamp
   );
@@ -107,8 +105,8 @@ contract QuantstampAudit {
       auditData = QuantstampAuditData(addr);
   }
 
-  function emitLogAuditFinished(uint256 requestId, address auditor, AuditState auditResult, string reportUri, string reportHash, uint256 reportTimestamp) {
-    emit LogAuditFinished(requestId, auditor, auditResult, reportUri, reportHash, reportTimestamp);
+  function emitLogAuditFinished(uint256 requestId, address auditor, AuditState auditResult, string reportHash, uint256 reportTimestamp) {
+    emit LogAuditFinished(requestId, auditor, auditResult, reportHash, reportTimestamp);
   }
 
   function emitLogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price, uint256 requestTimestamp) {
@@ -178,7 +176,7 @@ contract QuantstampAudit {
   }
 
   event submitReport_called();
-  function submitReport(uint256 requestId, AuditState auditResult, string reportUri, string reportHash){
+  function submitReport(uint256 requestId, AuditState auditResult, string reportHash){
     emit submitReport_called();
   }
 

@@ -794,7 +794,6 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__config.account,
             0,
             "",
-            "",
             0).transact({"from": self.__config.account})
 
     def __setAssignedRequestCount(self, num):
