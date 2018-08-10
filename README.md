@@ -111,7 +111,7 @@ any other nodes. Currently, the steps are as follows:
 
 1. In the audit contract repository, follow the [steps](https://github.com/quantstamp/qsp-protocol-audit-contract#deploy-to-ropsten-or-main-net-through-metamask) to deploy the smart contracts to a separate stage (e.g., "betanet-test-123"). Do the necessary whitelisting.
 
-2. In config.yaml, replace the contract addresses to point to the new stage, e.g., replace:
+2. In `deployment/local/config.yaml`, replace the contract addresses to point to the new stage, e.g., replace:
 `https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-abi.json`
 with 
 `https://s3.amazonaws.com/qsp-protocol-contract/betanet-test-123/QuantstampAudit-v-{major-version}-abi.json`.
