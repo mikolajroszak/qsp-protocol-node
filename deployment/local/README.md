@@ -9,30 +9,30 @@ The steps assume a Unix-like operating system.
 **Note**: all commands should be run from the location of this README document. All paths are relative to this
 README's folder.
 
-### Quick start (developers)
-If you have AWS crdentials on your machine and would like to run the node with default settings, default account
-(`0x60463b7ee0c3d33def3a05313597b1300f6de62b`) that's already whitelisted for
-`testnet`, make sure the requirements in `Install dependencies` are satisfied, 
-and then do `export ETH_AUTH_TOKEN="<token>" && make download && make run`.
-
 ### Install dependencies
 
-1. Install `make`, unless installed already.
+1. Install `make`, if not already installed.
     - Verify: `make -v` should print a version `GNU Make <version> ...`.
 1. Install Docker CE: https://www.docker.com/community-edition
     - Verify: `docker -v` should return `Docker version 17.09.0-ce` or above
-1. On Linux environments, ensure your user is a part of the docker group: `sudo usermod -a -G docker <username>`. This is required for running analyzer containers from within the audit node container.
+1. On Linux environments, check the group owner of `/var/run/docker.sock`.
+Add the current user to that group (generally `docker` or `root`):
+
+    `sudo usermod -a -G <group owner of docker.sock> <username>`
+
+The step above is required for running analyzer containers from the audit node container.
+
 1. Install AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/installing.html.
     - Verify: typing `aws` should output:
-    ```
-    usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
-    To see help text, you can run:
+        ```
+        usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
+        To see help text, you can run:
 
-      aws help
-      aws <command> help
-      aws <command> <subcommand> help
-    aws: error: the following arguments are required: command
-    ```
+        aws help
+        aws <command> help
+        aws <command> <subcommand> help
+        aws: error: the following arguments are required: command
+        ```
 
 ### Create an Ethereum account
 
@@ -62,23 +62,31 @@ Record for next steps:
 1. Set the environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to the provided AWS credentials. Alternatively, do `aws configure` to specify them at the user level: when prompted, use `us-east-1` as *Default region name* and leave `None` as *Default output format*
 1. Set environment variable `ENV` to `testnet` (default) or `betanet`
 1. Set environment variable `ETH_PASSPHRASE` to your account's passphrase (or *wallet password*)
-1. In `config.yaml`, specify the endpoint for the Ethereum node you want the QSP node to connect to:
+1. In `config.yaml`, specify the endpoint to the Ethereum node you want the QSP audit node to connect to. If connecting to Quantstamp's Ethereum secure node, just rely on the default provider endpoint:
     ```
     eth_node:
         provider: !!str "HTTPProvider"
         args:
-            endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token={token}"
+            endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token=${token}"
     ```
-    If your Ethereum node requires an auth token, set environment variable `ETH_AUTH_TOKEN`, and QSP node will substitute the placeholder `{token}`
+    The environment `ETH_AUTH_TOKEN` is injected in the URL, binding it to
+    the `${token}` variable. If that is the endpoint to use,  please
+    request an authorization token from Quantstamp.
 
-1. In `config.yaml`, edit the `account` section to specify your account id and, if different from default, keystore file path:
+1. In `config.yaml`, edit the `account` section to specify your account id and, if different from default, the associated keystore file path:
     ```
     account:
         id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
         keystore_file: !!str "./keystore/default.json"
     ```
+    You account must be prefixed with `0x` and be in a checksum format.
 
 1. Configure other settings as necessary, e.g., `gas_price`.
+
+### Start the docker daemon
+
+To be able to run the audit node container, one must check whether the docker daemon
+is up and running (`ps -A | egrep docker`). If not running, please start it.
 
 ### Pull the latest version
 

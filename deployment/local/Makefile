@@ -9,15 +9,15 @@ AWS_ACCESS_KEY_ID ?= "$(shell aws --profile default configure get aws_access_key
 AWS_SECRET_ACCESS_KEY ?= "$(shell aws --profile default configure get aws_secret_access_key)"
 
 download:
-	$(shell aws ecr get-login --region us-east-1 --no-include-email) && \
+	$(shell aws ecr get-login --region us-east-1 --no-include-email)
 	docker pull $(IMAGE)
 
 run:
 	docker run -it \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v /tmp:/tmp \
-		-v $(PWD)/keystore:/app/keystore \
-		-v $(PWD)/config.yaml:/app/config.yaml \
+		-v /tmp:/tmp:Z \
+		-v $(PWD)/keystore:/app/keystore:Z \
+		-v $(PWD)/config.yaml:/app/config.yaml:Z \
 		-e ENV="$(ENV)" \
 		-e CONFIG="$(CONFIG)" \
 		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
