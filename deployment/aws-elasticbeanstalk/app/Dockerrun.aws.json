@@ -58,7 +58,7 @@
         },
         {
           "sourceVolume": "geth-keystore",
-          "containerPath": "/app/keystore"
+          "containerPath": "/app/geth-keystore"
         }
       ]
     },
