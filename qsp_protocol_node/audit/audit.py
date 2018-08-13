@@ -26,6 +26,10 @@ from solc import compile_standard
 from solc.exceptions import ContractsNotFound, SolcError
 
 
+class ExecutionException(Exception):
+    pass
+
+
 class QSPAuditNode:
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
@@ -100,6 +104,7 @@ class QSPAuditNode:
         """
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
+
         def exec():
             current_block = 0
             while self.__exec:
@@ -134,6 +139,11 @@ class QSPAuditNode:
             self.__metric_collector = MetricCollector(self.__config)
             self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
+
+        if not self.__check_whitelist(self.config.account):
+            msg = "Node address is not whitelisted. Contact Quanstamp: {0}"
+            self.__logger.error(msg.format(self.config.account))
+            raise ExecutionException(msg.format(self.config.account))
 
         # Upon restart, before processing, set all events that timed out to err.
         self.__timeout_stale_requests()
@@ -188,7 +198,8 @@ class QSPAuditNode:
                     thread_lost = True
                     break
             if thread_lost:
-                raise Exception("Cannot proceed execution. At least one internal thread is not alive")
+                raise Exception(
+                    "Cannot proceed execution. At least one internal thread is not alive")
             sleep(health_check_interval_sec)
 
     def __timeout_stale_requests(self):
@@ -242,19 +253,32 @@ class QSPAuditNode:
                 "Error when calling to get a review {0}".format(str(error))
             )
 
+    def __check_whitelist(self, node):
+        """
+        Checks that a node address is whitelisted.
+        """
+        try:
+            return self.config.audit_data_contract.functions.isWhitelisted(node).call()
+        except Exception as error:
+            self.__logger.exception(
+                "Error when checking whitelist {0}".format(str(error))
+            )
+
     def __check_and_update_min_price(self):
         """
         Checks that the minimum price in the audit node's configuration matches the smart contract.
         """
         contract_price = self.__config.audit_data_contract.functions.getMinAuditPrice(
             self.__config.account).call()
-        min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10**18)
+        min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
         if min_price_in_mini_qsp != contract_price:
-            self.__logger.info("Local min_price does not match smart contract for address {0}, updating.".format(
-                self.__config.account
-            ))
+            self.__logger.info(
+                "Local min_price does not match smart contract for address {0}, updating.".format(
+                    self.__config.account
+                ))
             send_signed_transaction(self.__config,
-                                    self.__config.audit_contract.functions.setAuditNodePrice(min_price_in_mini_qsp))
+                                    self.__config.audit_contract.functions.setAuditNodePrice(
+                                        min_price_in_mini_qsp))
 
     def __on_audit_assigned(self, evt):
         request_id = None
@@ -508,7 +532,8 @@ class QSPAuditNode:
         """
         try:
             file_path = os.path.realpath(__file__)
-            schema_file = '{0}/../../analyzers/schema/analyzer_integration.json'.format(os.path.dirname(file_path))
+            schema_file = '{0}/../../analyzers/schema/analyzer_integration.json'.format(
+                os.path.dirname(file_path))
             with open(schema_file) as schema_data:
                 schema = json.load(schema_data)
             jsonschema.validate(report, schema)
@@ -552,7 +577,8 @@ class QSPAuditNode:
 
         audit_report_str = json.dumps(audit_report, indent=2)
         audit_hash = digest(audit_report_str)
-        upload_result = self.__config.report_uploader.upload(audit_report_str, audit_report_hash=audit_hash)
+        upload_result = self.__config.report_uploader.upload(audit_report_str,
+                                                             audit_report_hash=audit_hash)
 
         self.__logger.info(
             "Report upload result: {0}".format(upload_result),

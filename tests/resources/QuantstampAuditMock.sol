@@ -22,6 +22,10 @@ contract QuantstampAuditData{
   }
 
   constructor(){ }
+
+  function isWhitelisted(address node) public view returns(bool) {
+    return node != 0x0;
+  }
 }
 
 contract QuantstampAudit {

@@ -13,6 +13,7 @@ from threading import Thread
 from time import sleep
 
 from audit import QSPAuditNode
+from audit import ExecutionException
 from config import ConfigFactory, ConfigUtils, ConfigurationException
 from dpath.util import get
 from helpers.resource import (
@@ -647,6 +648,25 @@ class TestQSPAuditNode(unittest.TestCase):
         events = self.evt_wait_loop(self.__setAuditNodePrice_filter)
         self.assertEqual(events[0]['args']['price'], 1000000000000000000)
         self.assertEqual(events[0]['event'], 'setAuditNodePrice_called')
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_not_whitelisted(self):
+        # the address has to have fixed length, do not truncate
+        address = '0x0000000000000000000000000000000000000000'
+        self.assertFalse(self.__audit_node._QSPAuditNode__check_whitelist(address),
+                         "Address 0x0 is not whitelisted")
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_not_whitelisted_run(self):
+        self.__audit_node.stop()
+        # the address has to have fixed length, do not truncate
+        address = '0x0000000000000000000000000000000000000000'
+        self.__audit_node.config._Config__account = address
+        try:
+            self.__audit_node.run()
+            self.fail("This should throw an error")
+        except ExecutionException:
+            pass
 
     @timeout(30, timeout_exception=StopIteration)
     def test_configuration_checks(self):
