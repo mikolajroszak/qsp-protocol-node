@@ -129,7 +129,7 @@ class ConfigUtils:
                 self.__logger.debug("No account was provided, using the account at index [0]",
                                     account=new_account)
 
-        if not (keystore_file is None):
+        if keystore_file is not None:
             try:
                 with open(keystore_file) as keyfile:
                     encrypted_key = keyfile.read()

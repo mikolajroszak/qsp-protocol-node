@@ -7,27 +7,30 @@ ETH_AUTH_TOKEN ?= \"\"
 
 # Default target
 run: # printing "date" is important due to the logic CloudWatch uses to distinguish log files
-	date; python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(ETH_PASSPHRASE)" -t "$(ETH_AUTH_TOKEN)" $(ENV) $(CONFIG)
+	date
+	python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(ETH_PASSPHRASE)" -t "$(ETH_AUTH_TOKEN)" $(ENV) $(CONFIG)
 
 run-with-auto-restart:
 	./auto-restart
 
 setup:
-	pyenv uninstall -f 3.6.4 ; \
-	ln -s -f $(shell git rev-parse --show-toplevel)/pre-commit $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \
-	chmod +x $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit ; \
-	pyenv install 3.6.4 ; \
+	pyenv uninstall -f 3.6.4
+	ln -s -f $(shell git rev-parse --show-toplevel)/pre-commit $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit
+	chmod +x $(shell git rev-parse --show-toplevel)/.git/hooks/pre-commit
+	pyenv install 3.6.4
 	pip install -r requirements.txt
 
 test:
-	pip install web3[tester] ; \
+	pip install web3[tester]
 	PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc)$$" | xargs rm -rf
 
 run-docker:
-	make clean && docker build -t qsp-protocol-node . && docker run -it \
+	make clean
+	docker build -t qsp-protocol-node .
+	docker run -it \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
@@ -38,7 +41,9 @@ run-docker:
 		qsp-protocol-node sh -c "make run"
 
 test-docker:
-	make clean && docker build -t qsp-protocol-node . && docker run -it \
+	make clean
+	docker build -t qsp-protocol-node .
+	docker run -it \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
@@ -47,7 +52,8 @@ test-docker:
 		qsp-protocol-node sh -c "make test"
 
 test-ci:
-	docker build --cache-from $(CACHE_IMAGE) -t qsp-protocol-node . && docker run -t \
+	docker build --cache-from $(CACHE_IMAGE) -t qsp-protocol-node .
+	docker run -t \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
 		-v $(PWD)/tests/coverage:/app/tests/coverage \
