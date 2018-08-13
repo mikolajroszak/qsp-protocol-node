@@ -141,7 +141,7 @@ class QSPAuditNode:
             self.__internal_threads.append(self.__run_metrics_thread())
 
         if not self.__check_whitelist(self.config.account):
-            msg = "Node address is not whitelisted. Contact Quanstamp: {0}"
+            msg = "Node address is not whitelisted. Contact Quantstamp: {0}"
             self.__logger.error(msg.format(self.config.account))
             raise ExecutionException(msg.format(self.config.account))
 
