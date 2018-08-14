@@ -129,7 +129,7 @@ Do it for all the contract URIs.
     1. In dev AWS account, go to [Application versions](https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/application/versions?applicationName=qsp-protocol-node), download the desired artifact and unzip it
     2. Download the Docker image referenced in the unzipped folder's `Dockerrun.aws.json` and re-push it to the prod account id
     3. Edit `Dockerrun.aws.json` to use the prod AWS account id instead of the dev account id
-    4. Zip the file again
+    4. Zip the files located inside extracted folder. Note: do not zip the containing folder, only the files
     5. Run `zip -d Archive.zip __MACOSX/\*` to remove MacOS files from the archive
     6. In prod account's AWS console, upload the ZIP to the Beanstalk environment
 
