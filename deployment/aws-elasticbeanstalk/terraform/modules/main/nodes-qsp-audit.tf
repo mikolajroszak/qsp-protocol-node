@@ -60,6 +60,12 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
+    name = "AWS_DEFAULT_REGION"
+    value = "us-east-1"
+  }
+  
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
     name = "LOG_GROUP_NAME"
     value = "/aws/elasticbeanstalk/qsp-protocol-${var.stage}/all.log"
   }
