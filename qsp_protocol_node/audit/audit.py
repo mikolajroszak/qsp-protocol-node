@@ -82,12 +82,28 @@ class QSPAuditNode:
         #    processing new events. Old ones necessarily cause the underlying
         #    thread to complete execution and eventually dying
 
-    def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler):
+    def __web3_lock(self, synch):
+        if not synch:
+            return
+
+        self.__web3_access.acquire()
+
+    def __web3_unlock(self, synch):
+        if not synch:
+            return
+
+        self.__web3_access.release()
+
+    def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler, web3_synch):
         def exec():
             try:
                 while self.__exec:
-                    for evt in evt_filter.get_new_entries():
-                        evt_handler(evt)
+                    try:
+                        self.__web3_lock(web3_synch)
+                        for evt in evt_filter.get_new_entries():
+                            evt_handler(evt)
+                    finally:
+                        self.__web3_unlock(web3_synch)
 
                     sleep(self.__config.evt_polling)
             except Exception as error:
@@ -100,19 +116,28 @@ class QSPAuditNode:
 
         return evt_thread
 
-    def __run_block_mined_thread(self, handler_name, handler):
+    def __run_block_mined_thread(self, handler_name, handler, web3_synch):
         """
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
-
         def exec():
             current_block = 0
-            while self.__exec:
-                sleep(self.__config.block_mined_polling)
-                if current_block < self.__config.web3_client.eth.blockNumber:
-                    current_block = self.__config.web3_client.eth.blockNumber
-                    self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
-                    handler()
+            try:
+                while self.__exec:
+                    sleep(self.__config.block_mined_polling)
+                    if current_block < self.__config.web3_client.eth.blockNumber:
+                        current_block = self.__config.web3_client.eth.blockNumber
+                        self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
+                        try:
+                            self.__web3_lock(web3_synch)
+                            handler()
+                        finally:
+                            self.__web3_unlock(web3_synch)
+            except Exception as error:
+                self.__logger.exception(
+                    "Error in the block mined thread: {0}".format(str(error)))
+                raise error
+
 
         new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
         new_block_monitor_thread.start()
@@ -129,7 +154,9 @@ class QSPAuditNode:
         """
         if self.__exec:
             raise Exception("Cannot run audit node thread due to another audit node instance")
+
         self.__exec = True
+        self.__web3_access = threading.RLock()
 
         # before starting the actual audit process,
         # ensure that the min_price in the smart contract is up to date
@@ -161,26 +188,29 @@ class QSPAuditNode:
 
         self.__internal_threads.append(self.__run_block_mined_thread(
             "check_available_requests",
-            self.__check_then_request_audit_request
+            self.__check_then_request_audit_request,
+            web3_synch=True,
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_AUDIT_ASSIGNED,
             self.__config.audit_contract.events.LogAuditAssigned.createFilter(
                 fromBlock=start_block),
             self.__on_audit_assigned,
+            web3_synch=False,
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_REPORT_SUBMITTED,
             self.__config.audit_contract.events.LogAuditFinished.createFilter(
                 fromBlock=start_block),
             self.__on_report_submitted,
+            web3_synch=False,
         ))
 
         # Starts two additional threads for performing audits
         # and eventually submitting results
-        self.__internal_threads.append(self.__run_perform_audit_thread())
-        self.__internal_threads.append(self.__run_submission_thread())
-        self.__internal_threads.append(self.__run_monitor_submisson_thread())
+        self.__internal_threads.append(self.__run_perform_audit_thread(web3_synch=False))
+        self.__internal_threads.append(self.__run_submission_thread(web3_synch=True))
+        self.__internal_threads.append(self.__run_monitor_submisson_thread(web3_synch=False))
 
         # Monitors the state of each thread. Upon error, terminate the
         # audit node. Checking whether a thread is alive or not does
@@ -234,16 +264,17 @@ class QSPAuditNode:
                 self.__logger.debug(
                     "Skip bidding the request as currently processing {0} requests".format(
                         str(pending_requests_count)))
-                return
-
-            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call()
-            if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
-                self.__logger.debug("There is request available for bid on.")
-                self.__get_next_audit_request()
             else:
-                self.__logger.debug(
-                    "No request available as the contract returned {0}.".format(
-                        str(any_request_available)))
+                any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call()
+                if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
+                    self.__logger.debug("There is request available for bid on.")
+
+                    
+                    self.__get_next_audit_request()
+                else:
+                    self.__logger.debug(
+                        "No request available as the contract returned {0}.".format(
+                            str(any_request_available)))
         except DeduplicationException as error:
             self.__logger.debug(
                 "Error when calling to get a review {0}".format(str(error))
@@ -263,6 +294,7 @@ class QSPAuditNode:
             self.__logger.exception(
                 "Error when checking whitelist {0}".format(str(error))
             )
+            raise error
 
     def __check_and_update_min_price(self):
         """
@@ -329,10 +361,10 @@ class QSPAuditNode:
             )
             self.__config.event_pool_manager.set_evt_to_error(evt)
 
-    def __run_perform_audit_thread(self):
+    def __run_perform_audit_thread(self, web3_synch):
         def process_audit_request(evt):
             request_id = None
-            try:
+            try:                
                 requestor = evt['requestor']
                 request_id = evt['request_id']
                 contract_uri = evt['contract_uri']
@@ -379,9 +411,10 @@ class QSPAuditNode:
 
         return audit_thread
 
-    def __run_submission_thread(self):
+    def __run_submission_thread(self, web3_synch):
         def process_submission_request(evt):
             try:
+                self.__web3_lock(web3_synch)
                 tx_hash = self.__submit_report(
                     int(evt['request_id']),
                     evt['audit_state'],
@@ -390,6 +423,7 @@ class QSPAuditNode:
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
+            
             except DeduplicationException as error:
                 self.__logger.debug(
                     "Error when calling to get a review {0}".format(str(error))
@@ -408,6 +442,9 @@ class QSPAuditNode:
                 )
                 evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
+            finally:
+                self.__web3_unlock(web3_synch)
+
 
         def exec():
             while self.__exec:
@@ -462,7 +499,7 @@ class QSPAuditNode:
                 requestId=request_id,
             )
 
-    def __run_monitor_submisson_thread(self):
+    def __run_monitor_submisson_thread(self, web3_synch):
         timeout_limit = self.__config.submission_timeout_limit_blocks
 
         def monitor_submission_timeout(evt, current_block):
@@ -482,12 +519,16 @@ class QSPAuditNode:
         def exec():
             try:
                 while self.__exec:
-                    # Checks for a potential timeouts
-                    block = self.__config.web3_client.eth.blockNumber
-                    self.__config.event_pool_manager.process_submission_events(
-                        monitor_submission_timeout,
-                        block,
-                    )
+                    try:
+                        # Checks for a potential timeouts
+                        self.__web3_lock(web3_synch)
+                        block = self.__config.web3_client.eth.blockNumber
+                        self.__config.event_pool_manager.process_submission_events(
+                            monitor_submission_timeout,
+                            block,
+                        )
+                    finally:
+                        self.__web3_unlock(web3_synch)
 
                     sleep(self.__config.evt_polling)
             except Exception as error:

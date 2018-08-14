@@ -1,6 +1,3 @@
-from .singleton_lock import SingletonLock
-
-
 def mk_args(config):
     gas = config.gas
     gas_price_wei = config.gas_price_wei
@@ -18,13 +15,9 @@ def mk_args(config):
 
 
 def send_signed_transaction(config, transaction, attempts=10):
-    lock = SingletonLock.instance().lock
-    lock.acquire()
     args = mk_args(config)
     if config.account_private_key is None:  # no local signing (in case of tests)
-        result = transaction.transact(args)
-        lock.release()
-        return result
+        return transaction.transact(args)
     else:
         nonce = config.web3_client.eth.getTransactionCount(config.account)
         original_nonce = nonce
@@ -34,14 +27,11 @@ def send_signed_transaction(config, transaction, attempts=10):
                 tx = transaction.buildTransaction(args)
                 signed_tx = config.web3_client.eth.account.signTransaction(tx,
                                                                            private_key=config.account_private_key)
-                result = config.web3_client.eth.sendRawTransaction(signed_tx.rawTransaction)
-                lock.release()
-                return result
+                return config.web3_client.eth.sendRawTransaction(signed_tx.rawTransaction)
             except ValueError as e:
                 if i == attempts - 1:
                     config.logger.debug("Maximum number of retries reached. {}"
                                         .format(e))
-                    lock.release()
                     raise e
                 elif "replacement transaction underpriced" in repr(e):
                     config.logger.debug("Another transaction is queued with the same nonce. {}"
@@ -59,14 +49,10 @@ def send_signed_transaction(config, transaction, attempts=10):
                 elif "known transaction" in repr(e):
                     # the de-duplication is preserved and the exception is re-raised
                     config.logger.debug("Transaction deduplication happened. {}".format(e))
-                    lock.release()
                     raise DeduplicationException(e)
                 else:
                     config.logger.error("Unknown error while sending transaction. {}".format(e))
-                    lock.release()
                     raise e
-
-    lock.release()
 
 
 class DeduplicationException(Exception):

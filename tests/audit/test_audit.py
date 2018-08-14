@@ -484,7 +484,7 @@ class TestQSPAuditNode(unittest.TestCase):
         Tests that the run_evt_thread dies upon an internal exception
         """
         # An exception should be re-thrown inside the thread
-        thread = self.__audit_node._QSPAuditNode__run_audit_evt_thread(None, None, None)
+        thread = self.__audit_node._QSPAuditNode__run_audit_evt_thread(None, None, None, True)
         thread.join()
         self.assertFalse(thread.is_alive(), "Thread was supposed be terminated by an exception")
 
