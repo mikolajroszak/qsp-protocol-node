@@ -7,6 +7,11 @@ from audit import (
     Analyzer,
     Wrapper
 )
+
+from eth_tester import EthereumTester
+from eth_tester import PyEthereum21Backend
+from eth_tester import PyEVMBackend
+
 from pathlib import Path
 from tempfile import gettempdir
 from streaming import CloudWatchProvider
@@ -76,7 +81,7 @@ class ConfigUtils:
             return IPCProvider(**args)
 
         if provider == "EthereumTesterProvider":
-            return EthereumTesterProvider()
+            return EthereumTesterProvider(EthereumTester(PyEVMBackend()))
 
         if provider == "TestRPCProvider":
             return TestRPCProvider(**args)

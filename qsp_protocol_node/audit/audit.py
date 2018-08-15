@@ -82,13 +82,13 @@ class QSPAuditNode:
         #    processing new events. Old ones necessarily cause the underlying
         #    thread to complete execution and eventually dying
 
-    def __web3_lock(self, synch):
+    def __web3_lock(self, synch=True):
         if not synch:
             return
 
         self.__web3_access.acquire()
 
-    def __web3_unlock(self, synch):
+    def __web3_unlock(self, synch=True):
         if not synch:
             return
 
