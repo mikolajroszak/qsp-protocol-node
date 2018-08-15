@@ -323,26 +323,29 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
 
-    # @timeout(20, timeout_exception=StopIteration)
-    # def test_on_audit_assigned(self):
-    #     # The following causes an exception in the auditing node, but it should be caught and
-    #     # should not propagate
-    #     self.__audit_node._QSPAuditNode__on_audit_assigned({})
-    #     # This causes an auditor id mismatch
-    #     evt = {'args': {'auditor': 'this is not me', 'requestId': 1}}
-    #     self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
-    #     # test real auditor id with case mismatch and successful submit
-    #     buggy_contract = resource_uri("DAOBug.sol")
-    #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__request_audit(buggy_contract, self.__PRICE)
-    #     )
-    #     auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
-    #     evt = {'args': {'auditor': auditor_id, 'requestId': 1, 'price': self.__PRICE,
-    #                     'requestor': auditor_id, 'uri': buggy_contract}, 'blockNumber': 1}
-    #     self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
-    #     sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
-    #     row = get_first(sql3lite_worker.execute("select * from audit_evt"))
-    #     self.assertEqual(row['fk_status'], 'AS')
+    @timeout(20, timeout_exception=StopIteration)
+    def test_on_audit_assigned(self):
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
+        self.__audit_node._QSPAuditNode__on_audit_assigned({})
+
+        # This causes an auditor id mismatch
+        evt = {'args': {'auditor': 'this is not me', 'requestId': 1}}
+        self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
+        
+        # Tests a real auditor id with case mismatch and successful submit
+        buggy_contract = resource_uri("DAOBug.sol")
+        
+        tx_hash = self.__request_audit(buggy_contract, self.__PRICE)
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
+
+        auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
+        evt = {'args': {'auditor': auditor_id, 'requestId': 1, 'price': self.__PRICE,
+                        'requestor': auditor_id, 'uri': buggy_contract}, 'blockNumber': 1}
+        self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
+        sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
+        row = get_first(sql3lite_worker.execute("select * from audit_evt"))
+        self.assertEqual(row['fk_status'], 'AS')
 
     # @timeout(20, timeout_exception=StopIteration)
     # def test_on_report_submitted(self):
