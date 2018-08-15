@@ -268,14 +268,14 @@ class TestQSPAuditNode(unittest.TestCase):
     #             self.__AVAILABLE_AUDIT__STATE_READY).transact(
     #             {"from": self.__config.account})
     #     )
-    #     self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+    #     self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
     #     self.__audit_node._QSPAuditNode__check_then_request_audit_request()
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
     #         self.__config.audit_contract.functions.setAnyRequestAvailableResult(
     #             self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
     #             {"from": self.__config.account})
     #     )
-    #     self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+    #     self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
     #     self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
 
     # @timeout(10, timeout_exception=StopIteration)
@@ -293,14 +293,14 @@ class TestQSPAuditNode(unittest.TestCase):
     #             self.__AVAILABLE_AUDIT__STATE_READY).transact(
     #             {"from": self.__config.account})
     #     )
-    #     self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+    #     self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
     #     self.__audit_node._QSPAuditNode__check_then_request_audit_request()
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
     #         self.__config.audit_contract.functions.setAnyRequestAvailableResult(
     #             self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
     #             {"from": self.__config.account})
     #     )
-    #     self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+    #     self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
     #     self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
 
     # @timeout(20, timeout_exception=StopIteration)
@@ -314,7 +314,7 @@ class TestQSPAuditNode(unittest.TestCase):
     #     # test real auditor id with case mismatch and successful submit
     #     buggy_contract = resource_uri("DAOBug.sol")
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__requestAudit(buggy_contract, self.__PRICE)
+    #         self.__request_audit(buggy_contract, self.__PRICE)
     #     )
     #     auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
     #     evt = {'args': {'auditor': auditor_id, 'requestId': 1, 'price': self.__PRICE,
@@ -335,7 +335,7 @@ class TestQSPAuditNode(unittest.TestCase):
     #     # test real auditor id with case mismatch and successful submit
     #     buggy_contract = resource_uri("DAOBug.sol")
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__requestAudit(buggy_contract, self.__PRICE)
+    #         self.__request_audit(buggy_contract, self.__PRICE)
     #     )
     #     sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
     #     while True:
@@ -361,11 +361,11 @@ class TestQSPAuditNode(unittest.TestCase):
     #     # since we're mocking the smart contract, we should explicitly call its internals
     #     buggy_contract = resource_uri("DAOBug.sol")
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__requestAudit(buggy_contract, self.__PRICE)
+    #         self.__request_audit(buggy_contract, self.__PRICE)
     #     )
     #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(1))
 
-    #     self.evt_wait_loop(self.__submitReport_filter)
+    #     self.__evt_wait_loop(self.__submitReport_filter)
 
     #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(0))
     #     # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
@@ -403,7 +403,7 @@ class TestQSPAuditNode(unittest.TestCase):
     #     self.assertTrue(9 in ids)
     #     self.assertTrue(12 in ids)
 
-    #     self.evt_wait_loop(self.__submitReport_filter)
+    #     self.__evt_wait_loop(self.__submitReport_filter)
 
     #     # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
@@ -423,12 +423,12 @@ class TestQSPAuditNode(unittest.TestCase):
     #     """
     #     buggy_contract = resource_uri("BasicToken.sol")
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__requestAudit(buggy_contract, self.__PRICE)
+    #         self.__request_audit(buggy_contract, self.__PRICE)
     #     )
 
     #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(1))
 
-    #     self.evt_wait_loop(self.__submitReport_filter)
+    #     self.__evt_wait_loop(self.__submitReport_filter)
 
     #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(0))
 
@@ -450,7 +450,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
         print("===> 1")
         
-        tx_hash = self.__requestAudit(buggy_contract, self.__PRICE)
+        tx_hash = self.__request_audit(buggy_contract, self.__PRICE)
         print("===> tx_hash is " + str(tx_hash))
         
 
@@ -468,7 +468,7 @@ class TestQSPAuditNode(unittest.TestCase):
         print("===> 4")
 
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)        
-        self.evt_wait_loop(self.__submitReport_filter)
+        self.__evt_wait_loop(self.__submitReport_filter)
 
         print("===> 5")
 
@@ -512,15 +512,15 @@ class TestQSPAuditNode(unittest.TestCase):
     #                                                                1)
     #     self.__compare_json(report, "reports/BasicTokenErrorWithMetadata.json", json_loaded=True)
 
-    # @timeout(5, timeout_exception=StopIteration)
-    # def test_run_audit_evt_thread(self):
-    #     """
-    #     Tests that the run_evt_thread dies upon an internal exception
-    #     """
-    #     # An exception should be re-thrown inside the thread
-    #     thread = self.__audit_node._QSPAuditNode__run_audit_evt_thread(None, None, None, True)
-    #     thread.join()
-    #     self.assertFalse(thread.is_alive(), "Thread was supposed be terminated by an exception")
+    @timeout(5, timeout_exception=StopIteration)
+    def test_run_audit_evt_thread(self):
+        """
+        Tests that the run_evt_thread dies upon an internal exception
+        """
+        # An exception should be re-thrown inside the thread
+        thread = self.__audit_node._QSPAuditNode__run_audit_evt_thread(None, None, None, True)
+        thread.join()
+        self.assertFalse(thread.is_alive(), "Thread was supposed be terminated by an exception")
 
     # def test_run_multiple_instances_expecting_fail(self):
     #     """
@@ -560,9 +560,9 @@ class TestQSPAuditNode(unittest.TestCase):
     #             self.__AVAILABLE_AUDIT__STATE_READY).transact(
     #             {"from": self.__config.account})
     #     )
-    #     self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+    #     self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
 
-    #     self.evt_wait_loop(self.__getNextAuditRequest_filter)
+    #     self.__evt_wait_loop(self.__getNextAuditRequest_filter)
 
     #     buggy_contract = resource_uri("DappBinWallet.sol")
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
@@ -578,7 +578,7 @@ class TestQSPAuditNode(unittest.TestCase):
     #     # request
     #     sleep(self.__config.block_mined_polling + 1)
 
-    #     self.evt_wait_loop(self.__submitReport_filter)
+    #     self.__evt_wait_loop(self.__submitReport_filter)
 
     #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(0))
 
@@ -589,42 +589,10 @@ class TestQSPAuditNode(unittest.TestCase):
     #     self.__audit_node._QSPAuditNode__get_next_audit_request = original__get_next_audit_request
 
     #     # This is a critical line to be called as the node did all it audits
-    #     self.evt_wait_loop(self.__getNextAuditRequest_filter)
+    #     self.__evt_wait_loop(self.__getNextAuditRequest_filter)
 
     #     # an extra call to get_next_audit is no accepted
     #     self.assertFalse(self.__mocked__get_next_audit_request_called)
-
-    def __compare_json(self, audit_file, report_file_path, json_loaded=False):
-        if not json_loaded:
-            actual_json = load_json(audit_file)
-        else:
-            actual_json = audit_file
-        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
-        diff = DeepDiff(actual_json,
-                        expected_json,
-                        exclude_paths={
-                            "root['contract_uri']",
-                            # path is different depending on whether running inside Docker
-                            "root['timestamp']",
-                            "root['start_time']",
-                            "root['end_time']",
-                            "root['analyzers_reports'][0]['coverages'][0]['file']",
-                            "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][0]['start_time']",
-                            "root['analyzers_reports'][0]['end_time']",
-                            "root['analyzers_reports'][0]['hash']",
-                            "root['analyzers_reports'][1]['analyzer']['command']",
-                            "root['analyzers_reports'][1]['coverages'][0]['file']",
-                            "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][1]['start_time']",
-                            "root['analyzers_reports'][1]['end_time']",
-                            "root['analyzers_reports'][1]['hash']",
-                        }
-                        )
-        pprint(diff)
-        self.assertEqual(diff, {})
-        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
-                         ntpath.basename(expected_json['contract_uri']))
 
     # @timeout(30, timeout_exception=StopIteration)
     # def test_timeout_on_complex_file(self):
@@ -649,11 +617,11 @@ class TestQSPAuditNode(unittest.TestCase):
 
     #     contract = resource_uri("kyber.sol")
     #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__requestAudit(contract, self.__PRICE))
+    #         self.__request_audit(contract, self.__PRICE))
 
     #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(1))
 
-    #     self.evt_wait_loop(self.__submitReport_filter)
+    #     self.__evt_wait_loop(self.__submitReport_filter)
 
     #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(0))
 
@@ -682,8 +650,8 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node._QSPAuditNode__web3_lock()
         self.__audit_node._QSPAuditNode__check_and_update_min_price()
         self.__audit_node._QSPAuditNode__web3_unlock()
-        
-        events = self.evt_wait_loop(self.__setAuditNodePrice_filter)
+
+        events = self.__evt_wait_loop(self.__setAuditNodePrice_filter)
         self.assertEqual(events[0]['args']['price'], 1000000000000000000)
         self.assertEqual(events[0]['event'], 'setAuditNodePrice_called')
 
@@ -795,7 +763,39 @@ class TestQSPAuditNode(unittest.TestCase):
             name, conf = list(analyzer.items())[0]
             self.assertTrue(name in executed_analyzers)
 
-    def evt_wait_loop(self, current_filter):
+    def __compare_json(self, audit_file, report_file_path, json_loaded=False):
+        if not json_loaded:
+            actual_json = load_json(audit_file)
+        else:
+            actual_json = audit_file
+        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
+        diff = DeepDiff(actual_json,
+                        expected_json,
+                        exclude_paths={
+                            "root['contract_uri']",
+                            # path is different depending on whether running inside Docker
+                            "root['timestamp']",
+                            "root['start_time']",
+                            "root['end_time']",
+                            "root['analyzers_reports'][0]['coverages'][0]['file']",
+                            "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
+                            "root['analyzers_reports'][0]['start_time']",
+                            "root['analyzers_reports'][0]['end_time']",
+                            "root['analyzers_reports'][0]['hash']",
+                            "root['analyzers_reports'][1]['analyzer']['command']",
+                            "root['analyzers_reports'][1]['coverages'][0]['file']",
+                            "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
+                            "root['analyzers_reports'][1]['start_time']",
+                            "root['analyzers_reports'][1]['end_time']",
+                            "root['analyzers_reports'][1]['hash']",
+                        }
+                        )
+        pprint(diff)
+        self.assertEqual(diff, {})
+        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
+                         ntpath.basename(expected_json['contract_uri']))
+
+    def __evt_wait_loop(self, current_filter):
         wait = True
         while wait:
             events = current_filter.get_new_entries()
@@ -805,7 +805,7 @@ class TestQSPAuditNode(unittest.TestCase):
             sleep(1)
         return events
 
-    def __requestAudit(self, contract_uri, price):
+    def __request_audit(self, contract_uri, price):
         """
         Emulates requesting for a new audit.
         """
@@ -815,8 +815,8 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node._QSPAuditNode__web3_unlock()
 
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
-        self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
-        self.evt_wait_loop(self.__getNextAuditRequest_filter)
+        self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+        self.__evt_wait_loop(self.__getNextAuditRequest_filter)
 
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__config.audit_contract.functions.setAnyRequestAvailableResult(
@@ -825,7 +825,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
         
-        self.evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+        self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
 
         timestamp = 40
 
