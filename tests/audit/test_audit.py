@@ -672,16 +672,20 @@ class TestQSPAuditNode(unittest.TestCase):
     #             'timeout_sec'] = \
     #             original_timeouts[i]
 
-    # @timeout(30, timeout_exception=StopIteration)
-    # def test_change_min_price(self):
-    #     """
-    #     Tests that the node updates the min_price on the blockchain if the config value changes
-    #     """
-    #     self.__audit_node._QSPAuditNode__config._Config__min_price_in_qsp = 1
-    #     self.__audit_node._QSPAuditNode__check_and_update_min_price()
-    #     events = self.evt_wait_loop(self.__setAuditNodePrice_filter)
-    #     self.assertEqual(events[0]['args']['price'], 1000000000000000000)
-    #     self.assertEqual(events[0]['event'], 'setAuditNodePrice_called')
+    @timeout(30, timeout_exception=StopIteration)
+    def test_change_min_price(self):
+        """
+        Tests that the node updates the min_price on the blockchain if the config value changes
+        """
+        self.__audit_node._QSPAuditNode__config._Config__min_price_in_qsp = 1
+
+        self.__audit_node._QSPAuditNode__web3_lock()
+        self.__audit_node._QSPAuditNode__check_and_update_min_price()
+        self.__audit_node._QSPAuditNode__web3_unlock()
+        
+        events = self.evt_wait_loop(self.__setAuditNodePrice_filter)
+        self.assertEqual(events[0]['args']['price'], 1000000000000000000)
+        self.assertEqual(events[0]['event'], 'setAuditNodePrice_called')
 
     @timeout(10, timeout_exception=StopIteration)
     def test_not_whitelisted(self):
