@@ -95,15 +95,19 @@ class QSPAuditNode:
         self.__web3_access.release()
 
     def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler, web3_synch):
+        # NOTE: should we lock the entire for-loop?
+        # It might cause a deadlock....
+        # Locking the entire for-loop for the time being (a conservative measure)
+        # and stress testing to try to find a potential issue
         def exec():
             try:
                 while self.__exec:
-                    try:
-                        self.__web3_lock(web3_synch)
-                        for evt in evt_filter.get_new_entries():
+                    for evt in evt_filter.get_new_entries():
+                        try:
+                            self.__web3_lock(web3_synch)
                             evt_handler(evt)
-                    finally:
-                        self.__web3_unlock(web3_synch)
+                        finally:
+                            self.__web3_unlock(web3_synch)
 
                     sleep(self.__config.evt_polling)
             except Exception as error:
@@ -561,7 +565,9 @@ class QSPAuditNode:
         self.__exec = False
 
         for internal_thread in self.__internal_threads:
-            internal_thread.join()
+            print("===> Stopping... About to kill thread " + str(internal_thread.name))
+            if internal_thread.is_alive():
+                internal_thread.join()
         self.__internal_threads = []
 
         # Close resources
@@ -655,6 +661,7 @@ class QSPAuditNode:
     def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
 
         number_of_analyzers = len(self.__config.analyzers)
+
         # This array is shared between the current thread and wrappers
         shared_analyzers_reports = [{}] * number_of_analyzers
         parse_uri = urllib.parse.urlparse(uri)
@@ -667,20 +674,29 @@ class QSPAuditNode:
         def check_contract(analyzer_id):
             analyzer = self.__config.analyzers[analyzer_id]
             metadata = analyzer.get_metadata(target_contract, request_id, original_filename)
-            # in case of time out, declare the metadata as the report now
+            
+            # In case of time out, declare the metadata as the report now
             str_metadata = json.dumps(metadata)
-            analyzers_reports_locks[analyzer_id].acquire()
-            shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
-            analyzers_reports_locks[analyzer_id].release()
+
+            try:
+                analyzers_reports_locks[analyzer_id].acquire()
+                shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
+            finally:
+                analyzers_reports_locks[analyzer_id].release()
+
             result = analyzer.check(target_contract, request_id, original_filename)
-            # the values from metadata will overwrite those of report
+            
+            # The values from metadata will overwrite those of report
             report = {**result, **metadata}
             str_report = json.dumps(report)
             report['hash'] = digest(str_report)
+
             # Make sure no race-condition between the wrappers and the current thread
-            analyzers_reports_locks[analyzer_id].acquire()
-            shared_analyzers_reports[analyzer_id] = report
-            analyzers_reports_locks[analyzer_id].release()
+            try:
+                analyzers_reports_locks[analyzer_id].acquire()
+                shared_analyzers_reports[analyzer_id] = report
+            finally:
+                analyzers_reports_locks[analyzer_id].release()
 
         analyzers_threads = []
         analyzers_timeouts = []
@@ -688,7 +704,7 @@ class QSPAuditNode:
 
         # Starts each analyzer thread
         for i, analyzer in enumerate(self.__config.analyzers):
-            analyzer_thread = Thread(target=check_contract, args=[i])
+            analyzer_thread = Thread(target=check_contract, args=[i], name="{0}-wrapper-thread".format(analyzer.wrapper.analyzer_name))
             analyzers_threads.append(analyzer_thread)
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
             timeout_sec = int(self.__config.analyzers_config[i][analyzer_name]['timeout_sec'])
@@ -706,9 +722,11 @@ class QSPAuditNode:
 
             # Make sure there is no race condition between the current thread
             # and wrapper thread in overwriting on analyzers_reports
-            analyzers_reports_locks[i].acquire()
-            local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
-            analyzers_reports_locks[i].release()
+            try:
+                analyzers_reports_locks[i].acquire()
+                local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])                
+            finally:
+                analyzers_reports_locks[i].release()
 
             # NOTE
             # Due to timeout issues, one has to account for start/end

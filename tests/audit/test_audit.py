@@ -268,10 +268,10 @@ class TestQSPAuditNode(unittest.TestCase):
         # should not propagate
         get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
 
-        def mocked__get_next_audit_request():
+        def mocked_get_next_audit_request():
             raise Exception('mocked exception')
 
-        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
+        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked_get_next_audit_request
         
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__config.audit_contract.functions.setAnyRequestAvailableResult(
@@ -297,10 +297,10 @@ class TestQSPAuditNode(unittest.TestCase):
         # should not propagate
         get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
 
-        def mocked__get_next_audit_request():
+        def mocked_get_next_audit_request():
             raise DeduplicationException('mocked exception')
 
-        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
+        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked_get_next_audit_request
 
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__config.audit_contract.functions.setAnyRequestAvailableResult(
@@ -516,56 +516,32 @@ class TestQSPAuditNode(unittest.TestCase):
         Tests the entire flow of an audit request of a non-raw text file contract (e.g., HTML), from a request
         to the production of a report and its submission.
         """
-        buggy_contract = resource_uri("DappBinWallet.sol")
-
-        print("===> 1")
-        
+        buggy_contract = resource_uri("DappBinWallet.sol")      
         tx_hash = self.__request_audit(buggy_contract, self.__PRICE)
-        print("===> tx_hash is " + str(tx_hash))
-        
-
-        print("===> 2")
 
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
-        print("===> tx_hash is " + str(tx_hash))
-
-        print("===> 3")
 
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__set_assigned_request_count(1)
         self.__audit_node._QSPAuditNode__web3_unlock()
-
-        print("===> 4")
-
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)        
+
         self.__evt_wait_loop(self.__submitReport_filter)
 
-        print("===> 5")
 
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__set_assigned_request_count(0)
         self.__audit_node._QSPAuditNode__web3_unlock()
-
-        print("===> 6")
-
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
-        
-
-        print("===> 7")
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__audit_node._QSPAuditNode__web3_lock()
-        self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__send_done_message(self.__REQUEST_ID)
-        )
+        tx_hash = self.__send_done_message(self.__REQUEST_ID)        
         self.__audit_node._QSPAuditNode__web3_unlock()
-
-        print("===> 8")
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
                                     "reports/DappBinWallet.json")
-
-        print("===> 8")
 
     @timeout(80, timeout_exception=StopIteration)
     def test_analyzer_produces_metadata_for_errors(self):
@@ -605,9 +581,7 @@ class TestQSPAuditNode(unittest.TestCase):
     #         pass
     #     self.assertTrue(thrown, "No exception was thrown when starting multiple instances")
 
-    # # Variable to be passed to the mocked function
-    # __mocked__get_next_audit_request_called = False
-
+    
     @timeout(40, timeout_exception=StopIteration)
     def test_restricting_local_max_assigned(self):
         """
@@ -618,7 +592,8 @@ class TestQSPAuditNode(unittest.TestCase):
         # the limit is not reached.
         original__get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
 
-        def mocked__get_next_audit_request():
+        self.__mocked__get_next_audit_request_called = False
+        def mocked_get_next_audit_request():
             # this should be unreachable when the limit is reached
             self.__mocked__get_next_audit_request_called = True
 
@@ -645,7 +620,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
 
         # Node should not ask for further request
-        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
+        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked_get_next_audit_request
 
         # Make sure there is enough time for mining poll to call QSPAuditNode.__check_then_bid_audit
         # request
@@ -654,9 +629,9 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__evt_wait_loop(self.__submitReport_filter)
 
         self.__audit_node._QSPAuditNode__web3_lock()
-        tx_hash = self.__set_assigned_request_count(0)
-        self.__config.web3_client.eth.waitForTransactionReceipt()
+        tx_hash = self.__set_assigned_request_count(0)        
         self.__audit_node._QSPAuditNode__web3_unlock()
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
 
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__send_done_message(self.__REQUEST_ID)
@@ -669,7 +644,7 @@ class TestQSPAuditNode(unittest.TestCase):
         # This is a critical line to be called as the node did all it audits
         self.__evt_wait_loop(self.__getNextAuditRequest_filter)
 
-        # An extra call to get_next_audit is no accepted
+        # An extra call to get_next_audit is not accepted
         self.assertFalse(self.__mocked__get_next_audit_request_called)
 
     @timeout(30, timeout_exception=StopIteration)
@@ -700,7 +675,6 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__set_assigned_request_count(1)
         self.__audit_node._QSPAuditNode__web3_unlock()
-
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
 
         self.__evt_wait_loop(self.__submitReport_filter)
@@ -708,13 +682,11 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__set_assigned_request_count(0)
         self.__audit_node._QSPAuditNode__web3_unlock()
-
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
 
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__send_done_message(self.__REQUEST_ID)
         self.__audit_node._QSPAuditNode__web3_unlock()
-        
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
