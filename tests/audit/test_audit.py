@@ -702,36 +702,36 @@ class TestQSPAuditNode(unittest.TestCase):
     #     except ExecutionException:
     #         pass
 
-    # @timeout(30, timeout_exception=StopIteration)
-    # def test_configuration_checks(self):
-    #     """
-    #     Tests configuration sanity checks.
-    #     Since this test requires loading the QuantstampAuditData contract, it is better here than test_config.py.
-    #     """
-    #     config = self.__audit_node._QSPAuditNode__config
-    #     config_utils = ConfigUtils(config.node_version)
-    #     try:
-    #         temp = config.submission_timeout_limit_blocks
-    #         config._Config__submission_timeout_limit_blocks = 2
-    #         config_utils.check_configuration_settings(config)
-    #         self.fail("Configuration error should have been raised.")
-    #     except ConfigurationException:
-    #         config._Config__submission_timeout_limit_blocks = temp
-    #     try:
-    #         temp = config.submission_timeout_limit_blocks
-    #         config._Config__submission_timeout_limit_blocks = 123
-    #         config_utils.check_configuration_settings(config)
-    #         self.fail("Configuration error should have been raised.")
-    #     except ConfigurationException:
-    #         config._Config__submission_timeout_limit_blocks = temp
-    #     for i in range(0, len(self.__audit_node._QSPAuditNode__config.analyzers)):
-    #         try:
-    #             temp = self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec
-    #             self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = 123456
-    #             config_utils.check_configuration_settings(config)
-    #             self.fail("Configuration error should have been raised.")
-    #         except ConfigurationException:
-    #             self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = temp
+    @timeout(30, timeout_exception=StopIteration)
+    def test_configuration_checks(self):
+        """
+        Tests configuration sanity checks.
+        Since this test requires loading the QuantstampAuditData contract, it is better here than test_config.py.
+        """
+        config = self.__audit_node._QSPAuditNode__config
+        config_utils = ConfigUtils(config.node_version)
+        try:
+            temp = config.submission_timeout_limit_blocks
+            config._Config__submission_timeout_limit_blocks = 2
+            config_utils.check_configuration_settings(config)
+            self.fail("Configuration error should have been raised.")
+        except ConfigurationException:
+            config._Config__submission_timeout_limit_blocks = temp
+        try:
+            temp = config.submission_timeout_limit_blocks
+            config._Config__submission_timeout_limit_blocks = 123
+            config_utils.check_configuration_settings(config)
+            self.fail("Configuration error should have been raised.")
+        except ConfigurationException:
+            config._Config__submission_timeout_limit_blocks = temp
+        for i in range(0, len(self.__audit_node._QSPAuditNode__config.analyzers)):
+            try:
+                temp = self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec
+                self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = 123456
+                config_utils.check_configuration_settings(config)
+                self.fail("Configuration error should have been raised.")
+            except ConfigurationException:
+                self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = temp
 
     def __assert_audit_request(self, request_id, expected_audit_state, report_file_path):
         sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
