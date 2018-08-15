@@ -458,29 +458,37 @@ class TestQSPAuditNode(unittest.TestCase):
     #                                 "reports/DAOBug.json")
     #     self.__assert_all_analyzers(self.__REQUEST_ID)
 
-    # @timeout(80, timeout_exception=StopIteration)
-    # def test_buggy_contract_audit_request(self):
-    #     """
-    #     Tests the entire flow of an erroneous audit request, from a request
-    #     to the production of a report and its submission.
-    #     """
-    #     buggy_contract = resource_uri("BasicToken.sol")
-    #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__request_audit(buggy_contract, self.__PRICE)
-    #     )
+    @timeout(80, timeout_exception=StopIteration)
+    def test_buggy_contract_audit_request(self):
+        """
+        Tests the entire flow of an erroneous audit request, from a request
+        to the production of a report and its submission.
+        """
+        buggy_contract = resource_uri("BasicToken.sol")
+        tx_hash = self.__request_audit(buggy_contract, self.__PRICE)
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
 
-    #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(1))
+        self.__audit_node._QSPAuditNode__web3_lock()
+        tx_hash = self.__set_assigned_request_count(1)
+        self.__audit_node._QSPAuditNode__web3_unlock()
 
-    #     self.__evt_wait_loop(self.__submitReport_filter)
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
+        self.__evt_wait_loop(self.__submitReport_filter)
 
-    #     self.__config.web3_client.eth.waitForTransactionReceipt(self.__set_assigned_request_count(0))
+        self.__audit_node._QSPAuditNode__web3_lock()
+        tx_hash = self.__set_assigned_request_count(0)
+        self.__audit_node._QSPAuditNode__web3_unlock()
 
-    #     # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
-    #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__send_done_message(self.__REQUEST_ID))
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
 
-    #     self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
-    #                                 "reports/BasicToken.json")
+        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
+        self.__audit_node._QSPAuditNode__web3_lock()
+        tx_hash = self.__send_done_message(self.__REQUEST_ID)
+        self.__audit_node._QSPAuditNode__web3_unlock()
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
+
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR, "reports/BasicToken.json")
 
     
     @timeout(80, timeout_exception=StopIteration)
