@@ -134,7 +134,6 @@ Do it for all the contract URIs.
     6. In prod account's AWS console, upload the ZIP to the Beanstalk environment
 
 1. To add a new deployment method, add another subfolder to `deployment`.
-
 1. The [end-to-end test](https://console.aws.amazon.com/codepipeline/home?region=us-east-1#/view/qsp-protocol-end-to-end-test-dev) runs periodically against the Dev stack and posts any failures to the channel `#qsp-monitoring-dev`. To run the test outside of the regular schedule, go to the test link and do `Release change`.
 
 1. [Audit node logs](https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logStream:group=/aws/elasticbeanstalk/qsp-protocol-dev/all.log)
