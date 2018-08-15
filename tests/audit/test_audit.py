@@ -690,17 +690,17 @@ class TestQSPAuditNode(unittest.TestCase):
     #     self.assertFalse(self.__audit_node._QSPAuditNode__check_whitelist(address),
     #                      "Address 0x0 is not whitelisted")
 
-    # @timeout(10, timeout_exception=StopIteration)
-    # def test_not_whitelisted_run(self):
-    #     self.__audit_node.stop()
-    #     # the address has to have fixed length, do not truncate
-    #     address = '0x0000000000000000000000000000000000000000'
-    #     self.__audit_node.config._Config__account = address
-    #     try:
-    #         self.__audit_node.run()
-    #         self.fail("This should throw an error")
-    #     except ExecutionException:
-    #         pass
+    @timeout(10, timeout_exception=StopIteration)
+    def test_not_whitelisted_run(self):
+        self.__audit_node.stop()
+        # the address has to have fixed length, do not truncate
+        address = '0x0000000000000000000000000000000000000000'
+        self.__audit_node.config._Config__account = address
+        try:
+            self.__audit_node.run()
+            self.fail("This should throw an error")
+        except ExecutionException:
+            pass
 
     @timeout(30, timeout_exception=StopIteration)
     def test_configuration_checks(self):
