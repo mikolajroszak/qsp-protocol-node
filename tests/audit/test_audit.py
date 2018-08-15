@@ -201,15 +201,20 @@ class TestQSPAuditNode(unittest.TestCase):
         TestQSPAuditNode.__clean_up_pool_db(self.__config.evt_db_path)
 
     # @timeout(5, timeout_exception=StopIteration)
-    # def test_timeout_stale_evets(self):
+    # def test_timeout_stale_events(self):
     #     class Eth:
     #         def __init__(self):
-    #             self.blockNumber = 100
+    #             self.blockNumber = 100 # <<<---- THIS IS NOT SAFE! Let's seek alternatives
 
+    #     # Stops the audit node
+    #     self.__audit_node.stop()
+
+    #     # Resets some configuration
     #     self.__audit_node._QSPAuditNode__config.web3_client.eth = Eth()
     #     self.__audit_node._QSPAuditNode__config._Config__submission_timeout_limit_blocks = 10
     #     self.__audit_node._QSPAuditNode__config._Config__block_discard_on_restart = 2
-    #     # certainly times out
+        
+    #     # Certainly times out
     #     evt_first = {'request_id': 1,
     #                  'requestor': 'x',
     #                  'contract_uri': 'x',
@@ -217,7 +222,7 @@ class TestQSPAuditNode(unittest.TestCase):
     #                  'block_nbr': 10,
     #                  'status_info': 'x',
     #                  'price': 12}
-    #     # last block to time out
+    #     # Last block to time out
     #     evt_second = {'request_id': 17,
     #                   'requestor': 'x',
     #                   'contract_uri': 'x',
@@ -225,7 +230,7 @@ class TestQSPAuditNode(unittest.TestCase):
     #                   'block_nbr': 90 + 2,
     #                   'status_info': 'x',
     #                   'price': 12}
-    #     # first block not to time out
+    #     # First block not to time out
     #     evt_third = {'request_id': 18,
     #                  'requestor': 'x',
     #                  'contract_uri': 'x',
@@ -233,6 +238,10 @@ class TestQSPAuditNode(unittest.TestCase):
     #                  'block_nbr': 91 + 2,
     #                  'status_info': 'x',
     #                  'price': 12}
+
+    #     # Restarts the audit node
+    #     self.__audit_node.run()
+
     #     self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_first)
     #     self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(
     #         evt_second
@@ -248,35 +257,39 @@ class TestQSPAuditNode(unittest.TestCase):
     #         evt_second['request_id'])
     #     thrd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
     #         evt_third['request_id'])
-    #     self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
+        
     #     self.assertEqual(fst['fk_status'], 'ER')
     #     self.assertEqual(snd['fk_status'], 'ER')
     #     self.assertEqual(thrd['fk_status'], 'AS')
 
-    # @timeout(10, timeout_exception=StopIteration)
-    # def test__check_then_request_audit_request_exceptions(self):
-    #     # The following causes an exception in the auditing node, but it should be caught and
-    #     # should not propagate
-    #     get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
+    @timeout(10, timeout_exception=StopIteration)
+    def test__check_then_request_audit_request_exceptions(self):
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
+        get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
 
-    #     def mocked__get_next_audit_request():
-    #         raise Exception('mocked exception')
+        def mocked__get_next_audit_request():
+            raise Exception('mocked exception')
 
-    #     self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
-    #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-    #             self.__AVAILABLE_AUDIT__STATE_READY).transact(
-    #             {"from": self.__config.account})
-    #     )
-    #     self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
-    #     self.__audit_node._QSPAuditNode__check_then_request_audit_request()
-    #     self.__config.web3_client.eth.waitForTransactionReceipt(
-    #         self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-    #             self.__AVAILABLE_AUDIT__STATE_ERROR).transact(
-    #             {"from": self.__config.account})
-    #     )
-    #     self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
-    #     self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
+        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
+        
+        self.__audit_node._QSPAuditNode__web3_lock()
+        tx_hash = self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+            self.__AVAILABLE_AUDIT__STATE_READY).transact({"from": self.__config.account})
+        self.__audit_node._QSPAuditNode__web3_unlock()
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
+        self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+
+        self.__audit_node._QSPAuditNode__web3_lock()
+        self.__audit_node._QSPAuditNode__check_then_request_audit_request()
+        tx_hash = self.__config.audit_contract.functions.setAnyRequestAvailableResult(
+                self.__AVAILABLE_AUDIT__STATE_ERROR).transact({"from": self.__config.account})
+        self.__audit_node._QSPAuditNode__web3_unlock()
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
+        self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+        self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
 
     # @timeout(10, timeout_exception=StopIteration)
     # def test__check_then_request_audit_request_deduplication_exceptions(self):
