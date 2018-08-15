@@ -683,12 +683,12 @@ class TestQSPAuditNode(unittest.TestCase):
     #     self.assertEqual(events[0]['args']['price'], 1000000000000000000)
     #     self.assertEqual(events[0]['event'], 'setAuditNodePrice_called')
 
-    # @timeout(10, timeout_exception=StopIteration)
-    # def test_not_whitelisted(self):
-    #     # the address has to have fixed length, do not truncate
-    #     address = '0x0000000000000000000000000000000000000000'
-    #     self.assertFalse(self.__audit_node._QSPAuditNode__check_whitelist(address),
-    #                      "Address 0x0 is not whitelisted")
+    @timeout(10, timeout_exception=StopIteration)
+    def test_not_whitelisted(self):
+        # the address has to have fixed length, do not truncate
+        address = '0x0000000000000000000000000000000000000000'
+        self.assertFalse(self.__audit_node._QSPAuditNode__check_whitelist(address),
+                         "Address 0x0 is not whitelisted")
 
     @timeout(10, timeout_exception=StopIteration)
     def test_not_whitelisted_run(self):
