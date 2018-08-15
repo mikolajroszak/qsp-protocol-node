@@ -497,20 +497,20 @@ class TestQSPAuditNode(unittest.TestCase):
 
         print("===> 8")
 
-    # @timeout(80, timeout_exception=StopIteration)
-    # def test_analyzer_produces_metadata_for_errors(self):
-    #     """
-    #     Tests that analyzers produce their metadata even when failure occurs
-    #     """
-    #     buggy_contract = resource_uri("BasicToken.sol")
-    #     buggy_contract_file = fetch_file(buggy_contract)
-    #     # directly calling this function to avoid compilation checks;
-    #     # this will cause error states for the analyzers
-    #     report = self.__audit_node.get_audit_report_from_analyzers(buggy_contract_file,
-    #                                                                "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-    #                                                                buggy_contract,
-    #                                                                1)
-    #     self.__compare_json(report, "reports/BasicTokenErrorWithMetadata.json", json_loaded=True)
+    @timeout(80, timeout_exception=StopIteration)
+    def test_analyzer_produces_metadata_for_errors(self):
+        """
+        Tests that analyzers produce their metadata even when failure occurs
+        """
+        buggy_contract = resource_uri("BasicToken.sol")
+        buggy_contract_file = fetch_file(buggy_contract)
+        # directly calling this function to avoid compilation checks;
+        # this will cause error states for the analyzers
+        report = self.__audit_node.get_audit_report_from_analyzers(buggy_contract_file,
+                                                                   "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+                                                                   buggy_contract,
+                                                                   1)
+        self.__compare_json(report, "reports/BasicTokenErrorWithMetadata.json", json_loaded=True)
 
     @timeout(5, timeout_exception=StopIteration)
     def test_run_audit_evt_thread(self):
