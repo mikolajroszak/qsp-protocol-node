@@ -1,13 +1,15 @@
 provider "aws" {
   region = "us-east-1"
+  profile = "prod"
 }
 
 terraform {
   required_version = "= 0.11.1"
   backend "s3" {
-    bucket = "quantstamp-terraform-state"
+    bucket = "qsp-protocol-prod-terraform-state"
     key    = "prod/qsp-protocol/main.tfstate"
     region = "us-east-1"
+    profile = "prod"
   }
 }
 
@@ -21,6 +23,7 @@ module "main" {
   stage = "prod"
   key_name = "qsp-protocol-prod"
   node_instance_type_audit = "m4.large"
+  volume_size = 8
 
   ETH_PASSPHRASE = "${var.ETH_PASSPHRASE}"
   ETH_AUTH_TOKEN = "${var.ETH_AUTH_TOKEN}"

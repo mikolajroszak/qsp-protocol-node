@@ -6,7 +6,7 @@ resource "aws_iam_instance_profile" "audit" {
 resource "aws_elastic_beanstalk_environment" "audit" {
   name                  = "qsp-protocol-node-${var.stage}"
   application           = "qsp-protocol-node"
-  solution_stack_name   = "64bit Amazon Linux 2017.09 v2.8.4 running Multi-container Docker 17.09.1-ce (Generic)"
+  solution_stack_name   = "64bit Amazon Linux 2018.03 v2.11.0 running Multi-container Docker 18.03.1-ce (Generic)"
   tier                  = "WebServer"
 
   # You can set the environment type, single or LoadBalanced
@@ -56,6 +56,12 @@ resource "aws_elastic_beanstalk_environment" "audit" {
     namespace = "aws:elasticbeanstalk:application:environment"
     name = "CONFIG"
     value = "/app/node-config/config.yaml"
+  }
+  
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "AWS_DEFAULT_REGION"
+    value = "us-east-1"
   }
   
   setting {

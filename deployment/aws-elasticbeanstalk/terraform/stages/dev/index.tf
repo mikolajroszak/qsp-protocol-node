@@ -1,5 +1,6 @@
 provider "aws" {
   region = "us-east-1"
+  profile = "dev"
 }
 
 terraform {
@@ -8,6 +9,7 @@ terraform {
     bucket = "quantstamp-terraform-state"
     key    = "dev/qsp-protocol/main.tfstate"
     region = "us-east-1"
+    profile = "dev"
   }
 }
 
