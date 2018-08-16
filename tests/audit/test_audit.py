@@ -191,6 +191,8 @@ class TestQSPAuditNode(unittest.TestCase):
             sleep(1)
             num_checks += 1
             if num_checks == max_initialization_seconds:
+                self.__audit_node.stop()
+                audit_node_thread.join()
                 raise Exception("Node threads could not be initialized")
 
     def tearDown(self):
