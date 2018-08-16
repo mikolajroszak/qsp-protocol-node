@@ -384,7 +384,7 @@ class TestQSPAuditNode(unittest.TestCase):
         Tests the entire flow of a successful audit request, from a request
         to the production of a report and its submission.
         """
-        # since we're mocking the smart contract, we should explicitly call its internals
+        # Since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
         tx_hash = self.__request_audit(buggy_contract, self.__PRICE)
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
@@ -874,16 +874,15 @@ class TestQSPAuditNode(unittest.TestCase):
         tx_hash = self.__config.audit_contract.functions.setAnyRequestAvailableResult(
             self.__AVAILABLE_AUDIT__STATE_READY).transact({"from": self.__config.account})
         self.__audit_node._QSPAuditNode__web3_unlock()
-
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
         self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
+
         self.__evt_wait_loop(self.__getNextAuditRequest_filter)
 
         self.__audit_node._QSPAuditNode__web3_lock()
         tx_hash = self.__config.audit_contract.functions.setAnyRequestAvailableResult(
                 self.__AVAILABLE_AUDIT__STATE_ERROR).transact({"from": self.__config.account})
         self.__audit_node._QSPAuditNode__web3_unlock()
-
         self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
         
         self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
