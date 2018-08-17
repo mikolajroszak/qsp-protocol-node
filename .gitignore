@@ -4,7 +4,7 @@ __pycache__/
 .DS_Store
 *.db
 .pytest_cache
-tests/coverage/.coverage
+tests/coverage/.coverage*
 tests/coverage/htmlcov
 .terraform
 .idea/
