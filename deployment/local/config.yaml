@@ -14,6 +14,7 @@ testnet:
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 1
   block_discard_on_restart: !!int 1
+  start_n_blocks_in_the_past: !!int 10
   analyzers:
     - oyente:
         args: "-ce"
