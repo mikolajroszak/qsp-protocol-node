@@ -2,7 +2,7 @@ testnet:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token=${token}"
+      endpoint_uri: !!str "https://dev.rpc.blockchaindevlabs.com/?token=${token}"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-meta.json"
