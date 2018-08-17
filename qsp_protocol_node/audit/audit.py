@@ -12,12 +12,14 @@ import urllib.parse
 import jsonschema
 
 from time import sleep
+
 from utils.io import (
     fetch_file,
     digest,
     digest_file,
 )
 from utils.eth import send_signed_transaction
+from utils.eth import make_read_only_call
 from utils.eth import DeduplicationException
 
 from threading import Thread
@@ -112,7 +114,12 @@ class QSPAuditNode:
                 if current_block < self.__config.web3_client.eth.blockNumber:
                     current_block = self.__config.web3_client.eth.blockNumber
                     self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
-                    handler()
+                    try:
+                        handler()
+                    except Exception as e:
+                        self.config.logger.exception(
+                            "Error in block mined thread handler: {0}".format(str(e)))
+                        raise e
 
         new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
         new_block_monitor_thread.start()
@@ -228,15 +235,17 @@ class QSPAuditNode:
         Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
-            pending_requests_count = self.__config.audit_contract.functions.assignedRequestCount(
-                self.__config.account).call()
+            pending_requests_count = make_read_only_call(
+                self.config,
+                self.config.audit_contract.functions.assignedRequestCount(self.__config.account))
             if pending_requests_count >= self.__config.max_assigned_requests:
                 self.__logger.debug(
                     "Skip bidding the request as currently processing {0} requests".format(
                         str(pending_requests_count)))
                 return
-
-            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call()
+            any_request_available = make_read_only_call(
+                self.config,
+                self.config.audit_contract.functions.anyRequestAvailable())
             if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
                 self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
@@ -258,7 +267,10 @@ class QSPAuditNode:
         Checks that a node address is whitelisted.
         """
         try:
-            return self.config.audit_data_contract.functions.isWhitelisted(node).call()
+            return make_read_only_call(
+                self.config,
+                self.config.audit_data_contract.functions.isWhitelisted(node)
+            )
         except Exception as error:
             self.__logger.exception(
                 "Error when checking whitelist {0}".format(str(error))
@@ -268,8 +280,11 @@ class QSPAuditNode:
         """
         Checks that the minimum price in the audit node's configuration matches the smart contract.
         """
-        contract_price = self.__config.audit_data_contract.functions.getMinAuditPrice(
-            self.__config.account).call()
+        contract_price = make_read_only_call(
+            self.__config,
+            self.__config.audit_data_contract.functions.getMinAuditPrice(
+                self.__config.account)
+        )
         min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
         if min_price_in_mini_qsp != contract_price:
             self.__logger.info(
@@ -628,18 +643,25 @@ class QSPAuditNode:
             metadata = analyzer.get_metadata(target_contract, request_id, original_filename)
             # in case of time out, declare the metadata as the report now
             str_metadata = json.dumps(metadata)
-            analyzers_reports_locks[analyzer_id].acquire()
-            shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
-            analyzers_reports_locks[analyzer_id].release()
+
+            try:
+                analyzers_reports_locks[analyzer_id].acquire()
+                shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
+            finally:
+                analyzers_reports_locks[analyzer_id].release()
+
             result = analyzer.check(target_contract, request_id, original_filename)
             # the values from metadata will overwrite those of report
             report = {**result, **metadata}
             str_report = json.dumps(report)
             report['hash'] = digest(str_report)
+
             # Make sure no race-condition between the wrappers and the current thread
-            analyzers_reports_locks[analyzer_id].acquire()
-            shared_analyzers_reports[analyzer_id] = report
-            analyzers_reports_locks[analyzer_id].release()
+            try:
+                analyzers_reports_locks[analyzer_id].acquire()
+                shared_analyzers_reports[analyzer_id] = report
+            finally:
+                analyzers_reports_locks[analyzer_id].release()
 
         analyzers_threads = []
         analyzers_timeouts = []
@@ -647,7 +669,8 @@ class QSPAuditNode:
 
         # Starts each analyzer thread
         for i, analyzer in enumerate(self.__config.analyzers):
-            analyzer_thread = Thread(target=check_contract, args=[i])
+            thread_name = "{0}-wrapper-thread".format(analyzer.wrapper.analyzer_name)
+            analyzer_thread = Thread(target=check_contract, args=[i], name=thread_name)
             analyzers_threads.append(analyzer_thread)
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
             timeout_sec = int(self.__config.analyzers_config[i][analyzer_name]['timeout_sec'])
@@ -665,9 +688,11 @@ class QSPAuditNode:
 
             # Make sure there is no race condition between the current thread
             # and wrapper thread in overwriting on analyzers_reports
-            analyzers_reports_locks[i].acquire()
-            local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
-            analyzers_reports_locks[i].release()
+            try:
+                analyzers_reports_locks[i].acquire()
+                local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
+            finally:
+                analyzers_reports_locks[i].release()
 
             # NOTE
             # Due to timeout issues, one has to account for start/end
