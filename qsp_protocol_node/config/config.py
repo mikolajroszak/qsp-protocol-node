@@ -88,8 +88,11 @@ class Config:
         self.__submission_timeout_limit_blocks = config_value(cfg, '/submission_timeout_limit_blocks', 10)
         self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0)
         self.__default_gas = config_value(cfg, '/default_gas')
-        self.__gas_price_wei = config_value(cfg, '/gas_price_wei')
-        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider')
+        self.__gas_price_strategy = config_value(cfg, '/gas_price/strategy', accept_none=False)
+        self.__default_gas_price_wei = config_value(cfg, '/gas_price/default_gas_price_wei', 0)
+        self.__gas_price_wei = self.__default_gas_price_wei
+        self.__max_gas_price_wei = config_value(cfg, '/gas_price/max_gas_price_wei', -1)
+        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', )
         self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
         self.__logging_is_verbose = config_value(cfg, '/logging/is_verbose', False)
         self.__logging_streaming_provider_name = config_value(cfg, '/logging/streaming/provider')
@@ -124,7 +127,11 @@ class Config:
         """
         Creates a Web3 client from the already set Ethereum provider.
         """
-        return config_utils.create_web3_client(self.eth_provider, self.account, self.account_passwd, self.account_keystore_file)
+        return config_utils.create_web3_client(self.eth_provider,
+                                               self.account,
+                                               self.account_passwd,
+                                               self.account_keystore_file,
+                                               )
 
     def __create_audit_contract(self, config_utils):
         """
@@ -228,7 +235,10 @@ class Config:
         self.__eth_provider_name = None
         self.__eth_provider_args = None
         self.__eth_provider = None
+        self.__gas_price_strategy = "dynamic"
+        self.__default_gas_price_wei = 0
         self.__gas_price_wei = 0
+        self.__max_gas_price_wei = -1
         self.__logger = None
         self.__logging_is_verbose = False
         self.__logging_streaming_provider_name = None
@@ -437,11 +447,39 @@ class Config:
         return self.__gas
 
     @property
-    def gas_price_wei(self):
+    def gas_price_strategy(self):
+        """
+        Returns the strategy for configuring the gas price of transactions
+        """
+        return self.__gas_price_strategy
+
+    @property
+    def default_gas_price_wei(self):
         """
         Returns default gas price.
         """
+        return self.__default_gas_price_wei
+
+    @property
+    def gas_price_wei(self):
+        """
+        Returns current gas price.
+        """
         return self.__gas_price_wei
+
+    @gas_price_wei.setter
+    def gas_price_wei(self, value):
+        """
+        Sets current gas price.
+        """
+        self.__gas_price_wei = value
+
+    @property
+    def max_gas_price_wei(self):
+        """
+        Returns default gas price.
+        """
+        return self.__max_gas_price_wei
 
     @property
     def config_file_uri(self):

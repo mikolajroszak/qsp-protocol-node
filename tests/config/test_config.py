@@ -103,8 +103,17 @@ class ConfigUtilsMock(SimpleMock):
         arguments_to_check = ['web3_client', 'audit_contract_abi_uri', 'audit_contract_address']
         return self.call('create_contract', arguments_to_check, locals())
 
-    def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
-        arguments_to_check = ['eth_provider', 'account', 'account_passwd', 'keystore_file', 'max_attempts']
+    def create_web3_client(self,
+                           eth_provider,
+                           account,
+                           account_passwd,
+                           keystore_file,
+                           max_attempts=30):
+        arguments_to_check = ['eth_provider',
+                              'account',
+                              'account_passwd',
+                              'keystore_file',
+                              'max_attempts']
         return self.call('create_web3_client', arguments_to_check, locals())
 
 
@@ -325,7 +334,9 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, len(config.analyzers))
         self.assertEqual(0, config.gas)
         self.assertIsNone(config.env)
-        self.assertEqual(0, config.gas_price_wei)
+        self.assertEqual(0, config.default_gas_price_wei)
+        self.assertEqual(-1, config.max_gas_price_wei)
+        self.assertEqual("dynamic", config.gas_price_strategy)
         self.assertIsNone(config.config_file_uri)
         self.assertIsNone(config.evt_db_path)
         self.assertEqual(10, config.submission_timeout_limit_blocks)

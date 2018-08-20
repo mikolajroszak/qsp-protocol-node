@@ -1,3 +1,19 @@
+import math
+import operator
+import traceback
+from collections import deque
+
+import time
+
+import threading
+
+import functools
+import lru
+
+from eth_utils import to_tuple
+from web3.middleware.cache import _should_cache
+from web3.utils.caching import generate_cache_key
+
 import config
 import structlog
 import utils.io as io_utils
@@ -7,6 +23,7 @@ from audit import (
     Analyzer,
     Wrapper
 )
+from toolz import assoc
 from pathlib import Path
 from tempfile import gettempdir
 from streaming import CloudWatchProvider
@@ -83,7 +100,12 @@ class ConfigUtils:
 
         ConfigUtils.raise_err(True, "Unknown/Unsupported provider: {0}".format(provider))
 
-    def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
+    def create_web3_client(self,
+                           eth_provider,
+                           account,
+                           account_passwd,
+                           keystore_file,
+                           max_attempts=30):
         """
         Creates a Web3 client from the already set Ethereum provider, and creates and account.
         """
@@ -139,7 +161,6 @@ class ConfigUtils:
                     keystore_file,
                     exception)
                 )
-
         return web3_client, new_account, new_private_key
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
@@ -183,8 +204,16 @@ class ConfigUtils:
             analyzer_timeout = analyzer.wrapper.timeout_sec
             ConfigUtils.raise_err(
                 analyzer_timeout > contract_audit_timeout_in_blocks * ConfigUtils.__APPROXIMATE_BLOCK_LENGTH_IN_SECONDS)
+
         # max assigned requests should never exceed the limit specified in the contract
         ConfigUtils.raise_err(config.max_assigned_requests > contract_max_assigned_requests)
+
+        # default gas price should never exceed max gas price, if set
+        if config.max_gas_price_wei > 0:
+            ConfigUtils.raise_err(config.default_gas_price_wei > config.max_gas_price_wei)
+
+        # the gas price strategy can be either dynamic or static
+        ConfigUtils.raise_err(config.gas_price_strategy not in ['dynamic', 'static'])
 
     def check_audit_contract_settings(self, config):
         """
@@ -200,6 +229,7 @@ class ConfigUtils:
                                   )
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
+
         if config.has_audit_data_contract_abi:
             has_uri = bool(config.audit_data_contract_abi_uri)
             has_addr = bool(config.audit_data_contract_address)

@@ -30,6 +30,51 @@ class ConfigStub:
         self.audit_data_contract_address = data_contract_address
 
 
+class AuditDataContractStub:
+
+    class Function:
+        def __init__(self, value):
+            self.value = value
+
+        def call(self):
+            return self.value
+
+    class Functions:
+        def __init__(self):
+            self.auditTimeoutInBlocks = lambda: AuditDataContractStub.Function(25)
+            self.maxAssignedRequests = lambda: AuditDataContractStub.Function(5)
+
+    def __init__(self):
+        self.functions = AuditDataContractStub.Functions()
+
+
+class ConfigStubForCheckSettings:
+    """
+    TODO: Replace this with real config class when it become available in later PRs
+    Config stub for use with the check_configuration_settings function
+    """
+
+    def __init__(self,
+                 start_n_blocks=1,
+                 submission_timeout=1,
+                 audit_timeout=5,
+                 max_requests=1,
+                 max_gas_price=100,
+                 default_gas_price=50,
+                 gas_price_strategy=None):
+        self.start_n_blocks_in_the_past = start_n_blocks
+        self.submission_timeout_limit_blocks = submission_timeout
+        self.contract_audit_timeout_in_blocks = audit_timeout
+        self.max_assigned_requests = max_requests
+        self.max_gas_price_wei = max_gas_price
+        self.default_gas_price_wei = default_gas_price
+        if not gas_price_strategy:
+            gas_price_strategy = "dynamic"
+        self.gas_price_strategy = gas_price_strategy
+        self.audit_data_contract = AuditDataContractStub()
+        self.analyzers = []
+
+
 class TestConfigUtil(unittest.TestCase):
 
     def setUp(self):
@@ -180,6 +225,54 @@ class TestConfigUtil(unittest.TestCase):
         try:
             self.config_utils.check_audit_contract_settings(none)
             self.fail("Neither ABI is not present but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+
+    def test_check_configuration_settings(self):
+        """
+        Tests various configuration settings
+        """
+        # Test ABI
+        abi = ConfigStubForCheckSettings()
+        self.config_utils.check_configuration_settings(abi)
+        # if max_gas_price <= 0, it should be ignored
+        abi = ConfigStubForCheckSettings(max_gas_price=0)
+        self.config_utils.check_configuration_settings(abi)
+        abi = ConfigStubForCheckSettings(gas_price_strategy="static")
+        self.config_utils.check_configuration_settings(abi)
+        abi_faulty = ConfigStubForCheckSettings(start_n_blocks=10)
+        try:
+            self.config_utils.check_configuration_settings(abi_faulty)
+            self.fail("ABI has faulty configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStubForCheckSettings(submission_timeout=26)
+        try:
+            self.config_utils.check_configuration_settings(abi_faulty)
+            self.fail("ABI has faulty configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStubForCheckSettings(max_requests=100)
+        try:
+            self.config_utils.check_configuration_settings(abi_faulty)
+            self.fail("ABI has faulty configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStubForCheckSettings(default_gas_price=500)
+        try:
+            self.config_utils.check_configuration_settings(abi_faulty)
+            self.fail("ABI has faulty configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStubForCheckSettings(gas_price_strategy="invalid_strategy")
+        try:
+            self.config_utils.check_configuration_settings(abi_faulty)
+            self.fail("ABI has faulty configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass

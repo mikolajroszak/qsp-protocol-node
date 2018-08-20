@@ -4,7 +4,6 @@ from .singleton_lock import SingletonLock
 def mk_args(config):
     gas = config.gas
     gas_price_wei = config.gas_price_wei
-
     if gas is None:
         args = {'from': config.account, 'gasPrice': gas_price_wei}
     else:
