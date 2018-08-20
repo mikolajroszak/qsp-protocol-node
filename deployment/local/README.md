@@ -12,7 +12,7 @@ README's folder.
 ### Install dependencies
 
 1. Install `make`, if not already installed.
-    - Verify: `make -v` should print a version `GNU Make <version> ...`.
+    - Verify: `make -v` should print a version `GNU Make <version> ...`
 1. Install Docker CE: https://www.docker.com/community-edition
     - Verify: `docker -v` should return `Docker version 17.09.0-ce` or above
 1. On Linux environments, check the group owner of `/var/run/docker.sock`.
@@ -20,7 +20,9 @@ Add the current user to that group (generally `docker` or `root`):
 
     `sudo usermod -a -G <group owner of docker.sock> <username>`
 
-The step above is required for running analyzer containers from the audit node container.
+This is required for running analyzer containers from the audit node container.
+
+To force the new group assignment to take effect, restart you session (e.g., by logging out and logging in).
 
 1. Install AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/installing.html.
     - Verify: typing `aws` should output:
