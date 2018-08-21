@@ -57,10 +57,14 @@ def digest(input, charset="utf-8"):
 
 
 def digest_file(file, charset="utf-8"):
+    return digest(read_file(file, charset), charset)
+
+
+def read_file(file, charset="utf-8"):
     in_memory_str = None
     with codecs.open(file, 'r', charset) as stream:
         in_memory_str = stream.read()
-    return digest(in_memory_str, charset)
+    return in_memory_str
 
 
 def dir_exists(dir, throw_exception=False):
