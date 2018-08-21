@@ -36,7 +36,7 @@ testnet:
   default_gas: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
-    strategy: !!str "dynamic"
+    strategy: !!str "static"
     # Only used if strategy is set to "static"
     default_gas_price_wei: !!int 8000000000 # 8 Gwei
     # Sets an upper bound on gas_price which would override high values computed by the strategy.
@@ -89,7 +89,15 @@ mainnet:
     # specify a path to a valid keystore file that can be decrypted using ETH_PASSPHRASE
     keystore_file: !!str "./keystore/default.json"
   default_gas: !!int 500000
-  gas_price_wei: !!int 8000000000
+  gas_price:
+    # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
+    strategy: !!str "static"
+    # Only used if strategy is set to "static"
+    default_gas_price_wei: !!int 8000000000 # 8 Gwei
+    # Sets an upper bound on gas_price which would override high values computed by the strategy.
+    # Useful in case the network gets "gas attacked".
+    # Only used if strategy is set to "dynamic"
+    max_gas_price_wei: !!int 50000000000 # 50 Gwei
   logging:
     is_verbose: True
     streaming:
