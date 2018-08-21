@@ -30,7 +30,7 @@ testnet:
         bucket_name: "qsp-protocol-reports-dev"
         contract_bucket_name: "qsp-protocol-reports-dev"
   account:
-    id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b" # replace with your account id
+    id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B" # replace with your account id
     # specify a path to a valid keystore file that can be decrypted using ETH_PASSPHRASE
     keystore_file: !!str "./keystore/default.json"
   default_gas: !!int 500000
@@ -85,7 +85,7 @@ mainnet:
         bucket_name: "qsp-protocol-reports-prod"
         contract_bucket_name: "qsp-protocol-reports-prod"
   account:
-    id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b" # replace with your account id
+    id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B" # replace with your account id
     # specify a path to a valid keystore file that can be decrypted using ETH_PASSPHRASE
     keystore_file: !!str "./keystore/default.json"
   default_gas: !!int 500000

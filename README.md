@@ -96,7 +96,7 @@ To run with a custom account:
 1. In `deployment/local/config.yaml/testnet/account/id`, specify the Ethereum address and in `deployment/local/config.yaml/testnet/account/keystore_file`, specify the path to the keystore file. Example:
     ```text
     account:
-      id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
+      id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B"
       keystore_file: !!str "./keystore/default.json"
     ```
 1. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account
