@@ -9,7 +9,7 @@ testnet:
   audit_data_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAuditData-v-{major-version}-abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAuditData-v-{major-version}-meta.json"
-  min_price_in_qsp: !!int 0
+  min_price_in_qsp: !!int 1
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 1
@@ -65,7 +65,7 @@ mainnet:
   audit_data_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/prod/QuantstampAuditData-v-{major-version}-abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/prod/QuantstampAuditData-v-{major-version}-meta.json"
-  min_price_in_qsp: !!int 0
+  min_price_in_qsp: !!int 10
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 1
