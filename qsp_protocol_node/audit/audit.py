@@ -55,10 +55,6 @@ class QSPAuditNode:
     __AUDIT_STATUS_ERROR = "error"
     __AUDIT_STATUS_SUCCESS = "success"
 
-    __MAX_GAS_PRICE_HISTORY_SIZE = 120
-    # when first starting the node, initialize the history with the N most recent blocks
-    __INITIAL_GAS_PRICE_HISTORY_SIZE = 5
-
     def __init__(self, config):
         """
         Builds a QSPAuditNode object from the given input parameters.
@@ -69,7 +65,6 @@ class QSPAuditNode:
         self.__exec = False
         self.__internal_threads = []
         self.__audit_node_initialized = False
-        self.__block_gas_price_history = deque()
 
         # There are some important invariants that are to be respected at all
         # times when the audit node (re-)processes events (see associated queries):
@@ -139,65 +134,18 @@ class QSPAuditNode:
     def config(self):
         return self.__config
 
-    def __compute_gas_price_for_block_percentile(self, block, gas_price_key, percentile=0.1):
+    def __compute_gas_price(self):
         """
-        Given a block, compute a gas price that is greater than percentile-many transactions.
+        Queries recent blocks to set a baseline gas price, or uses a default static gas price
         """
-        transaction_prices = [transaction[gas_price_key] for transaction in block['transactions']]
-        if len(transaction_prices) == 0:
-            return 0
-        else:
-            transaction_prices.sort()
-            return transaction_prices[int(len(transaction_prices) * percentile)]
-
-    def __get_raw_miner_data(self, w3, sample_size):
-        latest = w3.eth.getBlock('latest', full_transactions=True)
-        # NOTE: there is a bug in the original implementation of get_raw_minor_data
-        # gas_price is used instead of gasPrice within EthereumTester.
-        # This inconsistency has been reported to the devs.
-        gas_price_key = None
-        if self.__config.eth_provider_name == "EthereumTesterProvider":
-            gas_price_key = "gas_price"
-        else:
-            gas_price_key = "gasPrice"
-        price = self.__compute_gas_price_for_block_percentile(latest, gas_price_key)
-        self.__block_gas_price_history.append(price)
-
-        block = latest
-        for _ in range(sample_size - 1):
-            if block['number'] == 0:
-                break
-            # we intentionally trace backwards using parent hashes rather than
-            # block numbers to make caching the data easier to implement.
-            block = w3.eth.getBlock(block['parentHash'], full_transactions=True)
-            price = self.__compute_gas_price_for_block_percentile(block, gas_price_key)
-            self.__block_gas_price_history.append(price)
-
-    def __compute_gas_price(self, num_blocks):
-        """
-        Queries recent blocks to set a baseline gas price.
-        num_blocks indicates how many new blocks to query,
-        however older data (up to __MAX_GAS_PRICE_HISTORY_SIZE) is still used.
-        """
-        # if we're not using the dynamic gas price strategy, just return the default
         gas_price = None
+        # if we're not using the dynamic gas price strategy, just return the default
         if self.__config.gas_price_strategy == "static":
             gas_price = self.__config.default_gas_price_wei
         else:
-            self.__get_raw_miner_data(self.__config.web3_client, sample_size=num_blocks)
-
-            # remove old blocks
-            while len(self.__block_gas_price_history) > QSPAuditNode.__MAX_GAS_PRICE_HISTORY_SIZE:
-                self.__block_gas_price_history.popleft()
-
-            # gas price is the average of the average block transaction gas prices
-            if len(self.__block_gas_price_history) == 0:
-                gas_price = self.__config.default_gas_price_wei
-            else:
-                gas_price = median(self.__block_gas_price_history)
-
-        # set the gas_price in config
+            gas_price = self.__config.web3_client.eth.gasPrice
         gas_price = int(min(gas_price, self.__config.max_gas_price_wei))
+        # set the gas_price in config
         self.__config.gas_price_wei = gas_price
 
     def run(self):
@@ -208,8 +156,8 @@ class QSPAuditNode:
             raise Exception("Cannot run audit node thread due to another audit node instance")
         self.__exec = True
 
-        # initialize the gas price based on recent transactions
-        self.__compute_gas_price(QSPAuditNode.__INITIAL_GAS_PRICE_HISTORY_SIZE)
+        # initialize the gas price
+        self.__compute_gas_price()
 
         # ensure that the min_price in the smart contract is up to date
         self.__check_and_update_min_price()
@@ -245,7 +193,7 @@ class QSPAuditNode:
 
         self.__internal_threads.append(self.__run_block_mined_thread(
             "compute_gas_price",
-            lambda: self.__compute_gas_price(1)
+            self.__compute_gas_price
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_AUDIT_ASSIGNED,

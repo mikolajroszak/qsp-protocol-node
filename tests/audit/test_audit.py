@@ -724,18 +724,6 @@ class TestQSPAuditNode(unittest.TestCase):
             pass
 
     @timeout(30, timeout_exception=StopIteration)
-    def test_gas_price_computation_nonempty_blockchain(self):
-        num_blocks = 5
-        # fill the blockchain with some transactions
-        for i in range(num_blocks):
-            self.__config.web3_client.eth.waitForTransactionReceipt(
-                self.__set_assigned_request_count(0, i * 1000))
-        self.__audit_node._QSPAuditNode__compute_gas_price(num_blocks)
-        # since the gasprice thread may not be fully updated due to event loops,
-        # just check to make sure the value is significantly above zero
-        self.assertGreaterEqual(self.__config.gas_price_wei, 500)
-
-    @timeout(30, timeout_exception=StopIteration)
     def test_gas_price_computation_static(self):
         num_blocks = 5
         # fill the blockchain with some transactions
@@ -744,14 +732,13 @@ class TestQSPAuditNode(unittest.TestCase):
                 self.__set_assigned_request_count(0, i * 1000))
         self.__config._Config__default_gas_price_wei = 12345
         self.__config._Config__gas_price_strategy = "static"
-        self.__audit_node._QSPAuditNode__compute_gas_price(num_blocks)
+        self.__audit_node._QSPAuditNode__compute_gas_price()
         self.assertEqual(self.__config.gas_price_wei, 12345)
 
     @timeout(30, timeout_exception=StopIteration)
     def test_gas_price_computation_empty_blockchain(self):
-        # tests when there are too few blocks in the blockchain history
-        blocks = self.__config.web3_client.eth.blockNumber
-        self.__audit_node._QSPAuditNode__compute_gas_price(blocks + 1)
+        # tests for errors when there are too few blocks in the blockchain history
+        self.__audit_node._QSPAuditNode__compute_gas_price()
 
     @timeout(30, timeout_exception=StopIteration)
     def test_configuration_checks(self):

@@ -36,7 +36,7 @@ testnet:
   default_gas: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
-    strategy: !!str "static"
+    strategy: !!str "dynamic"
     # Only used if strategy is set to "static"
     default_gas_price_wei: !!int 8000000000 # 8 Gwei
     # Sets an upper bound on gas_price which would override high values computed by the strategy.
@@ -91,7 +91,7 @@ mainnet:
   default_gas: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
-    strategy: !!str "static"
+    strategy: !!str "dynamic"
     # Only used if strategy is set to "static"
     default_gas_price_wei: !!int 8000000000 # 8 Gwei
     # Sets an upper bound on gas_price which would override high values computed by the strategy.
