@@ -4,7 +4,9 @@ This folder contains the scripts and instructions necessary for
 a node operator to spin up a QSP node.
 
 The node runs as a Docker container. The image is hosted on Quantstamp's private repository.
-The steps assume a Unix-like operating system.
+The steps assume a Unix-like operating system, 
+and has been tested on Mac OS High Sierra 10.13.4, 
+Ubuntu 18.04 and 16.04, Debian 9, and Redhat Enterprise Server 7.5.
 
 **Note**: all commands should be run from the location of this README document. All paths are relative to this
 README's folder.

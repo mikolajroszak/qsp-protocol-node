@@ -57,7 +57,7 @@ All instructions must be run from the project's root folder.
 
 1. Install Docker: <https://docs.docker.com/install/>
 
-1. Make sure your user is a part of the docker group:
+1. **On Linux-based Systems**: Make sure your user is a part of the docker group:
 
     ```bash
     sudo usermod -a -G docker <username>
