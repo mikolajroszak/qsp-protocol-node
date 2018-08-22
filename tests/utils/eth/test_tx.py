@@ -1,6 +1,7 @@
 import unittest
 
-from utils.eth.tx import mk_args, send_signed_transaction, DeduplicationException
+from utils.eth.tx import mk_args, send_signed_transaction, make_read_only_call
+from utils.eth.tx import DeduplicationException
 from unittest.mock import Mock
 
 
@@ -56,6 +57,17 @@ class SimpleTransactionMock:
     @property
     def is_signed(self):
         return self.__is_signed
+
+
+class ReadOnlyMethodMock:
+    def __init__(self, value, exception):
+        self.value = value
+        self.exception = exception
+
+    def call(self):
+        if self.exception is None:
+            return self.value
+        raise self.exception
 
 
 class TestFile(unittest.TestCase):
@@ -130,6 +142,22 @@ class TestFile(unittest.TestCase):
         except ValueError:
             # Expected
             pass
+
+    def test_make_read_only_call(self):
+        """
+        Tests that the method returns a value if a value is returned, and raises an exception if an
+        exception is raised by the call.
+        """
+        error = ValueError("unknown error")
+        read_only = ReadOnlyMethodMock(15, None)
+        config = TestFile.get_config_mock(4000000000, 0)
+        self.assertEquals(15, make_read_only_call(config, read_only))
+        read_only = ReadOnlyMethodMock(15, error)
+        try:
+            make_read_only_call(config, read_only)
+            self.fail("An error was expected")
+        except ValueError as e:
+            self.assertTrue(e is error)
 
     def test_send_signed_transaction_local_signing_with_unknown_error(self):
         """

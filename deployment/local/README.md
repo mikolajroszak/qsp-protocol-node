@@ -12,7 +12,7 @@ README's folder.
 ### Install dependencies
 
 1. Install `make`, if not already installed.
-    - Verify: `make -v` should print a version `GNU Make <version> ...`.
+    - Verify: `make -v` should print a version `GNU Make <version> ...`
 1. Install Docker CE: https://www.docker.com/community-edition
     - Verify: `docker -v` should return `Docker version 17.09.0-ce` or above
 1. On Linux environments, check the group owner of `/var/run/docker.sock`.
@@ -20,7 +20,9 @@ Add the current user to that group (generally `docker` or `root`):
 
     `sudo usermod -a -G <group owner of docker.sock> <username>`
 
-The step above is required for running analyzer containers from the audit node container.
+This is required for running analyzer containers from the audit node container.
+
+To force the new group assignment to take effect, restart you session (e.g., by logging out and logging in).
 
 1. Install AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/installing.html.
     - Verify: typing `aws` should output:
@@ -43,7 +45,7 @@ The step above is required for running analyzer containers from the audit node c
 - Add some Ether to your account (to cover gas costs)
 
 Record for next steps:
-- Your public Ethereum address, e.g., `0x60463b7ee0c3d33def3a05313597b1300f6de62b`
+- Your public Ethereum address, e.g., `0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B`
 - The passphrase for your key
 - Location of your keystore (JSON) file, e.g., `./keystore/default.json`. The location is
 relative to this README's folder.
@@ -76,7 +78,7 @@ Record for next steps:
 1. In `config.yaml`, edit the `account` section to specify your account id and, if different from default, the associated keystore file path:
     ```
     account:
-        id: !!str "0x60463b7ee0c3d33def3a05313597b1300f6de62b"
+        id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B"
         keystore_file: !!str "./keystore/default.json"
     ```
     You account must be prefixed with `0x` and be in a checksum format.

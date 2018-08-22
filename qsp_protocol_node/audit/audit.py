@@ -5,19 +5,25 @@ import calendar
 import copy
 import json
 import os
+from statistics import median
+
 import threading
 import time
 import traceback
 import urllib.parse
 import jsonschema
 
+from collections import deque
 from time import sleep
+
 from utils.io import (
     fetch_file,
     digest,
     digest_file,
+    read_file
 )
 from utils.eth import send_signed_transaction
+from utils.eth import make_read_only_call
 from utils.eth import DeduplicationException
 
 from threading import Thread
@@ -49,6 +55,10 @@ class QSPAuditNode:
     __AUDIT_STATUS_ERROR = "error"
     __AUDIT_STATUS_SUCCESS = "success"
 
+    __MAX_GAS_PRICE_HISTORY_SIZE = 120
+    # when first starting the node, initialize the history with the N most recent blocks
+    __INITIAL_GAS_PRICE_HISTORY_SIZE = 5
+
     def __init__(self, config):
         """
         Builds a QSPAuditNode object from the given input parameters.
@@ -59,6 +69,7 @@ class QSPAuditNode:
         self.__exec = False
         self.__internal_threads = []
         self.__audit_node_initialized = False
+        self.__block_gas_price_history = deque()
 
         # There are some important invariants that are to be respected at all
         # times when the audit node (re-)processes events (see associated queries):
@@ -112,7 +123,12 @@ class QSPAuditNode:
                 if current_block < self.__config.web3_client.eth.blockNumber:
                     current_block = self.__config.web3_client.eth.blockNumber
                     self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
-                    handler()
+                    try:
+                        handler()
+                    except Exception as e:
+                        self.config.logger.exception(
+                            "Error in block mined thread handler: {0}".format(str(e)))
+                        raise e
 
         new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
         new_block_monitor_thread.start()
@@ -123,6 +139,67 @@ class QSPAuditNode:
     def config(self):
         return self.__config
 
+    def __compute_gas_price_for_block_percentile(self, block, gas_price_key, percentile=0.1):
+        """
+        Given a block, compute a gas price that is greater than percentile-many transactions.
+        """
+        transaction_prices = [transaction[gas_price_key] for transaction in block['transactions']]
+        if len(transaction_prices) == 0:
+            return 0
+        else:
+            transaction_prices.sort()
+            return transaction_prices[int(len(transaction_prices) * percentile)]
+
+    def __get_raw_miner_data(self, w3, sample_size):
+        latest = w3.eth.getBlock('latest', full_transactions=True)
+        # NOTE: there is a bug in the original implementation of get_raw_minor_data
+        # gas_price is used instead of gasPrice within EthereumTester.
+        # This inconsistency has been reported to the devs.
+        gas_price_key = None
+        if self.__config.eth_provider_name == "EthereumTesterProvider":
+            gas_price_key = "gas_price"
+        else:
+            gas_price_key = "gasPrice"
+        price = self.__compute_gas_price_for_block_percentile(latest, gas_price_key)
+        self.__block_gas_price_history.append(price)
+
+        block = latest
+        for _ in range(sample_size - 1):
+            if block['number'] == 0:
+                break
+            # we intentionally trace backwards using parent hashes rather than
+            # block numbers to make caching the data easier to implement.
+            block = w3.eth.getBlock(block['parentHash'], full_transactions=True)
+            price = self.__compute_gas_price_for_block_percentile(block, gas_price_key)
+            self.__block_gas_price_history.append(price)
+
+    def __compute_gas_price(self, num_blocks):
+        """
+        Queries recent blocks to set a baseline gas price.
+        num_blocks indicates how many new blocks to query,
+        however older data (up to __MAX_GAS_PRICE_HISTORY_SIZE) is still used.
+        """
+        # if we're not using the dynamic gas price strategy, just return the default
+        gas_price = None
+        if self.__config.gas_price_strategy == "static":
+            gas_price = self.__config.default_gas_price_wei
+        else:
+            self.__get_raw_miner_data(self.__config.web3_client, sample_size=num_blocks)
+
+            # remove old blocks
+            while len(self.__block_gas_price_history) > QSPAuditNode.__MAX_GAS_PRICE_HISTORY_SIZE:
+                self.__block_gas_price_history.popleft()
+
+            # gas price is the average of the average block transaction gas prices
+            if len(self.__block_gas_price_history) == 0:
+                gas_price = self.__config.default_gas_price_wei
+            else:
+                gas_price = median(self.__block_gas_price_history)
+
+        # set the gas_price in config
+        gas_price = int(min(gas_price, self.__config.max_gas_price_wei))
+        self.__config.gas_price_wei = gas_price
+
     def run(self):
         """
         Starts all the threads processing different stages of a given event.
@@ -131,7 +208,9 @@ class QSPAuditNode:
             raise Exception("Cannot run audit node thread due to another audit node instance")
         self.__exec = True
 
-        # before starting the actual audit process,
+        # initialize the gas price based on recent transactions
+        self.__compute_gas_price(QSPAuditNode.__INITIAL_GAS_PRICE_HISTORY_SIZE)
+
         # ensure that the min_price in the smart contract is up to date
         self.__check_and_update_min_price()
 
@@ -162,6 +241,11 @@ class QSPAuditNode:
         self.__internal_threads.append(self.__run_block_mined_thread(
             "check_available_requests",
             self.__check_then_request_audit_request
+        ))
+
+        self.__internal_threads.append(self.__run_block_mined_thread(
+            "compute_gas_price",
+            lambda: self.__compute_gas_price(1)
         ))
         self.__internal_threads.append(self.__run_audit_evt_thread(
             QSPAuditNode.__EVT_AUDIT_ASSIGNED,
@@ -228,15 +312,17 @@ class QSPAuditNode:
         Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
-            pending_requests_count = self.__config.audit_contract.functions.assignedRequestCount(
-                self.__config.account).call()
+            pending_requests_count = make_read_only_call(
+                self.config,
+                self.config.audit_contract.functions.assignedRequestCount(self.__config.account))
             if pending_requests_count >= self.__config.max_assigned_requests:
                 self.__logger.debug(
                     "Skip bidding the request as currently processing {0} requests".format(
                         str(pending_requests_count)))
                 return
-
-            any_request_available = self.__config.audit_contract.functions.anyRequestAvailable().call()
+            any_request_available = make_read_only_call(
+                self.config,
+                self.config.audit_contract.functions.anyRequestAvailable())
             if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
                 self.__logger.debug("There is request available for bid on.")
                 self.__get_next_audit_request()
@@ -258,7 +344,10 @@ class QSPAuditNode:
         Checks that a node address is whitelisted.
         """
         try:
-            return self.config.audit_data_contract.functions.isWhitelisted(node).call()
+            return make_read_only_call(
+                self.config,
+                self.config.audit_data_contract.functions.isWhitelisted(node)
+            )
         except Exception as error:
             self.__logger.exception(
                 "Error when checking whitelist {0}".format(str(error))
@@ -268,8 +357,11 @@ class QSPAuditNode:
         """
         Checks that the minimum price in the audit node's configuration matches the smart contract.
         """
-        contract_price = self.__config.audit_data_contract.functions.getMinAuditPrice(
-            self.__config.account).call()
+        contract_price = make_read_only_call(
+            self.__config,
+            self.__config.audit_data_contract.functions.getMinAuditPrice(
+                self.__config.account)
+        )
         min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
         if min_price_in_mini_qsp != contract_price:
             self.__logger.info(
@@ -590,8 +682,9 @@ class QSPAuditNode:
 
         parse_uri = urllib.parse.urlparse(uri)
         original_filename = os.path.basename(parse_uri.path)
+        contract_body = read_file(target_contract)
         contract_upload_result = self.__config.report_uploader.upload_contract(request_id,
-                                                                               target_contract,
+                                                                               contract_body,
                                                                                original_filename)
         if contract_upload_result['success']:
             self.__logger.info(
@@ -628,18 +721,25 @@ class QSPAuditNode:
             metadata = analyzer.get_metadata(target_contract, request_id, original_filename)
             # in case of time out, declare the metadata as the report now
             str_metadata = json.dumps(metadata)
-            analyzers_reports_locks[analyzer_id].acquire()
-            shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
-            analyzers_reports_locks[analyzer_id].release()
+
+            try:
+                analyzers_reports_locks[analyzer_id].acquire()
+                shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
+            finally:
+                analyzers_reports_locks[analyzer_id].release()
+
             result = analyzer.check(target_contract, request_id, original_filename)
             # the values from metadata will overwrite those of report
             report = {**result, **metadata}
             str_report = json.dumps(report)
             report['hash'] = digest(str_report)
+
             # Make sure no race-condition between the wrappers and the current thread
-            analyzers_reports_locks[analyzer_id].acquire()
-            shared_analyzers_reports[analyzer_id] = report
-            analyzers_reports_locks[analyzer_id].release()
+            try:
+                analyzers_reports_locks[analyzer_id].acquire()
+                shared_analyzers_reports[analyzer_id] = report
+            finally:
+                analyzers_reports_locks[analyzer_id].release()
 
         analyzers_threads = []
         analyzers_timeouts = []
@@ -647,7 +747,8 @@ class QSPAuditNode:
 
         # Starts each analyzer thread
         for i, analyzer in enumerate(self.__config.analyzers):
-            analyzer_thread = Thread(target=check_contract, args=[i])
+            thread_name = "{0}-wrapper-thread".format(analyzer.wrapper.analyzer_name)
+            analyzer_thread = Thread(target=check_contract, args=[i], name=thread_name)
             analyzers_threads.append(analyzer_thread)
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
             timeout_sec = int(self.__config.analyzers_config[i][analyzer_name]['timeout_sec'])
@@ -665,9 +766,11 @@ class QSPAuditNode:
 
             # Make sure there is no race condition between the current thread
             # and wrapper thread in overwriting on analyzers_reports
-            analyzers_reports_locks[i].acquire()
-            local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
-            analyzers_reports_locks[i].release()
+            try:
+                analyzers_reports_locks[i].acquire()
+                local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
+            finally:
+                analyzers_reports_locks[i].release()
 
             # NOTE
             # Due to timeout issues, one has to account for start/end

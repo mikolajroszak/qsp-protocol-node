@@ -4,7 +4,14 @@ local:
     #provider: !!str "TestRPCProvider"
   # audit_contract_abi: The contract is injected in tests
   min_price_in_qsp: !!int 0
-  gas_price_wei: !!int 0
+  gas_price:
+    # Can be set to one of ["fast" (expected to mine in < 60s)|"medium" (< 10 minutes)|"slow" (< 1 hour)|"fixed"]
+    strategy: !!str "dynamic"
+    # Only used if gas_strategy is set to "fixed", or if the other strategies somehow fail
+    default_gas_price_wei: !!int 0
+    # Sets an upper bound on gas_price which would override high values computed by the strategy.
+    # Useful in case the network gets "gas attacked".
+    max_gas_price_wei: !!int 20000000000
   max_assigned_requests: !!int 1
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 5

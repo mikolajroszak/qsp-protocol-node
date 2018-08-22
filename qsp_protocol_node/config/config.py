@@ -8,10 +8,7 @@ from os.path import expanduser
 from dpath.util import get
 
 from evt import EventPoolManager
-from urllib.parse import urljoin
-from utils.eth import (
-    mk_checksum_address,
-)
+from utils.eth import mk_checksum_address
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -42,24 +39,31 @@ class Config:
     """
     Provides a set of methods for accessing configuration parameters.
     """
+
     def __fetch_contract_metadata(self, cfg, config_utils, contract_abi):
-        metadata_uri = config_utils.resolve_version(config_value(cfg, '/' + contract_abi + '/metadata'))
+        metadata_uri = config_utils.resolve_version(
+            config_value(cfg, '/' + contract_abi + '/metadata'))
         if metadata_uri is not None:
             return io_utils.load_json(
                 io_utils.fetch_file(metadata_uri)
             )
 
     def __setup_values(self, cfg, config_utils):
-        audit_contract_metadata = self.__fetch_contract_metadata(cfg, config_utils, 'audit_contract_abi')
+        audit_contract_metadata = self.__fetch_contract_metadata(cfg, config_utils,
+                                                                 'audit_contract_abi')
         self.__audit_contract_name = config_value(audit_contract_metadata, '/contractName')
         self.__audit_contract_address = config_value(audit_contract_metadata, '/contractAddress')
         self.__contract_version = config_value(audit_contract_metadata, '/version')
         self.__audit_contract = None
-        self.__audit_contract_abi_uri = config_utils.resolve_version(config_value(cfg, '/audit_contract_abi/uri'))
+        self.__audit_contract_abi_uri = config_utils.resolve_version(
+            config_value(cfg, '/audit_contract_abi/uri'))
 
-        audit_data_contract_metadata = self.__fetch_contract_metadata(cfg, config_utils, 'audit_data_contract_abi')
-        self.__audit_data_contract_name = config_value(audit_data_contract_metadata, '/contractName')
-        self.__audit_data_contract_address = config_value(audit_data_contract_metadata, '/contractAddress')
+        audit_data_contract_metadata = self.__fetch_contract_metadata(cfg, config_utils,
+                                                                      'audit_data_contract_abi')
+        self.__audit_data_contract_name = config_value(audit_data_contract_metadata,
+                                                       '/contractName')
+        self.__audit_data_contract_address = config_value(audit_data_contract_metadata,
+                                                          '/contractAddress')
         self.__audit_data_contract = None
         self.__audit_data_contract_abi_uri = config_utils.resolve_version(
             config_value(cfg, '/audit_data_contract_abi/uri'))
@@ -75,27 +79,39 @@ class Config:
 
         self.__block_discard_on_restart = config_value(cfg, '/block_discard_on_restart', 0)
         self.__min_price_in_qsp = config_value(cfg, '/min_price_in_qsp', accept_none=False, )
-        self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests', accept_none=False)
+        self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests',
+                                                    accept_none=False)
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
-        self.__block_mined_polling_interval_sec = config_value(cfg, '/block_mined_polling_interval_sec', accept_none=False)
+        self.__block_mined_polling_interval_sec = config_value(cfg,
+                                                               '/block_mined_polling_interval_sec',
+                                                               accept_none=False)
         self.__analyzers = []
         self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False)
         self.__account = config_value(cfg, '/account/id', )
         self.__account_keystore_file = config_value(cfg, '/account/keystore_file', None)
         self.__account_private_key = None
         self.__gas = config_value(cfg, '/gas')
-        self.__evt_db_path = config_value(cfg, '/evt_db_path', expanduser("~") + "/" + ".audit_node.db")
-        self.__submission_timeout_limit_blocks = config_value(cfg, '/submission_timeout_limit_blocks', 10)
+        self.__evt_db_path = config_value(cfg, '/evt_db_path',
+                                          expanduser("~") + "/" + ".audit_node.db")
+        self.__submission_timeout_limit_blocks = config_value(cfg,
+                                                              '/submission_timeout_limit_blocks',
+                                                              10)
         self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0)
         self.__default_gas = config_value(cfg, '/default_gas')
-        self.__gas_price_wei = config_value(cfg, '/gas_price_wei')
-        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider')
+        self.__gas_price_strategy = config_value(cfg, '/gas_price/strategy', accept_none=False)
+        self.__default_gas_price_wei = config_value(cfg, '/gas_price/default_gas_price_wei', 0)
+        self.__gas_price_wei = self.__default_gas_price_wei
+        self.__max_gas_price_wei = config_value(cfg, '/gas_price/max_gas_price_wei', -1)
+        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', )
         self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
         self.__logging_is_verbose = config_value(cfg, '/logging/is_verbose', False)
         self.__logging_streaming_provider_name = config_value(cfg, '/logging/streaming/provider')
         self.__logging_streaming_provider_args = config_value(cfg, '/logging/streaming/args', {})
-        self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled', False)
-        self.__metric_collection_interval_seconds = config_value(cfg, '/metric_collection/interval_seconds', 30)
+        self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled',
+                                                           False)
+        self.__metric_collection_interval_seconds = config_value(cfg,
+                                                                 '/metric_collection/interval_seconds',
+                                                                 30)
 
     def __create_eth_provider(self, config_utils):
         """
@@ -124,7 +140,11 @@ class Config:
         """
         Creates a Web3 client from the already set Ethereum provider.
         """
-        return config_utils.create_web3_client(self.eth_provider, self.account, self.account_passwd, self.account_keystore_file)
+        return config_utils.create_web3_client(self.eth_provider,
+                                               self.account,
+                                               self.account_passwd,
+                                               self.account_keystore_file,
+                                               )
 
     def __create_audit_contract(self, config_utils):
         """
@@ -132,7 +152,7 @@ class Config:
         available).
         """
         return config_utils.create_contract(self.web3_client, self.audit_contract_abi_uri,
-                                                  self.audit_contract_address)
+                                            self.audit_contract_address)
 
     def __create_audit_data_contract(self, config_utils):
         """
@@ -140,7 +160,7 @@ class Config:
         available).
         """
         return config_utils.create_contract(self.web3_client, self.audit_data_contract_abi_uri,
-                                                  self.audit_data_contract_address)
+                                            self.audit_data_contract_address)
 
     def __create_analyzers(self, config_utils):
         """
@@ -152,7 +172,8 @@ class Config:
         """
         Configures and logging and creates a logger and logging streaming provider.
         """
-        return config_utils.configure_logging(self.logging_is_verbose, self.logging_streaming_provider_name,
+        return config_utils.configure_logging(self.logging_is_verbose,
+                                              self.logging_streaming_provider_name,
                                               self.logging_streaming_provider_args, self.account)
 
     def __create_components(self, config_utils, validate_contract_settings=True):
@@ -164,17 +185,12 @@ class Config:
 
         # Creation of internal components
         self.__eth_provider = self.__create_eth_provider(config_utils)
-        self.__web3_client, self.__account, self.__account_private_key = self.__create_web3_client(config_utils)
+        self.__web3_client, self.__account, self.__account_private_key = self.__create_web3_client(
+            config_utils)
 
         # After having a web3 client object, use it to put addresses in a canonical format
-        self.__audit_contract_address = mk_checksum_address(
-            self.__web3_client,
-            self.__audit_contract_address,
-        )
-        self.__account = mk_checksum_address(
-            self.__web3_client,
-            self.__account,
-        )
+        self.__audit_contract_address = mk_checksum_address(self.__audit_contract_address)
+        self.__account = mk_checksum_address(self.__account)
 
         if self.has_audit_contract_abi:
             self.__audit_contract = self.__create_audit_contract(config_utils)
@@ -186,13 +202,31 @@ class Config:
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
-    def load_config(self, config_utils, env, config_file_uri, account_passwd="", auth_token="", validate_contract_settings=True):
+    def load_config(self, config_utils, env, config_file_uri, account_passwd="", auth_token="",
+                    validate_contract_settings=True):
         self.__config_file_uri = config_file_uri
         self.__env = env
         self.__account_passwd = account_passwd
         self.__auth_token = auth_token
         cfg = config_utils.load_config(config_file_uri, env)
         self.__setup_values(cfg, config_utils)
+
+        # Validation that the address provided in the config is in checksum format
+        if self.account is not None:
+            checksum_account = None
+            try:
+                checksum_account = mk_checksum_address(self.account)
+            except ValueError as ex:
+                # the logger is not configured here, we can only print and kill the node
+                print("The configured address {} is not a valid address.".format(self.account))
+                raise ex
+            if checksum_account != self.account:
+                # the logger is not configured here, we can only print and kill the node
+                print("Your configured account is not in checksum format.")
+                print("Please, change {0} to {1} in your config.yaml".format(self.account,
+                                                                             checksum_account))
+                raise ValueError("The account is not configured correctly.")
+
         self.__create_components(config_utils, validate_contract_settings)
         self.__logger.debug("Components successfully created")
         self.__cfg_dict = cfg
@@ -228,7 +262,10 @@ class Config:
         self.__eth_provider_name = None
         self.__eth_provider_args = None
         self.__eth_provider = None
+        self.__gas_price_strategy = "dynamic"
+        self.__default_gas_price_wei = 0
         self.__gas_price_wei = 0
+        self.__max_gas_price_wei = -1
         self.__logger = None
         self.__logging_is_verbose = False
         self.__logging_streaming_provider_name = None
@@ -437,11 +474,39 @@ class Config:
         return self.__gas
 
     @property
-    def gas_price_wei(self):
+    def gas_price_strategy(self):
+        """
+        Returns the strategy for configuring the gas price of transactions
+        """
+        return self.__gas_price_strategy
+
+    @property
+    def default_gas_price_wei(self):
         """
         Returns default gas price.
         """
+        return self.__default_gas_price_wei
+
+    @property
+    def gas_price_wei(self):
+        """
+        Returns current gas price.
+        """
         return self.__gas_price_wei
+
+    @gas_price_wei.setter
+    def gas_price_wei(self, value):
+        """
+        Sets current gas price.
+        """
+        self.__gas_price_wei = value
+
+    @property
+    def max_gas_price_wei(self):
+        """
+        Returns default gas price.
+        """
+        return self.__max_gas_price_wei
 
     @property
     def config_file_uri(self):

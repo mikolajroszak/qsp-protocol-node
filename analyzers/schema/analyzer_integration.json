@@ -19,7 +19,7 @@
         },
         "version": {
             "type": "string",
-            "description": "The version of the audit network"
+            "description": "The version of the audit node"
         },
         "contract_uri": {
             "type": "string",

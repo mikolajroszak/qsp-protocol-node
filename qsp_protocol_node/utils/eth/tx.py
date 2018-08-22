@@ -1,7 +1,9 @@
+from .singleton_lock import SingletonLock
+
+
 def mk_args(config):
     gas = config.gas
     gas_price_wei = config.gas_price_wei
-
     if gas is None:
         args = {'from': config.account, 'gasPrice': gas_price_wei}
     else:
@@ -14,7 +16,33 @@ def mk_args(config):
     return args
 
 
+def make_read_only_call(config, method):
+    try:
+        SingletonLock.instance().lock.acquire()
+        return method.call()
+    finally:
+        try:
+            SingletonLock.instance().lock.release()
+        except Exception as error:
+            config.logger.debug(
+                "Error when releasing a lock in a read-only call transaction {0}".format(str(error))
+            )
+
+
 def send_signed_transaction(config, transaction, attempts=10):
+    try:
+        SingletonLock.instance().lock.acquire()
+        return __send_signed_transaction(config, transaction, attempts)
+    finally:
+        try:
+            SingletonLock.instance().lock.release()
+        except Exception as error:
+            config.logger.debug(
+                "Error when releasing a lock in signed transaction {0}".format(str(error))
+            )
+
+
+def __send_signed_transaction(config, transaction, attempts=10):
     args = mk_args(config)
     if config.account_private_key is None:  # no local signing (in case of tests)
         return transaction.transact(args)
