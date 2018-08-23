@@ -441,7 +441,7 @@ class QSPAuditNode:
             except Exception as error:
                 self.__logger.exception(
                     "Error when processing submission event {0}: {1}.".format(
-                        str(evt),
+                        str(evt['request_id']),
                         str(error),
                     ),
                     requestId=evt['request_id'],
