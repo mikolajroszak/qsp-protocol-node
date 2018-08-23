@@ -425,7 +425,7 @@ class QSPAuditNode:
                 tx_hash = self.__submit_report(
                     int(evt['request_id']),
                     evt['audit_state'],
-                    evt['audit_hash'],
+                    str(evt['audit_hash']),
                 )
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
