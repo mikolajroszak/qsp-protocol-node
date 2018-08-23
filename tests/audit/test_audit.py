@@ -862,15 +862,15 @@ class TestQSPAuditNode(unittest.TestCase):
         )
         self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
 
-        timestamp = 40
+        request_block_number = 40
 
         return self.__send_request_message(
             self.__REQUEST_ID,
             contract_uri,
             price,
-            timestamp)
+            request_block_number)
 
-    def __send_request_message(self, request_id, contract_uri, price, timestamp):
+    def __send_request_message(self, request_id, contract_uri, price, request_block_number):
         """
         Emulates assigning a request for a given target contract by submitting the appropriate
         event.
@@ -884,7 +884,7 @@ class TestQSPAuditNode(unittest.TestCase):
                 auditor,
                 contract_uri,
                 price,
-                timestamp),
+                request_block_number),
             {"from": requester}
         )
 
@@ -894,8 +894,7 @@ class TestQSPAuditNode(unittest.TestCase):
                 request_id,
                 self.__config.account,
                 0,
-                "",
-                0),
+                ""),
             {"from": self.__config.account}
         )
 
@@ -907,14 +906,14 @@ class TestQSPAuditNode(unittest.TestCase):
             {"from": self.__config.account, "gasPrice": gas_price}
         )
 
-    def __assign_audit(self, request_id, uri, price, timestamp):
+    def __assign_audit(self, request_id, uri, price, request_block_number):
         return TestQSPAuditNode.__safe_transact(
             self.__config.audit_contract.functions.emitLogAuditAssigned(
                 request_id,
                 self.__config.account,
                 self.__config.account,
                 uri, price,
-                timestamp),
+                request_block_number),
             {"from": self.__config.account}
         )
 

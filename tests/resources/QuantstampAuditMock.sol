@@ -50,12 +50,12 @@ contract QuantstampAudit {
     string contractUri;
     uint256 price;
     uint256 transactionFee;
-    uint requestTimestamp; // approximate time of when audit was requested
+    uint requestBlockNumber; // approximate time of when audit was requested
     AuditState state;
     address auditor;       // the address of the node assigned to the audit
-    uint assignTimestamp;  // approximate time of when audit was assigned
+    uint assignBlockNumber;  // approximate time of when audit was assigned
     string reportHash;     // stores the hash of audit report
-    uint reportTimestamp;  // approximate time of when the payment and the audit report were submitted
+    uint reportBlockNumber;  // approximate time of when the payment and the audit report were submitted
   }
 
   struct AuditData {
@@ -68,15 +68,13 @@ contract QuantstampAudit {
     uint256 requestId,
     address auditor,
     AuditState auditResult,
-    string reportHash,
-    uint256 reportTimestamp
+    string reportHash
   );
 
   event LogAuditRequested(uint256 requestId,
     address requestor,
     string uri,
-    uint256 price,
-    uint256 requestTimestamp
+    uint256 price
   );
 
   // TODO update the smart contract appropriately
@@ -85,7 +83,7 @@ contract QuantstampAudit {
       address requestor,
       string uri,
       uint256 price,
-      uint256 requestTimestamp);
+      uint256 requestBlockNumber);
   event LogReportSubmissionError_InvalidAuditor(uint256 requestId, address auditor);
   event LogReportSubmissionError_InvalidState(uint256 requestId, address auditor, AuditState state);
   event LogAuditQueueIsEmpty();
@@ -109,16 +107,16 @@ contract QuantstampAudit {
       auditData = QuantstampAuditData(addr);
   }
 
-  function emitLogAuditFinished(uint256 requestId, address auditor, AuditState auditResult, string reportHash, uint256 reportTimestamp) {
-    emit LogAuditFinished(requestId, auditor, auditResult, reportHash, reportTimestamp);
+  function emitLogAuditFinished(uint256 requestId, address auditor, AuditState auditResult, string reportHash) {
+    emit LogAuditFinished(requestId, auditor, auditResult, reportHash);
   }
 
-  function emitLogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price, uint256 requestTimestamp) {
-    emit LogAuditRequested(requestId, requestor, uri, price, requestTimestamp);
+  function emitLogAuditRequested(uint256 requestId, address requestor, string uri, uint256 price) {
+    emit LogAuditRequested(requestId, requestor, uri, price);
   }
 
-  function emitLogAuditAssigned(uint256 requestId, address auditor, address requestor, string uri, uint256 price, uint256 requestTimestamp) {
-    emit LogAuditAssigned(requestId, auditor, requestor, uri, price, requestTimestamp);
+  function emitLogAuditAssigned(uint256 requestId, address auditor, address requestor, string uri, uint256 price, uint256 requestBlockNumber) {
+    emit LogAuditAssigned(requestId, auditor, requestor, uri, price, requestBlockNumber);
   }
 
   function emitLogReportSubmissionError_InvalidAuditor(uint256 requestId, address auditor) {
