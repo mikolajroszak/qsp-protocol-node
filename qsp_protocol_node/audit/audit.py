@@ -510,6 +510,8 @@ class QSPAuditNode:
                 if (current_block - evt['block_nbr']) > timeout_limit:
                     evt['status_info'] = "Submission timeout"
                     self.__config.event_pool_manager.set_evt_to_error(evt)
+                    self.__config.logger.debug("Submission timeout for audit {0}. Setting to error",
+                                               evt['request_id'])
             except KeyError as error:
                 self.__logger.exception(
                     "KeyError when monitoring timeout: {0}".format(str(error))
@@ -799,19 +801,23 @@ class QSPAuditNode:
         """
         Attempts to get a request from the audit request queue.
         """
-        return send_signed_transaction(self.__config,
-                                       self.__config.audit_contract.functions.getNextAuditRequest())
+        tx_hash = send_signed_transaction(
+            self.__config,
+            self.__config.audit_contract.functions.getNextAuditRequest())
+        self.__config.logger.debug("A getNextAuditRequest transaction has been sent")
+        return tx_hash
 
     def __submit_report(self, request_id, audit_state, audit_hash):
         """
         Submits the audit report to the entire QSP network.
         """
-        return send_signed_transaction(self.__config,
-                                       self.__config.audit_contract.functions.submitReport(
-                                           request_id,
-                                           audit_state,
-                                           audit_hash
-                                       ))
+        tx_hash = send_signed_transaction(self.__config,
+                                          self.__config.audit_contract.functions.submitReport(
+                                            request_id,
+                                            audit_state,
+                                            audit_hash))
+        self.__config.logger.debug("Report {0} has been submitted", request_id)
+        return tx_hash
 
     def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
         result = {
