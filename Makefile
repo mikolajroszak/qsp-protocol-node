@@ -65,3 +65,8 @@ test-ci:
 		-e AWS_SESSION_TOKEN="$(AWS_SESSION_TOKEN)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		qsp-protocol-node sh -c "make test"
+
+save:
+	docker save -o deployment/local/app.tar qsp-protocol-node:latest
+
+export: test-docker save

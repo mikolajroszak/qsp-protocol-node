@@ -6,9 +6,11 @@ Implements the QSP audit node in the Quantstamp network.
 
 ## Run a QSP node locally
 
-- To run the latest containerized version hosted on Quantstamp's private Docker repository, go to `deployment/local` and follow the steps in the dedicated [README](deployment/local/README.md).
-
 - To build and run the node from the source code, follow the instructions from the `Development setup` section and then refer to the `Run locally` subsection.
+
+- To test out the node operator instructions:
+    - Do `make export` to export a Docker image
+    - Go to `deployment/local` and follow the steps in the dedicated [README](deployment/local/README.md)
 
 ## Development setup
 
@@ -159,6 +161,21 @@ Do it for all the contract URIs.
     ```bash
     docker exec -i -t e237a5cf55f2 bash
     ```
+
+## Creating a Betanet distribution bundle
+
+Currently, the process is mostly manual. To be automated in the future.
+
+### Export a binary
+1. `make export`
+
+### Release
+1. `cd` to `deployment/local`
+1. Remove the `testnet` stage from config.yaml
+1. In `Makefile` make `mainnet` a default stage
+1. `zip -er qsp-release-v1.zip *`. Type in a password and record it for future use
+1. Upload the file to Google Drive
+1. Using Google Drive sharing features, share the file with a whitelisted node operator along with the password
 
 ## Development hierarchy
 

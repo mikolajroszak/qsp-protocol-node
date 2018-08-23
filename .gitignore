@@ -8,3 +8,4 @@ tests/coverage/.coverage*
 tests/coverage/htmlcov
 .terraform
 .idea/
+app.tar
