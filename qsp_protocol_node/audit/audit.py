@@ -425,7 +425,7 @@ class QSPAuditNode:
                 tx_hash = self.__submit_report(
                     int(evt['request_id']),
                     evt['audit_state'],
-                    evt['audit_hash'],
+                    str(evt['audit_hash']),
                 )
                 evt['tx_hash'] = tx_hash
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
@@ -441,7 +441,7 @@ class QSPAuditNode:
             except Exception as error:
                 self.__logger.exception(
                     "Error when processing submission event {0}: {1}.".format(
-                        str(evt),
+                        str(evt['request_id']),
                         str(error),
                     ),
                     requestId=evt['request_id'],
@@ -510,6 +510,8 @@ class QSPAuditNode:
                 if (current_block - evt['block_nbr']) > timeout_limit:
                     evt['status_info'] = "Submission timeout"
                     self.__config.event_pool_manager.set_evt_to_error(evt)
+                    msg = "Submission timeout for audit {0}. Setting to error"
+                    self.__config.logger.debug(msg.format(str(evt['request_id'])))
             except KeyError as error:
                 self.__logger.exception(
                     "KeyError when monitoring timeout: {0}".format(str(error))
@@ -799,20 +801,24 @@ class QSPAuditNode:
         """
         Attempts to get a request from the audit request queue.
         """
-        return send_signed_transaction(self.__config,
-                                       self.__config.audit_contract.functions.getNextAuditRequest(),
-                                       wait_for_transaction_receipt=True)
+        tx_hash = send_signed_transaction(
+            self.__config,
+            self.__config.audit_contract.functions.getNextAuditRequest(),
+            wait_for_transaction_receipt=True)
+        self.__config.logger.debug("A getNextAuditRequest transaction has been sent")
+        return tx_hash
 
     def __submit_report(self, request_id, audit_state, audit_hash):
         """
         Submits the audit report to the entire QSP network.
         """
-        return send_signed_transaction(self.__config,
-                                       self.__config.audit_contract.functions.submitReport(
-                                           request_id,
-                                           audit_state,
-                                           audit_hash
-                                       ))
+        tx_hash = send_signed_transaction(self.__config,
+                                          self.__config.audit_contract.functions.submitReport(
+                                            request_id,
+                                            audit_state,
+                                            audit_hash))
+        self.__config.logger.debug("Report {0} has been submitted".format(str(request_id)))
+        return tx_hash
 
     def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
         result = {
