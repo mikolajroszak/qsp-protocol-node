@@ -1,3 +1,5 @@
+from web3.utils.threads import Timeout
+
 from .singleton_lock import SingletonLock
 
 
@@ -29,10 +31,13 @@ def make_read_only_call(config, method):
             )
 
 
-def send_signed_transaction(config, transaction, attempts=10):
+def send_signed_transaction(config, transaction, attempts=10, wait_for_transaction_receipt=False):
     try:
         SingletonLock.instance().lock.acquire()
-        return __send_signed_transaction(config, transaction, attempts)
+        return __send_signed_transaction(config,
+                                         transaction,
+                                         attempts,
+                                         wait_for_transaction_receipt)
     finally:
         try:
             SingletonLock.instance().lock.release()
@@ -42,7 +47,7 @@ def send_signed_transaction(config, transaction, attempts=10):
             )
 
 
-def __send_signed_transaction(config, transaction, attempts=10):
+def __send_signed_transaction(config, transaction, attempts=10, wait_for_transaction_receipt=False):
     args = mk_args(config)
     if config.account_private_key is None:  # no local signing (in case of tests)
         return transaction.transact(args)
@@ -55,8 +60,16 @@ def __send_signed_transaction(config, transaction, attempts=10):
                 tx = transaction.buildTransaction(args)
                 signed_tx = config.web3_client.eth.account.signTransaction(tx,
                                                                            private_key=config.account_private_key)
-                return config.web3_client.eth.sendRawTransaction(signed_tx.rawTransaction)
+                tx_hash = config.web3_client.eth.sendRawTransaction(signed_tx.rawTransaction)
+
+                if wait_for_transaction_receipt:
+                    tx_receipt = config.web3_client.eth.waitForTransactionReceipt(tx_hash, 120)
+                    print("!!! RECEIPT:", tx_receipt)
+
+                print("!!!!!!! SUCCESS:", transaction, tx)
+                return tx_hash
             except ValueError as e:
+                print("!!!!!!!!!! VALUE ERROR", repr(e))
                 if i == attempts - 1:
                     config.logger.debug("Maximum number of retries reached. {}"
                                         .format(e))
@@ -81,6 +94,13 @@ def __send_signed_transaction(config, transaction, attempts=10):
                 else:
                     config.logger.error("Unknown error while sending transaction. {}".format(e))
                     raise e
+            except Timeout as e:
+                # If we actually time out after the default 120 seconds,
+                # the thread should continue on as normal.
+                # This is to avoid waiting indefinitely for an underpriced transaction.
+                config.logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
+                    str(transaction),
+                    e))
 
 
 class DeduplicationException(Exception):

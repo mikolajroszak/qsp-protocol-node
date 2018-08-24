@@ -800,7 +800,8 @@ class QSPAuditNode:
         Attempts to get a request from the audit request queue.
         """
         return send_signed_transaction(self.__config,
-                                       self.__config.audit_contract.functions.getNextAuditRequest())
+                                       self.__config.audit_contract.functions.getNextAuditRequest(),
+                                       wait_for_transaction_receipt=True)
 
     def __submit_report(self, request_id, audit_state, audit_hash):
         """
