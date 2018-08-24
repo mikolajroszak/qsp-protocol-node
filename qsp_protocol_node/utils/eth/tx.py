@@ -64,12 +64,9 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
 
                 if wait_for_transaction_receipt:
                     tx_receipt = config.web3_client.eth.waitForTransactionReceipt(tx_hash, 120)
-                    print("!!! RECEIPT:", tx_receipt)
 
-                print("!!!!!!! SUCCESS:", transaction, tx)
                 return tx_hash
             except ValueError as e:
-                print("!!!!!!!!!! VALUE ERROR", repr(e))
                 if i == attempts - 1:
                     config.logger.debug("Maximum number of retries reached. {}"
                                         .format(e))
