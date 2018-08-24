@@ -799,7 +799,8 @@ class QSPAuditNode:
         """
         tx_hash = send_signed_transaction(
             self.__config,
-            self.__config.audit_contract.functions.getNextAuditRequest())
+            self.__config.audit_contract.functions.getNextAuditRequest(),
+            wait_for_transaction_receipt=True)
         self.__config.logger.debug("A getNextAuditRequest transaction has been sent")
         return tx_hash
 
