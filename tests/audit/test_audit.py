@@ -285,7 +285,7 @@ class TestQSPAuditNode(unittest.TestCase):
     #     self.assertEqual(thrd['fk_status'], 'AS')
 
     @timeout(10, timeout_exception=StopIteration)
-    def test_check_then_request_audit_request_exceptions(self):
+    def test_check_then_do_audit_request_exceptions(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
         get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
@@ -304,7 +304,7 @@ class TestQSPAuditNode(unittest.TestCase):
             tx_hash
         )
         self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
-        self.__audit_node._QSPAuditNode__check_then_request_audit_request()
+        self.__audit_node._QSPAuditNode__check_then_do_audit_request()
         TestQSPAuditNode.__safe_transact(
             self.__config.audit_contract.functions.setAnyRequestAvailableResult(
                 self.__AVAILABLE_AUDIT__STATE_ERROR),
@@ -316,7 +316,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
 
     @timeout(10, timeout_exception=StopIteration)
-    def test_check_then_request_audit_request_deduplication_exceptions(self):
+    def test_check_then_do_audit_request_deduplication_exceptions(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
         get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
@@ -334,7 +334,7 @@ class TestQSPAuditNode(unittest.TestCase):
             )
         )
         self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
-        self.__audit_node._QSPAuditNode__check_then_request_audit_request()
+        self.__audit_node._QSPAuditNode__check_then_do_audit_request()
         self.__config.web3_client.eth.waitForTransactionReceipt(
             TestQSPAuditNode.__safe_transact(
                 self.__config.audit_contract.functions.setAnyRequestAvailableResult(

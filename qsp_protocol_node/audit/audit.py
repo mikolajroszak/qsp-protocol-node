@@ -30,10 +30,7 @@ from threading import Thread
 from utils.metrics import MetricCollector
 from solc import compile_standard
 from solc.exceptions import ContractsNotFound, SolcError
-
-
-class ExecutionException(Exception):
-    pass
+from .exceptions import NonWhitelistedNodeException
 
 
 class QSPAuditNode:
@@ -82,7 +79,7 @@ class QSPAuditNode:
         #    the event never leaves that state
         #
         # 4) At all times, there is at most one writer thread executing. Stated otherwise,
-        #    concurrent writes never occurs
+        #    concurrent writes never occur
         #
         # 5) At all times, the audit node only accounts for the health of threads
         #    processing new events. Old ones necessarily cause the underlying
@@ -110,7 +107,6 @@ class QSPAuditNode:
         """
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
-
         def exec():
             current_block = 0
             while self.__exec:
@@ -153,24 +149,26 @@ class QSPAuditNode:
         Starts all the threads processing different stages of a given event.
         """
         if self.__exec:
-            raise Exception("Cannot run audit node thread due to another audit node instance")
+            raise Exception("Cannot run audit node thread due to another audit node thread instance")
+
         self.__exec = True
 
-        # initialize the gas price
+        # First thing is to check whether the audit node is whitelisted or not.
+        if not self.__check_whitelist(self.config.account):
+            msg = "Node address {0} is not whitelisted. Please contact Quantstamp"
+            self.__logger.error(msg.format(self.config.account))
+            raise NonWhitelistedNodeException(msg.format(self.config.account))
+
+        # Initialize the gas price
         self.__compute_gas_price()
 
-        # ensure that the min_price in the smart contract is up to date
+        # Ensure that the min_price in the smart contract is up to date
         self.__check_and_update_min_price()
 
         if self.__config.metric_collection_is_enabled:
             self.__metric_collector = MetricCollector(self.__config)
             self.__metric_collector.collect()
             self.__internal_threads.append(self.__run_metrics_thread())
-
-        if not self.__check_whitelist(self.config.account):
-            msg = "Node address is not whitelisted. Contact Quantstamp: {0}"
-            self.__logger.error(msg.format(self.config.account))
-            raise ExecutionException(msg.format(self.config.account))
 
         # Upon restart, before processing, set all events that timed out to err.
         self.__timeout_stale_requests()
@@ -188,7 +186,7 @@ class QSPAuditNode:
 
         self.__internal_threads.append(self.__run_block_mined_thread(
             "check_available_requests",
-            self.__check_then_request_audit_request
+            self.__check_then_do_audit_request
         ))
 
         self.__internal_threads.append(self.__run_block_mined_thread(
@@ -255,7 +253,7 @@ class QSPAuditNode:
         self.__config.event_pool_manager.process_incoming_events(timeout_event)
         self.__config.event_pool_manager.process_events_to_be_submitted(timeout_event)
 
-    def __check_then_request_audit_request(self):
+    def __check_then_do_audit_request(self):
         """
         Checks first an audit is assignable; then, bids to get an audit request.
         """
@@ -272,7 +270,7 @@ class QSPAuditNode:
                 self.config,
                 self.config.audit_contract.functions.anyRequestAvailable())
             if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
-                self.__logger.debug("There is request available for bid on.")
+                self.__logger.debug("There is request available to bid on.")
                 self.__get_next_audit_request()
             else:
                 self.__logger.debug(
@@ -280,12 +278,10 @@ class QSPAuditNode:
                         str(any_request_available)))
         except DeduplicationException as error:
             self.__logger.debug(
-                "Error when calling to get a review {0}".format(str(error))
+                "Error when attempting to perform an audit request: {0}".format(str(error))
             )
         except Exception as error:
-            self.__logger.exception(
-                "Error when calling to get a review {0}".format(str(error))
-            )
+            self.__logger.exception(str(error))
 
     def __check_whitelist(self, node):
         """
@@ -432,7 +428,7 @@ class QSPAuditNode:
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
             except DeduplicationException as error:
                 self.__logger.debug(
-                    "Error when calling to get a review {0}".format(str(error))
+                    "Error when submiting report {0}".format(str(error))
                 )
             except KeyError as error:
                 self.__logger.exception(

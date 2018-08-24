@@ -6,31 +6,31 @@ QSP_NODE="make run"
 # qsp_protocol_node/qsp_protocol_node.py.
 
 SUCCESS="0"
-ERR_EXCEPTION="1"
-ERR_INVALID_ARGS="17"
-
-# Invokes the audit node.
-$QSP_NODE $@
-
-# Stores the exit code of invoking the audit node.
-return_code=$?
-
-# If invocation is successfull, it means the given command arguments worked
-# as expected. Otherwise, no need to proceed.
-
-if [[ "$return_code" == "$ERR_INVALID_ARGS" ]] ; then
-    exit $return_code
-fi
-
-# Invocation was successfull; enter infinite loop
-# as a means for error recovery.
 
 while true ; do
 
+    # NOTE: since this script executes within a docker image,
+    # the parameters passed in to it stem from the Makefile,
+    # which are necessarily correct -- we know how to run
+    # the node :) 
+
+    # Invokes the audit node; no argument validation   
+    $QSP_NODE $@
+
+    # Fetches the return code of the node
+    return_code=$?
+
+    # If the node has successfully finished,
+    # it means the node operator meant to kill it.
+    # Respect that wish and do not restart the node.
+    # For the record:
+    #    audit node exit code == 0: SIGKILL sent by user
+    #    audit node exit code > 0: error
+    # These values, if captured by make, 
+    # are translated as follows:
+    #    audit node exit code == 0: Makefile exists with code 0
+    #    audit node exit code > 0: Makefile exists with code 2
     if [[ "$return_code" == "$SUCCESS" ]]; then
-        # Normal exit. Just end gracefully.
-        # 0: normal execution
-        # 1: SIGKILL sent by user
         exit 0
     fi
 
@@ -42,9 +42,5 @@ while true ; do
     done
 
     echo ""
-        
-    # Invokes the audit node.      
-    $QSP_NODE $@
 
-    return_code=$?
 done

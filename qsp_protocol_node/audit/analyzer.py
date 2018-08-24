@@ -7,20 +7,6 @@ import json
 from utils.io import digest
 
 
-class AnalyzerRunException(Exception):
-    def __init__(self, message, output):
-        self.__message = message
-        self.__output = output
-
-    @property
-    def message(self):
-        return self.__message
-
-    @property
-    def output(self):
-        return self.__output
-
-
 class Analyzer:
 
     def __init__(self, wrapper, logger):
