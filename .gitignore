@@ -9,3 +9,4 @@ tests/coverage/htmlcov
 .terraform
 .idea/
 app.tar
+deployment/local/event_database.db
