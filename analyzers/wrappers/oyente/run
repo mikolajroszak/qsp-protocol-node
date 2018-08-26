@@ -69,7 +69,7 @@ OYENTE_CMD="python /oyente/oyente/oyente.py $ANALYZER_ARGS -j -s /shared/$CONTRA
 ##################################################################
 
 # Executes the analyzer
-docker run -v "$TMP_FOLDER":/shared/ -i "$DOCKER_IMAGE" bash -c "$OYENTE_CMD" \
+docker run --rm -v "$TMP_FOLDER":/shared/ -i "$DOCKER_IMAGE" bash -c "$OYENTE_CMD" \
     &> "$LOG_OUTPUT"
 
 # Cleans up any resources

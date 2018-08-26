@@ -62,7 +62,7 @@ ANALYZER_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':'
 ##################################################################
 
 # Executes the analyzer
-docker run -v "$TMP_FOLDER":/shared/ -i "$DOCKER_IMAGE" -o json -x "/shared/$CONTRACT_FILENAME" \
+docker run --rm -v "$TMP_FOLDER":/shared/ -i "$DOCKER_IMAGE" -o json -x "/shared/$CONTRACT_FILENAME" \
     &> "$LOG_OUTPUT"
 
 # Mythril can fail with error code 0 providing an error message in json
@@ -73,7 +73,7 @@ cat "$LOG_OUTPUT" | grep "\"success\": true" >/dev/null || \
 "$WRAPPER_HOME"/post_run >> "$LOG_OUTPUT" 2>&1
 
 
-ANALYZER_CMD="docker run -v \"$TMP_FOLDER\":/shared/ -i \"$DOCKER_IMAGE\" -o json -x \"/shared/$CONTRACT_FILENAME\""
+ANALYZER_CMD="docker run --rm -v \"$TMP_FOLDER\":/shared/ -i \"$DOCKER_IMAGE\" -o json -x \"/shared/$CONTRACT_FILENAME\""
 "$WRAPPER_HOME/utils/mk_success_report" "${ANALYZER_VERSION}" "${ANALYZER_CMD}" "${ANALYZER_VULNERABILITIES}"  \
     "${ORIGINAL_NAME}" "${LOG_OUTPUT}" || \
         { report_errors "$LOG_OUTPUT"; exit 1; }
