@@ -101,7 +101,14 @@ To run with a custom account:
       id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B"
       keystore_file: !!str "./keystore/default.json"
     ```
-1. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account
+1. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account. Note that your password may **NOT** contain
+quotes (double or single). The safest approach to verify whether your password matches what you have set is to check
+the value of `ETH_PASSPHRASE`. In a terminal, type:
+    ```
+    echo $ETH_PASSPHRASE
+    ```
+If the output matches your original password, the latter is correctly set.
+Otherwise, launching the audit node will fail.
 1. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands)
 1. Transfer some Ether to the account (for Ropsten, use a Ropsten faucet)
 
@@ -123,7 +130,7 @@ Do it for all the contract URIs.
 
 ## CI and deployment pipeline
 
-1. On every push to the repository, `buildspec-ci.yml` is activated. The build environment is based on the modification of the Oyente image (`Dockerfile.base`), however, this will change. The script runs `make test` and reports the status back to AWS CodeBuild.
+1. On every push to the repository, `buildspec-ci.yml` is activated. The build script runs `make test-ci` and reports the status back to AWS CodeBuild.
 
 1. On every merge into `develop`, `buildspec.yml` is activated. It builds the image, pushes it to AWS Docker repository, creates a build artifact (a ZIP containing `Dockerrun.aws.json` and `.ebextensions` from `deployment/aws-elasticbeanstalk`) and deploys it to a dev environment on AWS using [AWS CodePipeline](https://console.aws.amazon.com/codepipeline/home?region=us-east-1#/view/qsp-protocol-node-dev).
 

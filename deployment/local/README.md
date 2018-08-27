@@ -6,7 +6,7 @@ a node operator to spin up a QSP node.
 The node runs as a Docker container.
 The steps assume a Unix-like operating system, 
 and has been tested on Mac OS High Sierra 10.13.4, 
-Ubuntu 18.04 and 16.04, Debian 9, and Redhat Enterprise Server 7.5.
+Ubuntu 18.04 and 16.04, Debian 9, and RedHat Enterprise Server 7.5.
 
 **Note**: all commands should be run from the location of this README document. 
 All paths are relative to this README's folder.
@@ -50,7 +50,15 @@ Record for next steps:
 ### Configure
 
 1. Set the environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to the provided AWS credentials.
-1. Set environment variable `ETH_PASSPHRASE` to your account's passphrase (or *wallet password*)
+1. Set environment variable `ETH_PASSPHRASE` to your account's passphrase (or *wallet password*).
+Note that your password may **NOT** contain
+quotes (double or single). The safest approach to verify whether your password matches what you have set is to check
+the value of `ETH_PASSPHRASE`. In a terminal, type:
+    ```
+    echo $ETH_PASSPHRASE
+    ```
+If the output matches your original password, the latter is correctly set.
+Otherwise, launching the audit node will fail.
 1. In `config.yaml`, specify the endpoint to the Ethereum node you want the QSP audit node to connect to. If connecting to Quantstamp's Ethereum secure node, just rely on the default provider endpoint:
     ```
     eth_node:
