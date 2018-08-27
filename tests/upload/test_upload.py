@@ -1,4 +1,5 @@
 import unittest
+import os
 
 from upload import S3Provider
 
@@ -31,7 +32,7 @@ class TestS3Provider(unittest.TestCase):
         """
         # This bucket exists in S3 so the upload should succeed if the credentials are set up
         test_account = "test_account"
-        bucket = "qsp-protocol-reports-dev"
+        bucket = "qsp-protocol-reports-" + os.getenv("ENV", "dev")
         provider = S3Provider(test_account, bucket, bucket)
         result = provider.upload("some testing report", audit_report_hash="hash-as-filename")
         self.assertTrue("hash-as-filename" in result["url"], "The hash was not used.")

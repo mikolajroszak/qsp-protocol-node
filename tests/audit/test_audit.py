@@ -119,7 +119,7 @@ class TestQSPAuditNode(unittest.TestCase):
     def fetch_config(cls):
         # create config from file, the contract is not provided and will be injected separately
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file("local", config_file_uri,
+        config = ConfigFactory.create_from_file(os.getenv("ENV", default="local"), config_file_uri,
                                                 validate_contract_settings=False)
         # compile and inject contract
         contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
