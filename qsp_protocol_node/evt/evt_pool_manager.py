@@ -60,7 +60,7 @@ class EventPoolManager:
         db_file = None
         try:
             db_file = Path(db_path)
-            if db_file.is_file():
+            if db_file.is_file() and db_file.stat().st_size > 0:
                 db_existed = True
 
             self.__sqlworker = Sqlite3Worker(logger, file_name=db_path, max_queue_size=10000)
