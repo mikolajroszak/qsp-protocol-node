@@ -95,7 +95,7 @@ This will run the node using the default (test) account for Ropsten. This is sui
 To run with a custom account:
 
 1. Create a new account (e.g., using MyEtherWallet). Record the passphrase, the new account Ethereum address, and store the keystore file in an accessible location
-1. In `deployment/local/config.yaml/testnet/account/id`, specify the Ethereum address and in `deployment/local/config.yaml/testnet/account/keystore_file`, specify the path to the keystore file. Example:
+1. In `deployment/local/config.yaml/testnet/account/id`, specify the Ethereum address and in `deployment/local/config.yaml/testnet/account/keystore_file`, specify the path to the keystore file. The address must be in the **checksum** format. Example:
     ```text
     account:
       id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B"
