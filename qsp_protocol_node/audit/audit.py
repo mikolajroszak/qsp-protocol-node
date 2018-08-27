@@ -319,6 +319,8 @@ class QSPAuditNode:
                 send_signed_transaction(self.__config,
                                         transaction,
                                         wait_for_transaction_receipt=True)
+                self.__logger.debug("Successfully updated min price to {0}.".format(
+                    self.__config.min_price_in_qsp))
             except Timeout as e:
                 self.__logger.exception("Update min price timed out: {0}, {1}".format(
                     str(transaction),
