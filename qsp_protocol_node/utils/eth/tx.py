@@ -95,9 +95,6 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                 # If we actually time out after the default 120 seconds when waiting for a receipt,
                 # throw the exception to the calling thread.
                 # This is to avoid waiting indefinitely for an underpriced transaction.
-                config.logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
-                    str(transaction),
-                    e))
                 raise e
 
 

@@ -327,7 +327,7 @@ class QSPAuditNode:
                     str(e)))
                 raise e
             except Exception as e:
-                self.__logger.exception("Unknown error occurred setting min price: {0}, {1}".format(
+                self.__logger.exception("Error occurred setting min price: {0}, {1}".format(
                     str(transaction),
                     str(e)))
                 raise e
@@ -813,15 +813,17 @@ class QSPAuditNode:
         """
         Attempts to get a request from the audit request queue.
         """
+        transaction = self.__config.audit_contract.functions.getNextAuditRequest()
         try:
             tx_hash = send_signed_transaction(
                 self.__config,
-                self.__config.audit_contract.functions.getNextAuditRequest(),
+                transaction,
                 wait_for_transaction_receipt=True)
             self.__config.logger.debug("A getNextAuditRequest transaction has been sent")
         except Timeout as e:
-            # The log has already occurred in send_signed_transaction
-            pass
+            self.__logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
+                str(transaction),
+                e))
         return tx_hash
 
     def __submit_report(self, request_id, audit_state, audit_hash):
