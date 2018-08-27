@@ -15,6 +15,7 @@ import jsonschema
 
 from collections import deque
 from time import sleep
+from web3.utils.threads import Timeout
 
 from utils.io import (
     fetch_file,
@@ -312,9 +313,22 @@ class QSPAuditNode:
                 "Local min_price does not match smart contract for address {0}, updating.".format(
                     self.__config.account
                 ))
-            send_signed_transaction(self.__config,
-                                    self.__config.audit_contract.functions.setAuditNodePrice(
-                                        min_price_in_mini_qsp))
+            transaction = self.__config.audit_contract.functions.setAuditNodePrice(
+                                            min_price_in_mini_qsp)
+            try:
+                send_signed_transaction(self.__config,
+                                        transaction,
+                                        wait_for_transaction_receipt=True)
+            except Timeout as e:
+                self.__logger.exception("Update min price timed out: {0}, {1}".format(
+                    str(transaction),
+                    str(e)))
+                raise e
+            except Exception as e:
+                self.__logger.exception("Unknown error occurred setting min price: {0}, {1}".format(
+                    str(transaction),
+                    str(e)))
+                raise e
 
     def __on_audit_assigned(self, evt):
         request_id = None
@@ -797,11 +811,15 @@ class QSPAuditNode:
         """
         Attempts to get a request from the audit request queue.
         """
-        tx_hash = send_signed_transaction(
-            self.__config,
-            self.__config.audit_contract.functions.getNextAuditRequest(),
-            wait_for_transaction_receipt=True)
-        self.__config.logger.debug("A getNextAuditRequest transaction has been sent")
+        try:
+            tx_hash = send_signed_transaction(
+                self.__config,
+                self.__config.audit_contract.functions.getNextAuditRequest(),
+                wait_for_transaction_receipt=True)
+            self.__config.logger.debug("A getNextAuditRequest transaction has been sent")
+        except Timeout as e:
+            # The log has already occurred in send_signed_transaction
+            pass
         return tx_hash
 
     def __submit_report(self, request_id, audit_state, audit_hash):
