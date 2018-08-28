@@ -302,6 +302,10 @@ class QSPAuditNode:
         """
         Checks that the minimum price in the audit node's configuration matches the smart contract.
         """
+        msg = "Make sure the account has enough Ether, " \
+            + "the Ethereum node is connected and synced, " \
+            + "and restart your node to try again."
+
         contract_price = make_read_only_call(
             self.__config,
             self.__config.audit_data_contract.functions.getMinAuditPrice(
@@ -322,12 +326,14 @@ class QSPAuditNode:
                 self.__logger.debug("Successfully updated min price to {0}.".format(
                     self.__config.min_price_in_qsp))
             except Timeout as e:
-                self.__logger.exception("Update min price timed out: {0}, {1}".format(
+                error_msg = "Update min price timed out. {0}, {1}. " + msg
+                self.__logger.exception(error_msg.format(
                     str(transaction),
                     str(e)))
                 raise e
             except Exception as e:
-                self.__logger.exception("Error occurred setting min price: {0}, {1}".format(
+                error_msg = "Error occurred setting min price: {0}, {1}. " + msg
+                self.__logger.exception(error_msg.format(
                     str(transaction),
                     str(e)))
                 raise e
