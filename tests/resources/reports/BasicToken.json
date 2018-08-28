@@ -1,12 +1,14 @@
 {
-  "timestamp": 1530814690,
+  "timestamp": 1535474053,
   "contract_uri": "file:///app/tests/helpers/../resources/BasicToken.sol",
-  "contract_hash": "2662ea846c0c6ca2bd32dfdb97ab20ae4108e7abade53962f146f634e9f4eba7",
+  "contract_hash": "8a4523c7bddfdbf453f7d8c9618860c8d8ec921d0bdf8ef09fdca9fe9637d9c7",
   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "request_id": 1,
   "version": "0.1.1",
   "audit_state": 5,
   "status": "error",
-  "compilation_errors": ["BasicToken.sol:4:1: ParserError: Source \"ERC20Basic.sol\" not found: File outside of allowed directories.\nimport \"./ERC20Basic.sol\";\n^------------------------^\n\nBasicToken.sol:5:1: ParserError: Source \"math/SafeMath.sol\" not found: File outside of allowed directories.\nimport \"../../math/SafeMath.sol\";\n^-------------------------------^\n\n        > command: `solc --standard-json`\n        > return code: `0`\n        > stderr:\n        {\"contracts\":{},\"errors\":[{\"component\":\"general\",\"formattedMessage\":\"BasicToken.sol:4:1: ParserError: Source \\\"ERC20Basic.sol\\\" not found: File outside of allowed directories.\\nimport \\\"./ERC20Basic.sol\\\";\\n^------------------------^\\n\",\"message\":\"Source \\\"ERC20Basic.sol\\\" not found: File outside of allowed directories.\",\"severity\":\"error\",\"sourceLocation\":{\"end\":53,\"file\":\"BasicToken.sol\",\"start\":27},\"type\":\"ParserError\"},{\"component\":\"general\",\"formattedMessage\":\"BasicToken.sol:5:1: ParserError: Source \\\"math/SafeMath.sol\\\" not found: File outside of allowed directories.\\nimport \\\"../../math/SafeMath.sol\\\";\\n^-------------------------------^\\n\",\"message\":\"Source \\\"math/SafeMath.sol\\\" not found: File outside of allowed directories.\",\"severity\":\"error\",\"sourceLocation\":{\"end\":87,\"file\":\"BasicToken.sol\",\"start\":54},\"type\":\"ParserError\"}],\"sources\":{}}\n\n        > stdout:"]
+  "compilation_errors": [
+    "BasicToken.sol:13:1: ParserError: Source \"ERC20Basic.sol\" not found: File outside of allowed directories.\nimport \"./ERC20Basic.sol\";\n^------------------------^\n\nBasicToken.sol:14:1: ParserError: Source \"math/SafeMath.sol\" not found: File outside of allowed directories.\nimport \"../../math/SafeMath.sol\";\n^-------------------------------^\n\n        > command: `solc --standard-json`\n        > return code: `0`\n        > stderr:\n        {\"contracts\":{},\"errors\":[{\"component\":\"general\",\"formattedMessage\":\"BasicToken.sol:13:1: ParserError: Source \\\"ERC20Basic.sol\\\" not found: File outside of allowed directories.\\nimport \\\"./ERC20Basic.sol\\\";\\n^------------------------^\\n\",\"message\":\"Source \\\"ERC20Basic.sol\\\" not found: File outside of allowed directories.\",\"severity\":\"error\",\"sourceLocation\":{\"end\":862,\"file\":\"BasicToken.sol\",\"start\":836},\"type\":\"ParserError\"},{\"component\":\"general\",\"formattedMessage\":\"BasicToken.sol:14:1: ParserError: Source \\\"math/SafeMath.sol\\\" not found: File outside of allowed directories.\\nimport \\\"../../math/SafeMath.sol\\\";\\n^-------------------------------^\\n\",\"message\":\"Source \\\"math/SafeMath.sol\\\" not found: File outside of allowed directories.\",\"severity\":\"error\",\"sourceLocation\":{\"end\":896,\"file\":\"BasicToken.sol\",\"start\":863},\"type\":\"ParserError\"}],\"sources\":{}}\n\n        > stdout:"
+  ]
 }

@@ -1,10 +1,16 @@
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
 """
 Provides the main entry for executing a QSP audit node.
 """
 import argparse
-import signal
-import traceback
-import sys
 
 from audit import QSPAuditNode
 from config import ConfigFactory
@@ -53,7 +59,8 @@ def main():
     try:
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
-        cfg = ConfigFactory.create_from_file(args.environment, args.config_yaml, args.password, args.auth_token)
+        cfg = ConfigFactory.create_from_file(args.environment, args.config_yaml, args.password,
+                                             args.auth_token)
 
         cfg.logger.info("Initializing QSP Audit Node")
         cfg.logger.debug("account: {0}".format(str(cfg.account)))

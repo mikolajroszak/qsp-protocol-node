@@ -1,18 +1,11 @@
-import math
-import operator
-import traceback
-from collections import deque
-
-import time
-
-import threading
-
-import functools
-import lru
-
-from eth_utils import to_tuple
-from web3.middleware.cache import _should_cache
-from web3.utils.caching import generate_cache_key
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
 
 import config
 import structlog
@@ -23,7 +16,6 @@ from audit import (
     Analyzer,
     Wrapper
 )
-from toolz import assoc
 from pathlib import Path
 from tempfile import gettempdir
 from streaming import CloudWatchProvider

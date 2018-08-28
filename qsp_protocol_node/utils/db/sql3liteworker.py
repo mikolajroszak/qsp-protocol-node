@@ -19,8 +19,8 @@
 # THE SOFTWARE.
 #
 # Author: Shawn Lee
-# Changes by Leonardo Passos (Quantstamp Inc): support aspw layer, plus transaction
-# control
+# Changes by Leonardo Passos (Quantstamp Inc): support aspw layer, plus transaction control
+# Changes by Martin Derka (Quantstamp Inc): Exception handling and rollbacks
 
 
 """Thread safe sqlite3 interface."""
