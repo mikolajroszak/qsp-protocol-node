@@ -329,13 +329,13 @@ class QSPAuditNode:
                 self.__logger.debug("Successfully updated min price to {0}.".format(
                     self.__config.min_price_in_qsp))
             except Timeout as e:
-                error_msg = "Update min price timed out. {0}, {1}. " + msg
+                error_msg = "Update min price timed out. " + msg + " {0}, {1}."
                 self.__logger.exception(error_msg.format(
                     str(transaction),
                     str(e)))
                 raise e
             except Exception as e:
-                error_msg = "Error occurred setting min price: {0}, {1}. " + msg
+                error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
                 self.__logger.exception(error_msg.format(
                     str(transaction),
                     str(e)))
