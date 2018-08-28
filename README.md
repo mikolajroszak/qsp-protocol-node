@@ -179,10 +179,11 @@ Currently, the process is mostly manual. To be automated in the future.
 ### Release
 1. `cd` to `deployment/local`
 1. Remove the `testnet` stage from config.yaml
-1. In `Makefile` make `mainnet` a default stage
-1. `zip -er qsp-release-v1.zip *`. Type in a password and record it for future use
-1. Upload the file to Google Drive
-1. Using Google Drive sharing features, share the file with a whitelisted node operator along with the password
+1. In `run.sh`, make `mainnet` a default stage
+1. Compress the contents into `qsp-protocol-v1.zip`
+1. Copy the license file from the root into the current folder
+1. Upload the file to Google Drive (`QSP Protocol V1 - Release Bundles`)
+1. Using Google Drive sharing features, share the file with a whitelisted node operator
 
 ## Development hierarchy
 
@@ -215,9 +216,7 @@ Currently, the process is mostly manual. To be automated in the future.
 
 1. Run `make test`. Fix any issues or update the tests if applicable
 
-1. Run the node [in regular mode](#run-in-regular-mode) and check if there are any issues
-
-1. In case of significant changes, run the node [in container mode](#run-in-container-mode) and check if there are any issues
+1. [Run the node](#run-locally) and check if there are any issues
 
 1. Open a pull request from your branch into `develop`
 
