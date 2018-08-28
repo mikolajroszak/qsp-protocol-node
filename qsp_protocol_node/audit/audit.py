@@ -153,6 +153,7 @@ class QSPAuditNode:
         gas_price = int(min(gas_price, self.__config.max_gas_price_wei))
         # set the gas_price in config
         self.__config.gas_price_wei = gas_price
+        self.__logger.debug("Current gas price: {0}".format(str(gas_price)))
 
     def run(self):
         """
@@ -339,7 +340,15 @@ class QSPAuditNode:
                     self.__config.min_price_in_qsp))
             except Timeout as e:
                 error_msg = "Update min price timed out. " + msg + " {0}, {1}."
-                self.__logger.exception(error_msg.format(
+                self.__logger.debug(error_msg.format(
+                    str(transaction),
+                    str(e)))
+                raise e
+            except DeduplicationException as e:
+                error_msg = "A transaction already exists for updating min price," \
+                    + " but has not yet been mined. " + msg \
+                    + " This may take several iterations. {0}, {1}."
+                self.__logger.debug(error_msg.format(
                     str(transaction),
                     str(e)))
                 raise e
