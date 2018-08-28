@@ -92,7 +92,7 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                     config.logger.error("Unknown error while sending transaction. {}".format(e))
                     raise e
             except Timeout as e:
-                # If we actually time out after the default 120 seconds when waiting for a receipt,
+                # If we time out after the default 120 seconds when waiting for a receipt,
                 # throw the exception to the calling thread.
                 # This is to avoid waiting indefinitely for an underpriced transaction.
                 raise e
