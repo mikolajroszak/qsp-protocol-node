@@ -320,9 +320,12 @@ class QSPAuditNode:
             transaction = self.__config.audit_contract.functions.setAuditNodePrice(
                                             min_price_in_mini_qsp)
             try:
-                send_signed_transaction(self.__config,
-                                        transaction,
-                                        wait_for_transaction_receipt=True)
+                tx_hash = send_signed_transaction(self.__config,
+                                                  transaction,
+                                                  wait_for_transaction_receipt=True)
+                # If the tx_hash is None, the transaction did not actually complete. Exit.
+                if not tx_hash:
+                    raise Exception("The min price transaction did not complete")
                 self.__logger.debug("Successfully updated min price to {0}.".format(
                     self.__config.min_price_in_qsp))
             except Timeout as e:
