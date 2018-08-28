@@ -1,5 +1,7 @@
 import unittest
 
+from web3.utils.threads import Timeout
+
 from utils.eth.tx import mk_args, send_signed_transaction, make_read_only_call
 from utils.eth.tx import DeduplicationException
 from unittest.mock import Mock
@@ -237,6 +239,23 @@ class TestFile(unittest.TestCase):
             send_signed_transaction(config, transaction, attempts=1)
             self.fail("An error was expected")
         except ValueError as e:
+            # the error is supposed to be re-raised because we are out of retries
+            self.assertTrue(e is error)
+
+        self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
+
+    def test_send_signed_transaction_local_timeout(self):
+        """
+        Tests the case when the transaction is signed locally (the private key is provided).
+        """
+        error = Timeout()
+        transaction = SimpleTransactionMock(error_to_throw=error)
+        private_key = "abc"
+        config = TestFile.get_config_mock(4000000000, 0, private_key)
+        try:
+            send_signed_transaction(config, transaction, attempts=1)
+            self.fail("An error was expected")
+        except Timeout as e:
             # the error is supposed to be re-raised because we are out of retries
             self.assertTrue(e is error)
 

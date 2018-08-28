@@ -15,6 +15,7 @@ import jsonschema
 
 from collections import deque
 from time import sleep
+from web3.utils.threads import Timeout
 
 from utils.io import (
     fetch_file,
@@ -301,6 +302,10 @@ class QSPAuditNode:
         """
         Checks that the minimum price in the audit node's configuration matches the smart contract.
         """
+        msg = "Make sure the account has enough Ether, " \
+            + "the Ethereum node is connected and synced, " \
+            + "and restart your node to try again."
+
         contract_price = make_read_only_call(
             self.__config,
             self.__config.audit_data_contract.functions.getMinAuditPrice(
@@ -312,9 +317,29 @@ class QSPAuditNode:
                 "Local min_price does not match smart contract for address {0}, updating.".format(
                     self.__config.account
                 ))
-            send_signed_transaction(self.__config,
-                                    self.__config.audit_contract.functions.setAuditNodePrice(
-                                        min_price_in_mini_qsp))
+            transaction = self.__config.audit_contract.functions.setAuditNodePrice(
+                                            min_price_in_mini_qsp)
+            try:
+                tx_hash = send_signed_transaction(self.__config,
+                                                  transaction,
+                                                  wait_for_transaction_receipt=True)
+                # If the tx_hash is None, the transaction did not actually complete. Exit.
+                if not tx_hash:
+                    raise Exception("The min price transaction did not complete")
+                self.__logger.debug("Successfully updated min price to {0}.".format(
+                    self.__config.min_price_in_qsp))
+            except Timeout as e:
+                error_msg = "Update min price timed out. " + msg + " {0}, {1}."
+                self.__logger.exception(error_msg.format(
+                    str(transaction),
+                    str(e)))
+                raise e
+            except Exception as e:
+                error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
+                self.__logger.exception(error_msg.format(
+                    str(transaction),
+                    str(e)))
+                raise e
 
     def __on_audit_assigned(self, evt):
         request_id = None
@@ -797,11 +822,17 @@ class QSPAuditNode:
         """
         Attempts to get a request from the audit request queue.
         """
-        tx_hash = send_signed_transaction(
-            self.__config,
-            self.__config.audit_contract.functions.getNextAuditRequest(),
-            wait_for_transaction_receipt=True)
-        self.__config.logger.debug("A getNextAuditRequest transaction has been sent")
+        transaction = self.__config.audit_contract.functions.getNextAuditRequest()
+        try:
+            tx_hash = send_signed_transaction(
+                self.__config,
+                transaction,
+                wait_for_transaction_receipt=True)
+            self.__config.logger.debug("A getNextAuditRequest transaction has been sent")
+        except Timeout as e:
+            self.__logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
+                str(transaction),
+                e))
         return tx_hash
 
     def __submit_report(self, request_id, audit_state, audit_hash):
