@@ -27,7 +27,7 @@ test:
 	PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
 
 clean:
-	find . | egrep "^.*/(__pycache__|.*\.pyc)$$" | xargs rm -rf
+	find . | egrep "^.*/(__pycache__|.*\.pyc|tests/coverage/htmlcov|tests/coverage/.coverage|app.tar)$$" | xargs rm -rf
 
 run-docker:
 	make clean
