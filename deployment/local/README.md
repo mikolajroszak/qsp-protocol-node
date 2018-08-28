@@ -40,7 +40,7 @@ relative to this README's folder.
 
 ### Get whitelisted
 
-Contact Quantstamp (the Protocol team) to whitelist your Ethereum address and generate AWS credentials for your account.
+Contact the Protocol team (protocol@quantstamp.com) to whitelist your Ethereum address and generate AWS credentials for your account.
 
 Record for next steps:
 - AWS access key id, e.g., `AKIAIOSFODNN7EXAMPLE`
