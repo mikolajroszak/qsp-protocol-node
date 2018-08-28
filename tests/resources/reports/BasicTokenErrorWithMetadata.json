@@ -1,22 +1,28 @@
 {
+  "timestamp": 1535474035,
+  "contract_uri": "file:///app/tests/helpers/../resources/BasicToken.sol",
+  "contract_hash": "8a4523c7bddfdbf453f7d8c9618860c8d8ec921d0bdf8ef09fdca9fe9637d9c7",
+  "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "request_id": 1,
+  "version": "0.1.1",
+  "audit_state": 5,
+  "status": "error",
   "analyzers_reports": [
     {
-      "end_time": 1530192777,
+      "status": "error",
       "errors": [
-        "root:/shared/BasicToken.sol:4:1: Error: Source \"/shared/ERC20Basic.sol\" not found: Unknown exception in read callback.\n",
+        "root:/shared/BasicToken.sol:13:1: Error: Source \"/shared/ERC20Basic.sol\" not found: Unknown exception in read callback.\n",
         "root:Solidity compilation failed.\n"
       ],
-      "hash": "d31e9bdf56eb07ca5c3c20b4aa2ebfe62b414f5df2b96c68aeaa181d224b070f",
-      "start_time": 1530192774,
-      "status": "error",
       "warnings": [
         "root:You are using evm version 1.8.2. The supported version is 1.7.3\n",
         "root:You are using solc version 0.4.21, The latest supported version is 0.4.19\n"
       ],
       "analyzer": {
         "name": "oyente",
-        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/BasicToken.sol",
         "version": "16c74d21e997cffe9a7480cb140ee6c05b7ba608e1b878df90f585b4710e41b0",
+        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/BasicToken.sol",
         "vulnerabilities_checked": [
           "integer_underflow",
           "integer_overflow",
@@ -27,19 +33,20 @@
           "parity_multisig_bug_2",
           "assertion_failure"
         ]
-      }
+      },
+      "hash": "f0ea2648396e7817803f586ce32cf8b8293fb75c0dfca7a5e8d9dafa54d6dda0",
+      "start_time": 1535474030,
+      "end_time": 1535474034
     },
     {
-      "end_time": 1530192777,
-      "errors": [
-        "{\"success\": false, \"error\": \"Solc experienced a fatal error (code 1).\\n\\n/shared/BasicToken.sol:4:1: Error: Source \\\"/shared/ERC20Basic.sol\\\" not found: File not found.\\nimport \\\"./ERC20Basic.sol\\\";\\n^------------------------^\\n/shared/BasicToken.sol:5:1: Error: Source \\\"math/SafeMath.sol\\\" not found: File not found.\\nimport \\\"../../math/SafeMath.sol\\\";\\n^-------------------------------^\\n\", \"issues\": []}\n"
-      ],
-      "hash": "052ae21750ce10c572e10baf80acb4feab63619dc15ff6dc4308fe626a784901",
-      "start_time": 1530192774,
       "status": "error",
+      "errors": [
+        "{\"success\": false, \"error\": \"Solc experienced a fatal error (code 1).\\n\\n/shared/BasicToken.sol:13:1: Error: Source \\\"/shared/ERC20Basic.sol\\\" not found: File not found.\\nimport \\\"./ERC20Basic.sol\\\";\\n^------------------------^\\n/shared/BasicToken.sol:14:1: Error: Source \\\"math/SafeMath.sol\\\" not found: File not found.\\nimport \\\"../../math/SafeMath.sol\\\";\\n^-------------------------------^\\n\", \"issues\": []}\n"
+      ],
       "analyzer": {
         "name": "mythril",
         "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
+        "command": "docker run -v \"\":/shared/ -i \"mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882\" -o json -x \"/shared/BasicToken.sol\"",
         "vulnerabilities_checked": [
           "call_data_forwarded",
           "dependence_on_environment_variable",
@@ -56,16 +63,10 @@
           "transaction_order_dependence",
           "unchecked_call_return_value"
         ]
-      }
+      },
+      "hash": "3a68039408a8cd4b0fa1debff3ae96e6194608f7f1c07a7011bd148f3760aed8",
+      "start_time": 1535474030,
+      "end_time": 1535474035
     }
-  ],
-  "audit_state": 5,
-  "status": "error",
-  "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-  "contract_hash": "2662ea846c0c6ca2bd32dfdb97ab20ae4108e7abade53962f146f634e9f4eba7",
-  "contract_uri": "file:///app/tests/helpers/../resources/BasicToken.sol",
-  "request_id": 1,
-  "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-  "timestamp": 1530192777,
-  "version": "0.1.1"
+  ]
 }

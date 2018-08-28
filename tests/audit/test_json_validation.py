@@ -1,3 +1,12 @@
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
 """
 Tests that JSON reports adhere to the analyzer_integration schema
 """
@@ -10,7 +19,7 @@ from jsonschema import (
     ValidationError
 )
 
-from utils.io import fetch_file, digest_file, load_json
+from utils.io import fetch_file, load_json
 from helpers.resource import (
     resource_uri,
     project_root,

@@ -3,3 +3,4 @@ deployment/aws-elasticbeanstalk
 .pytest_cache
 keystore/
 app.tar
+*.zip

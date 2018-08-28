@@ -1,14 +1,21 @@
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
 from utils.io import (
     dir_exists,
     file_exists,
     is_executable,
 )
 
-import calendar
 import json
 import os
 import subprocess
-import time
 
 
 class Wrapper:

@@ -1,3 +1,12 @@
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
 from web3.utils.threads import Timeout
 
 from .singleton_lock import SingletonLock
@@ -92,12 +101,10 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                     config.logger.error("Unknown error while sending transaction. {}".format(e))
                     raise e
             except Timeout as e:
-                # If we actually time out after the default 120 seconds,
-                # the thread should continue on as normal.
+                # If we time out after the default 120 seconds when waiting for a receipt,
+                # throw the exception to the calling thread.
                 # This is to avoid waiting indefinitely for an underpriced transaction.
-                config.logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
-                    str(transaction),
-                    e))
+                raise e
 
 
 class DeduplicationException(Exception):

@@ -1,3 +1,12 @@
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
 """
 Tests the flow of receiving audit requests and
 their flow within the QSP audit node
@@ -11,6 +20,8 @@ import ntpath
 from timeout_decorator import timeout
 from threading import Thread
 from time import sleep
+from web3.utils.threads import Timeout
+from unittest import mock
 
 from audit import QSPAuditNode
 from audit import ExecutionException
@@ -344,6 +355,45 @@ class TestQSPAuditNode(unittest.TestCase):
         )
         self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_check_and_update_min_price_timeout_exception(self):
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
+        with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
+             mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
+            try:
+                mocked_sign.side_effect = Timeout()
+                self.__audit_node._QSPAuditNode__check_and_update_min_price()
+                self.fail("An exception should have been thrown")
+            except Timeout as e:
+                pass
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_check_and_update_min_price_deduplication_exception(self):
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
+        with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
+             mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
+            try:
+                mocked_sign.side_effect = DeduplicationException()
+                self.__audit_node._QSPAuditNode__check_and_update_min_price()
+                self.fail("An exception should have been thrown")
+            except DeduplicationException as e:
+                pass
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_check_and_update_min_price_other_exception(self):
+        # The following causes an exception in the auditing node, but it should be caught and
+        # should not propagate
+        with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
+                mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
+            try:
+                mocked_sign.side_effect = ValueError()
+                self.__audit_node._QSPAuditNode__check_and_update_min_price()
+                self.fail("An exception should have been thrown")
+            except ValueError as e:
+                pass
 
     @timeout(20, timeout_exception=StopIteration)
     def test_on_audit_assigned(self):
