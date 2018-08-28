@@ -166,7 +166,7 @@ class QSPAuditNode:
 
         # First thing is to check whether the audit node is whitelisted or not.
         if not self.__check_whitelist(self.config.account):
-            msg = "Node address {0} is not whitelisted. Please contact Quantstamp"
+            msg = "Node address {0} is not whitelisted. Please contact Quantstamp: protocol@quantstamp.com"
             self.__logger.error(msg.format(self.config.account))
             raise NonWhitelistedNodeException(msg.format(self.config.account))
 
