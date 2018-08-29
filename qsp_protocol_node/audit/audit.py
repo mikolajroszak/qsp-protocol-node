@@ -841,6 +841,7 @@ class QSPAuditNode:
         Attempts to get a request from the audit request queue.
         """
         transaction = self.__config.audit_contract.functions.getNextAuditRequest()
+        tx_hash = None
         try:
             tx_hash = send_signed_transaction(
                 self.__config,
