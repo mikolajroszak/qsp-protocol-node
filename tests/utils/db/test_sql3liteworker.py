@@ -59,7 +59,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         Sets up fresh database for each test.
         """
         cfg = TestSqlLite3Worker.read_yaml_setup('test_config.yaml')
-        file = config_value(cfg, '/local/evt_db_path')
+        file = config_value(cfg, '/dev/evt_db_path')
         self.logger_mock = LoggerMock()
         self.worker = Sqlite3Worker(self.logger_mock, file)
         self.worker.execute_script(fetch_file(resource_uri('dropdb.sql')))

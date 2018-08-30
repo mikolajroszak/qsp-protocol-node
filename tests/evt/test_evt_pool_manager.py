@@ -21,7 +21,7 @@ class TestEvtPoolManager(unittest.TestCase):
 
     def setUp(self):
         config_file_uri = resource_uri("test_config.yaml")
-        self.config = ConfigFactory.create_from_file("local", config_file_uri,
+        self.config = ConfigFactory.create_from_file("dev", config_file_uri,
                                                      validate_contract_settings=False)
         # this is here to make sure that the database is recreated
         db_file = Path(self.config.evt_db_path)
