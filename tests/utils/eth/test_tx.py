@@ -75,7 +75,7 @@ class ReadOnlyMethodMock:
         self.value = value
         self.exception = exception
 
-    def call(self):
+    def call(self, *args):
         if self.exception is None:
             return self.value
         raise self.exception
