@@ -444,7 +444,7 @@ class TestConfig(unittest.TestCase):
 
     def test_load_config(self):
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file("local", config_file_uri, validate_contract_settings=False)
+        config = ConfigFactory.create_from_file("dev", config_file_uri, validate_contract_settings=False)
         self.assertIsNotNone(config.logger)
         self.assertIsNone(config.logging_streaming_provider)
         self.assertIsNotNone(config.eth_provider)
@@ -462,7 +462,7 @@ class TestConfig(unittest.TestCase):
     def test_inject_token_auth(self):
         auth_token = "abc123456"
         endpoint = "https://test.com/?token={0}".format(auth_token)
-        target_env = "local"
+        target_env = "dev"
 
         # Sets the dictionary to be returned by a call to load_config
         config_file = fetch_file(resource_uri("test_config_with_auth_token.yaml"))

@@ -352,7 +352,7 @@ class TestConfigUtil(unittest.TestCase):
         Tests that utils are able to load a configuration dictionary from yaml file.
         """
         uri = resource_uri("test_config.yaml")
-        config_dict = self.config_utils.load_config(uri, "local")
+        config_dict = self.config_utils.load_config(uri, "dev")
         self.assertIsNotNone(config_dict, "Configuration dictionary was not loaded")
         self.assertTrue("evt_db_path" in config_dict.keys(),
                         "Key evt_db_path is missing from loaded data")

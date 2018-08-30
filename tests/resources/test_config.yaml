@@ -7,7 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-local:
+dev:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
     #provider: !!str "TestRPCProvider"
