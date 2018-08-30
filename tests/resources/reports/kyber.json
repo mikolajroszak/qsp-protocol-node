@@ -5,14 +5,14 @@
   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "request_id": 1,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "audit_state": 5,
   "status": "error",
   "analyzers_reports": [
     {
       "analyzer": {
         "name": "oyente",
-        "version": "16c74d21e997cffe9a7480cb140ee6c05b7ba608e1b878df90f585b4710e41b0",
+        "version": "7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67",
         "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/kyber.sol",
         "vulnerabilities_checked": [
           "integer_underflow",

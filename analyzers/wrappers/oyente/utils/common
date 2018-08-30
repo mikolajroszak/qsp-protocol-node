@@ -7,7 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-readonly DOCKER_IMAGE="luongnguyen/oyente@sha256:16c74d21e997cffe9a7480cb140ee6c05b7ba608e1b878df90f585b4710e41b0"
+readonly DOCKER_IMAGE="mderka/5d76cccb744b@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67"
 
 declare -a ON_EXIT_HANDLERS
 

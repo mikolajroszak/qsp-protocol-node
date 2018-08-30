@@ -26,7 +26,7 @@ class TestAnalyzerOyente(unittest.TestCase):
     """
 
     @staticmethod
-    def __new_analyzer(storage_dir="/tmp", timeout_sec=60):
+    def __new_analyzer(storage_dir="/tmp", timeout_sec=120):
         logger = getLogger("test")
         oyente_wrapper = Wrapper(
             wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
