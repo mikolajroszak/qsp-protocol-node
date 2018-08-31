@@ -14,16 +14,16 @@ phases:
       - echo Logging in to Amazon ECR...
       - $(aws ecr get-login --region us-east-1 --no-include-email)
       - echo Pulling the latest image as a cache...
-      - docker pull $REPO_URL/$REF_NAME:develop || true
+      - docker pull $REPO_URL/$REF_NAME:$REF_TAG || true
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
       - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
-      - docker build --cache-from $REPO_URL/$REF_NAME:develop --tag $REPO_URL/$REF_NAME:develop --tag $REPO_URL/$REF_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+      - docker build --cache-from $REPO_URL/$REF_NAME:$REF_TAG --tag $REPO_URL/$REF_NAME:$REF_TAG --tag $REPO_URL/$REF_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION .
       - echo Pushing the Docker image...
       - docker push $REPO_URL/$REF_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - docker push $REPO_URL/$REF_NAME:develop
+      - docker push $REPO_URL/$REF_NAME:$REF_TAG
       - sed -i -e "s@{{image}}@$REPO_URL/$REF_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION@g" ./deployment/aws-elasticbeanstalk/app/Dockerrun.aws.json
   post_build:
     commands:
