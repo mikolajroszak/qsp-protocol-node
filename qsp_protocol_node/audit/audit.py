@@ -926,13 +926,13 @@ class QSPAuditNode:
                 requestId=request_id)
             errors += [str(error)]
         except KeyError as error:
-            self.__logger.debug(
+            self.__logger.error(
                 "KeyError when calling analyzers: {0}".format(str(error)),
                 requestId=request_id)
             # This is thrown because a bug in our own code. We only log, but do not record the error
             # so that the analyzers are still executed.
         except Exception as error:
-            self.__logger.debug(
+            self.__logger.error(
                 "Error before calling analyzers: {0}".format(str(error)),
                 requestId=request_id)
             errors += [str(error)]
