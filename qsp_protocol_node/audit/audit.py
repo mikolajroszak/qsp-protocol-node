@@ -909,7 +909,7 @@ class QSPAuditNode:
                                        'sources': {
                                            file_name: {'content': data}}}
                                       )
-            for err in output['errors']:
+            for err in output.get('errors', []):
                 if err["severity"] == "warning":
                     warnings += [err['formattedMessage'].replace(temp_filename, original_filename)]
                 else:
