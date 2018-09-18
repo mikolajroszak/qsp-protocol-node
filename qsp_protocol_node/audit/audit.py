@@ -14,7 +14,6 @@ import calendar
 import copy
 import json
 import os
-from statistics import median
 
 import threading
 import time
@@ -22,7 +21,6 @@ import traceback
 import urllib.parse
 import jsonschema
 
-from collections import deque
 from time import sleep
 from web3.utils.threads import Timeout
 
@@ -104,8 +102,15 @@ class QSPAuditNode:
 
                     sleep(self.__config.evt_polling)
             except Exception as error:
-                self.__logger.exception(
-                    "Error in the audit event thread {0}: {1}".format(evt_name, str(error)))
+                if hasattr(error, 'message') and error.message == 'filter not found':
+                    # This is not actionable so it should be silenced from logs.
+                    self.__logger.info("Filter not found in the audit event thread {0}: {1}".format(
+                        evt_name, str(error))
+                    )
+                else:
+                    self.__logger.exception("Error in the audit event thread {0}: {1}".format(
+                        evt_name, str(error))
+                    )
                 raise error
 
         evt_thread = Thread(target=exec, name="{0} thread".format(evt_name))
@@ -904,7 +909,7 @@ class QSPAuditNode:
                                        'sources': {
                                            file_name: {'content': data}}}
                                       )
-            for err in output['errors']:
+            for err in output.get('errors', []):
                 if err["severity"] == "warning":
                     warnings += [err['formattedMessage'].replace(temp_filename, original_filename)]
                 else:
@@ -921,13 +926,13 @@ class QSPAuditNode:
                 requestId=request_id)
             errors += [str(error)]
         except KeyError as error:
-            self.__logger.debug(
+            self.__logger.error(
                 "KeyError when calling analyzers: {0}".format(str(error)),
                 requestId=request_id)
             # This is thrown because a bug in our own code. We only log, but do not record the error
             # so that the analyzers are still executed.
         except Exception as error:
-            self.__logger.debug(
+            self.__logger.error(
                 "Error before calling analyzers: {0}".format(str(error)),
                 requestId=request_id)
             errors += [str(error)]
