@@ -122,6 +122,12 @@
                             "description": "List of errors encountered when producing the report"
                         }
                     },
+                    "trace": {
+                        "array": {
+                            "type": "string",
+                            "description": "List of tracing information about the analyzer execution"
+                        }
+                    },
                     "warnings": {
                         "array": {
                             "type": "string",
