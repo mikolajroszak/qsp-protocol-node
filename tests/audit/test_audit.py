@@ -241,59 +241,79 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node.stop()
         TestQSPAuditNode.__clean_up_pool_db(self.__config.evt_db_path)
 
-    # TODO(mderka,lpassos): QSP-601 This test test was pronounced unsafe and should be replaced
-    # @timeout(5, timeout_exception=StopIteration)
-    # def test_timeout_stale_evets(self):
-    #     class Eth:
-    #         def __init__(self):
-    #             self.blockNumber = 100
-    #
-    #     self.__audit_node._QSPAuditNode__config.web3_client.eth = Eth()
-    #     self.__audit_node._QSPAuditNode__config._Config__submission_timeout_limit_blocks = 10
-    #     self.__audit_node._QSPAuditNode__config._Config__block_discard_on_restart = 2
-    #     # certainly times out
-    #     evt_first = {'request_id': 1,
-    #                  'requestor': 'x',
-    #                  'contract_uri': 'x',
-    #                  'evt_name': 'x',
-    #                  'block_nbr': 10,
-    #                  'status_info': 'x',
-    #                  'price': 12}
-    #     # last block to time out
-    #     evt_second = {'request_id': 17,
-    #                   'requestor': 'x',
-    #                   'contract_uri': 'x',
-    #                   'evt_name': 'x',
-    #                   'block_nbr': 90 + 2,
-    #                   'status_info': 'x',
-    #                   'price': 12}
-    #     # first block not to time out
-    #     evt_third = {'request_id': 18,
-    #                  'requestor': 'x',
-    #                  'contract_uri': 'x',
-    #                  'evt_name': 'x',
-    #                  'block_nbr': 91 + 2,
-    #                  'status_info': 'x',
-    #                  'price': 12}
-    #     self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_first)
-    #     self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(
-    #         evt_second
-    #     )
-    #     self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_third)
-    #     self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker.execute(
-    #         "update audit_evt set fk_status = 'TS' where request_id = 1"
-    #     )
-    #     self.__audit_node._QSPAuditNode__timeout_stale_requests()
-    #     fst = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
-    #         evt_first['request_id'])
-    #     snd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
-    #         evt_second['request_id'])
-    #     thrd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
-    #         evt_third['request_id'])
-    #     self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
-    #     self.assertEqual(fst['fk_status'], 'ER')
-    #     self.assertEqual(snd['fk_status'], 'ER')
-    #     self.assertEqual(thrd['fk_status'], 'AS')
+    @timeout(8, timeout_exception=StopIteration)
+    def test_timeout_stale_evets(self):
+        class Web3Mock:
+            def __init__(self, eth):
+                self.eth = eth
+
+        class EthMock:
+            def __init__(self):
+                self.blockNumber = 100
+                # gas price is needed for the thread that makes computations it in the background
+                # but it is irrelevant for the purposes of this test
+                self.gasPrice = 10
+
+        class ManagerMock:
+            def close(self):
+                pass
+
+        # The following stops the entire audit node except for the event pool manager that needs to
+        # remain open in order to handle database connection and database requests. The manager is
+        # temporarily replaced by a mock object so that the close method of the audit node can stop
+        # and merge all the threads, and then placed back. The manager is closed properly at the end
+        # of the test before verifying the results.
+        manager = self.__audit_node._QSPAuditNode__config.event_pool_manager
+        self.__audit_node._QSPAuditNode__config._Config__event_pool_manager = ManagerMock()
+        self.__audit_node.stop()
+        self.__audit_node._QSPAuditNode__config._Config__event_pool_manager = manager
+
+        self.__audit_node._QSPAuditNode__config._Config__web3_client = Web3Mock(EthMock())
+        self.__audit_node._QSPAuditNode__config._Config__submission_timeout_limit_blocks = 10
+        self.__audit_node._QSPAuditNode__config._Config__block_discard_on_restart = 2
+        # certainly times out
+        evt_first = {'request_id': 1,
+                     'requestor': 'x',
+                     'contract_uri': 'x',
+                     'evt_name': 'x',
+                     'block_nbr': 10,
+                     'status_info': 'x',
+                     'price': 12}
+        # last block to time out
+        evt_second = {'request_id': 17,
+                      'requestor': 'x',
+                      'contract_uri': 'x',
+                      'evt_name': 'x',
+                      'block_nbr': 90 + 2,
+                      'status_info': 'x',
+                      'price': 12}
+        # first block not to time out
+        evt_third = {'request_id': 18,
+                     'requestor': 'x',
+                     'contract_uri': 'x',
+                     'evt_name': 'x',
+                     'block_nbr': 91 + 2,
+                     'status_info': 'x',
+                     'price': 12}
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_first)
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(
+            evt_second
+        )
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_third)
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker.execute(
+            "update audit_evt set fk_status = 'TS' where request_id = 1"
+        )
+        self.__audit_node._QSPAuditNode__timeout_stale_requests()
+        fst = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+            evt_first['request_id'])
+        snd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+            evt_second['request_id'])
+        thrd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+            evt_third['request_id'])
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
+        self.assertEqual(fst['fk_status'], 'ER')
+        self.assertEqual(snd['fk_status'], 'ER')
+        self.assertEqual(thrd['fk_status'], 'AS')
 
     @timeout(10, timeout_exception=StopIteration)
     def test_check_then_do_audit_request_exceptions(self):
