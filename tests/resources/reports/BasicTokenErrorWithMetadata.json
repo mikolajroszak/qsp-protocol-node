@@ -42,6 +42,15 @@
       "errors": [
         "{\"success\": false, \"error\": \"Solc experienced a fatal error (code 1).\\n\\n/shared/BasicToken.sol:13:1: Error: Source \\\"/shared/ERC20Basic.sol\\\" not found: File not found.\\nimport \\\"./ERC20Basic.sol\\\";\\n^------------------------^\\n/shared/BasicToken.sol:14:1: Error: Source \\\"math/SafeMath.sol\\\" not found: File not found.\\nimport \\\"../../math/SafeMath.sol\\\";\\n^-------------------------------^\\n\", \"issues\": []}\n"
       ],
+      "trace": [
+        ">> Wrapper setup finished\n",
+        ">> once script was called\n",
+        ">> Once step finished execution\n",
+        ">> pre_run script was executed\n",
+        ">> Contracts were copied\n",
+        ">> Pre-run step finished execution\n",
+        ">> Docker finished\n"
+      ],
       "analyzer": {
         "name": "mythril",
         "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",

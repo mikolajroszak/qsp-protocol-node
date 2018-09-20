@@ -74,7 +74,8 @@ class TestAnalyzerMythril(unittest.TestCase):
         report = analyzer.check(no_file, request_id, no_file)
 
         self.assertTrue(report['status'], 'error')
-        self.assertTrue(1, len(report['errors']))
+        self.assertEquals(1, len(report['errors']))
+        self.assertEquals(4, len(report['trace']))
         self.assertTrue("No such file or directory" in report['errors'][0])
 
     def test_old_pragma(self):
@@ -87,9 +88,9 @@ class TestAnalyzerMythril(unittest.TestCase):
         analyzer = TestAnalyzerMythril.__new_analyzer()
         request_id = 15
         report = analyzer.check(old_contract, request_id, "DAOBugOld.sol")
-
         self.assertTrue(report['status'], 'error')
-        self.assertTrue(1, len(report['errors']))
+        self.assertEquals(1, len(report['errors']))
+        self.assertEquals(7, len(report['trace']))
         self.assertTrue("Error: Source file requires different compiler version" in report['errors'][0])
 
     def test_old_pragma_with_caret(self):
