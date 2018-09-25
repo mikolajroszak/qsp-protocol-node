@@ -8,10 +8,12 @@
 ####################################################################################################
 
 import unittest
+import apsw
 
 from config import ConfigFactory
 from evt import EventPoolManager
 from helpers.resource import resource_uri
+from helpers.logger_mock import LoggerMock
 from pathlib import Path
 from utils.io import fetch_file
 
@@ -198,6 +200,35 @@ class TestEvtPoolManager(unittest.TestCase):
         except TypeError:
             # expected
             pass
+
+    def test_insert_error_handler(self):
+        error = apsw.ConstraintError("audit_evt.request_id")
+        wrong_error = apsw.ConstraintError()
+        query = "iNserT something audit_evt.request_id"
+        wrong_query = "select"
+        values = ()
+
+        class Sqlite3WorkerMock:
+
+            def __init__(self):
+                self.logger = LoggerMock()
+
+        worker_mock = Sqlite3WorkerMock()
+        EventPoolManager.insert_error_handler(worker_mock, query, values=values, err=error)
+        self.assertTrue(worker_mock.logger.logged_warning)
+        self.assertFalse(worker_mock.logger.logged_error)
+
+        # misses proper error message
+        worker_mock = Sqlite3WorkerMock()
+        EventPoolManager.insert_error_handler(worker_mock, query, values=values, err=wrong_error)
+        self.assertFalse(worker_mock.logger.logged_warning)
+        self.assertTrue(worker_mock.logger.logged_error)
+
+        # wrong query
+        worker_mock = Sqlite3WorkerMock()
+        EventPoolManager.insert_error_handler(worker_mock, wrong_query, values=values, err=error)
+        self.assertFalse(worker_mock.logger.logged_warning)
+        self.assertTrue(worker_mock.logger.logged_error)
 
 
 if __name__ == '__main__':

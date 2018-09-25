@@ -15,38 +15,12 @@ import yaml
 import apsw
 
 from config import config_value
+from evt.evt_pool_manager import EventPoolManager
 from helpers.resource import resource_uri
+from helpers.logger_mock import LoggerMock
 from timeout_decorator import timeout
 from utils.db import Sqlite3Worker
 from utils.io import fetch_file
-
-
-class LoggerMock:
-
-    def __init__(self):
-        self.logged_error = False
-        self.logged_warning = False
-        self.err = None
-
-    def output(self, msg, query, values, err):
-        print(msg)
-        print(query)
-        print(values)
-        print(err)
-        if isinstance(err, apsw.BusyError):
-            print("NOTE: If the error appears to be 'BusyError', your test failed mid-execution. "
-                  "You might need to delete the test database file defined in test_config.yaml "
-                  "(currently set to /tmp/evts.test) in order to resume test execution.")
-
-    def error(self, msg, query, values, err):
-        self.err = err
-        self.logged_error = True
-        self.output(msg, query, values, err)
-
-    def warning(self, msg, query, values, err):
-        self.err = err
-        self.logged_warning = True
-        self.output(msg, query, values, err)
 
 
 class TestSqlLite3Worker(unittest.TestCase):
@@ -122,12 +96,14 @@ class TestSqlLite3Worker(unittest.TestCase):
         self.assertFalse(self.logger_mock.logged_warning)
         self.worker.execute_script(
             fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
-            values=(1, 'x', 'x', 'x', 10, 'x', 12)
+            values=(1, 'x', 'x', 'x', 10, 'x', 12),
+            error_handler=EventPoolManager.insert_error_handler
         )
         self.assertFalse(self.logger_mock.logged_warning)
         self.worker.execute_script(
             fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
-            values=(1, 'x', 'x', 'x', 10, 'x', 12)
+            values=(1, 'x', 'x', 'x', 10, 'x', 12),
+            error_handler=EventPoolManager.insert_error_handler
         )
         # ensure that threads were merged before assertions
         self.worker.close()

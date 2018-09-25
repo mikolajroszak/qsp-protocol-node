@@ -8,6 +8,7 @@
 ####################################################################################################
 
 import os
+import apsw
 
 from pathlib import Path
 from utils.db import Sqlite3Worker
@@ -51,9 +52,34 @@ class EventPoolManager:
         )
 
     @staticmethod
-    def __exec_sql(worker, query, values=()):
+    def __exec_sql(worker, query, values=(), error_handler=None):
         query_file = EventPoolManager.__query_path(query)
-        return worker.execute_script(query_file, values)
+        return worker.execute_script(query_file, values, error_handler)
+
+    @staticmethod
+    def insert_error_handler(sql_worker, query, values, err):
+        """
+        Handles error coming from a request insert to the database. It logs a warning if the
+        request already exists (based on the query and raised exception) and an error in every other
+        case
+        """
+        if query.lower().strip().startswith("insert") \
+                and isinstance(err, apsw.ConstraintError) \
+                and "audit_evt.request_id" in str(err):
+            # this error was caused by an already existing event
+            sql_worker.logger.warning(
+                "Audit request already exists: %s: %s: %s",
+                query,
+                values,
+                err,
+            )
+        else:
+            sql_worker.logger.error(
+                "Query returned error: %s: %s: %s",
+                query,
+                values,
+                err,
+            )
 
     def __init__(self, db_path, logger):
         # Gets a connection with the SQL3Lite server
@@ -131,7 +157,8 @@ class EventPoolManager:
                 encoded_evt['block_nbr'],
                 encoded_evt['status_info'],
                 encoded_evt['price'],
-            )
+            ),
+            error_handler=EventPoolManager.insert_error_handler
         )
 
     def __process_evt_with_status(self, query_name, fct, values=(), fct_kwargs=None):
@@ -174,12 +201,12 @@ class EventPoolManager:
             self.__sqlworker,
             'set_evt_to_be_submitted',
             (encoded_evt['status_info'],
-                encoded_evt['tx_hash'],
-                encoded_evt['audit_uri'],
-                encoded_evt['audit_hash'],
-                encoded_evt['audit_state'],
-                encoded_evt['request_id'],
-            ),
+             encoded_evt['tx_hash'],
+             encoded_evt['audit_uri'],
+             encoded_evt['audit_hash'],
+             encoded_evt['audit_state'],
+             encoded_evt['request_id'],
+             ),
         )
 
     def set_evt_to_submitted(self, evt):
@@ -188,12 +215,12 @@ class EventPoolManager:
             self.__sqlworker,
             'set_evt_to_submitted',
             (encoded_evt['tx_hash'],
-                encoded_evt['status_info'],
-                encoded_evt['audit_uri'],
-                encoded_evt['audit_hash'],
-                encoded_evt['audit_state'],
-                encoded_evt['request_id'],
-            ),
+             encoded_evt['status_info'],
+             encoded_evt['audit_uri'],
+             encoded_evt['audit_hash'],
+             encoded_evt['audit_state'],
+             encoded_evt['request_id'],
+             ),
         )
 
     def set_evt_to_done(self, evt):

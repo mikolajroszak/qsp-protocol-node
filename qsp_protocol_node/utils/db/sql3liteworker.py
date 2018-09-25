@@ -20,7 +20,8 @@
 #
 # Author: Shawn Lee
 # Changes by Leonardo Passos (Quantstamp Inc): support aspw layer, plus transaction control
-# Changes by Martin Derka (Quantstamp Inc): Exception handling and rollbacks
+# Changes by Martin Derka (Quantstamp Inc): Exception handling and rollbacks, support of custom
+#     error handlers
 
 
 """Thread safe sqlite3 interface."""
@@ -102,11 +103,11 @@ class Sqlite3Worker(threading.Thread):
         """
         # logger.debug("run: Thread started")
         execute_count = 0
-        for token, query, values in iter(self.sql_queue.get, None):
+        for token, query, values, error_handler in iter(self.sql_queue.get, None):
             # logger.debug("sql_queue: %s", self.sql_queue.qsize())
             if token != self.exit_token:
                 # logger.debug("run: %s", query)
-                self.run_query(token, query, values)
+                self.run_query(token, query, values, error_handler)
                 execute_count += 1
 
                 if self.sql_queue.empty() or execute_count == self.max_queue_size:
@@ -119,13 +120,14 @@ class Sqlite3Worker(threading.Thread):
                 self.thread_running = False
                 return
 
-    def run_query(self, token, query, values):
+    def run_query(self, token, query, values, error_handler):
         """Run a query.
 
         Args:
             token: A uuid object of the query you want returned.
             query: A sql query with ? placeholders for values.
             values: A tuple of values to replace "?" in query.
+            error_handler: A function to handle error. None executes the default.
         """
         if query.lower().strip().startswith("select"):
             try:
@@ -135,45 +137,32 @@ class Sqlite3Worker(threading.Thread):
                 # Put the error into the output queue since a response
                 # is required.
                 self.results[token] = ("Query returned error: %s: %s: %s" % (query, values, err))
-                self.logger.error("Query returned error: %s: %s: %s", query, values, err)
+                if error_handler is None:
+                    self.logger.error("Query returned error: %s: %s: %s", query, values, err)
+                else:
+                    error_handler(self, query, values, err)
         else:
             try:
                 self.sqlite3_cursor.execute("begin")
                 self.sqlite3_cursor.execute(query, values)
                 self.sqlite3_cursor.execute("commit")
             except apsw.Error as err:
+                self.results[token] = err
                 self.sqlite3_cursor.execute("rollback")
-                if query.lower().strip().startswith("insert") \
-                        and isinstance(err, apsw.ConstraintError) \
-                        and "audit_evt.request_id" in str(err):
-
-                    # this error was caused by an already existing event
-
-                    # TODO(lpassos): refactor this in such a way that
-                    # the warning is handled outside the sql3lite.
-                    # This error is very specific; sql3liteworker should be
-                    # kept as general as possible to promote reuse.
-                    # See https://quantstamp.atlassian.net/browse/QSP-551
-                    # for further reference
-
-                    self.logger.warning(
-                        "Audit request already exists: %s: %s: %s",
-                        query,
-                        values,
-                        err,
-                    )
-                else:
+                if error_handler is None:
                     self.logger.error(
                         "Query returned error: %s: %s: %s",
                         query,
                         values,
                         err,
                     )
+                else:
+                    error_handler(self, query, values, err)
 
     def close(self):
         """Close down the thread and close the sqlite3 database file."""
         self.exit_set = True
-        self.sql_queue.put((self.exit_token, "", ""), timeout=5)
+        self.sql_queue.put((self.exit_token, "", "", None), timeout=5)
         # Sleep and check that the thread is done before returning.
         while self.thread_running:
             time.sleep(.01)  # Don't kill the CPU waiting.
@@ -206,12 +195,13 @@ class Sqlite3Worker(threading.Thread):
             if delay < 8:
                 delay += delay
 
-    def execute(self, query, values=None):
+    def execute(self, query, values=None, error_handler=None):
         """Execute a query.
 
         Args:
             query: The sql string using ? for placeholders of dynamic values.
             values: A tuple of values to be replaced into the ? of the query.
+            error_handler: An optional custom handler to deal with a possible error.
 
         Returns:
             If it's a select query it will return the results of the query.
@@ -226,15 +216,15 @@ class Sqlite3Worker(threading.Thread):
         # If it's a select we queue it up with a token to mark the results
         # into the output queue so we know what results are ours.
         if query.lower().strip().startswith("select"):
-            self.sql_queue.put((token, query, values), timeout=5)
+            self.sql_queue.put((token, query, values, error_handler), timeout=5)
             return self.query_results(token)
         else:
-            self.sql_queue.put((token, query, values), timeout=5)
+            self.sql_queue.put((token, query, values, error_handler), timeout=5)
 
         return None
 
-    def execute_script(self, query_file, values=()):
+    def execute_script(self, query_file, values=(), error_handler=None):
         with open(query_file) as query_stream:
             query = query_stream.read().strip()
 
-        return self.execute(query, values)
+        return self.execute(query, values, error_handler)
