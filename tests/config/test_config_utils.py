@@ -45,7 +45,7 @@ class AuditDataContractStub:
         def __init__(self, value):
             self.value = value
 
-        def call(self):
+        def call(self, data):
             return self.value
 
     class Functions:
@@ -71,6 +71,7 @@ class ConfigStubForCheckSettings:
                  max_gas_price=100,
                  default_gas_price=50,
                  gas_price_strategy=None):
+        self.account = "0x0"
         self.start_n_blocks_in_the_past = start_n_blocks
         self.submission_timeout_limit_blocks = submission_timeout
         self.contract_audit_timeout_in_blocks = audit_timeout

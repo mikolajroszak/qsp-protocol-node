@@ -50,6 +50,7 @@ class TestQSPAuditNode(unittest.TestCase):
     __AVAILABLE_AUDIT__STATE_ERROR = 0
     __REQUEST_ID = 1
     __PRICE = 100
+    __SLEEP_INTERVAL = 0.01
     __logger = None
 
     @classmethod
@@ -228,8 +229,8 @@ class TestQSPAuditNode(unittest.TestCase):
         max_initialization_seconds = 5
         num_checks = 0
         while not self.__audit_node.audit_node_initialized:
-            sleep(1)
-            num_checks += 1
+            sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
+            num_checks += 100
             if num_checks == max_initialization_seconds:
                 self.__audit_node.stop()
                 raise Exception("Node threads could not be initialized")
@@ -377,40 +378,40 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
 
     @timeout(10, timeout_exception=StopIteration)
-    def test_check_and_update_min_price_timeout_exception(self):
+    def test_update_min_price_timeout_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
         with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
              mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = Timeout()
-                self.__audit_node._QSPAuditNode__check_and_update_min_price()
+                self.__audit_node._QSPAuditNode__update_min_price()
                 self.fail("An exception should have been thrown")
             except Timeout as e:
                 pass
 
     @timeout(10, timeout_exception=StopIteration)
-    def test_check_and_update_min_price_deduplication_exception(self):
+    def test_update_min_price_deduplication_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
         with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
              mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = DeduplicationException()
-                self.__audit_node._QSPAuditNode__check_and_update_min_price()
+                self.__audit_node._QSPAuditNode__update_min_price()
                 self.fail("An exception should have been thrown")
             except DeduplicationException as e:
                 pass
 
     @timeout(10, timeout_exception=StopIteration)
-    def test_check_and_update_min_price_other_exception(self):
+    def test_update_min_price_other_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
         with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
                 mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = ValueError()
-                self.__audit_node._QSPAuditNode__check_and_update_min_price()
+                self.__audit_node._QSPAuditNode__update_min_price()
                 self.fail("An exception should have been thrown")
             except ValueError as e:
                 pass
@@ -457,7 +458,7 @@ class TestQSPAuditNode(unittest.TestCase):
                     "update audit_evt set fk_status = 'AS' where request_id = 1")
                 break
             else:
-                sleep(1)
+                sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
         auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
         evt = {'args': {'auditor': auditor_id, 'requestId': 1}}
         self.__audit_node._QSPAuditNode__on_report_submitted(evt)
@@ -769,10 +770,18 @@ class TestQSPAuditNode(unittest.TestCase):
         Tests that the node updates the min_price on the blockchain if the config value changes
         """
         self.__audit_node._QSPAuditNode__config._Config__min_price_in_qsp = 1
-        self.__audit_node._QSPAuditNode__check_and_update_min_price()
-        events = self.__evt_wait_loop(self.__setAuditNodePrice_filter)
-        self.assertEqual(events[0]['args']['price'], 1000000000000000000)
-        self.assertEqual(events[0]['event'], 'setAuditNodePrice_called')
+        # this makes an one-off call
+        self.__audit_node._QSPAuditNode__update_min_price()
+        success = False
+        while not success:
+            events = self.__evt_wait_loop(self.__setAuditNodePrice_filter)
+            for event in events:
+                self.assertEqual(event['event'], 'setAuditNodePrice_called')
+                if event['args']['price'] == 10 ** 18:
+                    success = True
+                    break
+            if not success:
+                sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
 
     @timeout(10, timeout_exception=StopIteration)
     def test_not_whitelisted(self):
@@ -855,7 +864,7 @@ class TestQSPAuditNode(unittest.TestCase):
             if row != {} and row['request_id'] == request_id:
                 break
             else:
-                sleep(1)
+                sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
         self.assertEqual(row['evt_name'], "LogAuditAssigned")
         # FIXME: add range validation
         self.assertTrue(int(row['block_nbr']) > 0)
@@ -889,7 +898,7 @@ class TestQSPAuditNode(unittest.TestCase):
             if row != {} and row['request_id'] == request_id:
                 break
             else:
-                sleep(1)
+                sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
 
         audit_uri = row['audit_uri']
         audit_file = fetch_file(audit_uri)
@@ -900,13 +909,10 @@ class TestQSPAuditNode(unittest.TestCase):
             self.assertTrue(name in executed_analyzers)
 
     def __evt_wait_loop(self, current_filter):
-        wait = True
-        while wait:
+        events = current_filter.get_new_entries()
+        while not bool(events):
+            sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
             events = current_filter.get_new_entries()
-            for evt in events:
-                wait = False
-                break
-            sleep(1)
         return events
 
     def __request_audit(self, contract_uri, price):

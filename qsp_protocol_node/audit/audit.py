@@ -60,6 +60,13 @@ class QSPAuditNode:
     __AUDIT_STATUS_ERROR = "error"
     __AUDIT_STATUS_SUCCESS = "success"
 
+    # determines how long threads will sleep between waking up to react to events
+    __THREAD_SLEEP_TIME = 0.1
+
+    # The frequency of updating min price. This is not configurable as dashboard logic depends
+    # on this frequency.
+    __MIN_PRICE_BEAT = 24 * 60 * 60
+
     def __init__(self, config):
         """
         Builds a QSPAuditNode object from the given input parameters.
@@ -93,14 +100,25 @@ class QSPAuditNode:
         #    processing new events. Old ones necessarily cause the underlying
         #    thread to complete execution and eventually dying
 
+    def __run_with_interval(self, body_function, polling_interval, start_with_call=True):
+        last_called = 0
+        if not start_with_call:
+            last_called = time.time()
+        while self.__exec:
+            now = time.time()
+            if now - last_called > polling_interval:
+                body_function()
+                last_called = now
+            sleep(QSPAuditNode.__THREAD_SLEEP_TIME)
+
     def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler):
+        def process_new_events():
+            for evt in evt_filter.get_new_entries():
+                evt_handler(evt)
+
         def exec():
             try:
-                while self.__exec:
-                    for evt in evt_filter.get_new_entries():
-                        evt_handler(evt)
-
-                    sleep(self.__config.evt_polling)
+                self.__run_with_interval(process_new_events, self.__config.evt_polling)
             except Exception as error:
                 if hasattr(error, 'message') and error.message == 'filter not found':
                     # This is not actionable so it should be silenced from logs.
@@ -124,17 +142,21 @@ class QSPAuditNode:
         """
         def exec():
             current_block = 0
+            last_called = 0
             while self.__exec:
-                sleep(self.__config.block_mined_polling)
-                if current_block < self.__config.web3_client.eth.blockNumber:
-                    current_block = self.__config.web3_client.eth.blockNumber
-                    self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
-                    try:
-                        handler()
-                    except Exception as e:
-                        self.config.logger.exception(
-                            "Error in block mined thread handler: {0}".format(str(e)))
-                        raise e
+                now = time.time()
+                if now - last_called > self.__config.block_mined_polling:
+                    last_called = now
+                    if current_block < self.__config.web3_client.eth.blockNumber:
+                        current_block = self.__config.web3_client.eth.blockNumber
+                        self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
+                        try:
+                            handler()
+                        except Exception as e:
+                            self.config.logger.exception(
+                                "Error in block mined thread handler: {0}".format(str(e)))
+                            raise e
+                sleep(QSPAuditNode.__THREAD_SLEEP_TIME)
 
         new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
         new_block_monitor_thread.start()
@@ -178,8 +200,9 @@ class QSPAuditNode:
         # Initialize the gas price
         self.__compute_gas_price()
 
-        # Ensure that the min_price in the smart contract is up to date
-        self.__check_and_update_min_price()
+        # Updates min price and starts a thread that will be doing so every 24 hours
+        self.__update_min_price()
+        self.__run_update_min_price_thread()
 
         if self.__config.metric_collection_is_enabled:
             self.__metric_collector = MetricCollector(self.__config)
@@ -237,7 +260,9 @@ class QSPAuditNode:
 
         health_check_interval_sec = 2
         thread_lost = False
-        while self.__exec:
+        last_called = 0
+
+        def check_all_threads():
             # Checking if all threads are still alive
             for thread in self.__internal_threads:
                 if not thread.is_alive():
@@ -246,7 +271,8 @@ class QSPAuditNode:
             if thread_lost:
                 raise Exception(
                     "Cannot proceed execution. At least one internal thread is not alive")
-            sleep(health_check_interval_sec)
+
+        self.__run_with_interval(check_all_threads, health_check_interval_sec)
 
     def __timeout_stale_requests(self):
         first_valid_block = self.__config.web3_client.eth.blockNumber - \
@@ -313,56 +339,64 @@ class QSPAuditNode:
                 "Error when checking whitelist {0}".format(str(error))
             )
 
-    def __check_and_update_min_price(self):
+    def __run_update_min_price_thread(self):
+        """
+        Updates min price every 24 hours.
+        """
+        def exec():
+            self.__run_with_interval(self.__update_min_price, QSPAuditNode.__MIN_PRICE_BEAT,
+                                     start_with_call=False)
+
+        min_price_thread = Thread(target=exec, name="update min price thread")
+        self.__internal_threads.append(min_price_thread)
+        min_price_thread.start()
+
+        return min_price_thread
+
+    def __update_min_price(self):
         """
         Checks that the minimum price in the audit node's configuration matches the smart contract.
         """
         msg = "Make sure the account has enough Ether, " \
-            + "the Ethereum node is connected and synced, " \
-            + "and restart your node to try again."
+              + "the Ethereum node is connected and synced, " \
+              + "and restart your node to try again."
 
-        contract_price = make_read_only_call(
-            self.__config,
-            self.__config.audit_data_contract.functions.getMinAuditPrice(
-                self.__config.account)
-        )
         min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
-        if min_price_in_mini_qsp != contract_price:
-            self.__logger.info(
-                "Local min_price does not match smart contract for address {0}, updating.".format(
-                    self.__config.account
-                ))
-            transaction = self.__config.audit_contract.functions.setAuditNodePrice(
-                                            min_price_in_mini_qsp)
-            try:
-                tx_hash = send_signed_transaction(self.__config,
-                                                  transaction,
-                                                  wait_for_transaction_receipt=True)
-                # If the tx_hash is None, the transaction did not actually complete. Exit.
-                if not tx_hash:
-                    raise Exception("The min price transaction did not complete")
-                self.__logger.debug("Successfully updated min price to {0}.".format(
-                    self.__config.min_price_in_qsp))
-            except Timeout as e:
-                error_msg = "Update min price timed out. " + msg + " {0}, {1}."
-                self.__logger.debug(error_msg.format(
-                    str(transaction),
-                    str(e)))
-                raise e
-            except DeduplicationException as e:
-                error_msg = "A transaction already exists for updating min price," \
-                    + " but has not yet been mined. " + msg \
-                    + " This may take several iterations. {0}, {1}."
-                self.__logger.debug(error_msg.format(
-                    str(transaction),
-                    str(e)))
-                raise e
-            except Exception as e:
-                error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
-                self.__logger.exception(error_msg.format(
-                    str(transaction),
-                    str(e)))
-                raise e
+        self.__logger.info(
+            "Updating min_price in the smart contract for address {0}.".format(
+                self.__config.account
+            ))
+        transaction = self.__config.audit_contract.functions.setAuditNodePrice(
+            min_price_in_mini_qsp)
+        try:
+            tx_hash = send_signed_transaction(self.__config,
+                                              transaction,
+                                              wait_for_transaction_receipt=True)
+            # If the tx_hash is None, the transaction did not actually complete. Exit.
+            if not tx_hash:
+                raise Exception("The min price transaction did not complete")
+            self.__logger.debug("Successfully updated min price to {0}.".format(
+                self.__config.min_price_in_qsp))
+        except Timeout as e:
+            error_msg = "Update min price timed out. " + msg + " {0}, {1}."
+            self.__logger.debug(error_msg.format(
+                str(transaction),
+                str(e)))
+            raise e
+        except DeduplicationException as e:
+            error_msg = "A transaction already exists for updating min price," \
+                        + " but has not yet been mined. " + msg \
+                        + " This may take several iterations. {0}, {1}."
+            self.__logger.debug(error_msg.format(
+                str(transaction),
+                str(e)))
+            raise e
+        except Exception as e:
+            error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
+            self.__logger.exception(error_msg.format(
+                str(transaction),
+                str(e)))
+            raise e
 
     def __on_audit_assigned(self, evt):
         request_id = None
@@ -450,12 +484,13 @@ class QSPAuditNode:
                 evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
 
+        def process_incoming():
+            self.__config.event_pool_manager.process_incoming_events(
+                process_audit_request
+            )
+
         def exec():
-            while self.__exec:
-                self.__config.event_pool_manager.process_incoming_events(
-                    process_audit_request
-                )
-                sleep(self.__config.evt_polling)
+            self.__run_with_interval(process_incoming, self.__config.evt_polling)
 
         audit_thread = Thread(target=exec, name="audit thread")
         self.__internal_threads.append(audit_thread)
@@ -493,12 +528,13 @@ class QSPAuditNode:
                 evt['status_info'] = traceback.format_exc()
                 self.__config.event_pool_manager.set_evt_to_error(evt)
 
+        def process_to_be_submitted():
+            self.__config.event_pool_manager.process_events_to_be_submitted(
+                process_submission_request
+            )
+
         def exec():
-            while self.__exec:
-                self.__config.event_pool_manager.process_events_to_be_submitted(
-                    process_submission_request
-                )
-                sleep(self.__config.evt_polling)
+            self.__run_with_interval(process_to_be_submitted, self.__config.evt_polling)
 
         submission_thread = Thread(target=exec, name="submission thread")
         self.__internal_threads.append(submission_thread)
@@ -565,17 +601,17 @@ class QSPAuditNode:
                 self.__logger.exception(
                     "Unexpected error when monitoring timeout: {0}".format(error))
 
+        def process_submissions():
+            # Checks for a potential timeouts
+            block = self.__config.web3_client.eth.blockNumber
+            self.__config.event_pool_manager.process_submission_events(
+                monitor_submission_timeout,
+                block,
+            )
+
         def exec():
             try:
-                while self.__exec:
-                    # Checks for a potential timeouts
-                    block = self.__config.web3_client.eth.blockNumber
-                    self.__config.event_pool_manager.process_submission_events(
-                        monitor_submission_timeout,
-                        block,
-                    )
-
-                    sleep(self.__config.evt_polling)
+                self.__run_with_interval(process_submissions, self.__config.evt_polling)
             except Exception as error:
                 self.__logger.exception("Error in the monitor thread: {0}".format(str(error)))
 
@@ -587,9 +623,8 @@ class QSPAuditNode:
 
     def __run_metrics_thread(self):
         def exec():
-            while self.__exec:
-                self.__metric_collector.collect()
-                sleep(self.__config.metric_collection_interval_seconds)
+            self.__run_with_interval(self.__metric_collector.collect,
+                                     self.__config.metric_collection_interval_seconds)
 
         metrics_thread = Thread(target=exec, name="metrics thread")
         self.__internal_threads.append(metrics_thread)

@@ -247,3 +247,4 @@ While _`doing command`_, on _`environment`_, we encountered _`this message`_, th
 
 > While _executing_ `pyenv install 3.6.4`, on `macOS 10.13.4`, we encountered `zipimport.ZipImportError: can't decompress data; zlib not available`, then _installed_ `xcode-select --install`.
 
+
