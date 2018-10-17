@@ -55,7 +55,7 @@ testnet:
   logging:
     is_verbose: True
     streaming:
-      provider: !!str "CloudWatchProvider"
+      # provider: !!str "CloudWatchProvider" # uncomment to enable CloudWatch streaming. Requires AWS credentials
       args:
         log_group: "qsp-protocol-nodes-dev"
         log_stream: "node-{id}"
@@ -63,6 +63,7 @@ testnet:
   metric_collection:
     is_enabled: True
     interval_seconds: 30
+    destination_endpoint: !!str "https://dev-qsp-dashboard.quantstamp.com/node-metrics"
 mainnet:
   eth_node:
     provider: !!str "HTTPProvider"
@@ -110,7 +111,7 @@ mainnet:
   logging:
     is_verbose: True
     streaming:
-      provider: !!str "CloudWatchProvider"
+      # provider: !!str "CloudWatchProvider" # uncomment to enable CloudWatch streaming. Requires AWS credentials
       args:
         log_group: "qsp-protocol-nodes-prod"
         log_stream: "node-{id}"
@@ -118,3 +119,4 @@ mainnet:
   metric_collection:
     is_enabled: True
     interval_seconds: 30
+    destination_endpoint: !!str "https://qsp-dashboard.quantstamp.com/node-metrics"

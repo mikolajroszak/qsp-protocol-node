@@ -118,6 +118,8 @@ class Config:
         self.__logging_streaming_provider_args = config_value(cfg, '/logging/streaming/args', {})
         self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled',
                                                            False)
+        self.__metric_collection_destination_endpoint = config_value(cfg, '/metric_collection/destination_endpoint',
+                                                           None)
         self.__metric_collection_interval_seconds = config_value(cfg,
                                                                  '/metric_collection/interval_seconds',
                                                                  30)
@@ -283,6 +285,7 @@ class Config:
         self.__min_price_in_qsp = 0
         self.__metric_collection_is_enabled = True
         self.__metric_collection_interval_seconds = 30
+        self.__metric_collection_destination_endpoint = None
         self.__report_uploader = None
         self.__report_uploader_provider_name = None
         self.__report_uploader_provider_args = None
@@ -565,6 +568,13 @@ class Config:
         Is metric collection enabled.
         """
         return self.__metric_collection_is_enabled
+    
+    @property
+    def metric_collection_destination_endpoint(self):
+        """
+        Destrination endpoint where the collected metrics are sent to.
+        """
+        return self.__metric_collection_destination_endpoint
 
     @property
     def metric_collection_interval_seconds(self):

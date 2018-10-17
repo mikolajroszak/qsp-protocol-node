@@ -206,7 +206,7 @@ class QSPAuditNode:
 
         if self.__config.metric_collection_is_enabled:
             self.__metric_collector = MetricCollector(self.__config)
-            self.__metric_collector.collect()
+            self.__metric_collector.collect_and_send()
             self.__internal_threads.append(self.__run_metrics_thread())
 
         # Upon restart, before processing, set all events that timed out to err.
@@ -622,7 +622,7 @@ class QSPAuditNode:
 
     def __run_metrics_thread(self):
         def exec():
-            self.__run_with_interval(self.__metric_collector.collect,
+            self.__run_with_interval(self.__metric_collector.collect_and_send,
                                      self.__config.metric_collection_interval_seconds)
 
         metrics_thread = Thread(target=exec, name="metrics thread")

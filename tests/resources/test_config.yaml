@@ -42,6 +42,10 @@ dev:
   #account: No provided account hex (use the first one by default)
   evt_db_path: "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
+  metric_collection:
+    is_enabled: False
+    interval_seconds: 30
+    destination_endpoint: !!str "https://localhost/node-metrics"
 staging:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
@@ -77,3 +81,7 @@ staging:
   #account: No provided account hex (use the first one by default)
   evt_db_path: "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
+  metric_collection:
+    is_enabled: False
+    interval_seconds: 30
+    destination_endpoint: !!str "https://localhost/node-metrics"
