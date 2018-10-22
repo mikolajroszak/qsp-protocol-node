@@ -13,6 +13,10 @@ import urllib
 from unittest.mock import Mock, MagicMock
 from utils.metrics import MetricCollector
 from unittest.mock import patch
+from web3 import (
+    Web3,
+    EthereumTesterProvider,
+)
 
 class TestFile(unittest.TestCase):
     def setUp(self):
@@ -114,6 +118,12 @@ class TestFile(unittest.TestCase):
 
         self.__config_mock = MagicMock()
         self.__config_mock.metric_collection_destination_endpoint = 'http://localhost:1234'
+
+        web3_client = Web3(EthereumTesterProvider())
+        self.__config_mock.web3_client.eth.account.signHash = web3_client.eth.account.signHash
+        self.__config_mock.web3_client.toHex = web3_client.toHex
+        self.__config_mock.account_private_key = '0xc2fd94c5216e754d3eb8f4f34017120fef318c50780ce408b54db575b120229f'
+
         metrics = MetricCollector(self.__config_mock)
 
         response = MagicMock()
@@ -121,8 +131,15 @@ class TestFile(unittest.TestCase):
 
         with patch.object(urllib.request, 'urlopen', return_value=response) as mock_method:
             metrics.send_to_dashboard(self.__fake_metrics_json)
-            self.__config_mock.logger.debug.assert_called_with("Metrics sent successfully to 'http://localhost:1234'",
-                metrics_json=self.__fake_metrics_json, response='ok')
+            self.__config_mock.logger.debug.assert_called_with(
+                "Metrics sent successfully to 'http://localhost:1234'",
+                metrics_json=self.__fake_metrics_json,
+                headers={
+                    'Content-type': 'application/json',
+                    'User-agent': 'Mozilla/5.0',
+                    'Authorization': 'Digest: 0xde0cf725751768ff5b7e1e4bd36ce22242d5559f87b626beb9cf1ff412f232cc0fcc2aba1d29d8fdd95ac575d96dfb1ad10b24ae1a771e658ee90f4b8150b6c71b'
+                },
+                response='ok')
 
     def test_send_to_dashboard_logs_error_when_http_error(self):
         """

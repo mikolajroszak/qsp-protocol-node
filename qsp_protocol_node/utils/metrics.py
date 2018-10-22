@@ -12,6 +12,7 @@ import socket
 import os
 import json
 import urllib
+import sha3
 
 class MetricCollector:
 
@@ -20,14 +21,28 @@ class MetricCollector:
         self.__logger = config.logger
         self.__process_identifier = "{0}-{1}".format(socket.gethostname(), os.getpid())
 
+    def __get_auth_header(self, content):
+        k = sha3.keccak_256()
+        k.update(content)
+        message_hash = k.hexdigest()
+        signed_message = self.__config.web3_client.eth.account.signHash(
+            message_hash,
+            private_key=self.__config.account_private_key
+        )
+
+        return "Digest: {0}".format(
+            self.__config.web3_client.toHex(signed_message['signature'])
+        )
+
     def send_to_dashboard(self, metrics_json):
-        data = json.dumps(metrics_json).encode('utf8')
+        data = json.dumps(metrics_json, separators=None).encode('utf-8')
         req = urllib.request.Request(
             url = self.__config.metric_collection_destination_endpoint,
             data = data,
             headers = {
                 'content-type': 'application/json',
-                'user-agent': 'Mozilla/5.0' # the default user agent is often blocked
+                'user-agent': 'Mozilla/5.0', # the default user agent is often blocked,
+                'authorization': self.__get_auth_header(data)
             },
             method = 'POST'
         )
@@ -38,6 +53,7 @@ class MetricCollector:
                         self.__config.metric_collection_destination_endpoint
                     ),
                     metrics_json = metrics_json,
+                    headers = req.headers,
                     response = response
                 )
         except urllib.error.HTTPError as e:
