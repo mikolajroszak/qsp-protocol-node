@@ -19,8 +19,6 @@ RUN apk add --no-cache python3 && \
   if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
   rm -r /root/.cache
 
-RUN pip install -U pkg-config
-
 RUN apk add --no-cache python3-dev gcc musl-dev libtool automake autoconf
 RUN apk add --no-cache openssl-dev make
 RUN apk add --no-cache libffi-dev
