@@ -25,7 +25,7 @@ RUN apk add --no-cache libffi-dev
 RUN apk add --no-cache linux-headers
 
 # Install aws-cli
-RUN pip install -U awscli
+RUN pip3 install -U awscli
 
 # Install solc
 RUN wget https://github.com/ethereum/solidity/releases/download/v0.4.24/solc-static-linux && \
@@ -36,8 +36,8 @@ RUN mkdir ./app
 WORKDIR ./app
 RUN mkdir ./audit-db
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
-RUN pip install web3[tester]
+RUN pip3 install -r requirements.txt
+RUN pip3 install web3[tester]
 
 COPY . .
 
