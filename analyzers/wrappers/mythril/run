@@ -17,7 +17,7 @@ source "$WRAPPER_HOME"/utils/common
 
 # Generates an error report without warnings
 function report_errors {
-    "$WRAPPER_HOME/utils/make_error_report" "$1"
+    "$WRAPPER_HOME/utils/make_error_report" "$1" "$2"
 }
 
 # Generates an error report with warnings
@@ -39,33 +39,49 @@ on_exit_do rm -rf "$TMP_FOLDER"
 readonly LOG_OUTPUT="$TMP_FOLDER/output.log"
 on_exit_do rm -f "$LOG_OUTPUT"
 
+readonly TRACE_OUTPUT="$TMP_FOLDER/trace.log"
+on_exit_do rm -f "$TRACE_OUTPUT"
+
+echo ">> Wrapper setup finished" >> "$TRACE_OUTPUT"
+
 ##################################################################
 # once step
 ##################################################################
 
 # Only run `once`` if it has not been executed before
 if [[ ! -f "$STORAGE_DIR/.once" ]] ; then
+    echo ">> once script was called" >> "$TRACE_OUTPUT"
     "$WRAPPER_HOME"/once >> "$LOG_OUTPUT" 2>&1 || \
-        { report_errors "$LOG_OUTPUT"; exit 1; }
+        { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
 else
+    echo ">> once script was NOT called" >> "$TRACE_OUTPUT"
     > "$STORAGE_DIR/.once"
 fi
+
+echo ">> Once step finished execution" >> "$TRACE_OUTPUT"
 
 ##################################################################
 # pre-run step
 ##################################################################
 # Prepares the wrapper
 "$WRAPPER_HOME"/pre_run &> "$LOG_OUTPUT" || \
-    { report_errors "$LOG_OUTPUT"; exit 1; }
+    { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+echo ">> pre_run script was executed" >> "$TRACE_OUTPUT"
 
 # Copies the input contract to the temporary folder just created
 cp "$CONTRACT_PATH" "$TMP_FOLDER" >> "$LOG_OUTPUT" 2>&1 || \
-    { report_errors "$LOG_OUTPUT"; exit 1; }
+    { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+echo ">> Contracts were copied" >> "$TRACE_OUTPUT"
 
 CONTRACT_FILENAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
 
 ANALYZER_VULNERABILITIES="$WRAPPER_HOME"/resources/vulnerabilities
 ANALYZER_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':' -f2)
+
+echo ">> Pre-run step finished execution" >> "$TRACE_OUTPUT"
+
 
 ##################################################################
 # run step and post-run
@@ -75,18 +91,23 @@ ANALYZER_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':'
 docker run --rm -v "$TMP_FOLDER":/shared/ -i "$DOCKER_IMAGE" -o json -x "/shared/$CONTRACT_FILENAME" \
     &> "$LOG_OUTPUT"
 
+echo ">> Docker finished" >> "$TRACE_OUTPUT"
+
 # Mythril can fail with error code 0 providing an error message in json
 cat "$LOG_OUTPUT" | grep "\"success\": true" >/dev/null || \
-    { report_errors "$LOG_OUTPUT"; exit 1; }
+    { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+echo ">> Cleaning up" >> "$TRACE_OUTPUT"
 
 # Cleans up any resources
 "$WRAPPER_HOME"/post_run >> "$LOG_OUTPUT" 2>&1
 
+echo ">> Creating the report" >> "$TRACE_OUTPUT"
 
 ANALYZER_CMD="docker run --rm -v \"$TMP_FOLDER\":/shared/ -i \"$DOCKER_IMAGE\" -o json -x \"/shared/$CONTRACT_FILENAME\""
 "$WRAPPER_HOME/utils/mk_success_report" "${ANALYZER_VERSION}" "${ANALYZER_CMD}" "${ANALYZER_VULNERABILITIES}"  \
     "${ORIGINAL_NAME}" "${LOG_OUTPUT}" || \
-        { report_errors "$LOG_OUTPUT"; exit 1; }
+        { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
 
 # Exit with a success status code
 exit 0
