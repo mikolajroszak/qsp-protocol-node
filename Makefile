@@ -80,3 +80,6 @@ save:
 	docker save -o deployment/local/app.tar qsp-protocol-node:latest
 
 export: test-docker save
+
+bundle:
+	./create-bundle.sh

@@ -173,15 +173,8 @@ Do it for all the contract URIs.
 
 Currently, the process is mostly manual. To be automated in the future.
 
-### Export a binary
-1. `make export`
-
 ### Release
-1. `cd` to `deployment/local`
-1. Remove the `testnet` stage from config.yaml
-1. In `run.sh`, make `mainnet` a default stage
-1. Compress the contents into `qsp-protocol-v1.zip`
-1. Copy the license file from the root into the current folder
+1. Run `make bundle`. If successful, this  will create `qsp-protocol-v1.zip` file under deployment/local.
 1. Upload the file to Google Drive (`QSP Protocol V1 - Release Bundles`)
 1. Using Google Drive sharing features, share the file with a whitelisted node operator
 
