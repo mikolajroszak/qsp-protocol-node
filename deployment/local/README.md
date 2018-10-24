@@ -89,3 +89,17 @@ is up and running (`ps -A | egrep docker`). If not running, please start it.
 ### Run
 
 `./run.sh`
+
+You can use nohup to run the script in detached mode:
+
+`nohup ./run.sh &`
+
+### View Logs
+
+Logs are written to `qsp-protocol-node.log` file in current directory.
+
+### Stop
+
+`./stop.sh`
+
+Will stop and remove the docker containers.
