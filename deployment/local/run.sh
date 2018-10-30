@@ -17,6 +17,11 @@ esac
 
 bash ./stop.sh
 
+if [ ! -f app.tar ]; then
+        echo "app.tar file not present. Exiting!!"
+        exit 1
+fi
+
 touch $PWD/event_database.db
 
 docker load --input app.tar && \
