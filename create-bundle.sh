@@ -3,10 +3,12 @@
 set -e
 readonly ZIP_FILENAME=qsp-protocol-v1.zip
 
-make clean export
+make clean test-docker
+docker save -o deployment/local/app.tar qsp-protocol-node:latest
+
 cd ./deployment/local
 echo "Switched to: `pwd`"
-if [ ! -f config.yaml ] && [ ! -f run.sh ]; then
+if [ ! -f config.yaml ] && [ ! -f run.sh ] && [ ! -f app.tar ]; then
         echo "Require both config.yaml and run.sh"
         exit 1
 fi
