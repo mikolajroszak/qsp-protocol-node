@@ -41,16 +41,16 @@ class TestJsonReportValidation(unittest.TestCase):
         report = load_json(fetch_file(resource_uri(report_path)))
         validate(report, self.schema)
 
-    def test_DAOBug(self):
+    def test_dao_bug(self):
         self.validate_report("reports/DAOBug.json")
 
-    def test_BasicToken(self):
+    def test_basic_token(self):
         self.validate_report("reports/BasicToken.json")
 
-    def test_DappBinWallet(self):
+    def test_dapp_bin_wallet(self):
         self.validate_report("reports/DappBinWallet.json")
 
-    def test_DaoBugWithBadProperty(self):
+    def test_dao_bug_with_bad_property(self):
         # this test should fail as the report has correctly named the "analyzers_reports" property
         try:
             self.validate_report("reports/DAOBugWithBadProperty.json")

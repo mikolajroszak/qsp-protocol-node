@@ -46,6 +46,11 @@ All instructions must be run from the project's root folder.
     brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9599ce8371d9de039988f89ed577460e58a0f56a/solidity.rb
     ```
 
+    If you have a newer version of the compiler installed together with 0.4.24, you may need to switch the default solc to be the latter kind:
+    ```
+    brew switch solidity 0.4.24
+    ``` 
+
 1. Clone the repo and set it up by running:
 
     ```bash

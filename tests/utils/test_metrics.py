@@ -18,6 +18,7 @@ from web3 import (
     EthereumTesterProvider,
 )
 
+
 class TestFile(unittest.TestCase):
     def setUp(self):
         self.__fake_metrics_json = {

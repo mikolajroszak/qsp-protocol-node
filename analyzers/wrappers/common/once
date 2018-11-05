@@ -9,17 +9,12 @@
 #                                                                                                  #
 ####################################################################################################
 
-
 # Imports common definitions
-source "$WRAPPER_HOME"/utils/common
 
-CONTRACT_FILENAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
+source "$WRAPPER_HOME"/../common/settings
 
-ANALYZER_VULNERABILITIES="$WRAPPER_HOME"/resources/vulnerabilities
-ANALYZER_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':' -f2)
-ANALYZER_CMD="docker run -v \"$TMP_FOLDER\":/shared/ -i \"$DOCKER_IMAGE\" -o json -x \"/shared/$CONTRACT_FILENAME\""
+# Pull docker image
+docker pull "$ANALYZER_DOCKER_IMAGE" || exit 1
 
-echo "mythril"
-echo ${ANALYZER_VERSION}
-echo ${ANALYZER_CMD}
-cat ${ANALYZER_VULNERABILITIES} | awk -F= '{print $2}'
+> "$STORAGE_DIR/.once"
+

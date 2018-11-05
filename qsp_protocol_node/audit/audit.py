@@ -31,13 +31,14 @@ from utils.io import (
     read_file
 )
 from utils.eth import send_signed_transaction
-from utils.eth import make_read_only_call
+from utils.eth import mk_read_only_call
 from utils.eth import DeduplicationException
 
 from threading import Thread
 from utils.metrics import MetricCollector
 from solc import compile_standard
 from solc.exceptions import ContractsNotFound, SolcError
+from subprocess import TimeoutExpired
 from .exceptions import NonWhitelistedNodeException
 
 
@@ -299,7 +300,7 @@ class QSPAuditNode:
         Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
-            pending_requests_count = make_read_only_call(
+            pending_requests_count = mk_read_only_call(
                 self.config,
                 self.config.audit_contract.functions.assignedRequestCount(self.__config.account))
             if pending_requests_count >= self.__config.max_assigned_requests:
@@ -307,7 +308,7 @@ class QSPAuditNode:
                     "Skip bidding the request as currently processing {0} requests".format(
                         str(pending_requests_count)))
                 return
-            any_request_available = make_read_only_call(
+            any_request_available = mk_read_only_call(
                 self.config,
                 self.config.audit_contract.functions.anyRequestAvailable())
             if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
@@ -329,7 +330,7 @@ class QSPAuditNode:
         Checks that a node address is whitelisted.
         """
         try:
-            return make_read_only_call(
+            return mk_read_only_call(
                 self.config,
                 self.config.audit_data_contract.functions.isWhitelisted(node)
             )
@@ -505,7 +506,10 @@ class QSPAuditNode:
                     evt['audit_state'],
                     str(evt['audit_hash']),
                 )
+
+                # TODO: https://quantstamp.atlassian.net/browse/QSP-774
                 evt['tx_hash'] = tx_hash
+
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
             except DeduplicationException as error:
@@ -709,11 +713,11 @@ class QSPAuditNode:
             raise Exception("Error uploading report: {0}".format(json.dumps(upload_result)))
 
         parse_uri = urllib.parse.urlparse(uri)
-        original_filename = os.path.basename(parse_uri.path)
+        original_file_name = os.path.basename(parse_uri.path)
         contract_body = read_file(target_contract)
         contract_upload_result = self.__config.report_uploader.upload_contract(request_id,
                                                                                contract_body,
-                                                                               original_filename)
+                                                                               original_file_name)
         if contract_upload_result['success']:
             self.__logger.info(
                 "Contract upload result: {0}".format(contract_upload_result),
@@ -733,102 +737,109 @@ class QSPAuditNode:
         }
 
     def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
-
         number_of_analyzers = len(self.__config.analyzers)
-        # This array is shared between the current thread and wrappers
-        shared_analyzers_reports = [{}] * number_of_analyzers
-        parse_uri = urllib.parse.urlparse(uri)
-        original_filename = os.path.basename(parse_uri.path)
 
-        analyzers_reports_locks = []
-        for i in range(0, number_of_analyzers):
-            analyzers_reports_locks.append(threading.RLock())
+        parse_uri = urllib.parse.urlparse(uri)
+        original_file_name = os.path.basename(parse_uri.path)
+
+        # Arrays to track different data from each analyzer,
+        # each identified by a single position (analyzer_id)
+        shared_reports = []
+        local_reports = []
+        report_locks = []
+        wrappers = []
+        timed_out_flags = []
+        analyzer_threads = []
+        start_times = []
 
         def check_contract(analyzer_id):
-            analyzer = self.__config.analyzers[analyzer_id]
-            metadata = analyzer.get_metadata(target_contract, request_id, original_filename)
-            # in case of time out, declare the metadata as the report now
-            str_metadata = json.dumps(metadata)
+            report = {}
+            has_timed_out = False
 
             try:
-                analyzers_reports_locks[analyzer_id].acquire()
-                shared_analyzers_reports[analyzer_id] = {**metadata, 'hash': digest(str_metadata)}
-            finally:
-                analyzers_reports_locks[analyzer_id].release()
+                report = self.__config.analyzers[analyzer_id].check(
+                    target_contract,
+                    request_id,
+                    original_file_name
+                )
+            except Exception as error:
+                # Defer saving timeout errors for now as there is another
+                # check later on (report timeouts only once)
+                if isinstance(error, TimeoutExpired):
+                    has_timed_out = True
 
-            result = analyzer.check(target_contract, request_id, original_filename)
-            # the values from metadata will overwrite those of report
-            report = {**result, **metadata}
-            str_report = json.dumps(report)
-            report['hash'] = digest(str_report)
+                # Otherwise, save the error
+                else:
+                    errors = report.get('errors', [])
+                    errors.append(str(error))
+
+                report['status'] = 'error'
 
             # Make sure no race-condition between the wrappers and the current thread
             try:
-                analyzers_reports_locks[analyzer_id].acquire()
-                shared_analyzers_reports[analyzer_id] = report
+                report_locks[analyzer_id].acquire()
+                shared_reports[analyzer_id] = report
+                timed_out_flags[analyzer_id] = has_timed_out
             finally:
-                analyzers_reports_locks[analyzer_id].release()
-
-        analyzers_threads = []
-        analyzers_timeouts = []
-        analyzers_start_times = []
+                report_locks[analyzer_id].release()
 
         # Starts each analyzer thread
         for i, analyzer in enumerate(self.__config.analyzers):
-            thread_name = "{0}-wrapper-thread".format(analyzer.wrapper.analyzer_name)
+            shared_reports.append({})
+            local_reports.append({})
+            report_locks.append(threading.RLock())
+            wrappers.append(self.__config.analyzers[i].wrapper)
+            timed_out_flags.append(False)
+
+            thread_name = "{0}-analyzer-thread".format(wrappers[i].analyzer_name)
             analyzer_thread = Thread(target=check_contract, args=[i], name=thread_name)
-            analyzers_threads.append(analyzer_thread)
-            analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-            timeout_sec = int(self.__config.analyzers_config[i][analyzer_name]['timeout_sec'])
-            analyzers_timeouts.append(timeout_sec)
+            analyzer_threads.append(analyzer_thread)
 
             start_time = calendar.timegm(time.gmtime())
-            analyzers_start_times.append(start_time)
+            start_times.append(start_time)
+
             analyzer_thread.start()
 
-        # This array should only be accessible from the current thread
-        local_analyzers_reports = [{}] * number_of_analyzers
-
         for i in range(0, number_of_analyzers):
-            analyzers_threads[i].join(analyzers_timeouts[i])
+            analyzer_threads[i].join(wrappers[i].timeout_sec)
 
             # Make sure there is no race condition between the current thread
-            # and wrapper thread in overwriting on analyzers_reports
+            # and the wrapper/analyzer thread when writing reports
             try:
-                analyzers_reports_locks[i].acquire()
-                local_analyzers_reports[i] = copy.deepcopy(shared_analyzers_reports[i])
+                report_locks[i].acquire()
+                local_reports[i] = copy.deepcopy(shared_reports[i])
+
+                if analyzer_threads[i].is_alive():
+                    timed_out_flags[i] = True
             finally:
-                analyzers_reports_locks[i].release()
+                report_locks[i].release()
+
+            local_reports[i]['analyzer'] = wrappers[i].get_metadata(
+                target_contract,
+                request_id,
+                original_file_name
+            )
 
             # NOTE
             # Due to timeout issues, one has to account for start/end
-            # times at this point, rather than the wrapper itself
+            # times at this point, rather than at the wrapper itself
+            local_reports[i]['start_time'] = start_times[i]
 
-            start_time = analyzers_start_times[i]
-            local_analyzers_reports[i]['start_time'] = start_time
-
-            # If thread is still alive, it means a timeout has
-            # occurred
-            if analyzers_threads[i].is_alive():
-                # In case of time out, the metadata should exist as the report, unless that somehow
-                # failed too
-                analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-                if shared_analyzers_reports[i]:
-                    local_analyzers_reports[i] = shared_analyzers_reports[i]
-                else:
-                    local_analyzers_reports[i]['analyzer'] = {'name': analyzer_name}
-                local_analyzers_reports[i]['errors'] = [
+            # If analyzer has timed out, report the error
+            if timed_out_flags[i]:
+                errors = local_reports[i].get('errors', [])
+                errors.append(
                     "Time out occurred. Could not finish {0} within {1} seconds".format(
-                        analyzer_name,
-                        self.config.analyzers[i].wrapper.timeout_sec,
+                        wrappers[i].analyzer_name,
+                        wrappers[i].timeout_sec,
                     )
-                ]
+                )
+                local_reports[i]['errors'] = errors
+                local_reports[i]['status'] = 'error'
 
-                local_analyzers_reports[i]['status'] = 'error'
-            else:
-                # A timeout has not occurred. Register the end time
-                end_time = calendar.timegm(time.gmtime())
-                local_analyzers_reports[i]['end_time'] = end_time
+            # A timeout has not occurred. Register the end time
+            end_time = calendar.timegm(time.gmtime())
+            local_reports[i]['end_time'] = end_time
 
         audit_report = {
             'timestamp': calendar.timegm(time.gmtime()),
@@ -842,19 +853,19 @@ class QSPAuditNode:
 
         # FIXME
         # This is currently a very simple mechanism to claim an audit as
-        # successful or not. Either it is fully successful (all analyzer produce a result),
-        # or fails otherwise.
+        # successful or not. Either it is fully successful (all analyzers
+        # produce a successful result), or fails otherwise.
         audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
         audit_status = QSPAuditNode.__AUDIT_STATUS_SUCCESS
-        for i, analyzer_report in enumerate(local_analyzers_reports):
-            analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
 
-            # The next two fail safe checks should never kick in
+        for i, analyzer_report in enumerate(local_reports):
+
+            # The next two fail safe checks should never kick in...
 
             # This is a fail safe mechanism (defensive programming)
             if 'analyzer' not in analyzer_report:
                 analyzer_report['analyzer'] = {
-                    'name': analyzer_name
+                    'name': wrapper[i].analyzer_name
                 }
 
             # Another fail safe mechanism (defensive programming)
@@ -869,10 +880,13 @@ class QSPAuditNode:
             if analyzer_report['status'] == 'error':
                 audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
                 audit_status = QSPAuditNode.__AUDIT_STATUS_ERROR
+
         audit_report['audit_state'] = audit_state
         audit_report['status'] = audit_status
-        if len(local_analyzers_reports) > 0:
-            audit_report['analyzers_reports'] = local_analyzers_reports
+
+        if len(local_reports) > 0:
+            audit_report['analyzers_reports'] = local_reports
+
         return audit_report
 
     def __get_next_audit_request(self):
@@ -928,8 +942,8 @@ class QSPAuditNode:
         self.__logger.debug("Running compilation check. About to check {0}".format(contract),
                             requestId=request_id)
         parse_uri = urllib.parse.urlparse(uri)
-        original_filename = os.path.basename(parse_uri.path)
-        temp_filename = os.path.basename(contract)
+        original_file_name = os.path.basename(parse_uri.path)
+        temp_file_name = os.path.basename(contract)
         data = ""
         with open(contract, 'r') as myfile:
             data = myfile.read()
@@ -945,9 +959,9 @@ class QSPAuditNode:
                                       )
             for err in output.get('errors', []):
                 if err["severity"] == "warning":
-                    warnings += [err['formattedMessage'].replace(temp_filename, original_filename)]
+                    warnings += [err['formattedMessage'].replace(temp_file_name, original_file_name)]
                 else:
-                    errors += [err['formattedMessage'].replace(temp_filename, original_filename)]
+                    errors += [err['formattedMessage'].replace(temp_file_name, original_file_name)]
 
         except ContractsNotFound as error:
             self.__logger.debug(

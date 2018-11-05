@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ####################################################################################################
 #                                                                                                  #
 # (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
@@ -7,7 +9,34 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .tx import send_signed_transaction
-from .tx import mk_read_only_call
-from .tx import DeduplicationException
-from .address import mk_checksum_address
+# NOTE: This script is for testing purposes only; it allows executing different
+# wrapper scripts as a means to debug their output
+
+function usage {
+  echo "Usage: wrapper_exec <name> <script> <args> <target contract>" >> /dev/stderr
+}
+
+if [[ "$#" != "4" ]] ; then
+   usage
+   exit 1
+fi
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+SCRIPT="$2"
+
+export ANALYZER_NAME="$1"
+export WRAPPER_HOME="$SCRIPT_DIR/$ANALYZER_NAME"
+export STORAGE_DIR="/tmp"
+
+ARGS=("$@")
+export ANALYZER_ARGS="${ARGS[2]}"
+export CONTRACT_PATH=$(realpath "${ARGS[3]}")
+export ORIGINAL_FILE_NAME=$(echo "$CONTRACT_PATH" | awk -F '/' '{ print $NF }' )
+export CONTRACT_FILE_NAME="$ORIGINAL_FILE_NAME"
+
+source common/settings
+
+on_exit_do rm -f "$STORAGE_DIR"/.once
+
+"$WRAPPER_HOME"/"$SCRIPT"
+

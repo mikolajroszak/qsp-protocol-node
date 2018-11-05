@@ -17,7 +17,6 @@
           "assertion_failure"
         ]
       },
-      "count_potential_vulnerabilities": 1,
       "coverages": [
         {
           "contract": "SendBalance",
@@ -70,7 +69,6 @@
           "unchecked_call_return_value"
         ]
       },
-      "count_potential_vulnerabilities": 3,
       "end_time": 1530192805,
       "hash": "038f3fd738fbe388b32aaf4961967ebe64cff47b053a5a13b16561b3c616a538",
       "potential_vulnerabilities": [
@@ -83,7 +81,6 @@
               "start_line": 17
             }
           ],
-          "name": "Ether send",
           "type": "ether_send"
         },
         {
@@ -95,7 +92,6 @@
               "start_line": 17
             }
           ],
-          "name": "Message call to external contract",
           "type": "message_call_to_external_contract"
         },
         {
@@ -107,7 +103,6 @@
               "start_line": 21
             }
           ],
-          "name": "State change after external call",
           "type": "state_change_after_external_call"
         }
       ],

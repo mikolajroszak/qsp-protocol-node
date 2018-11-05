@@ -568,7 +568,7 @@ class Config:
         Is metric collection enabled.
         """
         return self.__metric_collection_is_enabled
-    
+
     @property
     def metric_collection_destination_endpoint(self):
         """

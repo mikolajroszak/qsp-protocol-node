@@ -14,18 +14,33 @@
         "name": "oyente",
         "version": "7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67",
         "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/kyber.sol",
-        "vulnerabilities_checked": [
-          "integer_underflow",
-          "integer_overflow",
-          "callstack",
-          "money_concurrency",
-          "time_dependency",
-          "reentrancy",
-          "parity_multisig_bug_2",
-          "assertion_failure"
-        ]
+        "vulnerabilities_checked": {
+            "integer_underflow": {
+                "type": "integer_underflow"
+            },
+            "integer_overflow": {
+                "type": "integer_overflow"
+            },
+            "callstack": {
+                "type": "callstack"
+            },
+            "money_concurrency": {
+                "type": "transaction_order_dependency"
+            },
+            "time_dependency": {
+                "type": "time_dependency"
+            },
+            "reentrancy": {
+                "type": "reentrancy"
+            },
+            "parity_multisig_bug_2": {
+                "type": "parity_multisig_bug"
+            },
+            "assertion_failure": {
+                "type": "exception_state"
+            }
+        }
       },
-      "hash": "79651d7b449aea3778409e3aef7817f6e961e238a829262f76490028db6888f5",
       "errors": [
         "Time out occurred. Could not finish oyente within 6 seconds"
       ],
@@ -36,28 +51,55 @@
         "name": "mythril",
         "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
         "command": "docker run -v \"\":/shared/ -i \"mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882\" -o json -x \"/shared/kyber.sol\"",
-        "vulnerabilities_checked": [
-          "call_data_forwarded",
-          "dependence_on_environment_variable",
-          "call_to_a_user-supplied_address",
-          "use_of_tx_origin",
-          "ether_send",
-          "exception_state",
-          "message_call_to_external_contract",
-          "state_change_after_external_call",
-          "integer_overflow",
-          "integer_underflow",
-          "multiple_calls",
-          "unchecked_suicide",
-          "transaction_order_dependence",
-          "unchecked_call_return_value"
-        ]
-      },
-      "hash": "bae9fb9d398f947629dceb0b4462df1c11fac1d5a084e76897418396f4a23bd2",
-      "errors": [
-        "Time out occurred. Could not finish mythril within 6 seconds"
-      ],
-      "status": "error"
+        "vulnerabilities_checked": {
+            "Call data forwarded with delegatecall()": {
+                "type": "delegate_call_to_untrusted_contract"
+            },
+            "Dependence on predictable environment variable": {
+                "type": "dependence_on_environment_variable"
+            },
+            "Call to a user-supplied address": {
+                "type": "delegate_call_to_untrusted_contract"
+            },
+            "Use of tx.origin": {
+                "type": "tx_origin_usage"
+            },
+            "Ether send": {
+                "type": "unprotected_ether_withdrawal"
+            },
+            "Exception state": {
+                "type": "exception_state"
+            },
+            "Message call to external contract": {
+                "type": "call_to_external_contract"
+            },
+            "State change after external call": {
+                "type": "reentrancy"
+            },
+            "Integer Overflow": {
+                "type": "integer_overflow"
+            },
+            "Integer Underflow": {
+                "type": "integer_underflow"
+            },
+            "Multiple Calls": {
+                "type": "multiple_calls"
+            },
+            "Unchecked SUICIDE":{
+                "type": "unprotected_self_destruct"
+            },
+            "Transaction order dependence": { 
+                "type": "transaction_order_dependency"
+            },
+            "Unchecked CALL return value": {
+                "type": "unchecked_call_return_value"
+            }
+      }
+    },
+    "errors": [
+      "Time out occurred. Could not finish mythril within 6 seconds"
+    ],
+    "status": "error"
     }
   ],
   "compilation_warnings": [
@@ -117,5 +159,5 @@
     "kyber.sol:1454:5: Warning: Functions in interfaces should be declared external.\n    function transferFrom(address _from, address _to, uint _value) public returns (bool);\n    ^-----------------------------------------------------------------------------------^\n",
     "kyber.sol:1455:5: Warning: Functions in interfaces should be declared external.\n    function burnFrom(address _from, uint256 _value) public returns (bool);\n    ^---------------------------------------------------------------------^\n",
     "kyber.sol:480:31: Warning: \"block.blockhash()\" has been deprecated in favor of \"blockhash()\"\n                random = uint(block.blockhash(block.number-1)) % numRelevantReserves;\n                              ^-------------^\n"
-  ]
+  ]  
 }

@@ -27,7 +27,7 @@ def mk_args(config):
     return args
 
 
-def make_read_only_call(config, method):
+def mk_read_only_call(config, method):
     try:
         SingletonLock.instance().lock.acquire()
         return method.call({'from': config.account})

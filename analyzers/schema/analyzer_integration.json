@@ -6,6 +6,9 @@
     "title": "Audit report",
     "description": "API schema defining the expected output format of an audit report",
     "additionalProperties": false,
+    "required": [
+        "status"
+    ],
     "properties": {
         "timestamp": {
             "type": "integer",
@@ -69,6 +72,10 @@
             "type": "array",
             "items": {
                 "type": "object",
+                "required": [
+                    "analyzer",
+                    "status"
+                ],
                 "properties": {
                     "start_time": {
                         "type": "integer",
@@ -80,14 +87,10 @@
                         "description": "The end time (epoch) that the analyzer ended execution",
                         "minimum": 1                    
                     },
-                    "hash": {
-                        "type": "string",
-                        "pattern": "^[A-Fa-f0-9]{64}$",
-                        "description": "Hash digest (sha256) of this audit report" 
-                    },
                     "analyzer": {
                         "type":  "object",
                         "description": "Meta data concerning the underlying analyzer",
+                        "required": ["name"],
                         "properties": {
                             "name": {
                                 "description": "Analyzer's name",
@@ -100,11 +103,18 @@
                                 "maxLength": 64
                             },
                             "vulnerabilities_checked": {
-                                "type": "array",
-                                "description": "Vulnerabilities checked by the analyzer",                    
-                                "maxItems": 100,
-                                "items": [{"type": "string"}],
-                                "additionalItems": true                        
+                                "type": "object",
+                                "patternProperties": {
+                                    "^.*$": { 
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": ["type"]
+                                    }
+                                }                     
                             },
                             "command": {
                                 "type": "string",
@@ -148,7 +158,7 @@
                                 },
                                 "file": {
                                     "type": "string",
-                                    "description": "Audited contract filename",
+                                    "description": "Audited contract file name",
                                     "maxLength": 1000
                                 },
                                 "contract": {
@@ -165,15 +175,20 @@
                         "items": {
                             "title": "Vulnerability",
                             "description": "Descriptive data about each reported vulnerability",
+                            "required": [
+                                "type",
+                                "file",
+                                "instances"
+                            ],
                             "properties": {
-                                "name": {
+                                "type": {
                                     "type": "string",
-                                    "description": "Name of the reported vulnerability",
-                                    "maxLength": 100
-                                },
+                                    "description": "The type of the vulnerability reported by the analyzer",
+                                    "maxLength": 1000
+                                },                                
                                 "file": {
                                     "type": "string",
-                                    "description": "Audited contract filename",
+                                    "description": "Audited contract file name",
                                     "maxLength": 1000
                                 },
                                 "contract": {
@@ -185,6 +200,10 @@
                                     "type": "array",
                                     "description": "Array of dictionaries describing each potential vulnerability",
                                     "items": {
+                                        "required": [
+                                            "ref_id",
+                                            "start_line"
+                                        ],
                                         "properties": {
                                             "ref_id": {
                                                 "type": "integer",

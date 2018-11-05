@@ -1,13 +1,20 @@
+#!/bin/bash
+
 ####################################################################################################
 #                                                                                                  #
 # (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
 # modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
 # Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
-# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.                                                    #
 #                                                                                                  #
 ####################################################################################################
 
-from .tx import send_signed_transaction
-from .tx import mk_read_only_call
-from .tx import DeduplicationException
-from .address import mk_checksum_address
+# Imports common definitions
+
+source "$WRAPPER_HOME"/../common/settings
+
+readonly VULNERABILITIES_JSON_MAPPING=$(cat "$VULNERABILITY_MAPPING")
+
+printf '{"name": "%s", "version": "%s", "vulnerabilities_checked": %s, "command": "%s"}\n' \
+    "$ANALYZER_NAME" "$ANALYZER_VERSION" "$VULNERABILITIES_JSON_MAPPING" "$ANALYZER_CMD" | jq '.'
+

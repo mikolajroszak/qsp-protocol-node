@@ -12,6 +12,7 @@ Tests invocation of the analyzer tool.
 """
 import unittest
 import random
+import json
 
 from audit import Analyzer
 from audit import Wrapper
@@ -53,7 +54,6 @@ class TestOyenteAnalyzer(unittest.TestCase):
         # Asserts some result produced
         self.assertTrue(report)
 
-        import json
         print(json.dumps(report, indent=2))
 
         # Asserts result is success
@@ -66,8 +66,8 @@ class TestOyenteAnalyzer(unittest.TestCase):
         on a non-inexistent file
         """
 
-        filename_prefix = str(random.randrange(1, 100))
-        inexistent_file = "{0}.sol".format(filename_prefix)
+        file_name_prefix = str(random.randrange(1, 100))
+        inexistent_file = "{0}.sol".format(file_name_prefix)
         analyzer = TestOyenteAnalyzer.__new_oyente_analyzer()
 
         request_id = random.randrange(1, 100)

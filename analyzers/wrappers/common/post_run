@@ -9,16 +9,5 @@
 #                                                                                                  #
 ####################################################################################################
 
-# Imports common definitions
-source "$WRAPPER_HOME"/utils/common
+# Do nothing
 
-CONTRACT_FILENAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
-
-OYENTE_VULNERABILITIES="$WRAPPER_HOME"/resources/vulnerabilities
-OYENTE_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':' -f2)
-OYENTE_CMD="python /oyente/oyente/oyente.py $ANALYZER_ARGS -j -s /shared/$CONTRACT_FILENAME"
-
-echo "oyente"
-echo ${OYENTE_VERSION}
-echo ${OYENTE_CMD}
-cat ${OYENTE_VULNERABILITIES}

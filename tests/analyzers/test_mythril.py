@@ -27,13 +27,13 @@ class TestAnalyzerMythril(unittest.TestCase):
     """
 
     @staticmethod
-    def __new_analyzer(storage_dir="/tmp", timeout_sec=60):
+    def __new_analyzer(timeout_sec=60):
         logger = getLogger("test")
         mythril_wrapper = Wrapper(
             wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
             analyzer_name="mythril",
             args="",
-            storage_dir=storage_dir,
+            storage_dir="/tmp",
             timeout_sec=timeout_sec,
             logger=logger
 
@@ -60,7 +60,6 @@ class TestAnalyzerMythril(unittest.TestCase):
         self.assertTrue(report['status'], 'success')
         self.assertIsNotNone(report['potential_vulnerabilities'])
         self.assertEquals(3, len(report['potential_vulnerabilities']))
-        self.assertEquals(3, report['count_potential_vulnerabilities'])
 
     def test_file_not_found(self):
         """
@@ -74,9 +73,10 @@ class TestAnalyzerMythril(unittest.TestCase):
         report = analyzer.check(no_file, request_id, no_file)
 
         self.assertTrue(report['status'], 'error')
-        self.assertEquals(1, len(report['errors']))
-        self.assertEquals(4, len(report['trace']))
-        self.assertTrue("No such file or directory" in report['errors'][0])
+
+        self.assertTrue(len(report['errors']) > 0)
+        self.assertEquals(5, len(report['trace']))
+        self.assertTrue("No such file or directory" in ''.join(err + '\n' for err in report['errors']))
 
     def test_old_pragma(self):
         """
@@ -89,9 +89,10 @@ class TestAnalyzerMythril(unittest.TestCase):
         request_id = 15
         report = analyzer.check(old_contract, request_id, "DAOBugOld.sol")
         self.assertTrue(report['status'], 'error')
-        self.assertEquals(1, len(report['errors']))
-        self.assertEquals(7, len(report['trace']))
-        self.assertTrue("Error: Source file requires different compiler version" in report['errors'][0])
+
+        self.assertTrue(len(report['errors']) > 0)
+        self.assertEquals(9, len(report['trace']))
+        self.assertTrue("Error: Source file requires different compiler version" in ''.join(err + '\n' for err in report['errors']))
 
     def test_old_pragma_with_caret(self):
         """
@@ -106,7 +107,6 @@ class TestAnalyzerMythril(unittest.TestCase):
 
         self.assertTrue(report['status'], 'success')
         self.assertEquals(3, len(report['potential_vulnerabilities']))
-        self.assertEquals(3, report['count_potential_vulnerabilities'])
 
 
 if __name__ == '__main__':

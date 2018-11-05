@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ####################################################################################################
 #                                                                                                  #
 # (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
@@ -7,25 +9,5 @@
 #                                                                                                  #
 ####################################################################################################
 
-readonly DOCKER_IMAGE="qspprotocol/oyente-0.4.24@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67"
+# Do nothing
 
-declare -a ON_EXIT_HANDLERS
-
-function on_exit()
-{
-    for i in "${ON_EXIT_HANDLERS[@]}"
-    do
-        eval $i
-    done
-}
-
-function on_exit_do()
-{
-    local n=${#ON_EXIT_HANDLERS[*]}
-    ON_EXIT_HANDLERS[$n]="$*"
-    if [[ $n -eq 0 ]]; then
-        # TODO
-        # Check how complete ths list of signals is
-        trap on_exit EXIT SIGINT SIGTERM SIGKILL
-    fi
-}

@@ -21,6 +21,7 @@ RUN apk add --no-cache python3 && \
 
 RUN apk add --no-cache python3-dev gcc musl-dev libtool automake autoconf
 RUN apk add --no-cache openssl-dev make
+RUN apk add --no-cache jq
 RUN apk add --no-cache libffi-dev
 RUN apk add --no-cache linux-headers
 

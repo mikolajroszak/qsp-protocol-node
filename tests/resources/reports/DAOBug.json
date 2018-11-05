@@ -1,5 +1,5 @@
 {
-  "timestamp": 1535570029,
+  "timestamp": 1540397572,
   "contract_uri": "file:///app/tests/helpers/../resources/DAOBug.sol",
   "contract_hash": "b7f55bc69671c5f4fb295fd5acf1375eb7f1363093176f4bec190c39f95c235b",
   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
@@ -9,124 +9,161 @@
   "audit_state": 4,
   "status": "success",
   "analyzers_reports": [
-    {
-      "analyzer": {
-        "name": "oyente",
-        "version": "7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67",
-        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/DAOBug.sol",
-        "vulnerabilities_checked": [
-          "integer_underflow",
-          "integer_overflow",
-          "callstack",
-          "money_concurrency",
-          "time_dependency",
-          "reentrancy",
-          "parity_multisig_bug_2",
-          "assertion_failure"
-        ]
+      {
+          "status": "success",
+          "warnings": [
+              "root:You are using solc version 0.4.24, The latest supported version is 0.4.19"
+          ],
+          "coverages": [
+              {
+                  "percentage": 98.4,
+                  "file": "DAOBug.sol",
+                  "contract": "SendBalance"
+              }
+          ],
+          "potential_vulnerabilities": [
+              {
+                  "type": "reentrancy",
+                  "file": "DAOBug.sol",
+                  "contract": "SendBalance",
+                  "instances": [
+                      {
+                          "ref_id": 0,
+                          "start_line": 25,
+                          "end_line": 25
+                      }
+                  ]
+              }
+          ],
+          "analyzer": {
+              "name": "oyente",
+              "version": "7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67",
+              "vulnerabilities_checked": {
+                  "integer_underflow": {
+                      "type": "integer_underflow"
+                  },
+                  "integer_overflow": {
+                      "type": "integer_overflow"
+                  },
+                  "callstack": {
+                      "type": "callstack"
+                  },
+                  "money_concurrency": {
+                      "type": "transaction_order_dependency"
+                  },
+                  "time_dependency": {
+                      "type": "time_dependency"
+                  },
+                  "reentrancy": {
+                      "type": "reentrancy"
+                  },
+                  "parity_multisig_bug_2": {
+                      "type": "parity_multisig_bug"
+                  },
+                  "assertion_failure": {
+                      "type": "exception_state"
+                  }
+              },
+              "command": "docker run --rm -v /tmp/.oyente/44611:/shared/ -i qspprotocol/oyente-0.4.24@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67 bash -c python /oyente/oyente/oyente.py -ce -j -s /shared/DAOBug.sol"
+          },
+          "start_time": 1540397569,
+          "end_time": 1540397572
       },
-      "status": "success",
-      "warnings": [
-        "root:You are using solc version 0.4.24, The latest supported version is 0.4.19"
-      ],
-      "coverages": [
-        {
-          "percentage": 98.4,
-          "file": "DAOBug.sol",
-          "contract": "SendBalance"
-        }
-      ],
-      "potential_vulnerabilities": [
-        {
-          "name": "reentrancy",
-          "file": "DAOBug.sol",
-          "contract": "SendBalance",
-          "instances": [
-            {
-              "ref_id": 0,
-              "start_line": 25,
-              "end_line": 25
-            }
-          ]
-        }
-      ],
-      "count_potential_vulnerabilities": 1,
-      "hash": "76ecb62f3ef359e18229b32e9cb391c175ae6acef2a69ac9f466ff5c63c93981",
-      "start_time": 1535570024,
-      "end_time": 1535570029
-    },
-    {
-      "analyzer": {
-        "name": "mythril",
-        "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
-        "command": "docker run -v \"\":/shared/ -i \"mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882\" -o json -x \"/shared/DAOBug.sol\"",
-        "vulnerabilities_checked": [
-          "call_data_forwarded",
-          "dependence_on_environment_variable",
-          "call_to_a_user-supplied_address",
-          "use_of_tx_origin",
-          "ether_send",
-          "exception_state",
-          "message_call_to_external_contract",
-          "state_change_after_external_call",
-          "integer_overflow",
-          "integer_underflow",
-          "multiple_calls",
-          "unchecked_suicide",
-          "transaction_order_dependence",
-          "unchecked_call_return_value"
-        ]
-      },
-      "status": "success",
-      "potential_vulnerabilities": [
-        {
-          "name": "Ether send",
-          "type": "ether_send",
-          "file": "DAOBug.sol",
-          "description": "In the function `withdrawBalance()` a non-zero amount of Ether is sent to msg.sender.\nIt seems that this function can be called without restrictions.",
-          "instances": [
-            {
-              "ref_id": 0,
-              "start_line": 25
-            }
-          ]
-        },
-        {
-          "name": "Message call to external contract",
-          "type": "message_call_to_external_contract",
-          "file": "DAOBug.sol",
-          "description": "This contract executes a message call to the address of the transaction sender. Generally, it is not recommended to call user-supplied addresses using Solidity's call() construct. Note that attackers might leverage reentrancy attacks to exploit race conditions or manipulate this contract's state.",
-          "instances": [
-            {
-              "ref_id": 1,
-              "start_line": 25
-            }
-          ]
-        },
-        {
-          "name": "State change after external call",
-          "type": "state_change_after_external_call",
-          "file": "DAOBug.sol",
-          "description": "The contract account state is changed after an external call. Consider that the called contract could re-enter the function before this state change takes place. This can lead to business logic vulnerabilities.",
-          "instances": [
-            {
-              "ref_id": 2,
-              "start_line": 29
-            }
-          ]
-        }
-      ],
-      "count_potential_vulnerabilities": 3,
-      "hash": "0771de4454539c9537569e77909c3b3b8fa1e96cd0bdab2c778ccd473f5fc9c7",
-      "start_time": 1535570024,
-      "end_time": 1535570029
-    }
+      {
+          "status": "success",
+          "potential_vulnerabilities": [
+              {
+                  "type": "unprotected_ether_withdrawal",
+                  "file": "DAOBug.sol",
+                  "description": "In the function `withdrawBalance()` a non-zero amount of Ether is sent to msg.sender.\nIt seems that this function can be called without restrictions.",
+                  "instances": [
+                      {
+                          "ref_id": 0,
+                          "start_line": 25
+                      }
+                  ]
+              },
+              {
+                  "type": "call_to_external_contract",
+                  "file": "DAOBug.sol",
+                  "description": "This contract executes a message call to the address of the transaction sender. Generally, it is not recommended to call user-supplied addresses using Solidity's call() construct. Note that attackers might leverage reentrancy attacks to exploit race conditions or manipulate this contract's state.",
+                  "instances": [
+                      {
+                          "ref_id": 1,
+                          "start_line": 25
+                      }
+                  ]
+              },
+              {
+                  "type": "reentrancy",
+                  "file": "DAOBug.sol",
+                  "description": "The contract account state is changed after an external call. Consider that the called contract could re-enter the function before this state change takes place. This can lead to business logic vulnerabilities.",
+                  "instances": [
+                      {
+                          "ref_id": 2,
+                          "start_line": 29
+                      }
+                  ]
+              }
+          ],
+          "analyzer": {
+              "name": "mythril",
+              "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
+              "vulnerabilities_checked": {
+                  "Call data forwarded with delegatecall()": {
+                      "type": "delegate_call_to_untrusted_contract"
+                  },
+                  "Dependence on predictable environment variable": {
+                      "type": "dependence_on_environment_variable"
+                  },
+                  "Call to a user-supplied address": {
+                      "type": "delegate_call_to_untrusted_contract"
+                  },
+                  "Use of tx.origin": {
+                      "type": "tx_origin_usage"
+                  },
+                  "Ether send": {
+                      "type": "unprotected_ether_withdrawal"
+                  },
+                  "Exception state": {
+                      "type": "exception_state"
+                  },
+                  "Message call to external contract": {
+                      "type": "call_to_external_contract"
+                  },
+                  "State change after external call": {
+                      "type": "reentrancy"
+                  },
+                  "Integer Overflow": {
+                      "type": "integer_overflow"
+                  },
+                  "Integer Underflow": {
+                      "type": "integer_underflow"
+                  },
+                  "Multiple Calls": {
+                      "type": "multiple_calls"
+                  },
+                  "Unchecked SUICIDE": {
+                      "type": "unprotected_self_destruct"
+                  },
+                  "Transaction order dependence": {
+                      "type": "transaction_order_dependency"
+                  },
+                  "Unchecked CALL return value": {
+                      "type": "unchecked_call_return_value"
+                  }
+              },
+              "command": "docker run --rm -v /tmp/.mythril/44610:/shared/ -i mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882  -o json -x /shared/DAOBug.sol"
+          },
+          "start_time": 1540397569,
+          "end_time": 1540397572
+      }
   ],
   "compilation_warnings": [
-    "DAOBug.sol:26:7: Warning: \"throw\" is deprecated in favour of \"revert()\", \"require()\" and \"assert()\".\n      throw;\n      ^---^\n",
-    "DAOBug.sol:16:3: Warning: No visibility specified. Defaulting to \"public\". \n  function getBalance(address u) constant returns (uint) {\n  ^ (Relevant source part starts here and spans across multiple lines).\n",
-    "DAOBug.sol:20:3: Warning: No visibility specified. Defaulting to \"public\". \n  function addToBalance() {\n  ^ (Relevant source part starts here and spans across multiple lines).\n",
-    "DAOBug.sol:21:33: Warning: \"msg.value\" used in non-payable function. Do you want to add the \"payable\" modifier to this function?\n    userBalances[msg.sender] += msg.value;\n                                ^-------^\n",
-    "DAOBug.sol:24:3: Warning: No visibility specified. Defaulting to \"public\". \n  function withdrawBalance() {\n  ^ (Relevant source part starts here and spans across multiple lines).\n"
+      "DAOBug.sol:26:7: Warning: \"throw\" is deprecated in favour of \"revert()\", \"require()\" and \"assert()\".\n      throw;\n      ^---^\n",
+      "DAOBug.sol:16:3: Warning: No visibility specified. Defaulting to \"public\". \n  function getBalance(address u) constant returns (uint) {\n  ^ (Relevant source part starts here and spans across multiple lines).\n",
+      "DAOBug.sol:20:3: Warning: No visibility specified. Defaulting to \"public\". \n  function addToBalance() {\n  ^ (Relevant source part starts here and spans across multiple lines).\n",
+      "DAOBug.sol:21:33: Warning: \"msg.value\" used in non-payable function. Do you want to add the \"payable\" modifier to this function?\n    userBalances[msg.sender] += msg.value;\n                                ^-------^\n",
+      "DAOBug.sol:24:3: Warning: No visibility specified. Defaulting to \"public\". \n  function withdrawBalance() {\n  ^ (Relevant source part starts here and spans across multiple lines).\n"
   ]
 }

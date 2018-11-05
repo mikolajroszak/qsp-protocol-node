@@ -46,7 +46,7 @@ class S3Provider:
                 'provider_exception': exception
             }
 
-    def upload_contract(self, request_id, contract_body, filename):
+    def upload_contract(self, request_id, contract_body, file_name):
         """
         Uploads a contract being audited into S3 for the purposes of future inspection.
         """
@@ -57,7 +57,7 @@ class S3Provider:
                 'provider_exception': Exception('The contact bucket name is not configured')
             }
         try:
-            contract_filname = "{0}/{1}/{2}".format(self.__account, request_id, filename)
+            contract_filname = "{0}/{1}/{2}".format(self.__account, request_id, file_name)
             response = self.__client.put_object(
                 Body=str(contract_body),
                 Bucket=self.__contract_bucket_name,

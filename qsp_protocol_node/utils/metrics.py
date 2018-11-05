@@ -14,6 +14,7 @@ import json
 import urllib
 import sha3
 
+
 class MetricCollector:
 
     def __init__(self, config):
@@ -37,14 +38,15 @@ class MetricCollector:
     def send_to_dashboard(self, metrics_json):
         data = json.dumps(metrics_json, separators=None).encode('utf-8')
         req = urllib.request.Request(
-            url = self.__config.metric_collection_destination_endpoint,
-            data = data,
-            headers = {
+            url=self.__config.metric_collection_destination_endpoint,
+            data=data,
+            headers={
                 'content-type': 'application/json',
-                'user-agent': 'Mozilla/5.0', # the default user agent is often blocked,
+                 # the default user agent is often blocked
+                'user-agent': 'Mozilla/5.0',
                 'authorization': self.__get_auth_header(data)
             },
-            method = 'POST'
+            method='POST'
         )
         try:
             with urllib.request.urlopen(req) as responseObject:
@@ -52,24 +54,24 @@ class MetricCollector:
                 self.__logger.debug("Metrics sent successfully to '{0}'".format(
                         self.__config.metric_collection_destination_endpoint
                     ),
-                    metrics_json = metrics_json,
-                    headers = req.headers,
-                    response = response
+                    metrics_json=metrics_json,
+                    headers=req.headers,
+                    response=response
                 )
         except urllib.error.HTTPError as e:
             self.__logger.debug("HTTPError occurred when sending metrics",
-                code = e.code,
-                endpoint = self.__config.metric_collection_destination_endpoint
+                code=e.code,
+                endpoint=self.__config.metric_collection_destination_endpoint
             )
         except urllib.error.URLError as e:
             self.__logger.debug("URLError occurred when sending metrics",
-                reason = e.reason,
-                endpoint = self.__config.metric_collection_destination_endpoint
+                reason=e.reason,
+                endpoint=self.__config.metric_collection_destination_endpoint
             )
         except Exception as e:
             self.__logger.debug('Unhandled exception occurred when sending metrics',
-                message = str(e),
-                endpoint = self.__config.metric_collection_destination_endpoint
+                message=str(e),
+                endpoint=self.__config.metric_collection_destination_endpoint
             )
 
     def collect_and_send(self):
@@ -88,7 +90,7 @@ class MetricCollector:
                 'account': self.__config.account
             }
 
-            self.__logger.info("Metrics", metrics_json = metrics_json)
+            self.__logger.info("Metrics", metrics_json=metrics_json)
             if self.__config.metric_collection_destination_endpoint is not None:
                 self.send_to_dashboard(metrics_json)
 

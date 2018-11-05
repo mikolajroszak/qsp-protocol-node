@@ -40,7 +40,7 @@ class Analyzer:
         )
         return self.wrapper.get_metadata(contract_path, request_id, original_file_name)
 
-    def check(self, contract_path, request_id, original_name):
+    def check(self, contract_path, request_id, original_file_name):
         """
         Checks for potential vulnerabilities in a target contract writen in a given
         version of Solidity, writing the result in a json report.
@@ -52,7 +52,7 @@ class Analyzer:
             requestId=request_id,
         )
 
-        json_report = self.__wrapper.check(contract_path, request_id, original_name)
+        json_report = self.__wrapper.check(contract_path, request_id, original_file_name)
         str_report = json.dumps(json_report)
         self.__logger.debug("{0}'s wrapper finished execution. Produced report is {1}".format(
             self.wrapper.analyzer_name,

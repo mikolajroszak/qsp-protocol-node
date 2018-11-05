@@ -11,7 +11,7 @@ import unittest
 
 from web3.utils.threads import Timeout
 
-from utils.eth.tx import mk_args, send_signed_transaction, make_read_only_call
+from utils.eth.tx import mk_args, send_signed_transaction, mk_read_only_call
 from utils.eth.tx import DeduplicationException
 from unittest.mock import Mock
 
@@ -154,7 +154,7 @@ class TestFile(unittest.TestCase):
             # Expected
             pass
 
-    def test_make_read_only_call(self):
+    def test_mk_read_only_call(self):
         """
         Tests that the method returns a value if a value is returned, and raises an exception if an
         exception is raised by the call.
@@ -162,10 +162,10 @@ class TestFile(unittest.TestCase):
         error = ValueError("unknown error")
         read_only = ReadOnlyMethodMock(15, None)
         config = TestFile.get_config_mock(4000000000, 0)
-        self.assertEquals(15, make_read_only_call(config, read_only))
+        self.assertEquals(15, mk_read_only_call(config, read_only))
         read_only = ReadOnlyMethodMock(15, error)
         try:
-            make_read_only_call(config, read_only)
+            mk_read_only_call(config, read_only)
             self.fail("An error was expected")
         except ValueError as e:
             self.assertTrue(e is error)

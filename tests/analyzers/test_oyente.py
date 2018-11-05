@@ -11,6 +11,7 @@
 Tests invocation of the analyzer tool.
 """
 import unittest
+import json
 
 from random import random
 from helpers.resource import project_root
@@ -53,14 +54,12 @@ class TestAnalyzerOyente(unittest.TestCase):
         # Asserts some result produced
         self.assertTrue(report)
 
-        import json
         print(json.dumps(report, indent=2))
 
         # Asserts result is success
         self.assertTrue(report['status'], 'success')
         self.assertIsNotNone(report['potential_vulnerabilities'])
         self.assertEquals(1, len(report['potential_vulnerabilities']))
-        self.assertEquals(report['count_potential_vulnerabilities'], 1)
 
     def test_file_not_found(self):
         """
@@ -74,7 +73,7 @@ class TestAnalyzerOyente(unittest.TestCase):
         report = analyzer.check(no_file, request_id, no_file)
 
         self.assertTrue(report['status'], 'error')
-        self.assertTrue("No such file or directory" in report['errors'][0])
+        self.assertTrue("No such file or directory" in ''.join(err + ' ' for err in report['errors']))
 
     def test_old_pragma(self):
         """
@@ -104,7 +103,6 @@ class TestAnalyzerOyente(unittest.TestCase):
 
         self.assertTrue(report['status'], 'success')
         self.assertEquals(1, len(report['potential_vulnerabilities']))
-        self.assertEquals(report['count_potential_vulnerabilities'], 1)
 
 
 if __name__ == '__main__':

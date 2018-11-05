@@ -5,42 +5,22 @@
 # (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
 # modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
 # Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
-# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.                                                    #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
 #                                                                                                  #
 ####################################################################################################
 
-##################################################################
-# TODO
-# Add unit tests for oyente's wrapper
-# See https://quantstamp.atlassian.net/browse/QSP-436
-
 # Imports common definitions
-source "$WRAPPER_HOME"/utils/common
-
+source "$WRAPPER_HOME/../common/settings"
 
 # Generates an error report without warnings
 function report_errors {
-    "$WRAPPER_HOME/utils/make_error_report" "$1" /dev/null
+    "$WRAPPER_HOME/utils/mk_error_report" "$1" /dev/null
 }
 
 # Generates an error report with warnings
 function report_warnings_and_errors {
-    "$WRAPPER_HOME/utils/make_error_report" "$1" "$2"
+    "$WRAPPER_HOME/utils/mk_error_report" "$1" "$2"
 }
-
-##################################################################
-# Setup
-##################################################################
-
-# Creates a temporary folder that will be deleted once
-# this script executes
-
-readonly TMP_FOLDER="$STORAGE_DIR/$$"
-mkdir "$TMP_FOLDER" &> /dev/null
-on_exit_do rm -rf "$TMP_FOLDER"
-
-readonly LOG_OUTPUT="$TMP_FOLDER/output.log"
-on_exit_do rm -f "$LOG_OUTPUT"
 
 ##################################################################
 # once step
@@ -50,8 +30,6 @@ on_exit_do rm -f "$LOG_OUTPUT"
 if [[ ! -f "$STORAGE_DIR/.once" ]] ; then
     "$WRAPPER_HOME"/once >> "$LOG_OUTPUT" 2>&1 || \
         { report_errors "$LOG_OUTPUT"; exit 1; }
-else
-    > "$STORAGE_DIR/.once"
 fi
 
 ##################################################################
@@ -59,7 +37,7 @@ fi
 ##################################################################
 
 # Prepares the wrapper
-"$WRAPPER_HOME"/pre_run &> "$LOG_OUTPUT" || \
+"$WRAPPER_HOME"/pre_run >> "$LOG_OUTPUT" || \
     { report_errors "$LOG_OUTPUT"; exit 1; }
 
 # Copies the input contract to the temporary
@@ -68,39 +46,33 @@ fi
 cp "$CONTRACT_PATH" "$TMP_FOLDER" >> "$LOG_OUTPUT" 2>&1 || \
     { report_errors "$LOG_OUTPUT"; exit 1; }
 
-CONTRACT_FILENAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
-
-OYENTE_VULNERABILITIES="$WRAPPER_HOME"/resources/vulnerabilities
-OYENTE_VERSION=$(echo "$DOCKER_IMAGE" | egrep -o ':[0-9A-Za-z]+$' | cut -d ':' -f2)
-OYENTE_CMD="python /oyente/oyente/oyente.py $ANALYZER_ARGS -j -s /shared/$CONTRACT_FILENAME"
-
 ##################################################################
 # run step and post-run
 ##################################################################
 
 # Executes the analyzer
-docker run --rm -v "$TMP_FOLDER":/shared/ -i "$DOCKER_IMAGE" bash -c "$OYENTE_CMD" \
+docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE bash -c "$OYENTE_CMD" \
     &> "$LOG_OUTPUT"
 
 # Cleans up any resources
 "$WRAPPER_HOME"/post_run >> "$LOG_OUTPUT" 2>&1
 
-OYENTE_ERRORS="$TMP_FOLDER/oyente.errors"
-OYENTE_WARNINGS="$TMP_FOLDER/oyente.warnings"
+ERRORS="$TMP_FOLDER/oyente.errors"
+WARNINGS="$TMP_FOLDER/oyente.warnings"
 
-cat "$LOG_OUTPUT" | egrep -o '^CRITICAL:.*$' | sed 's/^CRITICAL://' > "$OYENTE_ERRORS"
-cat "$LOG_OUTPUT" | egrep -o '^WARNING:.*$' | sed 's/^WARNING://' > "$OYENTE_WARNINGS"
+cat "$LOG_OUTPUT" | egrep -o '^CRITICAL:.*$' | sed 's/^CRITICAL://' > "$ERRORS"
+cat "$LOG_OUTPUT" | egrep -o '^WARNING:.*$' | sed 's/^WARNING://' > "$WARNINGS"
 
-OYENTE_REPORTS=$(ls "$TMP_FOLDER"/*.json 2> /dev/null)
+REPORTS=$(ls "$TMP_FOLDER"/*.json 2> /dev/null)
 
-if [[ "x$OYENTE_REPORTS" == "x" || "x$(cat $OYENTE_ERRORS)" != "x" ]] ; then        
-    report_warnings_and_errors "$OYENTE_ERRORS" "$OYENTE_WARNINGS"
+if [[ "x$REPORTS" == "x" || "x$(cat $ERRORS)" != "x" ]] ; then        
+    report_warnings_and_errors "$ERRORS" "$WARNINGS"
     exit 1
 fi
 
-"$WRAPPER_HOME/utils/mk_success_report" "${OYENTE_VERSION}" "${OYENTE_CMD}" "${OYENTE_VULNERABILITIES}" \
-    "${ORIGINAL_NAME}" "$OYENTE_WARNINGS" $OYENTE_REPORTS || \
-       { error "$LOG_OUTPUT"; exit 1; }
+"$WRAPPER_HOME/utils/mk_success_report"  \
+    "$VULNERABILITY_MAPPING" "$ORIGINAL_FILE_NAME" "$WARNINGS" $REPORTS || \
+       { report_errors "$LOG_OUTPUT"; exit 1; }
 
 # Exit with a success status code
 exit 0

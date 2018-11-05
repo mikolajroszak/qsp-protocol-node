@@ -1,0 +1,26 @@
+{
+    "integer_underflow": {
+        "type": "integer_underflow"
+    },
+    "integer_overflow": {
+        "type": "integer_overflow"
+    },
+    "callstack": {
+        "type": "callstack"
+    },
+    "money_concurrency": {
+        "type": "transaction_order_dependency"
+    },
+    "time_dependency": {
+        "type": "time_dependency"
+    },
+    "reentrancy": {
+        "type": "reentrancy"
+    },
+    "parity_multisig_bug_2": {
+        "type": "parity_multisig_bug"
+    },
+    "assertion_failure": {
+        "type": "exception_state"
+    }
+}

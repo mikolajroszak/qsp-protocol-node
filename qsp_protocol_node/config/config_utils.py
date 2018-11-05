@@ -21,7 +21,7 @@ from tempfile import gettempdir
 from streaming import CloudWatchProvider
 from upload import S3Provider
 from time import sleep
-from utils.eth import make_read_only_call
+from utils.eth import mk_read_only_call
 from web3 import (
     Web3,
     TestRPCProvider,
@@ -184,9 +184,9 @@ class ConfigUtils:
         """
         # collect state variables from the smart contract
         call = config.audit_data_contract.functions.auditTimeoutInBlocks()
-        contract_audit_timeout_in_blocks = make_read_only_call(config, call)
+        contract_audit_timeout_in_blocks = mk_read_only_call(config, call)
         call = config.audit_data_contract.functions.maxAssignedRequests()
-        contract_max_assigned_requests = make_read_only_call(config, call)
+        contract_max_assigned_requests = mk_read_only_call(config, call)
 
         # start_n_blocks_in_the_past should never exceed the submission timeout
         ConfigUtils.raise_err(config.start_n_blocks_in_the_past > config.submission_timeout_limit_blocks)

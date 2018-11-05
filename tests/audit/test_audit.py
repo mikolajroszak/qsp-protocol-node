@@ -54,10 +54,9 @@ class TestQSPAuditNode(unittest.TestCase):
     __logger = None
 
     @classmethod
-    def __clean_up_pool_db(cls, evt_db_path):
-        print("Cleaning test database")
+    def __clean_up_file(cls, path):
         with contextlib.suppress(FileNotFoundError):
-            os.remove(evt_db_path)
+            os.remove(path)
 
     @staticmethod
     def __safe_transact(contract_entity, tx_args):
@@ -127,6 +126,38 @@ class TestQSPAuditNode(unittest.TestCase):
         )
         return address, audit_contract, data_contract
 
+    def __compare_json(self, audit_file, report_file_path, json_loaded=False):
+        if not json_loaded:
+            actual_json = load_json(audit_file)
+        else:
+            actual_json = audit_file
+
+        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
+        diff = DeepDiff(actual_json,
+                        expected_json,
+                        exclude_paths={
+                            "root['contract_uri']",
+                            # path is different depending on whether running inside Docker
+                            "root['timestamp']",
+                            "root['start_time']",
+                            "root['end_time']",
+                            "root['analyzers_reports'][0]['analyzer']['command']",
+                            "root['analyzers_reports'][0]['coverages'][0]['file']",
+                            "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
+                            "root['analyzers_reports'][0]['start_time']",
+                            "root['analyzers_reports'][0]['end_time']",
+                            "root['analyzers_reports'][1]['analyzer']['command']",
+                            "root['analyzers_reports'][1]['coverages'][0]['file']",
+                            "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
+                            "root['analyzers_reports'][1]['start_time']",
+                            "root['analyzers_reports'][1]['end_time']",
+                        }
+                    )
+        pprint(diff)
+        self.assertEqual(diff, {})
+        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
+                         ntpath.basename(expected_json['contract_uri']))
+
     @classmethod
     def fetch_config(cls):
         # create config from file, the contract is not provided and will be injected separately
@@ -156,44 +187,7 @@ class TestQSPAuditNode(unittest.TestCase):
     def setUpClass(cls):
         config = TestQSPAuditNode.fetch_config()
         cls.__logger = config.logger
-        TestQSPAuditNode.__clean_up_pool_db(config.evt_db_path)
-
-        all_wrappers_dir = Path("{0}/analyzers/wrappers".format(project_root()))
-
-        i = 0
-        # Iterate over all the wrappers within the analyzers folder
-        for entry in all_wrappers_dir.iterdir():
-            if not entry.is_dir():
-                continue
-
-            wrapper_home = entry
-
-            env = dict(os.environ)
-            env['WRAPPER_HOME'] = wrapper_home
-
-            storage_dir = config.analyzers[i].wrapper.storage_dir
-            env['STORAGE_DIR'] = storage_dir
-
-            # Creates storage directory if it does not exits
-            if not os.path.exists(storage_dir):
-                os.makedirs(storage_dir)
-
-            once_process = subprocess.run(
-                "{0}/once".format(wrapper_home),
-                shell=True,
-                check=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                env=env,
-            )
-
-            if once_process.returncode == 1:
-                # An error occurred
-                raise Exception(
-                    "Error invoking once (return value is not 0). Output is {0}".format(
-                        once_process.stdout))
-
-            i += 1
+        TestQSPAuditNode.__clean_up_file(config.evt_db_path)
 
     def setUp(self):
         """
@@ -201,7 +195,11 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         self.__config = TestQSPAuditNode.fetch_config()
         self.__audit_node = QSPAuditNode(self.__config)
-        self.maxDiff = None
+
+        # Forces analyzer wrapper to always execute their `once` script prior
+        # to executing `run`
+        for analyzer in self.__config.analyzers:
+            TestQSPAuditNode.__clean_up_file(analyzer.wrapper.storage_dir + '/.once')
 
         self.__getNextAuditRequest_filter = \
             self.__config.audit_contract.events.getNextAuditRequest_called.createFilter(
@@ -240,10 +238,10 @@ class TestQSPAuditNode(unittest.TestCase):
         Stops the execution of the current QSP audit node.
         """
         self.__audit_node.stop()
-        TestQSPAuditNode.__clean_up_pool_db(self.__config.evt_db_path)
+        TestQSPAuditNode.__clean_up_file(self.__config.evt_db_path)
 
     @timeout(8, timeout_exception=StopIteration)
-    def test_timeout_stale_evets(self):
+    def test_timeout_stale_events(self):
         class Web3Mock:
             def __init__(self, eth):
                 self.eth = eth
@@ -381,7 +379,7 @@ class TestQSPAuditNode(unittest.TestCase):
     def test_update_min_price_timeout_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
-        with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
+        with mock.patch('audit.audit.mk_read_only_call', return_value=-1) as mocked_read, \
              mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = Timeout()
@@ -394,7 +392,7 @@ class TestQSPAuditNode(unittest.TestCase):
     def test_update_min_price_deduplication_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
-        with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
+        with mock.patch('audit.audit.mk_read_only_call', return_value=-1) as mocked_read, \
              mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = DeduplicationException()
@@ -407,7 +405,7 @@ class TestQSPAuditNode(unittest.TestCase):
     def test_update_min_price_other_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
-        with mock.patch('audit.audit.make_read_only_call', return_value=-1) as mocked_read, \
+        with mock.patch('audit.audit.mk_read_only_call', return_value=-1) as mocked_read, \
                 mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = ValueError()
@@ -686,38 +684,6 @@ class TestQSPAuditNode(unittest.TestCase):
         # an extra call to get_next_audit is no accepted
         self.assertFalse(self.__mocked__get_next_audit_request_called)
 
-    def __compare_json(self, audit_file, report_file_path, json_loaded=False):
-        if not json_loaded:
-            actual_json = load_json(audit_file)
-        else:
-            actual_json = audit_file
-        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
-        diff = DeepDiff(actual_json,
-                        expected_json,
-                        exclude_paths={
-                            "root['contract_uri']",
-                            # path is different depending on whether running inside Docker
-                            "root['timestamp']",
-                            "root['start_time']",
-                            "root['end_time']",
-                            "root['analyzers_reports'][0]['coverages'][0]['file']",
-                            "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][0]['start_time']",
-                            "root['analyzers_reports'][0]['end_time']",
-                            "root['analyzers_reports'][0]['hash']",
-                            "root['analyzers_reports'][1]['analyzer']['command']",
-                            "root['analyzers_reports'][1]['coverages'][0]['file']",
-                            "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][1]['start_time']",
-                            "root['analyzers_reports'][1]['end_time']",
-                            "root['analyzers_reports'][1]['hash']",
-                        }
-                        )
-        pprint(diff)
-        self.assertEqual(diff, {})
-        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
-                         ntpath.basename(expected_json['contract_uri']))
-
     @timeout(30, timeout_exception=StopIteration)
     def test_timeout_on_complex_file(self):
         """
@@ -865,7 +831,9 @@ class TestQSPAuditNode(unittest.TestCase):
                 break
             else:
                 sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
+
         self.assertEqual(row['evt_name'], "LogAuditAssigned")
+
         # FIXME: add range validation
         self.assertTrue(int(row['block_nbr']) > 0)
 

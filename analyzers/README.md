@@ -22,7 +22,7 @@ must follow specific naming conventions and responsibilities:
 - `pre_run`: contains the logic for setting up each run of the target analyzer.
 - `run`: contains the logic for invoking the analyzer executable and formatting its output.
 - `post_run`: contains the logic to clean-up each run of the target analyzer (e.g., temporary files, docker images, etc).
-- `get_metadata`: contains the logic to produce analyzer metadata. Outputs to stdout name, version, command, and the vulnerabilities list (one per line).
+- `metadata`: contains the logic to produce analyzer metadata. Outputs to stdout name, version, command, and the vulnerabilities list (one per line).
 
 Each executable comprising the wrapper has access to the following environment variables:
 - `STORAGE_DIR`: informs the volume (an absolute directory path) in which analyzers can create temporary or persistent files. By default, files are persistent per session, i.e., they are not removed after the analyzer executes. However, persistent
@@ -31,7 +31,7 @@ Each executable comprising the wrapper has access to the following environment v
 
 
 In the case of `run`, `pre_run`, and `post_run`, two other variables exist in the environment:
-- `INPUT_CONTRACT`: the filename (full path) containing the contract to be analyzed.
+- `INPUT_CONTRACT`: the file name (full path) containing the contract to be analyzed.
 - `ANALYZER_ARGS` containing specific arguments on how to execute the analyzer.
 
 ## Registering analyzers

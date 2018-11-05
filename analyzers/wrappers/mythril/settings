@@ -1,3 +1,4 @@
+
 ####################################################################################################
 #                                                                                                  #
 # (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
@@ -7,7 +8,9 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .tx import send_signed_transaction
-from .tx import mk_read_only_call
-from .tx import DeduplicationException
-from .address import mk_checksum_address
+source "$WRAPPER_HOME"/../common/settings
+
+readonly ANALYZER_DOCKER_IMAGE="mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882"
+readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
+readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -o json -x /shared/$CONTRACT_FILE_NAME"
+

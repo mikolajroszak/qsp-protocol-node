@@ -1,32 +1,20 @@
-
 ####################################################################################################
 #                                                                                                  #
 # (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
 # modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
 # Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
-# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.                                                    #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
 #                                                                                                  #
 ####################################################################################################
 
-readonly DOCKER_IMAGE="mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882"
+source "$WRAPPER_HOME"/../common/settings
 
-declare -a ON_EXIT_HANDLERS
+readonly ANALYZER_DOCKER_IMAGE="qspprotocol/oyente-0.4.24@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67"
+readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
+readonly OYENTE_CMD="python /oyente/oyente/oyente.py $ANALYZER_ARGS -j -s /shared/$CONTRACT_FILE_NAME"
 
-function on_exit()
-{
-    for i in "${ON_EXIT_HANDLERS[@]}"
-    do
-        eval $i
-    done
-}
+# FIXME
+# Could not escape this properly as done for mythril
+# Must be kept in synch with `run` script
 
-function on_exit_do()
-{
-    local n=${#ON_EXIT_HANDLERS[*]}
-    ON_EXIT_HANDLERS[$n]="$*"
-    if [[ $n -eq 0 ]]; then
-        # TODO
-        # Check how complete ths list of signals is
-        trap on_exit EXIT SIGINT SIGTERM SIGKILL
-    fi
-}
+readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE bash -c $OYENTE_CMD"

@@ -1,8 +1,0 @@
-integer_underflow
-integer_overflow
-callstack
-money_concurrency
-time_dependency
-reentrancy
-parity_multisig_bug_2
-assertion_failure
