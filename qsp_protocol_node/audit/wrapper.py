@@ -98,6 +98,7 @@ class Wrapper:
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
                 timeout=self.__timeout_sec,
+                cwd=self.__home,
             )
 
             metadata = json.loads(analyzer.stdout)
@@ -130,6 +131,7 @@ class Wrapper:
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
                 timeout=self.__timeout_sec,
+                cwd=self.__home,
             )
 
             self.__logger.debug("Wrapper stdout is: {0}".format(str(analyzer.stdout)), requestId=request_id)
