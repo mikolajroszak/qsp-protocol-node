@@ -35,10 +35,11 @@ All instructions must be run from the project's root folder.
     * pyenv
     * pyenv-virtualenv
     * coreutils
+    * jq
 
     For Mac, this can be done using `brew`:
     ```bash
-    brew install automake libtool awscli pyenv pyenv-virtualenv coreutils
+    brew install automake libtool awscli pyenv pyenv-virtualenv coreutils jq
     ```
 
     You also need to install the compiler for Solidity 0.4.24. If not installed, this can be done with
