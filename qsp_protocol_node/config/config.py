@@ -16,6 +16,7 @@ import utils.io as io_utils
 from os.path import expanduser
 from dpath.util import get
 
+from audit.report_processing import ReportEncoder
 from evt import EventPoolManager
 from utils.eth import mk_checksum_address
 
@@ -211,6 +212,7 @@ class Config:
             config_utils.check_configuration_settings(self)
         self.__analyzers = self.__create_analyzers(config_utils)
         self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
+        self.__report_encoder = ReportEncoder()
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
     def load_config(self, config_utils, env, config_file_uri, account_passwd="", auth_token="",
@@ -247,7 +249,7 @@ class Config:
         Builds a Config object from a target environment (e.g., test) and an input YAML
         configuration file.
         """
-        self.__node_version = '0.1.2'
+        self.__node_version = '1.0.0'
         self.__analyzers = []
         self.__analyzers_config = []
         self.__audit_contract_name = None
@@ -285,6 +287,7 @@ class Config:
         self.__min_price_in_qsp = 0
         self.__metric_collection_is_enabled = True
         self.__metric_collection_interval_seconds = 30
+        self.__report_encoder = None
         self.__metric_collection_destination_endpoint = None
         self.__report_uploader = None
         self.__report_uploader_provider_name = None
@@ -367,9 +370,16 @@ class Config:
         return self.__block_mined_polling_interval_sec
 
     @property
+    def report_encoder(self):
+        """
+        Returns report encoder.
+        """
+        return self.__report_encoder
+
+    @property
     def report_uploader(self):
         """
-        Returns report uploader."
+        Returns report uploader.
         """
         return self.__report_uploader
 

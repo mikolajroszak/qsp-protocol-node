@@ -270,7 +270,7 @@ class ConfigUtils:
             #     analyzer dictionary configuration
             # }
 
-            # Gets ths single key in the dictionart (the name of the analyzer)
+            # Gets ths single key in the dictionary (the name of the analyzer)
             analyzer_name = list(analyzer_config_dict.keys())[0]
             analyzer_config = analyzers_config[i][analyzer_name]
             script_path = os.path.realpath(__file__)

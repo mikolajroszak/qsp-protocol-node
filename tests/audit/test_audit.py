@@ -464,7 +464,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertEqual(row['fk_status'], 'DN')
 
     @timeout(80, timeout_exception=StopIteration)
-    def test_contract_audit_request(self):
+    def test_successful_contract_audit_request(self):
         """
         Tests the entire flow of a successful audit request, from a request
         to the production of a report and its submission.

@@ -68,6 +68,9 @@ class QSPAuditNode:
     # on this frequency.
     __MIN_PRICE_BEAT = 24 * 60 * 60
 
+    # empty report for certain error cases
+    __EMPTY_COMPRESSED_REPORT = ""
+
     def __init__(self, config):
         """
         Builds a QSPAuditNode object from the given input parameters.
@@ -458,12 +461,14 @@ class QSPAuditNode:
                 if audit_result is None:
                     error = "Could not generate report"
                     evt['status_info'] = error
+                    evt['compressed_report'] = QSPAuditNode.__EMPTY_COMPRESSED_REPORT
                     self.__logger.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
                     evt['audit_uri'] = audit_result['audit_uri']
                     evt['audit_hash'] = audit_result['audit_hash']
                     evt['audit_state'] = audit_result['audit_state']
+                    evt['compressed_report'] = audit_result['compressed_report']
                     evt['status_info'] = "Sucessfully generated report"
                     msg = "Generated report URI is {0}. Saving it in the internal database " \
                           "(if not previously saved)"
@@ -504,7 +509,7 @@ class QSPAuditNode:
                 tx_hash = self.__submit_report(
                     int(evt['request_id']),
                     evt['audit_state'],
-                    str(evt['audit_hash']),
+                    evt['compressed_report'],
                 )
 
                 # TODO: https://quantstamp.atlassian.net/browse/QSP-774
@@ -699,8 +704,14 @@ class QSPAuditNode:
 
         self.__validate_json(audit_report, request_id)
 
+        compressed_report = self.__config.report_encoder.compress_report(audit_report,
+                                                                         request_id,
+                                                                         self.__logger)
+
+        # TODO: remove report uploading (https://quantstamp.atlassian.net/browse/QSP-793)
         audit_report_str = json.dumps(audit_report, indent=2)
         audit_hash = digest(audit_report_str)
+
         upload_result = self.__config.report_uploader.upload(audit_report_str,
                                                              audit_report_hash=audit_hash)
 
@@ -733,7 +744,8 @@ class QSPAuditNode:
         return {
             'audit_state': audit_report['audit_state'],
             'audit_uri': upload_result['url'],
-            'audit_hash': audit_hash
+            'audit_hash': audit_hash,
+            'compressed_report': compressed_report,
         }
 
     def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
@@ -907,15 +919,18 @@ class QSPAuditNode:
                 e))
         return tx_hash
 
-    def __submit_report(self, request_id, audit_state, audit_hash):
+    def __submit_report(self, request_id, audit_state, compressed_report):
         """
         Submits the audit report to the entire QSP network.
         """
+        # convert from a bitstring to a bytes array
+        compressed_report_bytes = self.__config.web3_client.toBytes(hexstr=compressed_report)
+
         tx_hash = send_signed_transaction(self.__config,
                                           self.__config.audit_contract.functions.submitReport(
                                             request_id,
                                             audit_state,
-                                            audit_hash))
+                                            compressed_report_bytes))
         self.__config.logger.debug("Report {0} has been submitted".format(str(request_id)))
         return tx_hash
 

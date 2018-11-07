@@ -120,6 +120,22 @@ Otherwise, launching the audit node will fail.
 
 By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. To run the node in an isolated environment, see the next section.
 
+### Run Standalone Report Encoder
+
+1. To encode an existing json report to a compressed hexstring, run
+
+```
+python3 qsp_protocol_node/audit/report_processing.py -e path/to/file/report.json
+```
+
+2. To decode a compressed hexstring, run (for example)
+
+```
+python3 qsp_protocol_node/audit/report_processing.py -d 0108A9C2343908B4A6981E34BEE55C971F2104E53973DB37A24B83810FA6347FAD06
+```
+
+Note that there is no `0x` prefixing the hexstring.
+
 ### Run locally in an isolated environment
 For certain use cases, it is important to run the node in such a way that it doesn't affect
 any other nodes. Currently, the steps are as follows:

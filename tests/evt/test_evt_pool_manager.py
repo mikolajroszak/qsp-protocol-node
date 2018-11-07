@@ -162,6 +162,7 @@ class TestEvtPoolManager(unittest.TestCase):
         self.evt_first['audit_uri'] = 'uri'
         self.evt_first['audit_hash'] = 'hash'
         self.evt_first['audit_state'] = 'state'
+        self.evt_first['compressed_report'] = 'compressed_report'
         self.evt_pool_manager.set_evt_to_be_submitted(self.evt_first)
         evt = self.evt_pool_manager.get_event_by_request_id(self.evt_first['request_id'])
         self.assertEqual(evt['fk_status'], 'TS')

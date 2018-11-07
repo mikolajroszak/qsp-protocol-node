@@ -205,6 +205,7 @@ class EventPoolManager:
              encoded_evt['audit_uri'],
              encoded_evt['audit_hash'],
              encoded_evt['audit_state'],
+             encoded_evt['compressed_report'],
              encoded_evt['request_id'],
              ),
         )

@@ -187,7 +187,7 @@ contract QuantstampAudit {
   }
 
   event submitReport_called();
-  function submitReport(uint256 requestId, AuditState auditResult, string reportHash){
+  function submitReport(uint256 requestId, AuditState auditResult, bytes compressedReportBytes){
     emit submitReport_called();
   }
 

@@ -34,5 +34,6 @@ create table audit_evt (
     audit_uri          text default null,
     audit_hash         text default null,
     audit_state         smallint default null,
+    compressed_report   text default null,
     foreign key(fk_status) references evt_status(id)
 );
