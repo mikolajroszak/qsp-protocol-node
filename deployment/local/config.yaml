@@ -68,6 +68,7 @@ testnet:
     is_enabled: True
     interval_seconds: 30
     destination_endpoint: !!str "https://dev-qsp-dashboard.quantstamp.com/node-metrics"
+  heartbeat_allowed: False
 mainnet:
   eth_node:
     provider: !!str "HTTPProvider"

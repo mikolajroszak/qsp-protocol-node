@@ -380,6 +380,14 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
 
     @timeout(10, timeout_exception=StopIteration)
+    def test_check_and_update_min_price_call(self):
+        value = self.__config.min_price_in_qsp + 1
+        with mock.patch('audit.audit.mk_read_only_call', return_value=value) as mocked_read, \
+             mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
+            self.__audit_node._QSPAuditNode__check_and_update_min_price()
+            mocked_sign.assert_called()
+
+    @timeout(10, timeout_exception=StopIteration)
     def test_update_min_price_timeout_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate

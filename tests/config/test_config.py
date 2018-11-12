@@ -363,6 +363,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.logging_streaming_provider_args)
         self.assertEqual(0, config.start_n_blocks_in_the_past)
         self.assertEqual(0, config.block_discard_on_restart)
+        self.assertTrue(config.heartbeat_allowed)
 
     def test_create_components(self):
         logging_provider_name = "provider name"
@@ -445,7 +446,8 @@ class TestConfig(unittest.TestCase):
 
     def test_load_config(self):
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file("dev", config_file_uri, validate_contract_settings=False)
+        config = ConfigFactory.create_from_file("dev", config_file_uri,
+                                                validate_contract_settings=False)
         self.assertIsNotNone(config.logger)
         self.assertIsNone(config.logging_streaming_provider)
         self.assertIsNotNone(config.eth_provider)
@@ -460,6 +462,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(3, len(config.analyzers))
         self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
+        self.assertFalse(config.heartbeat_allowed)
 
     def test_inject_token_auth(self):
         auth_token = "abc123456"

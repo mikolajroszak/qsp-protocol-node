@@ -204,9 +204,13 @@ class QSPAuditNode:
         # Initialize the gas price
         self.__compute_gas_price()
 
-        # Updates min price and starts a thread that will be doing so every 24 hours
-        self.__update_min_price()
-        self.__run_update_min_price_thread()
+        if self.config.heartbeat_allowed:
+            # Updates min price and starts a thread that will be doing so every 24 hours
+            self.__update_min_price()
+            self.__run_update_min_price_thread()
+        else:
+            # Updates min price only if it differs
+            self.__check_and_update_min_price()
 
         if self.__config.metric_collection_is_enabled:
             self.__metric_collector = MetricCollector(self.__config)
@@ -356,9 +360,22 @@ class QSPAuditNode:
 
         return min_price_thread
 
+    def __check_and_update_min_price(self):
+        """
+        Checks that the minimum price in the audit node's configuration matches the smart contract
+        and updates it if it differs.
+        """
+        contract_price = mk_read_only_call(
+            self.__config,
+            self.__config.audit_data_contract.functions.getMinAuditPrice(self.__config.account)
+        )
+        min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
+        if min_price_in_mini_qsp != contract_price:
+            self.__update_min_price()
+
     def __update_min_price(self):
         """
-        Checks that the minimum price in the audit node's configuration matches the smart contract.
+        Updates smart contract with the minimum price in the audit node's configuration.
         """
         msg = "Make sure the account has enough Ether, " \
               + "the Ethereum node is connected and synced, " \

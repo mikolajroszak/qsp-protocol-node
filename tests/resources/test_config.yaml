@@ -50,6 +50,7 @@ dev:
     is_enabled: False
     interval_seconds: 30
     destination_endpoint: !!str "https://localhost/node-metrics"
+  heartbeat_allowed: False
 staging:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
