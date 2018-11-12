@@ -10,6 +10,10 @@
 resource "aws_s3_bucket" "reports_bucket" {
   bucket = "qsp-protocol-reports-${var.stage}"
   acl    = "private"
+  cors_rule {
+    allowed_methods = ["GET"]
+    allowed_origins = ["*"]
+  }
 }
 
 resource "aws_s3_bucket_policy" "reports_bucket_policy" {

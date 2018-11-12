@@ -31,7 +31,7 @@ module "main" {
   environment = "qsp-protocol-dev"
   stage = "dev"
   key_name = "qsp-protocol-dev"
-  node_instance_type_audit = "m4.large"
+  node_instance_type_audit = "r5.large"
   
   ETH_PASSPHRASE = "${var.ETH_PASSPHRASE}"
   ETH_AUTH_TOKEN = "${var.ETH_AUTH_TOKEN}"
