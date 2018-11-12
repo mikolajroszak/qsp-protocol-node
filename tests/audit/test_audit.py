@@ -493,6 +493,36 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
     @timeout(80, timeout_exception=StopIteration)
+    def test_successful_empty_contract_audit_request(self):
+        """
+        Tests the entire flow of a successful audit request, from a request
+        to the production of a report and its submission.
+        """
+        # since we're mocking the smart contract, we should explicitly call its internals
+        empty_contract = resource_uri("Empty.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__request_audit(empty_contract, self.__PRICE)
+        )
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__set_assigned_request_count(1))
+
+        # If the report is not submitted, this should timeout the test
+        self.__evt_wait_loop(self.__submitReport_filter)
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__set_assigned_request_count(0))
+        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__send_done_message(self.__REQUEST_ID))
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__set_assigned_request_count(0))
+
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
+                                     "reports/Empty.json")
+        self.__assert_all_analyzers(self.__REQUEST_ID)
+
+    @timeout(80, timeout_exception=StopIteration)
     def test_contract_audit_request_not_in_db(self):
         """
         Tests the entire flow of a successful audit request when the request is not stored in the

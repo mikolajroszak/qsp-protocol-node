@@ -1,0 +1,142 @@
+{
+  "timestamp": 1541782244,
+  "contract_uri": "file:///app/tests/helpers/../resources/Empty.sol",
+  "contract_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "auditor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+  "request_id": 1,
+  "version": "1.0.0",
+  "audit_state": 5,
+  "status": "error",
+  "analyzers_reports": [
+    {
+      "status": "error",
+      "errors": [
+        "root:/shared/Empty.sol:1:1: Warning: Source file does not specify required compiler version!Consider adding \"pragma solidity ^0.4.24;\"\n",
+        "root:Solidity compilation failed.\n"
+      ],
+      "warnings": [
+        "root:You are using solc version 0.4.24, The latest supported version is 0.4.19\n"
+      ],
+      "analyzer": {
+        "name": "oyente",
+        "version": "7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67",
+        "vulnerabilities_checked": {
+          "integer_underflow": {
+            "type": "integer_underflow"
+          },
+          "integer_overflow": {
+            "type": "integer_overflow"
+          },
+          "callstack": {
+            "type": "callstack"
+          },
+          "money_concurrency": {
+            "type": "transaction_order_dependency"
+          },
+          "time_dependency": {
+            "type": "time_dependency"
+          },
+          "reentrancy": {
+            "type": "reentrancy"
+          },
+          "parity_multisig_bug_2": {
+            "type": "parity_multisig_bug"
+          },
+          "assertion_failure": {
+            "type": "exception_state"
+          }
+        },
+        "command": "docker run --rm -v /tmp/.oyente/120:/shared/ -i qspprotocol/oyente-0.4.24@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67 bash -c python /oyente/oyente/oyente.py -ce -j -s /shared/Empty.sol"
+      },
+      "start_time": 1541782239,
+      "end_time": 1541782244
+    },
+    {
+      "status": "error",
+      "errors": [
+        "Traceback (most recent call last):\n",
+        "  File \"/usr/local/bin/myth\", line 4, in <module>\n",
+        "    __import__('pkg_resources').run_script('mythril==0.18.6', 'myth')\n",
+        "  File \"/usr/lib/python3/dist-packages/pkg_resources/__init__.py\", line 658, in run_script\n",
+        "    self.require(requires)[0].run_script(script_name, ns)\n",
+        "  File \"/usr/lib/python3/dist-packages/pkg_resources/__init__.py\", line 1438, in run_script\n",
+        "    exec(code, namespace, namespace)\n",
+        "  File \"/usr/local/lib/python3.6/dist-packages/mythril-0.18.6-py3.6.egg/EGG-INFO/scripts/myth\", line 9, in <module>\n",
+        "    mythril.interfaces.cli.main()\n",
+        "  File \"/usr/local/lib/python3.6/dist-packages/mythril-0.18.6-py3.6.egg/mythril/interfaces/cli.py\", line 159, in main\n",
+        "    address, _ = mythril.load_from_solidity(args.solidity_file)  # list of files\n",
+        "  File \"/usr/local/lib/python3.6/dist-packages/mythril-0.18.6-py3.6.egg/mythril/mythril.py\", line 305, in load_from_solidity\n",
+        "    contract = SolidityContract(file, contract_name, solc_args=self.solc_args)\n",
+        "  File \"/usr/local/lib/python3.6/dist-packages/mythril-0.18.6-py3.6.egg/mythril/ether/soliditycontract.py\", line 62, in __init__\n",
+        "    for key, contract in data['contracts'].items():\n",
+        "KeyError: 'contracts'\n"
+      ],
+      "trace": [
+        ">> Wrapper setup finished\n",
+        ">> About to execute once script\n",
+        ">> Done\n",
+        ">> About to execute pre_run script\n",
+        ">> Done\n",
+        ">> Copying contract(s) to docker's mounted volume\n",
+        ">> Done\n",
+        ">> About to invoke mythril\n",
+        ">> Done\n"
+      ],
+      "analyzer": {
+        "name": "mythril",
+        "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
+        "vulnerabilities_checked": {
+          "Call data forwarded with delegatecall()": {
+            "type": "delegate_call_to_untrusted_contract"
+          },
+          "Dependence on predictable environment variable": {
+            "type": "dependence_on_environment_variable"
+          },
+          "Call to a user-supplied address": {
+            "type": "delegate_call_to_untrusted_contract"
+          },
+          "Use of tx.origin": {
+            "type": "tx_origin_usage"
+          },
+          "Ether send": {
+            "type": "unprotected_ether_withdrawal"
+          },
+          "Exception state": {
+            "type": "exception_state"
+          },
+          "Message call to external contract": {
+            "type": "call_to_external_contract"
+          },
+          "State change after external call": {
+            "type": "reentrancy"
+          },
+          "Integer Overflow": {
+            "type": "integer_overflow"
+          },
+          "Integer Underflow": {
+            "type": "integer_underflow"
+          },
+          "Multiple Calls": {
+            "type": "multiple_calls"
+          },
+          "Unchecked SUICIDE": {
+            "type": "unprotected_self_destruct"
+          },
+          "Transaction order dependence": {
+            "type": "transaction_order_dependency"
+          },
+          "Unchecked CALL return value": {
+            "type": "unchecked_call_return_value"
+          }
+        },
+        "command": "docker run --rm -v /tmp/.mythril/132:/shared/ -i mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882  -o json -x /shared/Empty.sol"
+      },
+      "start_time": 1541782239,
+      "end_time": 1541782244
+    }
+  ],
+  "compilation_warnings": [
+    "Empty.sol:1:1: Warning: Source file does not specify required compiler version!Consider adding \"pragma solidity ^0.4.24;\"\n\n^\n"
+  ]
+}
