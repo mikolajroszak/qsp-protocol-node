@@ -1,5 +1,5 @@
 {
-  "timestamp": 1541782244,
+  "timestamp": 1542045974,
   "contract_uri": "file:///app/tests/helpers/../resources/Empty.sol",
   "contract_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
@@ -141,12 +141,109 @@
           },
           "Unchecked CALL return value": {
             "type": "unchecked_call_return_value"
+          },
+          "Unknown": {
+            "type": "other"
           }
         },
-        "command": "docker run --rm -v /tmp/.mythril/132:/shared/ -i mythril/myth@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316  -o json -x /shared/Empty.sol"
+        "command": "docker run --rm -v /tmp/.mythril/1538:/shared/ -i qspprotocol/mythril-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316  -o json -x /shared/Empty.sol"
       },
-      "start_time": 1541782239,
-      "end_time": 1541782244
+      "start_time": 1542045970,
+      "end_time": 1542045973
+    },
+    {
+      "status": "error",
+      "errors": [
+        "Exception in thread \"main\" java.lang.NullPointerException\n",
+        "\tat ch.securify.CompilationHelpers.compileContracts(CompilationHelpers.java:102)\n",
+        "\tat ch.securify.Main.processSolidityFile(Main.java:91)\n",
+        "\tat ch.securify.Main.main(Main.java:186)\n"
+      ],
+      "trace": [
+        ">> Wrapper setup finished\n",
+        ">> About to execute once script\n",
+        ">> Done\n",
+        ">> About to execute pre_run script\n",
+        ">> Done\n",
+        ">> Copying contract(s) to docker's mounted volume\n",
+        ">> Done\n",
+        ">> About to invoke securify\n"
+      ],
+      "analyzer": {
+        "name": "securify",
+        "version": "16e13ac1bfc7935ca16422b9949d9a9567231fe01c09576275f6caa46d9cf8b4",
+        "vulnerabilities_checked": {
+          "MissingInputValidation": {
+            "type": "missing_input_validation"
+          },
+          "LockedEther": {
+            "type": "locked_ether"
+          },
+          "UnrestrictedWrite": {
+            "type": "unprotected_state_manipulation"
+          },
+          "UnrestrictedEtherFlow": {
+            "type": "unprotected_ether_withdrawal"
+          },
+          "UnhandledException": {
+            "type": "exception_state"
+          },
+          "DAO": {
+            "type": "reentrancy"
+          },
+          "DAOConstantGas": {
+            "type": "reentrancy"
+          },
+          "TODReceiver": {
+            "type": "transaction_order_dependency"
+          },
+          "TODTransfer": {
+            "type": "transaction_order_dependency"
+          },
+          "TODAmount": {
+            "type": "transaction_order_dependency"
+          },
+          "MissingInputValidationTP": {
+            "type": "missing_input_validation_true_positive"
+          },
+          "LockedEtherTP": {
+            "type": "locked_ether_true_positive"
+          },
+          "UnrestrictedWriteTP": {
+            "type": "unprotected_state_manipulation_true_positive"
+          },
+          "UnrestrictedEtherFlowTP": {
+            "type": "unprotected_ether_withdrawal_true_positive"
+          },
+          "UnhandledExceptionTP": {
+            "type": "exception_state_true_positive"
+          },
+          "DAOTP": {
+            "type": "reentrancy_true_positive"
+          },
+          "DAOConstantGasTP": {
+            "type": "reentrancy_true_positive"
+          },
+          "TODReceiverTP": {
+            "type": "transaction_order_dependency_true_positive"
+          },
+          "TODTransferTP": {
+            "type": "transaction_order_dependency_true_positive"
+          },
+          "TODAmountTP": {
+            "type": "transaction_order_dependency_true_positive"
+          },
+          "SecurifyBug": {
+            "type": "securify_bug"
+          },
+          "Unknown": {
+            "type": "other"
+          }
+        },
+        "command": "docker run --rm -v /tmp/.securify/1550:/shared/ -i qspprotocol/securify-0.4.25@sha256:16e13ac1bfc7935ca16422b9949d9a9567231fe01c09576275f6caa46d9cf8b4  -fs /shared/Empty.sol"
+      },
+      "start_time": 1542045970,
+      "end_time": 1542045974
     }
   ],
   "compilation_warnings": [

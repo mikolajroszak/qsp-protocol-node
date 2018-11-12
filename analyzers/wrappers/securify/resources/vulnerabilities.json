@@ -1,0 +1,69 @@
+{
+    "MissingInputValidation": {
+        "type": "missing_input_validation"
+    },
+    "LockedEther": {
+        "type": "locked_ether"
+    },
+    "UnrestrictedWrite": {
+        "type": "unprotected_state_manipulation"
+    },
+    "UnrestrictedEtherFlow": {
+        "type": "unprotected_ether_withdrawal"
+    },
+    "UnhandledException": {
+        "type": "exception_state"
+    },
+    "DAO": {
+        "type": "reentrancy"
+    },
+    "DAOConstantGas": {
+        "type": "reentrancy"
+    },
+    "TODReceiver": {
+        "type": "transaction_order_dependency"
+    },
+    "TODTransfer": {
+        "type": "transaction_order_dependency"
+    },
+    "TODAmount": {
+        "type": "transaction_order_dependency"
+    },
+    "MissingInputValidationTP": {
+        "type": "missing_input_validation_true_positive"
+    },
+    "LockedEtherTP": {
+        "type": "locked_ether_true_positive"
+    },
+    "UnrestrictedWriteTP": {
+        "type": "unprotected_state_manipulation_true_positive"
+    },
+    "UnrestrictedEtherFlowTP": {
+        "type": "unprotected_ether_withdrawal_true_positive"
+    },
+    "UnhandledExceptionTP": {
+        "type": "exception_state_true_positive"
+    },
+    "DAOTP": {
+        "type": "reentrancy_true_positive"
+    },
+    "DAOConstantGasTP": {
+        "type": "reentrancy_true_positive"
+    },
+    "TODReceiverTP": {
+        "type": "transaction_order_dependency_true_positive"
+    },
+    "TODTransferTP": {
+        "type": "transaction_order_dependency_true_positive"
+    },
+    "TODAmountTP": {
+        "type": "transaction_order_dependency_true_positive"
+    },
+    "SecurifyBug": {
+        "type": "securify_bug"
+    },
+    "Unknown": {
+        "type": "other"
+    }
+}
+

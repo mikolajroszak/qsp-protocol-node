@@ -108,6 +108,14 @@ class TestAnalyzerMythril(unittest.TestCase):
         self.assertTrue(report['status'], 'success')
         self.assertEquals(3, len(report['potential_vulnerabilities']))
 
+    def test_get_metadata(self):
+        analyzer = TestAnalyzerMythril.__new_analyzer()
+        metadata = analyzer.get_metadata("x", 1, "x")
+        self.assertTrue("name" in metadata.keys())
+        self.assertTrue("version" in metadata.keys())
+        self.assertTrue("vulnerabilities_checked" in metadata.keys())
+        self.assertTrue("command" in metadata.keys())
+
 
 if __name__ == '__main__':
     unittest.main()

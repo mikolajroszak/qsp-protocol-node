@@ -123,8 +123,8 @@ class TestReportProcessing(unittest.TestCase):
         self.assertEqual(self.__encoder._ReportEncoder__to_bitstring("A", 4, is_hex=True), "1010")
         self.assertEqual(self.__encoder._ReportEncoder__to_bitstring("a", 4, is_hex=True), "1010")
         self.assertEqual(self.__encoder._ReportEncoder__to_bitstring("abc123",
-                                                                    24,
-                                                                    is_hex=True),
+                                                                     24,
+                                                                     is_hex=True),
                          "101010111100000100100011")
 
     def test_bitstring_to_decimal(self):
@@ -311,7 +311,7 @@ class TestReportProcessing(unittest.TestCase):
             end += self.__encoder._ReportEncoder__CONTRACT_HASH_SIZE
 
             b_contract_hash = bitstring[
-                self.__encoder._ReportEncoder__CONTRACT_HASH_START: end]
+                              self.__encoder._ReportEncoder__CONTRACT_HASH_START: end]
             self.assertEqual(expected_hash, b_contract_hash)
 
     def test_buggy_contract_hash_compression(self):
@@ -391,6 +391,7 @@ class TestReportProcessing(unittest.TestCase):
         hexstring = self.compress_report(report)
         print(hexstring)
         decoded_report = self.decode_report(hexstring)
+        print(decoded_report)
 
         # amended version of the original report for comparison
         expected_report = {
@@ -401,10 +402,16 @@ class TestReportProcessing(unittest.TestCase):
             "contract_hash": report["contract_hash"].upper(),
             "vulnerabilities": [
                 # TODO fix types
-                ("reentrancy", 25, 25),
-                ("unprotected_ether_withdrawal", 25, 25),
-                ("call_to_external_contract", 25, 25),
-                ("reentrancy", 29, 29),
+                ('reentrancy', 25, 25),
+                ('unprotected_ether_withdrawal', 25, 25),
+                ('call_to_external_contract', 25, 25),
+                ('reentrancy', 29, 29),
+                ('transaction_order_dependency', 25, 25),
+                ('exception_state', 25, 25),
+                ('reentrancy_true_positive', 25, 25),
+                ('missing_input_validation_true_positive', 16, 16),
+                ('missing_input_validation', 24, 24),
+                ('missing_input_validation', 20, 20)
             ]
         }
         self.assertTrue(

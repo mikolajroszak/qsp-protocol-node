@@ -1,0 +1,91 @@
+#!/bin/bash
+
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
+# Imports common definitions
+
+source "$WRAPPER_HOME"/../common/settings
+
+# Generates an error report without warnings
+function report_errors {
+    "$WRAPPER_HOME/utils/mk_error_report" "$1" "$2"
+}
+
+# Generates an error report with warnings
+function report_warnings_and_errors {
+    "$WRAPPER_HOME/utils/mk_error_report" "$1"
+}
+
+echo ">> Wrapper setup finished" >> "$TRACE_OUTPUT"
+
+##################################################################
+# once step
+##################################################################
+
+# Only run `once`` if it has not been executed before
+if [[ ! -f "$STORAGE_DIR/.once" ]] ; then
+    echo ">> About to execute once script" >> "$TRACE_OUTPUT"
+    "$WRAPPER_HOME"/once >> "$LOG_OUTPUT" 2>&1 || \
+        { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }    
+else
+    echo ">> Executing once is not needed. Skipping..." >> "$TRACE_OUTPUT"
+fi
+
+echo ">> Done" >> "$TRACE_OUTPUT"
+
+
+##################################################################
+# pre-run step
+##################################################################
+
+# Prepares the wrapper
+
+echo ">> About to execute pre_run script" >> "$TRACE_OUTPUT"
+
+"$WRAPPER_HOME"/pre_run >> "$LOG_OUTPUT" || \
+    { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+echo ">> Done" >> "$TRACE_OUTPUT"
+
+# Copies the input contract to the temporary folder just created
+cp "$CONTRACT_PATH" "$TMP_FOLDER" >> "$LOG_OUTPUT" 2>&1 || \
+    { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+echo ">> Copying contract(s) to docker's mounted volume" >> "$TRACE_OUTPUT"
+
+CONTRACT_FILE_NAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
+
+echo ">> Done" >> "$TRACE_OUTPUT"
+
+
+##################################################################
+# run step and post-run
+##################################################################
+
+echo ">> About to invoke $ANALYZER_NAME" >> "$TRACE_OUTPUT"
+
+# Executes the analyzer
+$ANALYZER_CMD &> "$LOG_OUTPUT" || { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+ 
+echo ">> Done" >> "$TRACE_OUTPUT"
+
+echo ">> Cleaning up" >> "$TRACE_OUTPUT"
+
+# Cleans up any resources
+"$WRAPPER_HOME"/post_run >> "$LOG_OUTPUT" 2>&1
+
+echo ">> Creating the report" >> "$TRACE_OUTPUT"
+
+"$WRAPPER_HOME/utils/mk_success_report" \
+    "${VULNERABILITY_MAPPING}" "${ORIGINAL_FILE_NAME}" "${LOG_OUTPUT}" || \
+        { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+# Exit with a success status code
+exit 0

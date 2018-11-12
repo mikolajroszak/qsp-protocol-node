@@ -40,7 +40,9 @@
     },
     "Unchecked CALL return value": {
         "type": "unchecked_call_return_value"
+    },
+    "Unknown": {
+        "type": "other"
     }
 }
 
- 

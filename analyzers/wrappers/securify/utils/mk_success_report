@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
+import argparse
+import json
+import sys
+
+
+class Issue:
+    """Representation of a detected vulnerability"""
+
+    def __init__(self, file_name, contract, title, severity_type="Informational",
+                 description=""):
+        self.title = title
+        self.contract = contract
+        self.description = description
+        self.type = severity_type
+        self.file_name = file_name
+        self.instances = []  # pair line + ref_id
+
+    def as_vulnerability(self, ref_id, vulnerability_mapping):
+        vulnerability = self.title
+        solidity_file = self.file_name
+        contract_name = self.contract
+        qsp_type = "other"
+        try:
+            qsp_type = vulnerability_mapping[self.title.strip()]
+        except KeyError:
+            # We cannot map this name, the vulnerability name must be new in Securify
+            pass
+
+        vulnerability_report = {
+            'type': qsp_type,
+            'file': solidity_file,
+            'description': self.description,
+        }
+        if contract_name is not None:
+            vulnerability_report['contract'] = contract_name
+        instances_found = [{
+            'ref_id': ref_id,
+            'start_line': lineno,
+        } for (lineno, ref_id) in self.instances]
+        vulnerability_report['instances'] = instances_found
+        return vulnerability_report
+
+
+def load_json(json_file):
+    json_dict = {}
+
+    with open(json_file) as f:
+        json_dict = json.load(f)
+
+    return json_dict
+
+
+def load_list(input_list):
+    """
+    Loads a list of single-line items from a file
+    """
+    with open(input_list) as f:
+        lines = f.read().splitlines()
+
+    return lines
+
+
+def main(argv):
+    parser = argparse.ArgumentParser(description='Report formatting of Mythril results')
+
+    parser.add_argument(
+        'vulnerability_mapping',
+        metavar='vulnerability_mapping',
+        type=str,
+        help='mapping (json) of vulnerabilities reported by the analyzer to a unified type'
+    )
+
+    parser.add_argument(
+        'original_file_name',
+        metavar='original_file_name',
+        type=str,
+        help='the original name of the file that is being analyzed'
+    )
+    parser.add_argument(
+        'log_output',
+        metavar='log_output',
+        type=str,
+        help='log to be parsed'
+    )
+
+    # Validates input arguments
+    args = parser.parse_args()
+    vulnerabilities = load_json(args.vulnerability_mapping)
+
+    vulnerability_mapping = {}
+    for key in vulnerabilities.keys():
+        vulnerability_mapping[key] = vulnerabilities[key]['type']
+
+    # Declares final_report dictionary
+    final_report = {'status': 'success'}
+
+    # starts converting issues
+    issue_reference = 0
+    potential_vulnerabilities = []
+
+    report_file = open(args.log_output)
+    report_dict = json.loads(report_file.read())
+    report_file.close()
+
+    for contract in report_dict.keys():
+        file_name = contract[contract.rfind("/") + 1:contract.rfind(":")]
+        contract_name = contract[contract.rfind(":") + 1:]
+        for vulnerability_check in report_dict[contract]["results"]:
+            vulnerability_data = report_dict[contract]["results"][vulnerability_check]
+            qsp_issue = Issue(file_name, contract_name, vulnerability_check + "TP",
+                              description=vulnerability_check)
+            qsp_issue_warning = Issue(file_name, contract_name, vulnerability_check,
+                                      description=vulnerability_check)
+            qsp_issue_bug = Issue(file_name, contract_name, "SecurifyBug",
+                                  description=vulnerability_check)
+            for line in vulnerability_data["violations"]:
+                # violations are always true positives
+                qsp_issue.instances += [(line + 1, issue_reference)]
+                issue_reference += 1
+            for line in vulnerability_data["warnings"]:
+                # warnings are potentially false positives
+                qsp_issue_warning.instances += [(line + 1, issue_reference)]
+                issue_reference += 1
+            for line in vulnerability_data["conflicts"]:
+                # conflicts are bugs that should be reported to securify
+                qsp_issue_bug.instances += [(line + 1, issue_reference)]
+                issue_reference += 1
+            # append to the report
+            for issue in [qsp_issue, qsp_issue_bug, qsp_issue_warning]:
+                if len(issue.instances) > 0:
+                    potential_vulnerabilities.append(
+                        issue.as_vulnerability(issue_reference, vulnerability_mapping))
+
+    # adds suspected vulnerabilities and prints the result
+    if len(potential_vulnerabilities) > 0:
+        final_report['potential_vulnerabilities'] = potential_vulnerabilities
+
+    print(json.dumps(final_report, indent=2))
+
+
+if __name__ == "__main__":
+    main(sys.argv)

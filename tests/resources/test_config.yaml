@@ -34,6 +34,10 @@ dev:
         args: "" # No args provided; rely on defaults for now
         storage_dir: /tmp/.mythril
         timeout_sec: 120
+    - securify:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: /tmp/.securify
+        timeout_sec: 300
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -73,6 +77,10 @@ staging:
         args: "" # No args provided; rely on defaults for now
         storage_dir: /tmp/.mythril
         timeout_sec: 120
+    - securify:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: /tmp/.securify
+        timeout_sec: 300
   report_uploader:
       provider: !!str "S3Provider"
       args:

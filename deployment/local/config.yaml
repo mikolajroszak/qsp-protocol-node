@@ -33,6 +33,10 @@ testnet:
         args: "" # No args provided; rely on defaults for now
         storage_dir: /tmp/mythril
         timeout_sec: 276
+    - securify:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: /tmp/securify
+        timeout_sec: 276
   report_uploader:
       provider: !!str "S3Provider"
       args:
@@ -88,6 +92,10 @@ mainnet:
     - mythril:
         args: "" # No args provided; rely on defaults for now
         storage_dir: /tmp/mythril
+        timeout_sec: 276
+    - securify:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: /tmp/securify
         timeout_sec: 276
   report_uploader:
       provider: !!str "S3Provider"

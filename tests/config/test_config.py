@@ -457,7 +457,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, config.min_price_in_qsp)
         self.assertEqual(0, config.gas_price_wei)
         self.assertEqual(5, config.evt_polling)
-        self.assertEqual(2, len(config.analyzers))
+        self.assertEqual(3, len(config.analyzers))
         self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
 
