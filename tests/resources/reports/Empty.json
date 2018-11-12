@@ -12,15 +12,16 @@
     {
       "status": "error",
       "errors": [
-        "root:/shared/Empty.sol:1:1: Warning: Source file does not specify required compiler version!Consider adding \"pragma solidity ^0.4.24;\"\n",
+        "root:/shared/Empty.sol:1:1: Warning: Source file does not specify required compiler version!Consider adding \"pragma solidity ^0.4.25;\"\n",
         "root:Solidity compilation failed.\n"
       ],
       "warnings": [
-        "root:You are using solc version 0.4.24, The latest supported version is 0.4.19\n"
+        "root:You are using evm version 1.8.2. The supported version is 1.7.3\n",
+        "root:You are using solc version 0.4.25, The latest supported version is 0.4.19\n"
       ],
       "analyzer": {
         "name": "oyente",
-        "version": "7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67",
+        "version": "f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8",
         "vulnerabilities_checked": {
           "integer_underflow": {
             "type": "integer_underflow"
@@ -47,8 +48,20 @@
             "type": "exception_state"
           }
         },
-        "command": "docker run --rm -v /tmp/.oyente/120:/shared/ -i qspprotocol/oyente-0.4.24@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67 bash -c python /oyente/oyente/oyente.py -ce -j -s /shared/Empty.sol"
+        "command": "docker run --rm -v /tmp/.oyente/120:/shared/ -i qspprotocol/oyente-0.4.25@sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8 bash -c python /oyente/oyente/oyente.py -ce -j -s /shared/Empty.sol"
       },
+      "trace": [
+        ">> Wrapper setup finished\n",
+        ">> About to execute once script\n",
+        ">> Done\n",
+        ">> About to execute pre_run script\n",
+        ">> Done\n",
+        ">> Copying contract(s) to docker's mounted volume\n",
+        ">> Done\n",
+        ">> About to invoke oyente\n",
+        ">> Done\n",
+        ">> Cleaning up\n"
+      ],
       "start_time": 1541782239,
       "end_time": 1541782244
     },
@@ -85,7 +98,7 @@
       ],
       "analyzer": {
         "name": "mythril",
-        "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
+        "version": "9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {
             "type": "delegate_call_to_untrusted_contract"
@@ -130,13 +143,13 @@
             "type": "unchecked_call_return_value"
           }
         },
-        "command": "docker run --rm -v /tmp/.mythril/132:/shared/ -i mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882  -o json -x /shared/Empty.sol"
+        "command": "docker run --rm -v /tmp/.mythril/132:/shared/ -i mythril/myth@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316  -o json -x /shared/Empty.sol"
       },
       "start_time": 1541782239,
       "end_time": 1541782244
     }
   ],
   "compilation_warnings": [
-    "Empty.sol:1:1: Warning: Source file does not specify required compiler version!Consider adding \"pragma solidity ^0.4.24;\"\n\n^\n"
+    "Empty.sol:1:1: Warning: Source file does not specify required compiler version!Consider adding \"pragma solidity ^0.4.25;\"\n\n^\n"
   ]
 }
