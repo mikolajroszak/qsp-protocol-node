@@ -14,13 +14,15 @@ source "$WRAPPER_HOME/../common/settings"
 
 # Generates an error report without warnings
 function report_errors {
-    "$WRAPPER_HOME/utils/mk_error_report" "$1" /dev/null
+    "$WRAPPER_HOME/utils/mk_error_report" "$1" /dev/null "$2"
 }
 
 # Generates an error report with warnings
 function report_warnings_and_errors {
-    "$WRAPPER_HOME/utils/mk_error_report" "$1" "$2"
+    "$WRAPPER_HOME/utils/mk_error_report" "$1" "$2" "$3"
 }
+
+echo ">> Wrapper setup finished" >> "$TRACE_OUTPUT"
 
 ##################################################################
 # once step
@@ -28,30 +30,49 @@ function report_warnings_and_errors {
 
 # Only run `once`` if it has not been executed before
 if [[ ! -f "$STORAGE_DIR/.once" ]] ; then
+    echo ">> About to execute once script" >> "$TRACE_OUTPUT"
     "$WRAPPER_HOME"/once >> "$LOG_OUTPUT" 2>&1 || \
-        { report_errors "$LOG_OUTPUT"; exit 1; }
+        { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+else
+    echo ">> Executing once is not needed. Skipping..." >> "$TRACE_OUTPUT"
 fi
+
+echo ">> Done" >> "$TRACE_OUTPUT"
 
 ##################################################################
 # pre-run step
 ##################################################################
 
+echo ">> About to execute pre_run script" >> "$TRACE_OUTPUT"
+
 # Prepares the wrapper
 "$WRAPPER_HOME"/pre_run >> "$LOG_OUTPUT" || \
-    { report_errors "$LOG_OUTPUT"; exit 1; }
+    { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+echo ">> Done" >> "$TRACE_OUTPUT"
+
+echo ">> Copying contract(s) to docker's mounted volume" >> "$TRACE_OUTPUT"
 
 # Copies the input contract to the temporary
 # folder just created
 
 cp "$CONTRACT_PATH" "$TMP_FOLDER" >> "$LOG_OUTPUT" 2>&1 || \
-    { report_errors "$LOG_OUTPUT"; exit 1; }
+    { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+echo ">> Done" >> "$TRACE_OUTPUT"
 
 ##################################################################
 # run step and post-run
 ##################################################################
 
+echo ">> About to invoke $ANALYZER_NAME" >> "$TRACE_OUTPUT"
+
 # Executes the analyzer
 $ANALYZER_CMD &> "$LOG_OUTPUT"
+
+echo ">> Done" >> "$TRACE_OUTPUT"
+
+echo ">> Cleaning up" >> "$TRACE_OUTPUT"
 
 # Cleans up any resources
 "$WRAPPER_HOME"/post_run >> "$LOG_OUTPUT" 2>&1
@@ -65,13 +86,15 @@ cat "$LOG_OUTPUT" | egrep -o '^WARNING:.*$' | sed 's/^WARNING://' > "$WARNINGS"
 REPORTS=$(ls "$TMP_FOLDER"/*.json 2> /dev/null)
 
 if [[ "x$REPORTS" == "x" || "x$(cat $ERRORS)" != "x" ]] ; then        
-    report_warnings_and_errors "$ERRORS" "$WARNINGS"
+    report_warnings_and_errors "$ERRORS" "$WARNINGS" "$TRACE_OUTPUT"
     exit 1
 fi
 
+echo ">> Creating the report (success)" >> "$TRACE_OUTPUT"
+
 "$WRAPPER_HOME/utils/mk_success_report"  \
     "$VULNERABILITY_MAPPING" "$ORIGINAL_FILE_NAME" "$WARNINGS" $REPORTS || \
-       { report_errors "$LOG_OUTPUT"; exit 1; }
+       { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
 
 # Exit with a success status code
 exit 0

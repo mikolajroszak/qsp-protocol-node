@@ -13,7 +13,7 @@ import json
 import sys
 
 
-def print_report(errors=[], warnings=[], traces=[]):
+def print_report(errors=[], warnings=[], trace=[]):
     report = {
         'status': 'error'
     }
@@ -24,8 +24,8 @@ def print_report(errors=[], warnings=[], traces=[]):
     if len(warnings) > 0:
         report['warnings'] = warnings
 
-    if len(traces) > 0:
-        report['trace'] = traces
+    if len(trace) > 0:
+        report['trace'] = trace
 
     print(json.dumps(report, indent=2))
 
@@ -33,13 +33,16 @@ def print_report(errors=[], warnings=[], traces=[]):
 def main(argv):
     errors = []
     warnings = []
-    traces = []
+
+    # A trace is a list of execution points ran by the analyzer
+    trace = []
+
     if len(argv) != 3:
         errors.append("Missing argument error. Usage: mk_error_report <errors file> <trace file>")
 
     try:
         with open(argv[2]) as trace_file:
-            traces = [trace for trace in trace_file]
+            trace = [t for t in trace_file]
     except Exception as e:
         errors.append(str(e))
 
@@ -50,7 +53,7 @@ def main(argv):
         errors.append(str(e))
 
     try:
-        print_report(errors, warnings, traces)
+        print_report(errors, warnings, trace)
     except Exception as e:
         # Nothing much to do here....
         sys.exit(1)

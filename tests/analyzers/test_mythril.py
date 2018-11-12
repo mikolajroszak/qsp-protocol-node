@@ -75,7 +75,7 @@ class TestAnalyzerMythril(unittest.TestCase):
         self.assertTrue(report['status'], 'error')
 
         self.assertTrue(len(report['errors']) > 0)
-        self.assertEquals(5, len(report['trace']))
+        self.assertEquals(6, len(report['trace']))
         self.assertTrue("No such file or directory" in ''.join(err + '\n' for err in report['errors']))
 
     def test_old_pragma(self):

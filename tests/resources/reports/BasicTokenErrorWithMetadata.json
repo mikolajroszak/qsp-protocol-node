@@ -50,6 +50,18 @@
             }
           }        
       },
+      "trace": [
+        ">> Wrapper setup finished\n",
+        ">> About to execute once script\n",
+        ">> Done\n",
+        ">> About to execute pre_run script\n",
+        ">> Done\n",
+        ">> Copying contract(s) to docker's mounted volume\n",
+        ">> Done\n",
+        ">> About to invoke oyente\n",
+        ">> Done\n",
+        ">> Cleaning up\n"
+      ],
       "start_time": 1535569896,
       "end_time": 1535569899
     },

@@ -54,16 +54,15 @@ echo ">> About to execute pre_run script" >> "$TRACE_OUTPUT"
 
 echo ">> Done" >> "$TRACE_OUTPUT"
 
+echo ">> Copying contract(s) to docker's mounted volume" >> "$TRACE_OUTPUT"
+
 # Copies the input contract to the temporary folder just created
 cp "$CONTRACT_PATH" "$TMP_FOLDER" >> "$LOG_OUTPUT" 2>&1 || \
     { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
 
-echo ">> Copying contract(s) to docker's mounted volume" >> "$TRACE_OUTPUT"
-
 CONTRACT_FILE_NAME=$(realpath "$CONTRACT_PATH" | awk -F '/' '{ print $NF  }')
 
 echo ">> Done" >> "$TRACE_OUTPUT"
-
 
 ##################################################################
 # run step and post-run
@@ -90,6 +89,8 @@ echo ">> Creating the report" >> "$TRACE_OUTPUT"
 "$WRAPPER_HOME/utils/mk_success_report" \
     "${VULNERABILITY_MAPPING}" "${ORIGINAL_FILE_NAME}" "${LOG_OUTPUT}" || \
         { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
+
+echo ">> Done" >> "$TRACE_OUTPUT"
 
 # Exit with a success status code
 exit 0
