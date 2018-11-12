@@ -12,7 +12,7 @@
     {
       "analyzer": {
         "name": "oyente",
-        "version": "7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67",
+        "version": "f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8",
         "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/kyber.sol",
         "vulnerabilities_checked": {
             "integer_underflow": {
@@ -49,8 +49,8 @@
     {
       "analyzer": {
         "name": "mythril",
-        "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
-        "command": "docker run -v \"\":/shared/ -i \"mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882\" -o json -x \"/shared/kyber.sol\"",
+        "version": "9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316",
+        "command": "docker run -v \"\":/shared/ -i \"qspprotocol/mythril-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316\" -o json -x \"/shared/kyber.sol\"",
         "vulnerabilities_checked": {
             "Call data forwarded with delegatecall()": {
                 "type": "delegate_call_to_untrusted_contract"

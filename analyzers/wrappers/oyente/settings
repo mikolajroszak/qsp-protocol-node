@@ -9,12 +9,6 @@
 
 source "$WRAPPER_HOME"/../common/settings
 
-readonly ANALYZER_DOCKER_IMAGE="qspprotocol/oyente-0.4.24@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67"
+readonly ANALYZER_DOCKER_IMAGE="qspprotocol/oyente-0.4.25@sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8"
 readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
-readonly OYENTE_CMD="python /oyente/oyente/oyente.py $ANALYZER_ARGS -j -s /shared/$CONTRACT_FILE_NAME"
-
-# FIXME
-# Could not escape this properly as done for mythril
-# Must be kept in synch with `run` script
-
-readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE bash -c $OYENTE_CMD"
+readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -j -s /shared/$CONTRACT_FILE_NAME"

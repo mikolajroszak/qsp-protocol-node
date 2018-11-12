@@ -42,14 +42,14 @@ All instructions must be run from the project's root folder.
     brew install automake libtool awscli pyenv pyenv-virtualenv coreutils jq
     ```
 
-    You also need to install the compiler for Solidity 0.4.24. If not installed, this can be done with
+    You also need to install the compiler for Solidity 0.4.25. If not installed, this can be done with
     ```bash
-    brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9599ce8371d9de039988f89ed577460e58a0f56a/solidity.rb
+    brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/f26f126820e5f47c3ed7ec6d5e6e046707443d87/solidity.rb
     ```
 
-    If you have a newer version of the compiler installed together with 0.4.24, you may need to switch the default solc to be the latter kind:
+    If you have a newer/older version of the compiler installed together with 0.4.25, you may need to switch the default solc to be the latter kind:
     ```
-    brew switch solidity 0.4.24
+    brew switch solidity 0.4.25
     ``` 
 
 1. Clone the repo and set it up by running:

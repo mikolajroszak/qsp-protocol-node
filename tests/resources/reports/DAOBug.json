@@ -12,7 +12,8 @@
       {
           "status": "success",
           "warnings": [
-              "root:You are using solc version 0.4.24, The latest supported version is 0.4.19"
+              "root:You are using evm version 1.8.2. The supported version is 1.7.3",
+              "root:You are using solc version 0.4.25, The latest supported version is 0.4.19"
           ],
           "coverages": [
               {
@@ -37,7 +38,7 @@
           ],
           "analyzer": {
               "name": "oyente",
-              "version": "7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67",
+              "version": "f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8",
               "vulnerabilities_checked": {
                   "integer_underflow": {
                       "type": "integer_underflow"
@@ -64,7 +65,7 @@
                       "type": "exception_state"
                   }
               },
-              "command": "docker run --rm -v /tmp/.oyente/44611:/shared/ -i qspprotocol/oyente-0.4.24@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67 bash -c python /oyente/oyente/oyente.py -ce -j -s /shared/DAOBug.sol"
+              "command": "docker run --rm -v /tmp/.oyente/44611:/shared/ -i qspprotocol/oyente-0.4.25@sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8 bash -c python /oyente/oyente/oyente.py -ce -j -s /shared/DAOBug.sol"
           },
           "start_time": 1540397569,
           "end_time": 1540397572
@@ -108,7 +109,7 @@
           ],
           "analyzer": {
               "name": "mythril",
-              "version": "a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882",
+              "version": "9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316",
               "vulnerabilities_checked": {
                   "Call data forwarded with delegatecall()": {
                       "type": "delegate_call_to_untrusted_contract"
@@ -153,7 +154,7 @@
                       "type": "unchecked_call_return_value"
                   }
               },
-              "command": "docker run --rm -v /tmp/.mythril/44610:/shared/ -i mythril/myth@sha256:a4e01e358fc52517a1889fad415846876d27ad9e8f6555a59246b761a89ec882  -o json -x /shared/DAOBug.sol"
+              "command": "docker run --rm -v /tmp/.mythril/44610:/shared/ -i qspprotocol/mythril-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316  -o json -x /shared/DAOBug.sol"
           },
           "start_time": 1540397569,
           "end_time": 1540397572

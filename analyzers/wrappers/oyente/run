@@ -51,8 +51,7 @@ cp "$CONTRACT_PATH" "$TMP_FOLDER" >> "$LOG_OUTPUT" 2>&1 || \
 ##################################################################
 
 # Executes the analyzer
-docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE bash -c "$OYENTE_CMD" \
-    &> "$LOG_OUTPUT"
+$ANALYZER_CMD &> "$LOG_OUTPUT"
 
 # Cleans up any resources
 "$WRAPPER_HOME"/post_run >> "$LOG_OUTPUT" 2>&1

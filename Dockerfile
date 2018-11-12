@@ -29,7 +29,7 @@ RUN apk add --no-cache linux-headers
 RUN pip3 install -U awscli
 
 # Install solc
-RUN wget https://github.com/ethereum/solidity/releases/download/v0.4.24/solc-static-linux && \
+RUN wget https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-static-linux && \
   chmod +x solc-static-linux && \
   mv solc-static-linux /usr/local/bin/solc
 
