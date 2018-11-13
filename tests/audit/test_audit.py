@@ -46,8 +46,8 @@ from utils.eth import DeduplicationException
 class TestQSPAuditNode(unittest.TestCase):
     __AUDIT_STATE_SUCCESS = 4
     __AUDIT_STATE_ERROR = 5
-    __AVAILABLE_AUDIT__STATE_READY = 1
-    __AVAILABLE_AUDIT__STATE_ERROR = 0
+    __AVAILABLE_AUDIT_STATE_READY = 1
+    __AVAILABLE_AUDIT_STATE_ERROR = 0
     __REQUEST_ID = 1
     __PRICE = 100
     __SLEEP_INTERVAL = 0.01
@@ -331,7 +331,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
         tx_hash = TestQSPAuditNode.__safe_transact(
             self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-                self.__AVAILABLE_AUDIT__STATE_READY),
+                self.__AVAILABLE_AUDIT_STATE_READY),
             {"from": self.__config.account}
         )
         self.__config.web3_client.eth.waitForTransactionReceipt(
@@ -341,7 +341,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__audit_node._QSPAuditNode__check_then_do_audit_request()
         TestQSPAuditNode.__safe_transact(
             self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-                self.__AVAILABLE_AUDIT__STATE_ERROR),
+                self.__AVAILABLE_AUDIT_STATE_ERROR),
             {"from": self.__config.account}
         )
 
@@ -363,7 +363,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(
             TestQSPAuditNode.__safe_transact(
                 self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-                    self.__AVAILABLE_AUDIT__STATE_READY),
+                    self.__AVAILABLE_AUDIT_STATE_READY),
                 {"from": self.__config.account}
             )
         )
@@ -372,7 +372,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(
             TestQSPAuditNode.__safe_transact(
                 self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-                    self.__AVAILABLE_AUDIT__STATE_ERROR),
+                    self.__AVAILABLE_AUDIT_STATE_ERROR),
                 {"from": self.__config.account}
             )
         )
@@ -686,7 +686,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(
             TestQSPAuditNode.__safe_transact(
                 self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-                    self.__AVAILABLE_AUDIT__STATE_READY),
+                    self.__AVAILABLE_AUDIT_STATE_READY),
                 {"from": self.__config.account}
             )
         )
@@ -932,7 +932,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(
             TestQSPAuditNode.__safe_transact(
                 self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-                    self.__AVAILABLE_AUDIT__STATE_READY),
+                    self.__AVAILABLE_AUDIT_STATE_READY),
                 {"from": self.__config.account}
             )
         )
@@ -942,7 +942,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__config.web3_client.eth.waitForTransactionReceipt(
             TestQSPAuditNode.__safe_transact(
                 self.__config.audit_contract.functions.setAnyRequestAvailableResult(
-                    self.__AVAILABLE_AUDIT__STATE_ERROR),
+                    self.__AVAILABLE_AUDIT_STATE_ERROR),
                 {"from": self.__config.account}
             )
         )

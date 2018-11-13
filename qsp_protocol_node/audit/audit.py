@@ -56,7 +56,7 @@ class QSPAuditNode:
 
     # must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L80
-    __AVAILABLE_AUDIT__STATE_READY = 1
+    __AVAILABLE_AUDIT_STATE_READY = 1
 
     __AUDIT_STATUS_ERROR = "error"
     __AUDIT_STATUS_SUCCESS = "success"
@@ -318,7 +318,7 @@ class QSPAuditNode:
             any_request_available = mk_read_only_call(
                 self.config,
                 self.config.audit_contract.functions.anyRequestAvailable())
-            if any_request_available == self.__AVAILABLE_AUDIT__STATE_READY:
+            if any_request_available == self.__AVAILABLE_AUDIT_STATE_READY:
                 self.__logger.debug("There is request available to bid on.")
                 self.__get_next_audit_request()
             else:
@@ -528,10 +528,7 @@ class QSPAuditNode:
                     evt['audit_state'],
                     evt['compressed_report'],
                 )
-
-                # TODO: https://quantstamp.atlassian.net/browse/QSP-774
-                evt['tx_hash'] = tx_hash
-
+                evt['tx_hash'] = tx_hash.hex()
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
             except DeduplicationException as error:
