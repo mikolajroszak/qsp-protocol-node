@@ -47,7 +47,7 @@ class ConfigUtilsDummy:
     def create_contract(self, web3_client, audit_contract_abi_uri, audit_contract_address):
         return self.return_values.get('create_contract', None)
 
-    def create_web3_client(self, eth_provider, account, account_passwd, keystore_file, max_attempts=30):
+    def create_web3_client(self, eth_provider, account_passwd, keystore_file, max_attempts=30):
         return self.return_values.get('create_web3_client', (None, None, None))
 
     def load_config(self, config_file_uri, environment):
@@ -114,12 +114,10 @@ class ConfigUtilsMock(SimpleMock):
 
     def create_web3_client(self,
                            eth_provider,
-                           account,
                            account_passwd,
                            keystore_file,
                            max_attempts=30):
         arguments_to_check = ['eth_provider',
-                              'account',
                               'account_passwd',
                               'keystore_file',
                               'max_attempts']
@@ -303,18 +301,16 @@ class TestConfig(unittest.TestCase):
 
     def test_create_web3_client(self):
         eth_provider = "eth_provider"
-        account = "account"
         account_passwd = "account password"
         account_keystore_file = "./mykey.json"
         created_web3_provider = "created provider"
         config = ConfigFactory.create_empty_config()
         config._Config__eth_provider = eth_provider
-        config._Config__account = account
         config._Config__account_passwd = account_passwd
         config._Config__account_keystore_file = account_keystore_file
         utils = ConfigUtilsMock()
         utils.expect('create_web3_client',
-                     {'eth_provider': eth_provider, 'account': account, 'account_passwd': account_passwd,
+                     {'eth_provider': eth_provider, 'account_passwd': account_passwd,
                       'keystore_file': account_keystore_file, 'max_attempts': 30},
                      created_web3_provider)
         result = config._Config__create_web3_client(utils)
@@ -418,7 +414,7 @@ class TestConfig(unittest.TestCase):
                      {'provider': eth_provider_name, 'args': eth_provider_args},
                      created_eth_provider)
         utils.expect('create_web3_client',
-                     {'eth_provider': created_eth_provider, 'account': account, 'account_passwd': account_passwd,
+                     {'eth_provider': created_eth_provider, 'account_passwd': account_passwd,
                       'keystore_file': account_keystore_file, 'max_attempts': 30},
                      (created_web3_client, new_account, new_private_key))
         utils.expect('create_contract',
