@@ -9,17 +9,18 @@
 
 import boto3
 
+from .provider import UploadProvider
 from utils.io import digest
 
 
-class S3Provider:
+class S3Provider(UploadProvider):
     def __init__(self, account, bucket_name, contract_bucket_name):
         self.__client = boto3.client('s3')
         self.__bucket_name = bucket_name
         self.__contract_bucket_name = contract_bucket_name
         self.__account = account
 
-    def upload(self, report_as_string, audit_report_hash=None):
+    def upload_report(self, report_as_string, audit_report_hash=None):
         report_hash = audit_report_hash
         if audit_report_hash is None:
             report_hash = digest(report_as_string)

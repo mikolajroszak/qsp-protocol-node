@@ -43,7 +43,7 @@ class TestS3Provider(unittest.TestCase):
         test_account = "test_account"
         bucket = "qsp-protocol-reports-" + os.getenv("ENV", "dev")
         provider = S3Provider(test_account, bucket, bucket)
-        result = provider.upload("some testing report", audit_report_hash="hash-as-filename")
+        result = provider.upload_report("some testing report", audit_report_hash="hash-as-filename")
         self.assertTrue("hash-as-filename" in result["url"], "The hash was not used.")
         self.assertTrue(result["success"], "The result does not indicate a successful upload.")
         self.assertIsNotNone(result["url"], "The url for the report is not set.")
@@ -60,7 +60,7 @@ class TestS3Provider(unittest.TestCase):
         test_account = "test_account"
         bucket = "bucket-that-does-not-exist"
         provider = S3Provider(test_account, bucket, bucket)
-        result = provider.upload("some testing report")
+        result = provider.upload_report("some testing report")
         self.assertFalse(result["success"], "The result does not indicate a successful upload.")
         self.assertIsNone(result["url"], "The url for the report is set.")
         self.assertIsNotNone(result["provider_exception"],

@@ -112,8 +112,11 @@ class Config:
         self.__default_gas_price_wei = config_value(cfg, '/gas_price/default_gas_price_wei', 0)
         self.__gas_price_wei = self.__default_gas_price_wei
         self.__max_gas_price_wei = config_value(cfg, '/gas_price/max_gas_price_wei', -1)
-        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', )
+
+        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', "")
+        self.__report_uploader_is_enabled = config_value(cfg, '/report_uploader/is_enabled', False)
         self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
+
         self.__logging_is_verbose = config_value(cfg, '/logging/is_verbose', False)
         self.__logging_streaming_provider_name = config_value(cfg, '/logging/streaming/provider')
         self.__logging_streaming_provider_args = config_value(cfg, '/logging/streaming/args', {})
@@ -147,7 +150,8 @@ class Config:
         """
         return config_utils.create_report_uploader_provider(self.account,
                                                             self.report_uploader_provider_name,
-                                                            self.report_uploader_provider_args)
+                                                            self.report_uploader_provider_args,
+                                                            self.report_uploader_is_enabled)
 
     def __create_web3_client(self, config_utils):
         """
@@ -291,6 +295,7 @@ class Config:
         self.__report_encoder = None
         self.__metric_collection_destination_endpoint = None
         self.__report_uploader = None
+        self.__report_uploader_is_enabled = False
         self.__report_uploader_provider_name = None
         self.__report_uploader_provider_args = None
         self.__start_n_blocks_in_the_past = 0
@@ -598,6 +603,10 @@ class Config:
     @property
     def logging_streaming_provider(self):
         return self.__logging_streaming_provider
+
+    @property
+    def report_uploader_is_enabled(self):
+        return self.__report_uploader_is_enabled
 
     @property
     def report_uploader_provider_name(self):

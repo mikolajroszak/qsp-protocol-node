@@ -28,7 +28,7 @@ class ConfigUtilsDummy:
     def __init__(self, return_values):
         self.return_values = return_values
 
-    def create_report_uploader_provider(self, account, report_uploader_provider_name, report_uploader_provider_args):
+    def create_report_uploader_provider(self, account, report_uploader_provider_name, report_uploader_provider_args, is_enabled):
         return self.return_values.get('create_report_uploader_provider', None)
 
     def create_eth_provider(self, provider, args):
@@ -63,12 +63,12 @@ class ConfigUtilsMock(SimpleMock):
     """
 
     def create_report_uploader_provider(self, account, report_uploader_provider_name,
-                                        report_uploader_provider_args):
+                                        report_uploader_provider_args, is_enabled):
         """
         A stub for the report_uploader_provider method.
         """
         arguments_to_check = ['account', 'report_uploader_provider_name',
-                              'report_uploader_provider_args']
+                              'report_uploader_provider_args', 'is_enabled']
         return self.call('create_report_uploader_provider', arguments_to_check, locals())
 
     def create_eth_provider(self, provider, args):
@@ -238,12 +238,14 @@ class TestConfig(unittest.TestCase):
         config = ConfigFactory.create_empty_config()
         config._Config__account = account
         config._Config__report_uploader_provider_name = report_uploader_provider_name
+        config._Config__report_uploader_is_enabled = True
         config._Config__report_uploader_provider_args = report_uploader_provider_args
         utils = ConfigUtilsMock()
         utils.expect('create_report_uploader_provider',
                      {'account': account,
                       'report_uploader_provider_name': report_uploader_provider_name,
-                      'report_uploader_provider_args': report_uploader_provider_args},
+                      'report_uploader_provider_args': report_uploader_provider_args,
+                      'is_enabled': True},
                      report_uploader)
         result = config._Config__create_report_uploader_provider(utils)
         self.assertEqual(report_uploader, result)
@@ -401,6 +403,7 @@ class TestConfig(unittest.TestCase):
         config._Config__evt_db_path = "/tmp/evts.test"
         config._Config__report_uploader_provider_name = report_uploader_provider_name
         config._Config__report_uploader_provider_args = report_uploader_provider_args
+        config._Config__report_uploader_is_enabled = True
         config._Config__audit_contract_abi_uri = audit_contract_abi_uri
         config._Config__audit_contract_address = audit_contract_address
         utils = ConfigUtilsMock()
@@ -431,7 +434,8 @@ class TestConfig(unittest.TestCase):
         utils.expect('create_report_uploader_provider',
                      {'account': new_account,
                       'report_uploader_provider_name': report_uploader_provider_name,
-                      'report_uploader_provider_args': report_uploader_provider_args},
+                      'report_uploader_provider_args': report_uploader_provider_args,
+                      'is_enabled': True},
                      report_uploader)
         config._Config__create_components(utils)
         self.assertEqual(logger, config.logger)

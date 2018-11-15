@@ -19,7 +19,7 @@ from audit import (
 from pathlib import Path
 from tempfile import gettempdir
 from streaming import CloudWatchProvider
-from upload import S3Provider
+from upload import S3Provider, DummyProvider
 from time import sleep
 from utils.eth import mk_read_only_call
 from web3 import (
@@ -48,13 +48,17 @@ class ConfigUtils:
         self.__logger = structlog.getLogger("config_utils")
 
     def create_report_uploader_provider(self, account, report_uploader_provider_name,
-                                        report_uploader_provider_args):
+                                        report_uploader_provider_args, is_enabled):
         """
         Creates a report uploader provider.
         """
         # Supported providers:
         #
         # S3Provider
+
+        if not is_enabled:
+            return DummyProvider()
+
         if report_uploader_provider_name == "S3Provider":
             if account is None:
                 raise ConfigurationException("account is None, the upload will not be possible")

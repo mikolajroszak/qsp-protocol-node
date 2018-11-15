@@ -101,7 +101,8 @@ class TestConfigUtil(unittest.TestCase):
         account = "account"
         result = self.config_utils.create_report_uploader_provider(account,
                                                                    report_uploader_provider_name,
-                                                                   report_uploader_provider_args)
+                                                                   report_uploader_provider_args,
+                                                                   True)
         self.assertTrue(isinstance(result, S3Provider), "The created provider is not an S3Provider")
 
     def test_create_report_uploader_provider_not_ok(self):
@@ -114,7 +115,8 @@ class TestConfigUtil(unittest.TestCase):
         try:
             self.config_utils.create_report_uploader_provider(account,
                                                               report_uploader_provider_name,
-                                                              report_uploader_provider_args)
+                                                              report_uploader_provider_args,
+                                                              True)
             self.fail("Succeeded to create upload provider without proper provider name.")
         except ConfigurationException:
             # expected
@@ -122,7 +124,8 @@ class TestConfigUtil(unittest.TestCase):
         try:
             self.config_utils.create_report_uploader_provider(None,
                                                               report_uploader_provider_name,
-                                                              report_uploader_provider_args)
+                                                              report_uploader_provider_args,
+                                                              True)
             self.fail("Succeeded to create upload provider without account.")
         except ConfigurationException:
             # expected

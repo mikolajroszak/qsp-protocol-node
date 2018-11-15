@@ -1,3 +1,4 @@
+from .provider import UploadProvider
 ####################################################################################################
 #                                                                                                  #
 # (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
@@ -7,6 +8,21 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .s3_provider import S3Provider
-from .dummy_provider import DummyProvider
-from .provider import UploadProvider
+from singleton_decorator import singleton
+
+
+@singleton
+class DummyProvider(UploadProvider):
+
+    def __init__(self):
+        self.__response = {
+            'success': True,
+            'url': "Not available. Full report was not uploaded",
+            'provider_response': {},
+        }
+
+    def upload_report(self, report_as_string, audit_report_hash=None):
+        return self.__response
+
+    def upload_contract(self, request_id, contract_body, file_name):
+        return self.__response

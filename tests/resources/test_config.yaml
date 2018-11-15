@@ -39,6 +39,7 @@ dev:
         storage_dir: /tmp/.securify
         timeout_sec: 300
   report_uploader:
+      is_enabled: True
       provider: !!str "S3Provider"
       args:
             bucket_name: "qsp-protocol-reports-dev"
@@ -51,6 +52,8 @@ dev:
     interval_seconds: 30
     destination_endpoint: !!str "https://localhost/node-metrics"
   heartbeat_allowed: False
+
+
 staging:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
@@ -83,6 +86,7 @@ staging:
         storage_dir: /tmp/.securify
         timeout_sec: 300
   report_uploader:
+      is_enabled: True
       provider: !!str "S3Provider"
       args:
             bucket_name: "qsp-protocol-reports-staging"

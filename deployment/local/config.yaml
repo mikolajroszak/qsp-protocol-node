@@ -38,6 +38,7 @@ testnet:
         storage_dir: /tmp/securify
         timeout_sec: 276
   report_uploader:
+      is_enabled: False
       provider: !!str "S3Provider"
       args:
         bucket_name: "qsp-protocol-reports-dev"
@@ -69,6 +70,7 @@ testnet:
     interval_seconds: 30
     destination_endpoint: !!str "https://dev-qsp-dashboard.quantstamp.com/node-metrics"
   heartbeat_allowed: False
+
 mainnet:
   eth_node:
     provider: !!str "HTTPProvider"
@@ -99,10 +101,7 @@ mainnet:
         storage_dir: /tmp/securify
         timeout_sec: 276
   report_uploader:
-      provider: !!str "S3Provider"
-      args:
-        bucket_name: "qsp-protocol-reports-prod"
-        contract_bucket_name: "qsp-protocol-reports-prod"
+      is_enabled: False
   account:
     id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B" # replace with your account id
     # specify a path to a valid keystore file that can be decrypted using ETH_PASSPHRASE

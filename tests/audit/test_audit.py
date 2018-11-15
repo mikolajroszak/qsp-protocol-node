@@ -17,12 +17,6 @@ import subprocess
 import unittest
 import ntpath
 
-from timeout_decorator import timeout
-from threading import Thread
-from time import sleep
-from web3.utils.threads import Timeout
-from unittest import mock
-
 from audit import QSPAuditNode
 from audit import ExecutionException
 from config import ConfigFactory, ConfigUtils, ConfigurationException
@@ -31,16 +25,22 @@ from helpers.resource import (
     resource_uri,
     project_root,
 )
-from pathlib import Path
-from solc import compile_files
-
+from upload import DummyProvider
 from utils.eth.singleton_lock import SingletonLock
 from utils.io import fetch_file, digest_file, load_json
 from utils.db import get_first
 from utils.db import Sqlite3Worker
+
 from deepdiff import DeepDiff
+from pathlib import Path
 from pprint import pprint
+from solc import compile_files
+from time import sleep
+from timeout_decorator import timeout
+from threading import Thread
 from utils.eth import DeduplicationException
+from unittest import mock
+from web3.utils.threads import Timeout
 
 
 class TestQSPAuditNode(unittest.TestCase):
@@ -505,6 +505,39 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
     @timeout(80, timeout_exception=StopIteration)
+    def test_successful_contract_audit_request_with_disabled_upload(self):
+        """
+        Tests the entire flow of a successful audit request, from a request
+        to the production of a report and its submission.
+        """
+        # rewires the config
+        self.__audit_node._QSPAuditNode__config._Config__report_upload_is_enabled = False
+        self.__audit_node._QSPAuditNode__config._Config__report_uploader_provider_name = ""
+        self.__audit_node._QSPAuditNode__config._Config__report_uploader_provider_args = {}
+        self.__audit_node._QSPAuditNode__config._Config__report_uploader = DummyProvider()
+
+        # since we're mocking the smart contract, we should explicitly call its internals
+        buggy_contract = resource_uri("DAOBug.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__request_audit(buggy_contract, self.__PRICE)
+        )
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__set_assigned_request_count(1))
+
+        self.__evt_wait_loop(self.__submitReport_filter)
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__set_assigned_request_count(0))
+        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__send_done_message(self.__REQUEST_ID))
+
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__set_assigned_request_count(0))
+
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS)
+
+    @timeout(80, timeout_exception=StopIteration)
     def test_successful_empty_contract_audit_request(self):
         """
         Tests the entire flow of a successful audit request, from a request
@@ -768,9 +801,8 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = \
                 original_timeouts[i]
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-            self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name][
-                'timeout_sec'] = \
-                original_timeouts[i]
+            self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][
+                analyzer_name]['timeout_sec'] = original_timeouts[i]
 
     @timeout(30, timeout_exception=StopIteration)
     def test_change_min_price(self):
@@ -859,7 +891,7 @@ class TestQSPAuditNode(unittest.TestCase):
             except ConfigurationException:
                 self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = temp
 
-    def __assert_audit_request(self, request_id, expected_audit_state, report_file_path):
+    def __assert_audit_request(self, request_id, expected_audit_state, report_file_path=None):
         sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
 
         # Busy waits on receiving events up to the configured
@@ -886,12 +918,16 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assertTrue(row['tx_hash'] is not None)
         self.assertTrue(row['contract_uri'] is not None)
 
-        audit_uri = row['audit_uri']
         audit_state = row['audit_state']
-        audit_file = fetch_file(audit_uri)
-        self.assertEqual(digest_file(audit_file), row['audit_hash'])
         self.assertEqual(audit_state, expected_audit_state)
-        self.__compare_json(audit_file, report_file_path)
+
+        audit_uri = row['audit_uri']
+        if report_file_path is not None:
+            audit_file = fetch_file(audit_uri)
+            self.assertEqual(digest_file(audit_file), row['audit_hash'])
+            self.__compare_json(audit_file, report_file_path)
+        else:
+            self.assertEqual(audit_uri, "Not available. Full report was not uploaded")
 
     def __assert_all_analyzers(self, request_id):
         """

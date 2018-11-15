@@ -722,12 +722,11 @@ class QSPAuditNode:
                                                                          request_id,
                                                                          self.__logger)
 
-        # TODO: remove report uploading (https://quantstamp.atlassian.net/browse/QSP-793)
         audit_report_str = json.dumps(audit_report, indent=2)
         audit_hash = digest(audit_report_str)
 
-        upload_result = self.__config.report_uploader.upload(audit_report_str,
-                                                             audit_report_hash=audit_hash)
+        upload_result = self.__config.report_uploader.upload_report(audit_report_str,
+                                                                    audit_report_hash=audit_hash)
 
         self.__logger.info(
             "Report upload result: {0}".format(upload_result),
