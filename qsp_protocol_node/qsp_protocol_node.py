@@ -11,6 +11,8 @@
 Provides the main entry for executing a QSP audit node.
 """
 import argparse
+import sys
+import traceback
 
 from audit import QSPAuditNode
 from config import ConfigFactory
@@ -56,6 +58,7 @@ def main():
     except SystemExit:
         Stop.error(code=ERR_INVALID_ARGUMENT)
 
+    cfg = None
     try:
         # Creates a config object based on the provided environment
         # and configuration (given as a yaml file)
@@ -86,9 +89,9 @@ def main():
     except Exception as error:
         # Useful for debugging. Enable the following
         # two commented lines
+        if cfg is not None and cfg.env in ['dev', 'staging']:
+            traceback.print_exc(file=sys.stdout)
 
-        # import sys, traceback
-        # traceback.print_exc(file=sys.stdout)
         Stop.error(err=error, code=ERR_EXCEPTION)
 
 
