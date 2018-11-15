@@ -315,16 +315,12 @@ class TestConfigUtil(unittest.TestCase):
         Test that web3 client and accounts can be created using an ethereum provider
         """
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
-        account = "Account"
-        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
-        self.assertTrue(isinstance(client, Web3))
-        self.assertEqual(account, new_account, "Account was recreated even though it was not None")
-        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, None, None, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, None, None, 2)
         self.assertTrue(isinstance(client, Web3))
         self.assertIsNotNone(new_account, "The account was none and was not created")
         # None ETH provider will make this fail
         try:
-            client, new_account, new_private_key = self.config_utils.create_web3_client(None, None, None, None, 2)
+            client, new_account, new_private_key = self.config_utils.create_web3_client(None, None, None, 2)
             self.fail("No exception was thrown even though the eth provider does not exist and web3 cannot connect")
         except ConfigurationException:
             # Expected
@@ -335,15 +331,14 @@ class TestConfigUtil(unittest.TestCase):
         Test that private key is instantiated correctly when creating web3 client
         """
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
-        account = "Account"
         private_key = "0xc2fd94c5216e754d3eb8f4f34017120fef318c50780ce408b54db575b120229f"
         passphrase = "abc123ropsten"
-        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, passphrase,
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, passphrase,
             io_utils.fetch_file(resource_uri("mykey.json")), 2)
         self.assertEqual(private_key, Web3.toHex(new_private_key), "Private key was not decrypted correctly")
         # None ETH provider will make this fail
         try:
-            client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, "incorrect-passphrase",
+            client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, "incorrect-passphrase",
                 io_utils.fetch_file(resource_uri("mykey.json")), 2)
             self.fail("No exception was thrown even though the private key isn't correct")
         except ConfigurationException as e:
@@ -362,9 +357,8 @@ class TestConfigUtil(unittest.TestCase):
                         "Key evt_db_path is missing from loaded data")
 
     def test_create_contract(self):
-        account = "Account"
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
-        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, account, None, None, 2)
+        client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, None, None, 2)
         abi_uri = "file://tests/resources/QuantstampAudit.abi.json"
         address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         self.config_utils.create_contract(client, abi_uri, address)

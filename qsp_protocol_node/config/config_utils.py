@@ -99,7 +99,6 @@ class ConfigUtils:
 
     def create_web3_client(self,
                            eth_provider,
-                           account,
                            account_passwd,
                            keystore_file,
                            max_attempts=30):
@@ -113,7 +112,7 @@ class ConfigUtils:
         # 2) If connected, nothing else to do
         # 3) Otherwise, keep trying at most max_attempts, waiting 10s per each iteration
         web3_client = Web3(eth_provider)
-        new_account = account
+        new_account = None
         new_private_key = None
         connected = False
         while attempts < max_attempts and not connected:
@@ -140,19 +139,19 @@ class ConfigUtils:
 
         # It could be the case that account is not setup, which may happen for
         # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
-        if account is None:
-            if len(web3_client.eth.accounts) == 0:
-                raise ConfigurationException("No account was provided. Please provide an account")
-            else:
-                new_account = web3_client.eth.accounts[0]
-                self.__logger.debug("No account was provided, using the account at index [0]",
-                                    account=new_account)
+        if keystore_file is None:
+            if eth_provider.__class__.__name__ not in ['TestRPCProvider', 'EthereumTesterProvider']:
+                raise ConfigurationException("Could not find an account. Please provide a valid keystore file")
 
-        if keystore_file is not None:
+            new_account = web3_client.eth.accounts[0]
+            self.__logger.debug("No account was provided, using the account at index [0]", account=new_account)
+        else:
             try:
                 with open(keystore_file) as keyfile:
                     encrypted_key = keyfile.read()
                     new_private_key = web3_client.eth.account.decrypt(encrypted_key, account_passwd)
+                    acct = web3_client.eth.account.privateKeyToAccount(new_private_key)
+                    new_account = acct.address
             except Exception as exception:
                 raise ConfigurationException("Error reading or decrypting the keystore file '{0}': {1}".format(
                     keystore_file,

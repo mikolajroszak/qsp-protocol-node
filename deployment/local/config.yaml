@@ -43,10 +43,7 @@ testnet:
       args:
         bucket_name: "qsp-protocol-reports-dev"
         contract_bucket_name: "qsp-protocol-reports-dev"
-  account:
-    id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B" # replace with your account id
-    # specify a path to a valid keystore file that can be decrypted using ETH_PASSPHRASE
-    keystore_file: !!str "./keystore/default.json"
+  keystore_file: !!str "./keystore/default.json"
   default_gas: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
@@ -102,10 +99,7 @@ mainnet:
         timeout_sec: 276
   report_uploader:
       is_enabled: False
-  account:
-    id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B" # replace with your account id
-    # specify a path to a valid keystore file that can be decrypted using ETH_PASSPHRASE
-    keystore_file: !!str "./keystore/default.json"
+  keystore_file: !!str "./keystore/default.json"
   default_gas: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)

@@ -9,7 +9,7 @@
 
 """
 Provides the configuration for executing a QSP Audit node,
-as loaded from an input YAML file.
+as loaded from an input YAML file
 """
 import utils.io as io_utils
 
@@ -97,8 +97,7 @@ class Config:
                                                                accept_none=False)
         self.__analyzers = []
         self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False)
-        self.__account = config_value(cfg, '/account/id', )
-        self.__account_keystore_file = config_value(cfg, '/account/keystore_file', None)
+        self.__account_keystore_file = config_value(cfg, '/keystore_file', None)
         self.__account_private_key = None
         self.__gas = config_value(cfg, '/gas')
         self.__evt_db_path = config_value(cfg, '/evt_db_path',
@@ -158,7 +157,6 @@ class Config:
         Creates a Web3 client from the already set Ethereum provider.
         """
         return config_utils.create_web3_client(self.eth_provider,
-                                               self.account,
                                                self.account_passwd,
                                                self.account_keystore_file,
                                                )
