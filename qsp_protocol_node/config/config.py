@@ -192,17 +192,15 @@ class Config:
                                               self.logging_streaming_provider_args, self.account)
 
     def __create_components(self, config_utils, validate_contract_settings=True):
+        # Creation of internal components
+        self.__eth_provider = self.__create_eth_provider(config_utils)
+        self.__web3_client, self.__account, self.__account_private_key = self.__create_web3_client(
+            config_utils)
         # Setup followed by verification
         self.__logger, self.__logging_streaming_provider = self.__configure_logging(config_utils)
         # Contract settings validation
         if validate_contract_settings:
             config_utils.check_audit_contract_settings(self)
-
-        # Creation of internal components
-        self.__eth_provider = self.__create_eth_provider(config_utils)
-        self.__web3_client, self.__account, self.__account_private_key = self.__create_web3_client(
-            config_utils)
-
         # After having a web3 client object, use it to put addresses in a canonical format
         self.__audit_contract_address = mk_checksum_address(self.__audit_contract_address)
         self.__account = mk_checksum_address(self.__account)
