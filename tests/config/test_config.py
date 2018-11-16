@@ -403,20 +403,20 @@ class TestConfig(unittest.TestCase):
         config._Config__audit_contract_abi_uri = audit_contract_abi_uri
         config._Config__audit_contract_address = audit_contract_address
         utils = ConfigUtilsMock()
-        utils.expect('configure_logging',
-                     {'logging_is_verbose': verbose, 'logging_streaming_provider_name': logging_provider_name,
-                      'logging_streaming_provider_args': logging_provider_args, 'account': account},
-                     (logger, streaming_provider))
-        utils.expect('check_audit_contract_settings',
-                     {'config': config},
-                     None)
         utils.expect('create_eth_provider',
-                     {'provider': eth_provider_name, 'args': eth_provider_args},
-                     created_eth_provider)
+                    {'provider': eth_provider_name, 'args': eth_provider_args},
+                    created_eth_provider)
         utils.expect('create_web3_client',
                      {'eth_provider': created_eth_provider, 'account_passwd': account_passwd,
                       'keystore_file': account_keystore_file, 'max_attempts': 30},
                      (created_web3_client, new_account, new_private_key))
+        utils.expect('configure_logging',
+                     {'logging_is_verbose': verbose, 'logging_streaming_provider_name': logging_provider_name,
+                      'logging_streaming_provider_args': logging_provider_args, 'account': new_account},
+                     (logger, streaming_provider))
+        utils.expect('check_audit_contract_settings',
+                     {'config': config},
+                     None)
         utils.expect('create_contract',
                      {'web3_client': created_web3_client, 'audit_contract_abi_uri': audit_contract_abi_uri,
                       'audit_contract_address': audit_contract_address},
