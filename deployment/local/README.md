@@ -43,12 +43,12 @@ Contact the Protocol team (protocol@quantstamp.com) to whitelist your Ethereum a
 
 ### Configure
 
-1. Set environment variable `ETH_PASSPHRASE` to your account's passphrase (or *wallet password*).
+1. Set environment variable `QSP_ETH_PASSPHRASE` to your account's passphrase (or *wallet password*).
 Note that your password may **NOT** contain
 quotes (double or single). The safest approach to verify whether your password matches what you have set is to check
-the value of `ETH_PASSPHRASE`. In a terminal, type:
+the value of `QSP_ETH_PASSPHRASE`. In a terminal, type:
     ```
-    echo $ETH_PASSPHRASE
+    echo $QSP_ETH_PASSPHRASE
     ```
 If the output matches your original password, the latter is correctly set.
 Otherwise, launching the audit node will fail.

@@ -31,13 +31,13 @@ docker run -d \
 	-v $PWD/keystore:/app/keystore:Z \
 	-v $PWD/config.yaml:/app/config.yaml:Z \
 	-v $PWD/event_database.db:/root/.audit_node.db:Z \
-	-e ENV="testnet" \
-	-e CONFIG="config.yaml" \
+	-e QSP_ENV="testnet" \
+	-e QSP_CONFIG="config.yaml" \
 	-e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
 	-e AWS_DEFAULT_REGION="us-east-1" \
-	-e ETH_PASSPHRASE="$ETH_PASSPHRASE" \
-	-e ETH_AUTH_TOKEN="$ETH_AUTH_TOKEN" \
+	-e QSP_ETH_PASSPHRASE="$QSP_ETH_PASSPHRASE" \
+	-e QSP_ETH_AUTH_TOKEN="$QSP_ETH_AUTH_TOKEN" \
 	qsp-protocol-node sh -c "make run-with-auto-restart"
 
 

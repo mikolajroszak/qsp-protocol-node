@@ -9,18 +9,19 @@
 
 MAKEFLAGS += --silent
 
-ENV ?= testnet
-CONFIG ?= deployment/local/config.yaml
-ETH_PASSPHRASE ?= abc123ropsten
-ETH_AUTH_TOKEN ?= \"\"
+QSP_ENV ?= testnet
+QSP_CONFIG ?= deployment/local/config.yaml
+QSP_ETH_PASSPHRASE ?= abc123ropsten
+QSP_ETH_AUTH_TOKEN ?= \"\"
 IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
+
 
 # NOTE: if running outside a container, assume all required environment variables are configured properly.
 
 # Default target
 run: # printing "date" is important due to the logic CloudWatch uses to distinguish log files
 	date
-	python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(ETH_PASSPHRASE)" -t "$(ETH_AUTH_TOKEN)" $(ENV) $(CONFIG)
+	python -W ignore::DeprecationWarning qsp_protocol_node/qsp_protocol_node.py -p "$(QSP_ETH_PASSPHRASE)" -t "$(QSP_ETH_AUTH_TOKEN)" $(QSP_ENV) $(QSP_CONFIG)
 
 run-with-auto-restart:
 	./auto-restart
@@ -49,8 +50,8 @@ run-docker:
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
-		-e ETH_PASSPHRASE="$(ETH_PASSPHRASE)" \
-		-e ETH_AUTH_TOKEN="$(ETH_AUTH_TOKEN)" \
+		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
+		-e QSP_ETH_AUTH_TOKEN="$(QSP_ETH_AUTH_TOKEN)" \
 		qsp-protocol-node sh -c "make run"
 
 test-docker:
@@ -74,7 +75,7 @@ test-ci:
 		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
 		-e AWS_SESSION_TOKEN="$(AWS_SESSION_TOKEN)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
-		-e ENV="$(ENV)" \
+		-e QSP_ENV="$(QSP_ENV)" \
 		qsp-protocol-node sh -c "make test"
 
 bundle:

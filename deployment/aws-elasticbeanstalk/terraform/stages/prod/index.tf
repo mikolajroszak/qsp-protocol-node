@@ -22,8 +22,8 @@ terraform {
   }
 }
 
-variable "ETH_PASSPHRASE" {}
-variable "ETH_AUTH_TOKEN" {}
+variable "QSP_ETH_PASSPHRASE" {}
+variable "QSP_ETH_AUTH_TOKEN" {}
 
 module "main" {
   source = "../../modules/main"
@@ -34,6 +34,6 @@ module "main" {
   node_instance_type_audit = "m4.large"
   volume_size = 8
 
-  ETH_PASSPHRASE = "${var.ETH_PASSPHRASE}"
-  ETH_AUTH_TOKEN = "${var.ETH_AUTH_TOKEN}"
+  QSP_ETH_PASSPHRASE = "${var.QSP_ETH_PASSPHRASE}"
+ QSP_ETH_AUTH_TOKEN = "${var.QSP_ETH_AUTH_TOKEN}"
 }
