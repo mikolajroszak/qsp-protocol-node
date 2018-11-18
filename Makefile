@@ -13,6 +13,7 @@ ENV ?= testnet
 CONFIG ?= deployment/local/config.yaml
 ETH_PASSPHRASE ?= abc123ropsten
 ETH_AUTH_TOKEN ?= \"\"
+IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
 
 # NOTE: if running outside a container, assume all required environment variables are configured properly.
 
@@ -79,3 +80,7 @@ test-ci:
 bundle:
 	./create-bundle.sh
 
+stylecheck:
+	echo "Running Stylecheck"
+	find . -name \*.py -exec pycodestyle --ignore=$(IGNORE_CODES) {} +
+	echo "Stylecheck passed"
