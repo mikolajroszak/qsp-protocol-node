@@ -128,6 +128,53 @@ contract QuantstampAudit {
     emit LogAuditAssigned(requestId, auditor, requestor, uri, price, requestBlockNumber);
   }
 
+  // The struct exists for the purposes of mocking function myMostRecentAssignedAudit
+  struct AssignedAuditMock {
+    uint256 requestId;
+    address requestor;
+    string contractUri;
+    uint256 price;
+    uint256 blockNumber;
+  }
+
+  // Mapping of the most recently assigned audits for function myMostRecentAssignedAudit
+  mapping(address => AssignedAuditMock) public mostRecentAssignedRequestPerAuditor;
+
+  // Emits that an audit was assigned and records the assignment. Deprecates emitLogAuditAssigned.
+  function assignAuditAndEmit(uint256 requestId, address auditor, address requestor, string uri, uint256 price, uint256 requestBlockNumber) {
+    emitLogAuditAssigned(requestId, auditor, requestor, uri, price, requestBlockNumber);
+    mostRecentAssignedRequestPerAuditor[auditor] = AssignedAuditMock(
+      requestId,
+      requestor,
+      uri,
+      price,
+      requestBlockNumber
+    );
+  }
+
+  // Mocks the myMostRecentAssignedAudit function from the smart contract
+  function myMostRecentAssignedAudit() public view returns(
+    uint256, // requestId
+    address, // requestor
+    string,  // contract uri
+    uint256, // price
+    uint256  // request block number
+  ) {
+    return (
+      mostRecentAssignedRequestPerAuditor[msg.sender].requestId,
+      mostRecentAssignedRequestPerAuditor[msg.sender].requestor,
+      mostRecentAssignedRequestPerAuditor[msg.sender].contractUri,
+      mostRecentAssignedRequestPerAuditor[msg.sender].price,
+      mostRecentAssignedRequestPerAuditor[msg.sender].blockNumber
+    );
+  }
+
+  mapping(uint256 => bool) public finishedAudits;
+
+  function isAuditFinished(uint256 requestId) public view returns(bool) {
+    return finishedAudits[requestId];
+  }
+
   function emitLogReportSubmissionError_InvalidAuditor(uint256 requestId, address auditor) {
     emit LogReportSubmissionError_InvalidAuditor(requestId, auditor);
   }
@@ -188,6 +235,7 @@ contract QuantstampAudit {
 
   event submitReport_called();
   function submitReport(uint256 requestId, AuditState auditResult, bytes compressedReportBytes){
+    finishedAudits[requestId] = true;
     emit submitReport_called();
   }
 

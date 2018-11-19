@@ -115,6 +115,24 @@ class QSPAuditNode:
                 last_called = now
             sleep(QSPAuditNode.__THREAD_SLEEP_TIME)
 
+    def convert_to_event_and_handle(self, evt_handler):
+        most_recent_audit = mk_read_only_call(
+            self.config,
+            self.__config.audit_contract.functions.myMostRecentAssignedAudit()
+        )
+        # convert to event in order to reuse code
+        evt = {"args": {
+            "requestId": most_recent_audit[0],
+            "requestor": str(most_recent_audit[1]),
+            "uri": most_recent_audit[2],
+            "price": most_recent_audit[3],
+            "auditor": self.config.account
+        },
+            "blockNumber": most_recent_audit[4],
+        }
+        if evt["args"]["requestId"] != 0:
+            evt_handler(evt)
+
     def __run_audit_evt_thread(self, evt_name, evt_filter, evt_handler):
         def process_new_events():
             for evt in evt_filter.get_new_entries():
@@ -240,18 +258,6 @@ class QSPAuditNode:
             "compute_gas_price",
             self.__compute_gas_price
         ))
-        self.__internal_threads.append(self.__run_audit_evt_thread(
-            QSPAuditNode.__EVT_AUDIT_ASSIGNED,
-            self.__config.audit_contract.events.LogAuditAssigned.createFilter(
-                fromBlock=start_block),
-            self.__on_audit_assigned,
-        ))
-        self.__internal_threads.append(self.__run_audit_evt_thread(
-            QSPAuditNode.__EVT_REPORT_SUBMITTED,
-            self.__config.audit_contract.events.LogAuditFinished.createFilter(
-                fromBlock=start_block),
-            self.__on_report_submitted,
-        ))
 
         # Starts two additional threads for performing audits
         # and eventually submitting results
@@ -321,6 +327,8 @@ class QSPAuditNode:
             if any_request_available == self.__AVAILABLE_AUDIT_STATE_READY:
                 self.__logger.debug("There is request available to bid on.")
                 self.__get_next_audit_request()
+                # persists the event in the database for processing
+                self.convert_to_event_and_handle(self.__on_audit_assigned)
             else:
                 self.__logger.debug(
                     "No request available as the contract returned {0}.".format(
@@ -531,6 +539,7 @@ class QSPAuditNode:
                 evt['tx_hash'] = tx_hash.hex()
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
+                self.__on_successful_submission(int(evt['request_id']))
             except DeduplicationException as error:
                 self.__logger.debug(
                     "Error when submiting report {0}".format(str(error))
@@ -564,44 +573,27 @@ class QSPAuditNode:
 
         return submission_thread
 
-    def __on_report_submitted(self, evt):
+    def __on_successful_submission(self, request_id):
         audit_evt = None
-        request_id = None
         try:
-            request_id = str(evt['args']['requestId'])
-            target_auditor = evt['args']['auditor']
-
-            # If an audit request is not targeted to the
-            # running audit node, just disconsider it
-            if target_auditor.lower() != self.__config.account.lower():
-                self.__logger.debug(
-                    "Ignoring submission event (not directed at current node): {0}".format(
-                        str(evt)
-                    ),
-                    requestId=request_id,
-                )
-                return
-
-            audit_evt = self.__config.event_pool_manager.get_event_by_request_id(
-                request_id
+            is_finished = mk_read_only_call(
+                self.config, self.__config.audit_contract.functions.isAuditFinished(request_id)
             )
-            if audit_evt != {}:
+            audit_evt = self.__config.event_pool_manager.get_event_by_request_id(request_id)
+            if is_finished and audit_evt != {}:
                 audit_evt['status_info'] = 'Report successfully submitted'
-                self.__config.event_pool_manager.set_evt_to_done(
-                    audit_evt
-                )
+                self.__config.event_pool_manager.set_evt_to_done(audit_evt)
         except KeyError as error:
             self.__logger.exception(
                 "KeyError when processing submission event: {0}".format(str(error))
             )
         except Exception as error:
             self.__logger.exception(
-                "Error when processing submission event {0}: {1}. Audit event is {2}".format(
-                    str(evt),
+                "Error when processing changing event status: {0}. Audit event is {1}".format(
                     str(error),
-                    str(audit_evt),
+                    str(audit_evt)
                 ),
-                requestId=request_id,
+                requestId=request_id
             )
 
     def __run_monitor_submisson_thread(self):
