@@ -33,23 +33,16 @@ To force the new group assignment to take effect, restart you session (e.g., by 
 - Add some Ether to your account (to cover gas costs)
 
 Record for next steps:
-- Your public Ethereum address, e.g., `0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B`
 - The passphrase (or *wallet password*) for your key
 - Location of your keystore (JSON) file, e.g., `./keystore/default.json`. The location is
 relative to this README's folder.
 
 ### Get whitelisted
 
-Contact the Protocol team (protocol@quantstamp.com) to whitelist your Ethereum address and generate AWS credentials for your account.
-
-Record for next steps:
-- AWS access key id, e.g., `AKIAIOSFODNN7EXAMPLE`
-- AWS secret access key, e.g., `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
-- If provided, Ethereum node token, e.g., `8a7b2d9f0e0b9e7a6a7b8a7b2d9f0e0b9e7a6a7b8a7b2d9f`
+Contact the Protocol team (protocol@quantstamp.com) to whitelist your Ethereum address.
 
 ### Configure
 
-1. Set the environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to the provided AWS credentials.
 1. Set environment variable `ETH_PASSPHRASE` to your account's passphrase (or *wallet password*).
 Note that your password may **NOT** contain
 quotes (double or single). The safest approach to verify whether your password matches what you have set is to check
@@ -59,25 +52,10 @@ the value of `ETH_PASSPHRASE`. In a terminal, type:
     ```
 If the output matches your original password, the latter is correctly set.
 Otherwise, launching the audit node will fail.
-1. In `config.yaml`, specify the endpoint to the Ethereum node you want the QSP audit node to connect to. If connecting to Quantstamp's Ethereum secure node, just rely on the default provider endpoint:
-    ```
-    eth_node:
-        provider: !!str "HTTPProvider"
-        args:
-            endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/?token=${token}"
-    ```
-    The environment `ETH_AUTH_TOKEN` is injected in the URL, binding it to
-    the `${token}` variable. If that is the endpoint to use,  please
-    request an authorization token from Quantstamp.
 
-1. In `config.yaml`, edit the `account` section to specify your account id and, if different from default, the associated keystore file path:
-    ```
-    account:
-        id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B"
-        keystore_file: !!str "./keystore/default.json"
-    ```
-    You account must be prefixed with `0x` and be in **checksum** format.
-    To get a checksum address, go to `https://etherscan.io/address/{your-account}` and copy the value of `Address` field on the page (it will contain some capital letters)
+1. If you would like to proceed with Infura as a back-end (default), sign up on https://infura.io/register, record the token (e.g., in  `https://mainnet.infura.io/v3/abcdefg`, `abcdefg` is the token), and set the environment variable `ETH_AUTH_TOKEN` to this token. If you'd like to use your own endpoint, modify `eth_node/args/endpoint_uri` in `config.yaml` to the endpoint of your choice.
+
+1. If the location of your keystore file is different from the default one, in `config.yaml`, edit the line `keystore_file: !!str "./keystore/default.json"`
 
 1. Configure other settings as necessary, e.g., `gas_price`.
 

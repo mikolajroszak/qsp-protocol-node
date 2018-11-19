@@ -11,7 +11,7 @@ testnet:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://prod.rpc.blockchaindevlabs.com/?token=${token}"
+      endpoint_uri: !!str "https://ropsten.infura.io/v3/${token}"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-meta.json"
@@ -72,7 +72,7 @@ mainnet:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://rpc.blockchaindevlabs.com/mainnet?token=${token}"
+      endpoint_uri: !!str "https://mainnet.infura.io/v3/${token}"
   audit_contract_abi:
     uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/prod/QuantstampAudit-v-{major-version}-abi.json"
     metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/prod/QuantstampAudit-v-{major-version}-meta.json"
