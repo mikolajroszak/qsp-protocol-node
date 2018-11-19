@@ -27,11 +27,11 @@ variable "node_instance_type_audit" {
   description = "The web server instance type for QSP Audit"
 }
 
-variable "ETH_PASSPHRASE" {
+variable "QSP_ETH_PASSPHRASE" {
   description = "The passphrase for the keystore file"
 }
 
-variable "ETH_AUTH_TOKEN" {
+variable "QSP_ETH_AUTH_TOKEN" {
   description = "The authorization token for accessing the provider endpoint"
 }
 

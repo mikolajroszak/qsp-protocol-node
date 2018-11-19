@@ -91,7 +91,7 @@ make test-docker
 
 ### Run locally
 
-1. Set the environment `ETH_AUTH_TOKEN` to the Ethereum node's authentication token
+1. Set the environment `QSP_ETH_AUTH_TOKEN` to the Ethereum node's authentication token
 2. `make run`. Alternatively:
     - `make run-docker` to run as a container
     - `make run-with-auto-restart` to leverage the auto-restart feature.
@@ -107,11 +107,11 @@ To run with a custom account:
       id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B"
       keystore_file: !!str "./keystore/default.json"
     ```
-1. Set the environment variable `ETH_PASSPHRASE` to the passphrase of your account. Note that your password may **NOT** contain
+1. Set the environment variable `QSP_ETH_PASSPHRASE` to the passphrase of your account. Note that your password may **NOT** contain
 quotes (double or single). The safest approach to verify whether your password matches what you have set is to check
-the value of `ETH_PASSPHRASE`. In a terminal, type:
+the value of `QSP_ETH_PASSPHRASE`. In a terminal, type:
     ```
-    echo $ETH_PASSPHRASE
+    echo $QSP_ETH_PASSPHRASE
     ```
 If the output matches your original password, the latter is correctly set.
 Otherwise, launching the audit node will fail.

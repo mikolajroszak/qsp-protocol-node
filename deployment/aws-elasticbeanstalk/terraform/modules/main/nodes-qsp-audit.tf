@@ -57,13 +57,13 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name = "ENV"
+    name = "QSP_ENV"
     value = "${var.stage}"
   }
   
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name = "CONFIG"
+    name = "QSP_CONFIG"
     value = "/app/node-config/config.yaml"
   }
   
@@ -81,14 +81,14 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name = "ETH_PASSPHRASE"
-    value = "${var.ETH_PASSPHRASE}"
+    name = "QSP_ETH_PASSPHRASE"
+    value = "${var.QSP_ETH_PASSPHRASE}"
   }
 
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name = "ETH_AUTH_TOKEN"
-    value = "${var.ETH_AUTH_TOKEN}"
+    name = "QSP_ETH_AUTH_TOKEN"
+    value = "${var.QSP_ETH_AUTH_TOKEN}"
   }
   
   tags {
