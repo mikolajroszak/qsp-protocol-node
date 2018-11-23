@@ -150,6 +150,16 @@ Do it for all the contract URIs.
 
 3. Run the node.
 
+## S3 log streaming
+
+1. To stream logs to S3 you will need to create and s3 bucket in your AWS account and update following paramters under `report_uploader` in config.yaml:
+    1. `bucket_name`
+    2. `contract_bucket_name`
+2. Specify AWS credentials as environment variables to the run docker command. Make sure that the AWS role has permissions to access the bucket.
+
+Please refer to following docs for creating s3 bucket and access policies
+https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html
+https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html
 ## CI and deployment pipeline
 
 1. On every push to the repository, `buildspec-ci.yml` is activated. The build script runs `make test-ci` and reports the status back to AWS CodeBuild.
