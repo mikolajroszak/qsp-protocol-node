@@ -150,6 +150,16 @@ Do it for all the contract URIs.
 
 3. Run the node.
 
+
+
+### (Optional) To store full version of the report and original smart contract for troubleshooting purposes in an s3 bucket: 
+1. [Create an s3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html) in your AWS account
+2. Specify AWS credentials as environment variables to the run docker command. Make sure that the AWS role has [correct permissions](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html) to access the bucket. 
+
+3. Update following paramters under `report_uploader` in config.yaml:
+    1. `bucket_name`
+    2. `contract_bucket_name`
+
 ## CI and deployment pipeline
 
 1. On every push to the repository, `buildspec-ci.yml` is activated. The build script runs `make test-ci` and reports the status back to AWS CodeBuild.
