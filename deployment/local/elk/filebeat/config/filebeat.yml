@@ -1,0 +1,12 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - '/var/log/qsp-protocol/*.*log*'
+  json.message_key: log
+  json.keys_under_root: true
+  processors:
+   - add_docker_metadata: ~
+output.logstash:
+  hosts:
+   - elk_logstash_1:5044

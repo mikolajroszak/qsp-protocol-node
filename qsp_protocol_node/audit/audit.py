@@ -583,6 +583,13 @@ class QSPAuditNode:
             if is_finished and audit_evt != {}:
                 audit_evt['status_info'] = 'Report successfully submitted'
                 self.__config.event_pool_manager.set_evt_to_done(audit_evt)
+                self.__logger.debug(
+                    "Report successfully submitted for event: {0}".format(
+                        str(evt)
+                    ),
+                    request_id=request_id,
+                )
+
         except KeyError as error:
             self.__logger.exception(
                 "KeyError when processing submission event: {0}".format(str(error))

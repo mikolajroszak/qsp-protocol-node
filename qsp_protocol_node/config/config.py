@@ -19,6 +19,7 @@ from dpath.util import get
 from audit.report_processing import ReportEncoder
 from evt import EventPoolManager
 from utils.eth import mk_checksum_address
+from pathlib import Path
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -117,6 +118,7 @@ class Config:
         self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
 
         self.__logging_is_verbose = config_value(cfg, '/logging/is_verbose', False)
+        self.__logging_dir = config_value(cfg, '/logging/dir', "/var/log")
         self.__logging_streaming_provider_name = config_value(cfg, '/logging/streaming/provider')
         self.__logging_streaming_provider_args = config_value(cfg, '/logging/streaming/args', {})
         self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled',
@@ -189,7 +191,7 @@ class Config:
         """
         return config_utils.configure_logging(self.logging_is_verbose,
                                               self.logging_streaming_provider_name,
-                                              self.logging_streaming_provider_args, self.account)
+                                              self.logging_streaming_provider_args, self.account, self.logging_dir)
 
     def __create_components(self, config_utils, validate_contract_settings=True):
         # Creation of internal components
@@ -282,6 +284,7 @@ class Config:
         self.__max_gas_price_wei = -1
         self.__logger = None
         self.__logging_is_verbose = False
+        self.__logging_dir = "/var/log"
         self.__logging_streaming_provider_name = None
         self.__logging_streaming_provider_args = None
         self.__logging_streaming_provider = None
@@ -619,6 +622,10 @@ class Config:
     @property
     def logging_is_verbose(self):
         return self.__logging_is_verbose
+
+    @property
+    def logging_dir(self):
+        return self.__logging_dir
 
     @property
     def logging_streaming_provider_name(self):

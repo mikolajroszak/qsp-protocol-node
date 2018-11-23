@@ -16,6 +16,7 @@ from upload import S3Provider
 from helpers.resource import resource_uri
 import utils.io as io_utils
 from streaming import CloudWatchProvider
+from os.path import expanduser
 from web3 import (
     Web3,
     TestRPCProvider,
@@ -164,11 +165,12 @@ class TestConfigUtil(unittest.TestCase):
         """
         Tests that logging can be configured properly without throwing exceptions.
         """
+        logging_dir = "/var/log"
         account = "0x12345"
-        self.config_utils.configure_logging(True, None, {}, account)
-        self.config_utils.configure_logging(False, None, {}, account)
+        self.config_utils.configure_logging(True, None, {}, account, logging_dir)
+        self.config_utils.configure_logging(False, None, {}, account, logging_dir)
         args = {'log_group': 'grp', 'log_stream': 'stream', 'send_interval_seconds': 10}
-        self.config_utils.configure_logging(True, "CloudWatchProvider", args, account)
+        self.config_utils.configure_logging(True, "CloudWatchProvider", args, account, logging_dir)
         # this has to stay in order to disable streaming again
         configure_basic_logging()
 

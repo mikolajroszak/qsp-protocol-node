@@ -18,11 +18,14 @@ from structlog import configure_once
 from structlog import processors
 from structlog import stdlib
 from structlog import threadlocal
+from os.path import expanduser
+from pathlib import Path
 
 
-def configure_basic_logging(verbose=False):
-    logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-    logging.getLogger('botocore').setLevel(logging.CRITICAL)
+def configure_basic_logging(verbose=False, logging_dir="/var/log"):
+
+    logging_dir = str(logging_dir + "/qsp-protocol")
+    Path(logging_dir).mkdir(parents=True, exist_ok=True)
 
     configure_once(
         context_class=threadlocal.wrap_dict(dict),
@@ -53,11 +56,19 @@ def configure_basic_logging(verbose=False):
             'json': {
                 'class': 'logging.StreamHandler',
                 'formatter': 'json'
+            },
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'formatter': 'json',
+                'filename': logging_dir + '/qsp-protocol.log',
+                'mode': 'a',
+                'maxBytes': 10485760,
+                'backupCount': 5
             }
         },
         'loggers': {
             '': {
-                'handlers': ['json'],
+                'handlers': ['json', 'file'],
                 'level': logging.DEBUG if verbose else logging.INFO
             }
         }

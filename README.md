@@ -272,4 +272,15 @@ While _`doing command`_, on _`environment`_, we encountered _`this message`_, th
 
 > While _executing_ `pyenv install 3.6.4`, on `macOS 10.13.4`, we encountered `zipimport.ZipImportError: can't decompress data; zlib not available`, then _installed_ `xcode-select --install`.
 
+(OPTIONAL) Visualize logs :
 
+You can use ELK stack to visualize logs or aggregate results for troubleshooting.
+
+1. Make sure docker daemon is running
+2. Run `make elk`
+5. Access kibana dashboard from a browser on port 5601
+6. Create a new index pattern under management matching logstash*. (this can take a couple of minutes while logstash comes online).
+7. For timestamp select `@timestamp`.
+8. Now visit discover tab to see the logs. 
+
+To learn more about ELK please visit https://www.elastic.co/learn

@@ -22,6 +22,7 @@ from utils.io import (
     load_yaml,
 )
 from unittest.mock import Mock
+from os.path import expanduser
 
 
 class ConfigUtilsDummy:
@@ -35,7 +36,7 @@ class ConfigUtilsDummy:
         return self.return_values.get('create_eth_provider', None)
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                    logging_streaming_provider_args, account):
+                    logging_streaming_provider_args, account, logging_dir):
         return self.return_values.get('configure_logging', (Mock(), None))
 
     def create_analyzers(self, analyzers_config, logger):
@@ -79,12 +80,12 @@ class ConfigUtilsMock(SimpleMock):
         return self.call('create_eth_provider', arguments_to_check, locals())
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                          logging_streaming_provider_args, account):
+                          logging_streaming_provider_args, account, logging_dir):
         """
         A stub for configure_logging method.
         """
         arguments_to_check = ['logging_is_verbose', 'logging_streaming_provider_name',
-                              'logging_streaming_provider_args', 'account']
+                              'logging_streaming_provider_args', 'account', 'logging_dir']
         return self.call('configure_logging', arguments_to_check, locals())
 
     def create_analyzers(self, analyzers_config, logger):
@@ -270,6 +271,7 @@ class TestConfig(unittest.TestCase):
         return_value = "value"
         verbose = False
         account = "0x12345"
+        logging_dir = "/var/log"
         config = ConfigFactory.create_empty_config()
         config._Config__logging_is_verbose = verbose
         config._Config__logging_streaming_provider_name = name
@@ -278,7 +280,7 @@ class TestConfig(unittest.TestCase):
         utils = ConfigUtilsMock()
         utils.expect('configure_logging',
                      {'logging_is_verbose': verbose, 'logging_streaming_provider_name': name,
-                      'logging_streaming_provider_args': args, 'account': account},
+                      'logging_streaming_provider_args': args, 'account': account, 'logging_dir': logging_dir},
                      return_value)
         result = config._Config__configure_logging(utils)
         self.assertEqual(return_value, result)
@@ -368,6 +370,7 @@ class TestConfig(unittest.TestCase):
         logging_provider_args = "arguments"
         logger = "created logger"
         streaming_provider = "created streaming provider"
+        logging_dir = "/var/log"
         verbose = False
         eth_provider_name = "eth provider name"
         eth_provider_args = "eth provider arguments"
@@ -412,7 +415,7 @@ class TestConfig(unittest.TestCase):
                      (created_web3_client, new_account, new_private_key))
         utils.expect('configure_logging',
                      {'logging_is_verbose': verbose, 'logging_streaming_provider_name': logging_provider_name,
-                      'logging_streaming_provider_args': logging_provider_args, 'account': new_account},
+                      'logging_streaming_provider_args': logging_provider_args, 'account': new_account, 'logging_dir': logging_dir},
                      (logger, streaming_provider))
         utils.expect('check_audit_contract_settings',
                      {'config': config},

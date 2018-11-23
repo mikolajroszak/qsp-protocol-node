@@ -160,9 +160,18 @@ class ConfigUtils:
         return web3_client, new_account, new_private_key
 
     def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                          logging_streaming_provider_args, account):
+                          logging_streaming_provider_args, account, logging_dir):
         if logging_is_verbose:
             config.configure_basic_logging(verbose=True)
+        try:
+            Path(logging_dir).mkdir(parents=True, exist_ok=True)
+            config.configure_basic_logging(logging_dir=logging_dir)
+        except Exception as exception:
+            raise ConfigurationException("Could not create {0} for logging {1}".format(
+                logging_dir,
+                exception)
+            )
+
         logger = structlog.getLogger("audit")
         logging_streaming_provider = None
         if logging_streaming_provider_name is not None:

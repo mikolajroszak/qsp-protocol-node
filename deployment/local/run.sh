@@ -10,6 +10,9 @@
 ####################################################################################################
 
 # Check if the script is running in background
+
+source common.sh
+
 case $(ps -o stat= -p $$) in
   *+*) IN_BACKGROUND="false" ;;
   *) IN_BACKGROUND="true" ;;
@@ -31,6 +34,7 @@ docker run -d \
 	-v $PWD/keystore:/app/keystore:Z \
 	-v $PWD/config.yaml:/app/config.yaml:Z \
 	-v $PWD/event_database.db:/root/.audit_node.db:Z \
+	-v $LOG_DIR:/var/log/qsp-protocol:Z \
 	-e QSP_ENV="testnet" \
 	-e QSP_CONFIG="config.yaml" \
 	-e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
@@ -40,16 +44,16 @@ docker run -d \
 	-e QSP_ETH_AUTH_TOKEN="$QSP_ETH_AUTH_TOKEN" \
 	qsp-protocol-node sh -c "make run-with-auto-restart"
 
-
 # Redirect log for the docker to a log file in current directory 
-docker logs --follow $(docker ps -a -q --latest --filter "status=running" --filter ancestor=qsp-protocol-node) > qsp-protocol-node.log &
+docker logs --follow $(docker ps -a -q --latest --filter "status=running" --filter ancestor=qsp-protocol-node) > $LOG_PATH &
 
+echo $$ > /tmp/qsp-protocol.pid
 # Tail the logs if not in background
 if [ "$IN_BACKGROUND" == "false" ]; then
-	while [ ! -f ./qsp-protocol-node.log ]
+	while [ ! -f $LOG_PATH ]
 	do
   		sleep 1
 	done
 	echo "Displaying logs from qsp-protocol-node.log file..."
-	tail -f -n +1 qsp-protocol-node.log
+	tail -f -n +1 $LOG_PATH
 fi
