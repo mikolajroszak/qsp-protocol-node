@@ -33,6 +33,7 @@ from utils.io import (
 from utils.eth import send_signed_transaction
 from utils.eth import mk_read_only_call
 from utils.eth import DeduplicationException
+from utils.eth import get_gas_price
 
 from threading import Thread
 from utils.metrics import MetricCollector
@@ -198,7 +199,7 @@ class QSPAuditNode:
         if self.__config.gas_price_strategy == "static":
             gas_price = self.__config.default_gas_price_wei
         else:
-            gas_price = self.__config.web3_client.eth.gasPrice
+            gas_price = get_gas_price(self.__config)
         gas_price = int(min(gas_price, self.__config.max_gas_price_wei))
         # set the gas_price in config
         self.__config.gas_price_wei = gas_price

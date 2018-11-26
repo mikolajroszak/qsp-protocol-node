@@ -10,4 +10,5 @@
 from .tx import send_signed_transaction
 from .tx import mk_read_only_call
 from .tx import DeduplicationException
+from .tx import get_gas_price
 from .address import mk_checksum_address

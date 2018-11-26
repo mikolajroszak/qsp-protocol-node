@@ -40,6 +40,19 @@ def mk_read_only_call(config, method):
             )
 
 
+def get_gas_price(config):
+    try:
+        SingletonLock.instance().lock.acquire()
+        return config.web3_client.eth.gasPrice
+    finally:
+        try:
+            SingletonLock.instance().lock.release()
+        except Exception as error:
+            config.logger.debug(
+                "Error when releasing a lock in gas price read {0}".format(str(error))
+            )
+
+
 def send_signed_transaction(config, transaction, attempts=10, wait_for_transaction_receipt=False):
     try:
         SingletonLock.instance().lock.acquire()
