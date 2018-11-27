@@ -40,6 +40,6 @@ COPY requirements.txt ./
 RUN pip3 install -r requirements.txt
 
 COPY . .
-
+RUN chmod +x ./qsp-protocol-node
 RUN find "./analyzers/wrappers" -type f -exec chmod +x {} \;
 CMD [ "./qsp-protocol-node" ]
