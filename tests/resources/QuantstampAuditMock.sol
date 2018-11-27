@@ -13,6 +13,8 @@ pragma solidity 0.4.25;
 // For updating the protocol node to use the real QuantstampAudit contract,
 // see notes in https://quantstamp.atlassian.net/browse/QSP-369.
 
+import "./QuantstampAuditTokenEscrow.sol";
+
 contract QuantstampAuditData{
   uint256 public auditTimeoutInBlocks = 25;
   uint256 public maxAssignedRequests = 10;
@@ -73,6 +75,9 @@ contract QuantstampAudit {
   }
   QuantstampAuditData public auditData;
 
+  // contract that stores token escrows of nodes on the network
+  QuantstampAuditTokenEscrow public tokenEscrow;
+
   event LogAuditFinished(
     uint256 requestId,
     address auditor,
@@ -98,6 +103,7 @@ contract QuantstampAudit {
   event LogAuditQueueIsEmpty();
 
   event LogAuditAssignmentError_ExceededMaxAssignedRequests(address auditor);
+  event LogAuditAssignmentError_Understaked(address auditor, uint256 stake);
 
   event LogPayAuditor(uint256 requestId, address auditor, uint256 amount);
   event LogTransactionFeeChanged(uint256 oldFee, uint256 newFee);
@@ -261,5 +267,61 @@ contract QuantstampAudit {
   function setAuditNodePrice(uint256 price){
     auditData.setMinAuditPrice(msg.sender, price);
     emit setAuditNodePrice_called(price);
+  }
+
+  /**
+   * The mock function intended to set an escrow address
+   */
+  function setTokenEscrow(address addr) public {
+    tokenEscrow = QuantstampAuditTokenEscrow(addr);
+  }
+
+  /**
+   * @dev Returns the total stake deposited by an address.
+   * @param addr The address to check.
+   */
+  function totalStakedFor(address addr) public view returns(uint256) {
+    return tokenEscrow.depositsOf(addr);
+  }
+
+  /**
+   * @dev Returns true if the sender staked enough.
+   */
+  function hasEnoughStake() public view returns(bool) {
+    return tokenEscrow.hasEnoughStake(msg.sender);
+  }
+
+  /**
+   * @dev Returns the minimum stake required to be an auditor.
+   */
+  function getMinAuditStake() public view returns(uint256) {
+    return tokenEscrow.minAuditStake();
+  }
+
+  /**
+   * @dev Allows nodes to stake a deposit. The audit node must approve QuantstampAudit before invoking.
+   * @param amount The amount of wei-QSP to deposit.
+   */
+  function stake(uint256 amount) external returns(bool) {
+    // first acquire the tokens approved by the auditor
+    // the real contract calls the following transfer here, the mock will skip this
+    // require(auditData.token().transferFrom(msg.sender, address(this), amount));
+
+    // use those tokens to approve a transfer in the escrow
+    // the real contract approves the following transfer here, the mock will skip this
+    //auditData.token().approve(address(tokenEscrow), amount);
+
+    // a "Deposited" event is emitted in TokenEscrow
+    tokenEscrow.deposit(msg.sender, amount);
+    return true;
+  }
+
+  /**
+   * @dev Allows audit nodes to retrieve a deposit.
+   */
+  function unstake() external returns(bool) {
+    // the escrow contract ensures that the deposit is not currently locked
+    tokenEscrow.withdraw(msg.sender);
+    return true;
   }
 }
