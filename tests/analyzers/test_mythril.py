@@ -16,7 +16,6 @@ import unittest
 from random import random
 from helpers.resource import project_root
 from helpers.resource import resource_uri
-from structlog import getLogger
 from audit import Analyzer, Wrapper
 from utils.io import fetch_file
 
@@ -28,17 +27,14 @@ class TestAnalyzerMythril(unittest.TestCase):
 
     @staticmethod
     def __new_analyzer(timeout_sec=60):
-        logger = getLogger("test")
         mythril_wrapper = Wrapper(
             wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
             analyzer_name="mythril",
             args="",
             storage_dir="/tmp",
             timeout_sec=timeout_sec,
-            logger=logger
-
         )
-        return Analyzer(mythril_wrapper, getLogger("test"))
+        return Analyzer(mythril_wrapper)
 
     def test_report_creation(self):
         """

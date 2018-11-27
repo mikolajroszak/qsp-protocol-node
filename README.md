@@ -2,66 +2,10 @@
 
 ![Build status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiZDlrWUpGTmt1Y0RsdXpvbVdOdHhNUlVxWjlkYnd3VXBsbDBhRXc0RGg0S2FCOEpxaTBhbHpGRDRjSm5OTDE1S0laQnViU1JTVW1ZODJ5NUMxSHdnTzc0PSIsIml2UGFyYW1ldGVyU3BlYyI6IlpIRFRacVlPcUF3S1EybmoiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop)
 
-Implements the QSP audit node in the Quantstamp network.
+Implements the QSP audit node in the Quantstamp network. This guide presents
+steps on how to perform common development tasks.
 
-## Run a QSP node locally
-
-- To build and run the node from the source code, follow the instructions from the `Development setup` section and then refer to the `Run locally` subsection.
-
-- To test out the node operator instructions:
-    - Do `make export` to export a Docker image
-    - Go to `deployment/local` and follow the steps in the dedicated [README](deployment/local/README.md)
-
-## Development setup
-
-All instructions must be run from the project's root folder.
-
-1. Make sure you have [`pyenv`](https://github.com/pyenv/pyenv) installed and that it is properly initialized. Initialization entails changing your `~/.bash_profile` (if not already done so):
-
-    ```bash
-    echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
-    ```
-
-    and sourcing it:
-
-    ```bash
-    source ~/.bash_profile
-    ```
-
-1. Install dependencies
-    * automake
-    * libtool
-    * awscli
-    * pyenv
-    * pyenv-virtualenv
-    * coreutils
-    * jq
-
-    For Mac, this can be done using `brew`:
-    ```bash
-    brew install automake libtool awscli pyenv pyenv-virtualenv coreutils jq
-    ```
-
-    You also need to install the compiler for Solidity 0.4.25. If not installed, this can be done with
-    ```bash
-    brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/f26f126820e5f47c3ed7ec6d5e6e046707443d87/solidity.rb
-    ```
-
-    If you have a newer/older version of the compiler installed together with 0.4.25, you may need to switch the default solc to be the latter kind:
-    ```
-    brew switch solidity 0.4.25
-    ``` 
-
-1. Clone the repo and set it up by running:
-
-    ```bash
-    make setup
-    ```
-
-1. Acquire AWS credentials for accessing S3 and Docker repository. If you don't have permissions to create credentials, contact the `#dev-protocol` Slack channel.
-
-1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)  
-**On Mac**: double-check that Python bin path in your `$PATH` variable does not use the `~` character. If it does, replace it with your `/Users/<username>` (or `make` won't find `aws`).
+## Requirements
 
 1. Install Docker: <https://docs.docker.com/install/>
 
@@ -71,56 +15,57 @@ All instructions must be run from the project's root folder.
     sudo usermod -a -G docker <username>
     ```
 
-1. If you are using MacOS, ensure `Xcode` is installed.
+1. Ensure node's account has enough funds. At all times, the node must have
+   enough ether to pay for its associated gas fees (e.g., when bidding,
+   submiting a report, etc.). When running the node against `testnet` (default), one should mint ether.
 
-### Run tests
+   Go to a [Ropsten faucet](https://faucet.ropsten.be/) and transfer testing ether
+   to the node's target account (default is `0x60463b7ee0c3d33def3a05313597b1300f6de62b`).
 
-1. For testing purposes, issue:
 
-    ```bash
-    make test
-    ```
-
-2. To access the HTML coverage report, after running tests, open `tests/coverage/htmlcov/index.html`
-
-3. To run tests inside a container, run
+## Running the node
 
 ```bash
-make test-docker
+make run
 ```
 
-### Run locally
+This runs the node against `testnet`. It relies on default values for
+`QSP_ETH_AUTH_TOKEN` and `QSP_ETH_PASSPHRASE`, two mandatory environment
+variables used by the node. Specifically:
 
-1. Set the environment `QSP_ETH_AUTH_TOKEN` to the Ethereum node's authentication token
-2. `make run`. Alternatively:
-    - `make run-docker` to run as a container
-    - `make run-with-auto-restart` to leverage the auto-restart feature.
-
-This will run the node using the default (test) account for Ropsten. This is suitable for quick local run but not recommended for thorough testing.
-
-To run with a custom account:
-
-1. Create a new account (e.g., using MyEtherWallet). Record the passphrase, the new account Ethereum address, and store the keystore file in an accessible location
-1. In `deployment/local/config.yaml/testnet/account/id`, specify the Ethereum address and in `deployment/local/config.yaml/testnet/account/keystore_file`, specify the path to the keystore file. The address must be in the **checksum** format. Example:
-    ```text
-    account:
-      id: !!str "0x60463b7Ee0c3D33deF3A05313597B1300F6dE62B"
-      keystore_file: !!str "./keystore/default.json"
-    ```
-1. Set the environment variable `QSP_ETH_PASSPHRASE` to the passphrase of your account. Note that your password may **NOT** contain
+* `QSP_ETH_AUTH_TOKEN`: Ethereum node's
+   authentication token (e.g., one obtained for Infura, a proxy node, etc).
+   Default points to an Infura authentication token created for Quantstamp.
+   
+* `QSP_ETH_PASSPHRASE`: passphrase of the target Ethereum account. 
+The password must **NOT** contain
 quotes (double or single). The safest approach to verify whether your password matches what you have set is to check
-the value of `QSP_ETH_PASSPHRASE`. In a terminal, type:
+the value of `QSP_ETH_PASSPHRASE` in a terminal:
     ```
     echo $QSP_ETH_PASSPHRASE
     ```
-If the output matches your original password, the latter is correctly set.
-Otherwise, launching the audit node will fail.
-1. Whitelist the address using the [whitelist command](https://github.com/quantstamp/qsp-protocol-audit-contract#commands)
-1. Transfer some Ether to the account (for Ropsten, use a Ropsten faucet)
+   If the output matches your original password, the latter is correctly set.
+   Otherwise, launching the audit node will fail.
 
-By default, the node is pointed to the Dev stage that is on Ropsten, thus your node is competing with the node on AWS to process the audit request sent by the end-to-end test (runs every hour). If your node processes the request correctly, there will be no test failure. To run the node in an isolated environment, see the next section.
+Additionally, the node relies on the configuration settings given in a 
+yaml file (default is `deployment/local/config.yaml`).
 
-### Run Standalone Report Encoder
+## Using custom accounts
+
+To run the node with an account different from the one given as default,
+create a new account (e.g., using MyEtherWallet). 
+
+Record the passphrase and the ew Ethereum account address, storing the keystore file in an accessible
+location. Change the keystore location in the yaml configuration file.
+
+
+### Running tests
+
+```bash
+make test
+```
+
+### Run node's standalone report encoder
 
 1. To encode an existing json report to a compressed hexstring, run
 
@@ -136,29 +81,47 @@ python3 qsp_protocol_node/audit/report_processing.py -d 0108A9C2343908B4A6981E34
 
 Note that there is no `0x` prefixing the hexstring.
 
-### Run locally in an isolated environment
+### Run node locally and in an isolated environment
+
 For certain use cases, it is important to run the node in such a way that it doesn't affect
 any other nodes. Currently, the steps are as follows:
 
-1. In the audit contract repository, follow the [steps](https://github.com/quantstamp/qsp-protocol-audit-contract#deploy-to-ropsten-or-main-net-through-metamask) to deploy the smart contracts to a separate stage (e.g., "betanet-test-123"). Do the necessary whitelisting.
+1. In the audit contract repository, follow the [steps](https://github.com/quantstamp/qsp-protocol-audit-contract#deploy-to-ropsten-or-main-net-through-metamask) to 
+deploy the smart contracts to a separate stage (e.g., "betanet-test-123"). Do the necessary whitelisting.
 
-2. In `deployment/local/config.yaml`, replace the contract addresses to point to the new stage, e.g., replace:
+1. In `deployment/local/config.yaml`, replace the contract addresses to point to the new stage, e.g., replace:
 `https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-abi.json`
 with 
 `https://s3.amazonaws.com/qsp-protocol-contract/betanet-test-123/QuantstampAudit-v-{major-version}-abi.json`.
 Do it for all the contract URIs.
 
-3. Run the node.
+1. Run the node.
 
 
+## Optional features
 
-### (Optional) To store full version of the report and original smart contract for troubleshooting purposes in an s3 bucket: 
+The node allows full report uploading to a remote site (e.g., S3), as well as log streaming (e.g., CloudWatch). Currently, 
+this is restricted to AWS services. The configuration steps are as follows:
+
+1. Set up AWS credentials. If you don't have permissions to create credentials, contact the `#dev-protocol` Slack channel.
+
+1. Follow the steps [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration)  
+**On Mac**: double-check that python is in your `$PATH` and its directory does not start with `~`. If it does, replace it with your `/Users/<username>` (or `make` won't find `aws`).
+
 1. [Create an s3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html) in your AWS account
-2. Specify AWS credentials as environment variables to the run docker command. Make sure that the AWS role has [correct permissions](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html) to access the bucket. 
 
-3. Update following paramters under `report_uploader` in config.yaml:
+1. Specify AWS credentials as environment variables, namely `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. 
+Make sure that the AWS role has [correct permissions](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html) to access the bucket. 
+
+1. Update the following paramters under `report_uploader` in `config.yaml`:
     1. `bucket_name`
-    2. `contract_bucket_name`
+    1. `contract_bucket_name`
+
+<!-- TODO: Add quick instructions on how to setup a log entry in CloudWatch
+See https://quantstamp.atlassian.net/browse/QSP-854
+-->
+Additionally, one can also stream logs to CloudWatch. Once AWS credentials are in place, simply enable `logging/streaming` in
+ `deployment/local/config.yaml`, changing the default parameters (if desired).
 
 ## CI and deployment pipeline
 
@@ -212,7 +175,7 @@ Currently, the process is mostly manual. To be automated in the future.
 
 ## Development hierarchy
 
-* Main file: `qsp_protocol_audit.py`
+* Main file: `qsp_protocol_node/__main__.py`
 
 * Target environments are defined in `deployment/local/config.yaml`
 
@@ -223,15 +186,10 @@ Currently, the process is mostly manual. To be automated in the future.
   - `audit.py`
     - main loop is in the run() method
     - logic for audit computation
-    - report is JSON and posted to the private blockchain
+    - report is JSON and posted to Ethereum
   - `analyzer.py`
     - abstracts an analyzer tool
     - needs to accept parameters in a better way
-  - security constraints
-    - network audit service might have a threat of price forgery (it is possible for a contract to be audited twice?)
-    - need to control the state of this service
-      - uptime monitoring
-      - metrics
 
 ## Contribute
 
@@ -269,8 +227,6 @@ The codestyle builds on PEP8 and includes especially the following:
 This section includes situations that a command previously failed and we came up with ways to mitigate it. The following troubleshooting statements are in the form below:
 
 While _`doing command`_, on _`environment`_, we encountered _`this message`_, then _`did these steps`_.
-
-> While _executing_ `pyenv install 3.6.4`, on `macOS 10.13.4`, we encountered `zipimport.ZipImportError: can't decompress data; zlib not available`, then _installed_ `xcode-select --install`.
 
 (OPTIONAL) Visualize logs :
 

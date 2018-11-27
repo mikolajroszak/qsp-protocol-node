@@ -39,7 +39,6 @@ def load_json(json_file_path):
     Loads a JSON file as a in-memory dictionary.
     """
     json_dict = {}
-
     with open(json_file_path) as json_file:
         json_dict = load(json_file)
 

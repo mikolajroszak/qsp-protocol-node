@@ -10,8 +10,8 @@
 import unittest
 import uuid
 
-from stop import Stop
-from stop import __handle_sigkill_signal as handle
+from utils.stop import Stop
+from utils.stop import __handle_sigkill_signal as handle
 
 from unittest.mock import patch
 
@@ -91,12 +91,6 @@ class StopTest(unittest.TestCase):
             self.assertTrue(stoppables[1].is_stopped)
             self.assertTrue(stoppables[2].is_stopped)
             self.assertTrue(stoppables[3].is_stopped)
-
-    def test_set_logger(self):
-        orioginal_logger = Stop._Stop__logger
-        Stop.set_logger(15)
-        self.assertEqual(15, Stop._Stop__logger)
-        Stop._Stop__logger = orioginal_logger
 
     def test_error(self):
         with patch('sys.exit') as exit_mock:

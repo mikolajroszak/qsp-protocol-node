@@ -16,9 +16,10 @@ import os
 import json
 
 import audit.report_processing
+
 from audit.report_processing import ReportEncoder
 from audit.report_processing import ReportFormattingException
-from tests.helpers.resource import resource_uri
+from helpers.resource import resource_uri
 from utils.io import load_json, fetch_file
 
 
@@ -26,11 +27,6 @@ class TestReportProcessing(unittest.TestCase):
     """
     Tests correctness of encoding and decoding functions
     """
-    __LOGGER = None
-
-    @classmethod
-    def setUpClass(cls):
-        cls.__LOGGER = structlog.getLogger("test")
 
     def setUp(self):
         self.__encoder = audit.report_processing.ReportEncoder()
@@ -100,13 +96,13 @@ class TestReportProcessing(unittest.TestCase):
         """
         Compresses the JSON report.
         """
-        return self.__encoder.compress_report(report, 1, TestReportProcessing.__LOGGER)
+        return self.__encoder.compress_report(report, 1)
 
     def decode_report(self, report):
         """
         Decodes the hexstring report.
         """
-        return self.__encoder.decode_report(report, 1, TestReportProcessing.__LOGGER)
+        return self.__encoder.decode_report(report, 1)
 
     def test_decimal_to_bitstring(self):
         """

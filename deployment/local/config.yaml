@@ -55,9 +55,9 @@ testnet:
     # Only used if strategy is set to "dynamic"
     max_gas_price_wei: !!int 50000000000 # 50 Gwei
   logging:
-    is_verbose: True
     streaming:
-      # provider: !!str "CloudWatchProvider" # uncomment to enable CloudWatch streaming. Requires AWS credentials
+      is_enabled: False
+      provider: !!str "CloudWatchProvider"
       args:
         log_group: "qsp-protocol-nodes-dev"
         log_stream: "node-{id}"
@@ -111,9 +111,9 @@ mainnet:
     # Only used if strategy is set to "dynamic"
     max_gas_price_wei: !!int 50000000000 # 50 Gwei
   logging:
-    is_verbose: True
     streaming:
-      # provider: !!str "CloudWatchProvider" # uncomment to enable CloudWatch streaming. Requires AWS credentials
+      is_enabled: False
+      provider: !!str "CloudWatchProvider"
       args:
         log_group: "qsp-protocol-nodes-prod"
         log_stream: "node-{id}"

@@ -12,9 +12,10 @@ Tests the flow of receiving audit requests and
 their flow within the QSP audit node
 """
 import contextlib
+import ntpath
 import os
 import unittest
-import ntpath
+import structlog
 
 from audit import QSPAuditNode
 from audit import ExecutionException
@@ -50,7 +51,6 @@ class TestQSPAuditNode(unittest.TestCase):
     __REQUEST_ID = 1
     __PRICE = 100
     __SLEEP_INTERVAL = 0.01
-    __logger = None
 
     @classmethod
     def __clean_up_file(cls, path):
@@ -66,15 +66,13 @@ class TestQSPAuditNode(unittest.TestCase):
             SingletonLock.instance().lock.acquire()
             return contract_entity.transact(tx_args)
         except Exception as e:
-            TestQSPAuditNode.__logger.exception("!!!!!!! Safe transaction in tests failed")
+            print("!!!!!!! Safe transaction in tests failed")
             raise e
         finally:
             try:
                 SingletonLock.instance().lock.release()
             except Exception as error:
-                TestQSPAuditNode.__logger.exception(
-                    "Error when releasing a lock in test {0}".format(str(error))
-                )
+                print("Error when releasing a lock in test {0}".format(str(error)))
 
     @staticmethod
     def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
@@ -137,7 +135,11 @@ class TestQSPAuditNode(unittest.TestCase):
                         expected_json,
                         exclude_paths={
                             "root['contract_uri']",
-                            # path is different depending on whether running inside Docker
+                            # There is no keystore used for testing. Accounts
+                            # are dynamic and therefore cannot be compared
+                            "root['auditor']",
+                            "root['requestor']",
+                            # Path is different depending on whether running inside Docker
                             "root['timestamp']",
                             "root['start_time']",
                             "root['end_time']",
@@ -167,7 +169,7 @@ class TestQSPAuditNode(unittest.TestCase):
     def fetch_config(cls):
         # create config from file, the contract is not provided and will be injected separately
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file(os.getenv("QSP_ENV", default="dev"), config_file_uri,
+        config = ConfigFactory.create_from_file(config_file_uri, os.getenv("QSP_ENV", default="dev"),
                                                 validate_contract_settings=False)
         # compile and inject contract
         contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
@@ -185,7 +187,7 @@ class TestQSPAuditNode(unittest.TestCase):
                 contract_source_uri,
                 audit_contract_name,
                 data_contract_name,
-                config.account, )
+                config.account)
         config_utils = ConfigUtils(config.node_version)
         config_utils.check_configuration_settings(config)
         return config
@@ -193,7 +195,11 @@ class TestQSPAuditNode(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         config = TestQSPAuditNode.fetch_config()
-        cls.__logger = config.logger
+        # Assures structlog has been minimally configured
+        structlog.configure_once(
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+        )
         TestQSPAuditNode.__clean_up_file(config.evt_db_path)
 
     def setUp(self):
@@ -419,7 +425,7 @@ class TestQSPAuditNode(unittest.TestCase):
         row = get_first(sql3lite_worker.execute("select * from audit_evt"))
         self.assertEqual(row['fk_status'], 'AS')
 
-    @timeout(100, timeout_exception=StopIteration)
+    @timeout(300, timeout_exception=StopIteration)
     def test_successful_contract_audit_request(self):
         """
         Tests the entire flow of a successful audit request, from a request
@@ -441,7 +447,7 @@ class TestQSPAuditNode(unittest.TestCase):
                                     report_file_path="reports/DAOBug.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
-    @timeout(100, timeout_exception=StopIteration)
+    @timeout(300, timeout_exception=StopIteration)
     def test_successful_contract_audit_request_with_disabled_upload(self):
         """
         Tests the entire flow of a successful audit request, from a request
@@ -467,7 +473,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS)
 
-    @timeout(100, timeout_exception=StopIteration)
+    @timeout(300, timeout_exception=StopIteration)
     def test_successful_empty_contract_audit_request(self):
         """
         Tests the entire flow of a successful audit request, from a request
@@ -490,13 +496,13 @@ class TestQSPAuditNode(unittest.TestCase):
                                      report_file_path="reports/Empty.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
-    @timeout(200, timeout_exception=StopIteration)
+    @timeout(300, timeout_exception=StopIteration)
     def test_multiple_sequential_requests(self):
         """
         Tests that bidding happens when multiple request arrive in a row.
         """
         # since we're mocking the smart contract, we should explicitly call its internals
-        worker = Sqlite3Worker(self.__config.logger, self.__config.evt_db_path)
+        worker = Sqlite3Worker(self.__config.evt_db_path)
         buggy_contract = resource_uri("DAOBug.sol")
 
         # We will request three events in the row without updating the assigned number in the
@@ -595,7 +601,7 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
                                     report_file_path="reports/DappBinWallet.json")
 
-    @timeout(100, timeout_exception=StopIteration)
+    @timeout(300, timeout_exception=StopIteration)
     def test_analyzer_produces_metadata_for_errors(self):
         """
         Tests that analyzers produce their metadata even when failure occurs

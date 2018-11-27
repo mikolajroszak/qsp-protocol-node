@@ -16,7 +16,6 @@ import json
 from random import random
 from helpers.resource import project_root
 from helpers.resource import resource_uri
-from structlog import getLogger
 from audit import Analyzer, Wrapper
 from utils.io import fetch_file
 
@@ -28,17 +27,14 @@ class TestAnalyzerOyente(unittest.TestCase):
 
     @staticmethod
     def __new_analyzer(storage_dir="/tmp", timeout_sec=120):
-        logger = getLogger("test")
         oyente_wrapper = Wrapper(
             wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
             analyzer_name="oyente",
             args="-ce",
             storage_dir=storage_dir,
             timeout_sec=timeout_sec,
-            logger=logger
-
         )
-        return Analyzer(oyente_wrapper, getLogger("test"))
+        return Analyzer(oyente_wrapper)
 
     def test_report_creation(self):
         """

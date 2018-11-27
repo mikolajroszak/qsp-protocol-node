@@ -35,11 +35,7 @@ class ConfigUtilsDummy:
     def create_eth_provider(self, provider, args):
         return self.return_values.get('create_eth_provider', None)
 
-    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                    logging_streaming_provider_args, account, logging_dir):
-        return self.return_values.get('configure_logging', (Mock(), None))
-
-    def create_analyzers(self, analyzers_config, logger):
+    def create_analyzers(self, analyzers_config):
         return self.return_values.get('create_analyzers', None)
 
     def check_audit_contract_settings(self):
@@ -79,20 +75,11 @@ class ConfigUtilsMock(SimpleMock):
         arguments_to_check = ['provider', 'args']
         return self.call('create_eth_provider', arguments_to_check, locals())
 
-    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                          logging_streaming_provider_args, account, logging_dir):
+    def create_analyzers(self, analyzers_config):
         """
         A stub for configure_logging method.
         """
-        arguments_to_check = ['logging_is_verbose', 'logging_streaming_provider_name',
-                              'logging_streaming_provider_args', 'account', 'logging_dir']
-        return self.call('configure_logging', arguments_to_check, locals())
-
-    def create_analyzers(self, analyzers_config, logger):
-        """
-        A stub for configure_logging method.
-        """
-        arguments_to_check = ['analyzers_config', 'logger']
+        arguments_to_check = ['analyzers_config']
         return self.call('create_analyzers', arguments_to_check, locals())
 
     def check_audit_contract_settings(self, config):
@@ -265,27 +252,6 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(return_value, result)
         utils.verify()
 
-    def test_configure_logging(self):
-        name = "provider name"
-        args = "arguments"
-        return_value = "value"
-        verbose = False
-        account = "0x12345"
-        logging_dir = "/var/log"
-        config = ConfigFactory.create_empty_config()
-        config._Config__logging_is_verbose = verbose
-        config._Config__logging_streaming_provider_name = name
-        config._Config__logging_streaming_provider_args = args
-        config._Config__account = account
-        utils = ConfigUtilsMock()
-        utils.expect('configure_logging',
-                     {'logging_is_verbose': verbose, 'logging_streaming_provider_name': name,
-                      'logging_streaming_provider_args': args, 'account': account, 'logging_dir': logging_dir},
-                     return_value)
-        result = config._Config__configure_logging(utils)
-        self.assertEqual(return_value, result)
-        utils.verify()
-
     def test_create_analyzers(self):
         analyzers_config = "config list"
         logger = "logger"
@@ -350,17 +316,12 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.evt_db_path)
         self.assertEqual(10, config.submission_timeout_limit_blocks)
         self.assertIsNone(config.event_pool_manager)
-        self.assertIsNone(config.logger)
         self.assertTrue(config.metric_collection_is_enabled)
         self.assertEquals(30, config.metric_collection_interval_seconds)
         self.assertIsNone(config.metric_collection_destination_endpoint)
-        self.assertIsNone(config.logging_streaming_provider)
         self.assertIsNone(config.report_uploader_provider_name)
         self.assertIsNone(config.report_uploader_provider_args)
         self.assertEqual(0, len(config.analyzers_config))
-        self.assertFalse(config.logging_is_verbose)
-        self.assertIsNone(config.logging_streaming_provider_name)
-        self.assertIsNone(config.logging_streaming_provider_args)
         self.assertEqual(0, config.start_n_blocks_in_the_past)
         self.assertEqual(0, config.block_discard_on_restart)
         self.assertTrue(config.heartbeat_allowed)
@@ -368,10 +329,7 @@ class TestConfig(unittest.TestCase):
     def test_create_components(self):
         logging_provider_name = "provider name"
         logging_provider_args = "arguments"
-        logger = "created logger"
         streaming_provider = "created streaming provider"
-        logging_dir = "/var/log"
-        verbose = False
         eth_provider_name = "eth provider name"
         eth_provider_args = "eth provider arguments"
         created_eth_provider = "created_eth_provider"
@@ -390,9 +348,6 @@ class TestConfig(unittest.TestCase):
         created_audit_contract = "contract"
         created_web3_client = Web3Mock()
         config = ConfigFactory.create_empty_config()
-        config._Config__logging_is_verbose = verbose
-        config._Config__logging_streaming_provider_name = logging_provider_name
-        config._Config__logging_streaming_provider_args = logging_provider_args
         config._Config__eth_provider_name = eth_provider_name
         config._Config__eth_provider_args = eth_provider_args
         config._Config__account = account
@@ -413,10 +368,6 @@ class TestConfig(unittest.TestCase):
                      {'eth_provider': created_eth_provider, 'account_passwd': account_passwd,
                       'keystore_file': account_keystore_file, 'max_attempts': 30},
                      (created_web3_client, new_account, new_private_key))
-        utils.expect('configure_logging',
-                     {'logging_is_verbose': verbose, 'logging_streaming_provider_name': logging_provider_name,
-                      'logging_streaming_provider_args': logging_provider_args, 'account': new_account, 'logging_dir': logging_dir},
-                     (logger, streaming_provider))
         utils.expect('check_audit_contract_settings',
                      {'config': config},
                      None)
@@ -428,7 +379,7 @@ class TestConfig(unittest.TestCase):
                      {'config': config},
                      None)
         utils.expect('create_analyzers',
-                     {'analyzers_config': analyzers_config, 'logger': logger},
+                     {'analyzers_config': analyzers_config},
                      created_analyzers)
         utils.expect('create_report_uploader_provider',
                      {'account': new_account,
@@ -437,8 +388,6 @@ class TestConfig(unittest.TestCase):
                       'is_enabled': True},
                      report_uploader)
         config._Config__create_components(utils)
-        self.assertEqual(logger, config.logger)
-        self.assertEqual(streaming_provider, config.logging_streaming_provider)
         self.assertEqual(created_eth_provider, config.eth_provider)
         self.assertEqual(created_web3_client, config.web3_client)
         self.assertEqual(new_account, config.account)
@@ -449,10 +398,7 @@ class TestConfig(unittest.TestCase):
 
     def test_load_config(self):
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file("dev", config_file_uri,
-                                                validate_contract_settings=False)
-        self.assertIsNotNone(config.logger)
-        self.assertIsNone(config.logging_streaming_provider)
+        config = ConfigFactory.create_from_file(config_file_uri, "dev", validate_contract_settings=False)
         self.assertIsNotNone(config.eth_provider)
         self.assertIsNotNone(config.web3_client)
         self.assertIsNotNone(config.account)

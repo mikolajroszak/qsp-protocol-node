@@ -10,14 +10,15 @@
 """
 Tests our assumptions about the database client and SQLite3 engine.
 """
+import apsw
 import unittest
 import yaml
-import apsw
+
+from unittest import mock
 
 from config import config_value
 from evt.evt_pool_manager import EventPoolManager
 from helpers.resource import resource_uri
-from helpers.logger_mock import LoggerMock
 from timeout_decorator import timeout
 from utils.db import Sqlite3Worker
 from utils.io import fetch_file
@@ -34,8 +35,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         """
         cfg = TestSqlLite3Worker.read_yaml_setup('test_config.yaml')
         file = config_value(cfg, '/dev/evt_db_path')
-        self.logger_mock = LoggerMock()
-        self.worker = Sqlite3Worker(self.logger_mock, file)
+        self.worker = Sqlite3Worker(file)
         self.worker.execute_script(fetch_file(resource_uri('dropdb.sql')))
         self.worker.execute_script(fetch_file(resource_uri('evt/createdb.sql', is_main=True)))
 
@@ -52,11 +52,12 @@ class TestSqlLite3Worker(unittest.TestCase):
         Tests that the worker is capable of creating the database and insert items by executing a
         script.
         """
-        self.assertFalse(self.logger_mock.logged_error)
-        result = self.worker.execute("select * from evt_status")
-        self.assertEqual(len(result), 5,
-                         'We are expecting 5 event type records. There are {0}'.format(len(result)))
-        self.assertFalse(self.logger_mock.logged_error)
+        with mock.patch('utils.db.sql3liteworker.logger') as logger_mock:
+            self.assertFalse(logger_mock.error.called)
+            result = self.worker.execute("select * from evt_status")
+            self.assertEqual(len(result), 5,
+                            'We are expecting 5 event type records. There are {0}'.format(len(result)))
+            self.assertFalse(logger_mock.error.called)
 
     @timeout(3, timeout_exception=StopIteration)
     def test_inserting_duplicates_primary_key(self):
@@ -65,26 +66,34 @@ class TestSqlLite3Worker(unittest.TestCase):
         primary key are inserted in the database. Also tests that if such an insert is invoked, the
         existing values remain the same.
         """
-        self.assertFalse(self.logger_mock.logged_error)
-        result = self.worker.execute("select * from evt_status")
-        # The result is string if the database is locked (caused by previously failed tests)
-        self.assertFalse(isinstance(result, str))
-        self.assertFalse(self.logger_mock.logged_error)
-        original_value = [x for x in result if x['id'] == 'AS'][0]
-        # Inserts a repeated primary key
-        self.worker.execute("insert into evt_status values ('AS', 'Updated received')")
-        result = self.worker.execute("select * from evt_status")
-        # The result is string if the database is locked (caused by previously failed tests)
-        self.assertFalse(isinstance(result, str))
-        self.assertEqual(len(result), 5,
-                         'We are expecting 5 event type records. There are {0}'.format(len(result)))
-        new_value = [x for x in result if x['id'] == 'AS'][0]
-        self.assertEqual(new_value, original_value,
-                         "The original value changed after the insert")
-        # This should stay at the very end after the worker thread has been merged
-        self.worker.close()
-        self.assertTrue(isinstance(self.logger_mock.err, apsw.ConstraintError))
-        self.assertTrue(self.logger_mock.logged_error)
+        with mock.patch('utils.db.sql3liteworker.logger') as logger_mock:
+            self.assertFalse(logger_mock.error.called)
+            result = self.worker.execute("select * from evt_status")
+
+            # The result is string if the database is locked (caused by previously failed tests)
+            self.assertFalse(isinstance(result, str))
+            self.assertFalse(logger_mock.error.called)
+            original_value = [x for x in result if x['id'] == 'AS'][0]
+
+        with mock.patch('utils.db.sql3liteworker.logger') as logger_mock:
+            # Inserts a repeated primary key
+            self.worker.execute("insert into evt_status values ('AS', 'Updated received')")
+            result = self.worker.execute("select * from evt_status")
+
+            # The result is string if the database is locked (caused by previously failed tests)
+            self.assertFalse(isinstance(result, str))
+            self.assertEqual(len(result), 5,
+                            'We are expecting 5 event type records. There are {0}'.format(len(result)))
+            new_value = [x for x in result if x['id'] == 'AS'][0]
+            self.assertEqual(new_value, original_value,
+                            "The original value changed after the insert")
+
+            # This should stay at the very end after the worker thread has been merged
+            self.worker.close()
+            self.assertTrue(logger_mock.error.called)
+
+            args, _ = logger_mock.error.call_args
+            self.assertTrue(isinstance(args[3], apsw.ConstraintError))
 
     @timeout(3, timeout_exception=StopIteration)
     def test_inserting_duplicates_events(self):
@@ -93,36 +102,51 @@ class TestSqlLite3Worker(unittest.TestCase):
         primary key are inserted in the database. Also tests that if such an insert is invoked, the
         existing values remain the same.
         """
-        self.assertFalse(self.logger_mock.logged_warning)
-        self.worker.execute_script(
-            fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
-            values=(1, 'x', 'x', 'x', 10, 'x', 12),
-            error_handler=EventPoolManager.insert_error_handler
-        )
-        self.assertFalse(self.logger_mock.logged_warning)
-        self.worker.execute_script(
-            fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
-            values=(1, 'x', 'x', 'x', 10, 'x', 12),
-            error_handler=EventPoolManager.insert_error_handler
-        )
-        # ensure that threads were merged before assertions
-        self.worker.close()
-        self.assertFalse(self.logger_mock.logged_error)
-        self.assertTrue(self.logger_mock.logged_warning)
-        self.assertTrue(isinstance(self.logger_mock.err, apsw.ConstraintError))
+        with mock.patch('utils.db.sql3liteworker.logger') as sql3liteworker_logger_mock:
+            with mock.patch('evt.evt_pool_manager.logger') as evt_pool_manager_logger_mock:
+                self.assertFalse(sql3liteworker_logger_mock.warning.called)
+
+                self.worker.execute_script(
+                    fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
+                    values=(1, 'x', 'x', 'x', 10, 'x', 12),
+                    error_handler=EventPoolManager.insert_error_handler
+                )
+
+                self.assertFalse(sql3liteworker_logger_mock.warning.called)
+                self.assertFalse(evt_pool_manager_logger_mock.warning.called)
+
+        with mock.patch('utils.db.sql3liteworker.logger') as sql3liteworker_logger_mock:
+            with mock.patch('evt.evt_pool_manager.logger') as evt_pool_manager_logger_mock:
+                self.worker.execute_script(
+                    fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
+                    values=(1, 'x', 'x', 'x', 10, 'x', 12),
+                    error_handler=EventPoolManager.insert_error_handler
+                )
+                # Ensure that threads were merged before assertions
+                self.worker.close()
+
+                self.assertFalse(sql3liteworker_logger_mock.error.called)
+                self.assertFalse(evt_pool_manager_logger_mock.error.called)
+
+                self.assertTrue(evt_pool_manager_logger_mock.warning.called)
+                args, _ = evt_pool_manager_logger_mock.warning.call_args
+                self.assertTrue(isinstance(args[3], apsw.ConstraintError))
 
     @timeout(3, timeout_exception=StopIteration)
     def test_wrong_select(self):
         """
         Tests that wrong select returns string and logs an error.
         """
-        self.assertFalse(self.logger_mock.logged_error)
-        result = self.worker.execute("select * from nonexistent_table")
-        # The result is string if the database is locked (caused by previously failed tests)
-        self.assertTrue(isinstance(result, str))
-        # This should stay at the very end after the worker thread has been merged
-        self.worker.close()
-        self.assertTrue(self.logger_mock.logged_error)
+        with mock.patch('utils.db.sql3liteworker.logger') as logger_mock:
+            self.assertFalse(logger_mock.warning.called)
+            result = self.worker.execute("select * from nonexistent_table")
+
+            # The result is string if the database is locked (caused by previously failed tests)
+            self.assertTrue(isinstance(result, str))
+
+            # This should stay at the very end after the worker thread has been merged
+            self.worker.close()
+            self.assertTrue(logger_mock.error.called)
 
     @staticmethod
     def read_yaml_setup(config_path):

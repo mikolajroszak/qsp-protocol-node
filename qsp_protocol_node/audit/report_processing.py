@@ -31,14 +31,18 @@ but not clear where this should be implemented.
 This could be a top-level package/executable, similar to the analyzers.
 """
 
+import argparse
+import json
+import logging
 import math
 import os
-import structlog
-import json
-import argparse
-from collections import OrderedDict
 
+from log_streaming import get_logger
+
+from collections import OrderedDict
 from pprint import pprint
+
+logger = get_logger(__name__)
 
 
 class ReportFormattingException(Exception):
@@ -297,7 +301,7 @@ class ReportEncoder:
             vulnerabilities.append((vulnerability_type, start_line, end_line))
         return vulnerabilities
 
-    def compress_report(self, report, request_id, logger):
+    def compress_report(self, report, request_id):
         """
         Converts a JSON report to a compressed hex representation.
 
@@ -338,7 +342,7 @@ class ReportEncoder:
             )
             raise Exception("Report could not be compressed") from e
 
-    def decode_report(self, report, request_id, logger):
+    def decode_report(self, report, request_id):
         """
         Decodes a compressed report in hex format.
 
@@ -375,7 +379,6 @@ def main():
     """
     Takes as input a hexstring-encoded report and decodes it.
     """
-    logger = structlog.getLogger("test")
     encoder = ReportEncoder()
     REQUEST_ID = 0
 
@@ -395,12 +398,12 @@ def main():
         )
         args = parser.parse_args()
         if args.decode_report:
-            report = encoder.decode_report(args.decode_report, REQUEST_ID, logger)
+            report = encoder.decode_report(args.decode_report, REQUEST_ID)
             pprint(report)
         else:
             with open(args.encode_report) as stream:
                 json_report = json.load(stream)
-                hexstring = encoder.compress_report(json_report, REQUEST_ID, logger)
+                hexstring = encoder.compress_report(json_report, REQUEST_ID)
                 print(hexstring)
     except Exception as error:
         raise error

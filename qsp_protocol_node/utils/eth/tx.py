@@ -7,9 +7,12 @@
 #                                                                                                  #
 ####################################################################################################
 
+from log_streaming import get_logger
+from .singleton_lock import SingletonLock
+
 from web3.utils.threads import Timeout
 
-from .singleton_lock import SingletonLock
+logger = get_logger(__name__)
 
 
 def mk_args(config):
@@ -35,7 +38,7 @@ def mk_read_only_call(config, method):
         try:
             SingletonLock.instance().lock.release()
         except Exception as error:
-            config.logger.debug(
+            logger.debug(
                 "Error when releasing a lock in a read-only call transaction {0}".format(str(error))
             )
 
@@ -64,7 +67,7 @@ def send_signed_transaction(config, transaction, attempts=10, wait_for_transacti
         try:
             SingletonLock.instance().lock.release()
         except Exception as error:
-            config.logger.debug(
+            logger.debug(
                 "Error when releasing a lock in signed transaction {0}".format(str(error))
             )
 
@@ -90,11 +93,11 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                 return tx_hash
             except ValueError as e:
                 if i == attempts - 1:
-                    config.logger.debug("Maximum number of retries reached. {}"
+                    logger.debug("Maximum number of retries reached. {}"
                                         .format(e))
                     raise e
                 elif "replacement transaction underpriced" in repr(e):
-                    config.logger.debug("Another transaction is queued with the same nonce. {}"
+                    logger.debug("Another transaction is queued with the same nonce. {}"
                                         .format(e))
                     nonce += 1
                 elif "nonce too low" in repr(e):
@@ -104,14 +107,14 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                         config.web3_client.eth.getTransactionCount(config.account),
                         original_nonce,
                         e)
-                    config.logger.debug(msg)
+                    logger.debug(msg)
                     nonce += 1
                 elif "known transaction" in repr(e):
                     # the de-duplication is preserved and the exception is re-raised
-                    config.logger.debug("Transaction deduplication happened. {}".format(e))
+                    logger.debug("Transaction deduplication happened. {}".format(e))
                     raise DeduplicationException(e)
                 else:
-                    config.logger.error("Unknown error while sending transaction. {}".format(e))
+                    logger.error("Unknown error while sending transaction. {}".format(e))
                     raise e
             except Timeout as e:
                 # If we time out after the default 120 seconds when waiting for a receipt,

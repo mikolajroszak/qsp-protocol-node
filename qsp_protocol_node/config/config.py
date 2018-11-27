@@ -11,15 +11,26 @@
 Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file
 """
+import structlog
+
 import utils.io as io_utils
 
-from os.path import expanduser
 from dpath.util import get
+from os.path import expanduser
 
 from audit.report_processing import ReportEncoder
 from evt import EventPoolManager
+from log_streaming import get_logger
 from utils.eth import mk_checksum_address
 from pathlib import Path
+
+logger = get_logger(__name__)
+
+# FIXME
+# There is some technical debt accumulating in this file. Config started simple and therefore justified
+# its own existence as a self-contained module. This has to change as we move forward. Break config
+# into smaller subconfigs. See QSP-414.
+# https://quantstamp.atlassian.net/browse/QSP-414
 
 
 def config_value(cfg, path, default=None, accept_none=True):
@@ -40,17 +51,10 @@ def config_value(cfg, path, default=None, accept_none=True):
     return value
 
 
-# FIXME
-# There is some technical debt accumulating in this file. Config started simple and therefore justified
-# its own existence as a self-contained module. This has to change as we move forward. Break config
-# into smaller subconfigs. See QSP-414.
-# https://quantstamp.atlassian.net/browse/QSP-414
-
 class Config:
     """
     Provides a set of methods for accessing configuration parameters.
     """
-
     def __fetch_contract_metadata(self, cfg, config_utils, contract_abi):
         metadata_uri = config_utils.resolve_version(
             config_value(cfg, '/' + contract_abi + '/metadata'))
@@ -86,6 +90,8 @@ class Config:
         # Makes sure the endpoint URL contains the authentication token
         endpoint = self.__eth_provider_args.get('endpoint_uri')
         if endpoint is not None:
+            if self.auth_token is None:
+                raise ValueError("Authentication token is missing. Cannot set provider endpoint")
             self.__eth_provider_args['endpoint_uri'] = endpoint.replace("${token}", self.auth_token)
 
         self.__block_discard_on_restart = config_value(cfg, '/block_discard_on_restart', 0)
@@ -116,11 +122,6 @@ class Config:
         self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', "")
         self.__report_uploader_is_enabled = config_value(cfg, '/report_uploader/is_enabled', False)
         self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
-
-        self.__logging_is_verbose = config_value(cfg, '/logging/is_verbose', False)
-        self.__logging_dir = config_value(cfg, '/logging/dir', "/var/log")
-        self.__logging_streaming_provider_name = config_value(cfg, '/logging/streaming/provider')
-        self.__logging_streaming_provider_args = config_value(cfg, '/logging/streaming/args', {})
         self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled',
                                                            False)
         self.__metric_collection_destination_endpoint = config_value(cfg, '/metric_collection/destination_endpoint',
@@ -183,69 +184,49 @@ class Config:
         """
         Creates an instance of the each target analyzer that should be verifying a given contract.
         """
-        return config_utils.create_analyzers(self.analyzers_config, self.logger)
-
-    def __configure_logging(self, config_utils):
-        """
-        Configures and logging and creates a logger and logging streaming provider.
-        """
-        return config_utils.configure_logging(self.logging_is_verbose,
-                                              self.logging_streaming_provider_name,
-                                              self.logging_streaming_provider_args, self.account, self.logging_dir)
+        return config_utils.create_analyzers(self.analyzers_config)
 
     def __create_components(self, config_utils, validate_contract_settings=True):
         # Creation of internal components
         self.__eth_provider = self.__create_eth_provider(config_utils)
         self.__web3_client, self.__account, self.__account_private_key = self.__create_web3_client(
             config_utils)
-        # Setup followed by verification
-        self.__logger, self.__logging_streaming_provider = self.__configure_logging(config_utils)
+
         # Contract settings validation
         if validate_contract_settings:
             config_utils.check_audit_contract_settings(self)
+
         # After having a web3 client object, use it to put addresses in a canonical format
         self.__audit_contract_address = mk_checksum_address(self.__audit_contract_address)
         self.__account = mk_checksum_address(self.__account)
 
         if self.has_audit_contract_abi:
             self.__audit_contract = self.__create_audit_contract(config_utils)
+
         if self.has_audit_data_contract_abi:
             self.__audit_data_contract = self.__create_audit_data_contract(config_utils)
+
         if validate_contract_settings:
             config_utils.check_configuration_settings(self)
+
         self.__analyzers = self.__create_analyzers(config_utils)
-        self.__event_pool_manager = EventPoolManager(self.evt_db_path, self.logger)
+        self.__event_pool_manager = EventPoolManager(self.evt_db_path)
         self.__report_encoder = ReportEncoder()
         self.__report_uploader = self.__create_report_uploader_provider(config_utils)
 
-    def load_config(self, config_utils, env, config_file_uri, account_passwd="", auth_token="",
-                    validate_contract_settings=True):
-        self.__config_file_uri = config_file_uri
+    def load_dictionary(self, config_dictionary, config_utils, env, account_passwd="", auth_token="",
+                        validate_contract_settings=True):
         self.__env = env
         self.__account_passwd = account_passwd
         self.__auth_token = auth_token
-        cfg = config_utils.load_config(config_file_uri, env)
-        self.__setup_values(cfg, config_utils)
-
-        # Validation that the address provided in the config is in checksum format
-        if self.account is not None:
-            checksum_account = None
-            try:
-                checksum_account = mk_checksum_address(self.account)
-            except ValueError as ex:
-                # the logger is not configured here, we can only print and kill the node
-                print("The configured address {} is not a valid address.".format(self.account))
-                raise ex
-            if checksum_account != self.account:
-                # the logger is not configured here, we can only print and kill the node
-                print("Your configured account is not in checksum format.")
-                print("Please, change {0} to {1} in your config.yaml".format(self.account,
-                                                                             checksum_account))
-                raise ValueError("The account is not configured correctly.")
-
+        self.__setup_values(config_dictionary, config_utils)
         self.__create_components(config_utils, validate_contract_settings)
-        self.__logger.debug("Components successfully created")
-        self.__cfg_dict = cfg
+
+    def load_file(self, config_file_uri, config_utils, env, account_passwd="", auth_token="",
+                    validate_contract_settings=True):
+        cfg = config_utils.load_config(config_file_uri, env)
+        self.__config_file_uri = config_file_uri
+        self.load_dictionary(cfg, config_utils, env, account_passwd, auth_token, validate_contract_settings)
 
     def __init__(self):
         """
@@ -268,7 +249,6 @@ class Config:
         self.__account_private_key = None
         self.__account_passwd = None
         self.__auth_token = None
-        self.__cfg_dict = None
         self.__config_file_uri = None
         self.__gas = 0
         self.__evt_db_path = None
@@ -282,12 +262,6 @@ class Config:
         self.__default_gas_price_wei = 0
         self.__gas_price_wei = 0
         self.__max_gas_price_wei = -1
-        self.__logger = None
-        self.__logging_is_verbose = False
-        self.__logging_dir = "/var/log"
-        self.__logging_streaming_provider_name = None
-        self.__logging_streaming_provider_args = None
-        self.__logging_streaming_provider = None
         self.__min_price_in_qsp = 0
         self.__metric_collection_is_enabled = True
         self.__metric_collection_interval_seconds = 30
@@ -572,13 +546,6 @@ class Config:
         return self.__event_pool_manager
 
     @property
-    def logger(self):
-        """
-        Returns the configured logger.
-        """
-        return self.__logger
-
-    @property
     def metric_collection_is_enabled(self):
         """
         Is metric collection enabled.
@@ -600,10 +567,6 @@ class Config:
         return self.__metric_collection_interval_seconds
 
     @property
-    def logging_streaming_provider(self):
-        return self.__logging_streaming_provider
-
-    @property
     def report_uploader_is_enabled(self):
         return self.__report_uploader_is_enabled
 
@@ -618,22 +581,6 @@ class Config:
     @property
     def analyzers_config(self):
         return self.__analyzers_config
-
-    @property
-    def logging_is_verbose(self):
-        return self.__logging_is_verbose
-
-    @property
-    def logging_dir(self):
-        return self.__logging_dir
-
-    @property
-    def logging_streaming_provider_name(self):
-        return self.__logging_streaming_provider_name
-
-    @property
-    def logging_streaming_provider_args(self):
-        return self.__logging_streaming_provider_args
 
     @property
     def contract_version(self):

@@ -38,11 +38,8 @@ WORKDIR ./app
 RUN mkdir ./audit-db
 COPY requirements.txt ./
 RUN pip3 install -r requirements.txt
-RUN pip3 install web3[tester]
 
 COPY . .
 
 RUN find "./analyzers/wrappers" -type f -exec chmod +x {} \;
-RUN chmod +x auto-restart
-
-CMD [ "make", "run" ]
+CMD [ "./qsp-protocol-node" ]

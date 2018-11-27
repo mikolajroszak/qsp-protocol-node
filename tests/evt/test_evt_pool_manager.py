@@ -7,13 +7,14 @@
 #                                                                                                  #
 ####################################################################################################
 
-import unittest
 import apsw
+import unittest
+
+from unittest import mock
 
 from config import ConfigFactory
 from evt import EventPoolManager
 from helpers.resource import resource_uri
-from helpers.logger_mock import LoggerMock
 from pathlib import Path
 from utils.io import fetch_file
 
@@ -23,12 +24,12 @@ class TestEvtPoolManager(unittest.TestCase):
 
     def setUp(self):
         config_file_uri = resource_uri("test_config.yaml")
-        self.config = ConfigFactory.create_from_file("dev", config_file_uri,
+        self.config = ConfigFactory.create_from_file(config_file_uri, "dev",
                                                      validate_contract_settings=False)
         # this is here to make sure that the database is recreated
         db_file = Path(self.config.evt_db_path)
         db_file.unlink()
-        self.evt_pool_manager = EventPoolManager(self.config.evt_db_path, self.config.logger)
+        self.evt_pool_manager = EventPoolManager(self.config.evt_db_path)
         self.evt_first = {'request_id': 1,
                           'requestor': 'x',
                           'contract_uri': 'x',
@@ -196,7 +197,7 @@ class TestEvtPoolManager(unittest.TestCase):
 
     def test_error_init(self):
         try:
-            self.evt_pool_manager = EventPoolManager(None, self.config.logger)
+            self.evt_pool_manager = EventPoolManager(None)
             self.fail("An error should have been raised")
         except TypeError:
             # expected
@@ -210,26 +211,28 @@ class TestEvtPoolManager(unittest.TestCase):
         values = ()
 
         class Sqlite3WorkerMock:
-
             def __init__(self):
-                self.logger = LoggerMock()
+                pass
 
-        worker_mock = Sqlite3WorkerMock()
-        EventPoolManager.insert_error_handler(worker_mock, query, values=values, err=error)
-        self.assertTrue(worker_mock.logger.logged_warning)
-        self.assertFalse(worker_mock.logger.logged_error)
+        with mock.patch('evt.evt_pool_manager.logger') as logger_mock:
+            worker_mock = Sqlite3WorkerMock()
+            EventPoolManager.insert_error_handler(worker_mock, query, values=values, err=error)
+            self.assertTrue(logger_mock.warning.called)
+            self.assertFalse(logger_mock.error.called)
 
-        # misses proper error message
-        worker_mock = Sqlite3WorkerMock()
-        EventPoolManager.insert_error_handler(worker_mock, query, values=values, err=wrong_error)
-        self.assertFalse(worker_mock.logger.logged_warning)
-        self.assertTrue(worker_mock.logger.logged_error)
+        with mock.patch('evt.evt_pool_manager.logger') as logger_mock:
+            # Misses proper error message
+            worker_mock = Sqlite3WorkerMock()
+            EventPoolManager.insert_error_handler(worker_mock, query, values=values, err=wrong_error)
+            self.assertFalse(logger_mock.warning.called)
+            self.assertTrue(logger_mock.error.called)
 
-        # wrong query
-        worker_mock = Sqlite3WorkerMock()
-        EventPoolManager.insert_error_handler(worker_mock, wrong_query, values=values, err=error)
-        self.assertFalse(worker_mock.logger.logged_warning)
-        self.assertTrue(worker_mock.logger.logged_error)
+        with mock.patch('evt.evt_pool_manager.logger') as logger_mock:
+            # Wrong query
+            worker_mock = Sqlite3WorkerMock()
+            EventPoolManager.insert_error_handler(worker_mock, wrong_query, values=values, err=error)
+            self.assertFalse(logger_mock.warning.called)
+            self.assertTrue(logger_mock.error.called)
 
 
 if __name__ == '__main__':

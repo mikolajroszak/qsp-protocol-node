@@ -30,11 +30,15 @@ __author__ = "Shawn Lee"
 __email__ = "shawnl@palantir.com"
 __license__ = "MIT"
 
-import queue as Queue
 import apsw
+import queue as Queue
 import threading
 import time
 import uuid
+
+from log_streaming import get_logger
+
+logger = get_logger(__name__)
 
 
 class Sqlite3Worker(threading.Thread):
@@ -62,7 +66,7 @@ class Sqlite3Worker(threading.Thread):
     As with execute, execute_script executes within a transaction.
     """
 
-    def __init__(self, logger, file_name, max_queue_size=100):
+    def __init__(self, file_name, max_queue_size=100):
         """Automatically starts the thread.
 
         Args:
@@ -70,7 +74,6 @@ class Sqlite3Worker(threading.Thread):
             max_queue_size: The max queries that will be queued.
         """
         threading.Thread.__init__(self)
-        self.logger = logger
         self.daemon = True
         self.sqlite3_conn = apsw.Connection(file_name)
 
@@ -138,7 +141,7 @@ class Sqlite3Worker(threading.Thread):
                 # is required.
                 self.results[token] = ("Query returned error: %s: %s: %s" % (query, values, err))
                 if error_handler is None:
-                    self.logger.error("Query returned error: %s: %s: %s", query, values, err)
+                    logger.error("Query returned error: %s: %s: %s", query, values, err)
                 else:
                     error_handler(self, query, values, err)
         else:
@@ -150,7 +153,7 @@ class Sqlite3Worker(threading.Thread):
                 self.results[token] = err
                 self.sqlite3_cursor.execute("rollback")
                 if error_handler is None:
-                    self.logger.error(
+                    logger.error(
                         "Query returned error: %s: %s: %s",
                         query,
                         values,

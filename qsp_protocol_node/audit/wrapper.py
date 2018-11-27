@@ -7,15 +7,18 @@
 #                                                                                                  #
 ####################################################################################################
 
+import json
+import os
+import subprocess
+
 from utils.io import (
     dir_exists,
     file_exists,
     is_executable,
 )
+from log_streaming import get_logger
 
-import json
-import os
-import subprocess
+logger = get_logger(__name__)
 
 
 class Wrapper:
@@ -25,7 +28,7 @@ class Wrapper:
         file_exists(script, throw_exception=True)
         is_executable(script, throw_exception=True)
 
-    def __init__(self, wrappers_dir, analyzer_name, args, storage_dir, timeout_sec, logger):
+    def __init__(self, wrappers_dir, analyzer_name, args, storage_dir, timeout_sec):
         self.__analyzer_name = analyzer_name
 
         self.__home = "{0}/{1}".format(wrappers_dir, analyzer_name)
@@ -46,7 +49,6 @@ class Wrapper:
         self.__metadata_script = metadata_script
         self.__run_script = run_script
         # print("RUN WRAPPER: " + str(run_script))
-        self.__logger = logger
 
     @property
     def analyzer_name(self):
@@ -85,7 +87,7 @@ class Wrapper:
         metadata = {'name': self.__analyzer_name}
         try:
             env_vars = self.setup_environment(contract_path, original_file_name)
-            self.__logger.debug(
+            logger.debug(
                 "Getting {0}'s metadata as subprocess".format(self.analyzer_name),
                 requestId=request_id,
             )
@@ -104,7 +106,7 @@ class Wrapper:
             metadata = json.loads(analyzer.stdout)
 
         except Exception as inner_error:
-            self.__logger.error("Error collecting the metadata from {0}'s wrapper: {1}".format(
+            logger.error("Error collecting the metadata from {0}'s wrapper: {1}".format(
                     self.analyzer_name,
                     str(inner_error),
                 ),
@@ -117,7 +119,7 @@ class Wrapper:
         json_report = {}
         try:
             env_vars = self.setup_environment(contract_path, original_file_name)
-            self.__logger.debug("Invoking {0}'s wrapper as subprocess".format(
+            logger.debug("Invoking {0}'s wrapper as subprocess".format(
                     self.analyzer_name
                 ),
                 requestId=request_id,
@@ -134,13 +136,13 @@ class Wrapper:
                 cwd=self.__home,
             )
 
-            self.__logger.debug("Wrapper stdout is: {0}".format(str(analyzer.stdout)), requestId=request_id)
-            self.__logger.debug("Wrapper stderr is: {0}".format(str(analyzer.stderr)), requestId=request_id)
+            logger.debug("Wrapper stdout is: {0}".format(str(analyzer.stdout)), requestId=request_id)
+            logger.debug("Wrapper stderr is: {0}".format(str(analyzer.stderr)), requestId=request_id)
 
             json_report = json.loads(analyzer.stdout)
 
         except Exception as err:
-            self.__logger.error("Error running {0}'s wrapper: {1}".format(
+            logger.error("Error running {0}'s wrapper: {1}".format(
                     self.analyzer_name,
                     str(err),
                 ),

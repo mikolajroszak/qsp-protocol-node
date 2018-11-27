@@ -10,17 +10,9 @@
 import signal
 import sys
 
+from log_streaming import get_logger
 
-def print_err(logger, err):
-    """
-    Prints an error message to a given non-null logger or
-    prints to stderr otherwise.
-    """
-    if logger is not None:
-        logger.exception(str(err))
-    else:
-        # If not, just print to standard error
-        print(str(err), file=sys.stderr)
+logger = get_logger(__name__)
 
 
 class Stop:
@@ -31,7 +23,6 @@ class Stop:
     terminate altogether.
     """
     __objects = []
-    __logger = None
 
     @classmethod
     def stop_all(cls):
@@ -61,13 +52,6 @@ class Stop:
         Stop.__objects.remove(stoppable)
 
     @classmethod
-    def set_logger(cls, logger):
-        """"
-        Sets the logger for printing debug/error messages.
-        """
-        Stop.__logger = logger
-
-    @classmethod
     def normal(cls):
         """
         Signals a normal stop. Stops all registered stoppable objects,
@@ -94,7 +78,7 @@ class Stop:
 
         Stop.stop_all()
         if err is not None:
-            print_err(Stop.__logger, err)
+            logger.exception(err)
         sys.exit(code)
 
 
@@ -110,7 +94,7 @@ def __handle_sigkill_signal(signal, frame):
     try:
         Stop.stop_all()
     except Exception as e:
-        print_err(Stop.__logger, e)
+        logger.exception(e)
 
     Stop.sigkill()
 

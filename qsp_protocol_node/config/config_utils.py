@@ -8,19 +8,21 @@
 ####################################################################################################
 
 import config
-import structlog
-import utils.io as io_utils
 import os
+
+import utils.io as io_utils
 
 from audit import (
     Analyzer,
     Wrapper
 )
+from log_streaming import get_logger
+
+from dpath.util import get
 from pathlib import Path
 from tempfile import gettempdir
-from streaming import CloudWatchProvider
-from upload import S3Provider, DummyProvider
 from time import sleep
+from upload import S3Provider, DummyProvider
 from utils.eth import mk_read_only_call
 from web3 import (
     Web3,
@@ -29,6 +31,8 @@ from web3 import (
     IPCProvider,
     EthereumTesterProvider,
 )
+
+logger = get_logger(__name__)
 
 
 class ConfigurationException(Exception):
@@ -43,9 +47,17 @@ class ConfigUtils:
     """
     __APPROXIMATE_BLOCK_LENGTH_IN_SECONDS = 12
 
+    @classmethod
+    def load_config(cls, config_file_uri, environment):
+        """
+        Loads config from file and returns.
+        """
+        config_file_path = io_utils.fetch_file(config_file_uri)
+        config_file = io_utils.load_yaml(config_file_path)
+        return config_file[environment]
+
     def __init__(self, node_version):
         self.__node_version = node_version
-        self.__logger = structlog.getLogger("config_utils")
 
     def create_report_uploader_provider(self, account, report_uploader_provider_name,
                                         report_uploader_provider_args, is_enabled):
@@ -66,21 +78,6 @@ class ConfigUtils:
 
         raise ConfigurationException(
             "Unknown/Unsupported provider: {0}".format(report_uploader_provider_name))
-
-    def create_logging_streaming_provider(self, logging_streaming_provider_name,
-                                          logging_streaming_provider_args, account):
-        """
-        Creates a logging streaming provider.
-        """
-        # Supported providers:
-        #
-        # CloudWatchProvider
-
-        if logging_streaming_provider_name == "CloudWatchProvider":
-            return CloudWatchProvider(account, **logging_streaming_provider_args)
-
-        raise ConfigurationException(
-            "Unknown/Unsupported provider: {0}".format(logging_streaming_provider_name))
 
     def create_eth_provider(self, provider, args):
         if provider == "HTTPProvider":
@@ -115,18 +112,19 @@ class ConfigUtils:
         new_account = None
         new_private_key = None
         connected = False
+
         while attempts < max_attempts and not connected:
             try:
                 web3_client = Web3(eth_provider)
                 # the following throws if Geth is not reachable
                 _ = web3_client.eth.accounts
                 connected = True
-                self.__logger.debug("Connected on attempt {0}".format(attempts))
+                logger.debug("Connected on attempt {0}".format(attempts))
             except Exception as exception:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
-                self.__logger.debug(
+                logger.debug(
                     "Connection attempt ({0}) failed due to {1}. Retrying in 10 seconds".format(attempts, str(exception)))
                 sleep(10)
 
@@ -144,7 +142,7 @@ class ConfigUtils:
                 raise ConfigurationException("Could not find an account. Please provide a valid keystore file")
 
             new_account = web3_client.eth.accounts[0]
-            self.__logger.debug("No account was provided, using the account at index [0]", account=new_account)
+            logger.debug("No account was provided, using the account at index [0]", account=new_account)
         else:
             try:
                 with open(keystore_file) as keyfile:
@@ -158,37 +156,6 @@ class ConfigUtils:
                     exception)
                 )
         return web3_client, new_account, new_private_key
-
-    def configure_logging(self, logging_is_verbose, logging_streaming_provider_name,
-                          logging_streaming_provider_args, account, logging_dir):
-        if logging_is_verbose:
-            config.configure_basic_logging(verbose=True)
-        try:
-            Path(logging_dir).mkdir(parents=True, exist_ok=True)
-            config.configure_basic_logging(logging_dir=logging_dir)
-        except Exception as exception:
-            raise ConfigurationException("Could not create {0} for logging {1}".format(
-                logging_dir,
-                exception)
-            )
-
-        logger = structlog.getLogger("audit")
-        logging_streaming_provider = None
-        if logging_streaming_provider_name is not None:
-            logging_streaming_provider = \
-                self.create_logging_streaming_provider(logging_streaming_provider_name,
-                                                       logging_streaming_provider_args,
-                                                       account)
-            logger.addHandler(logging_streaming_provider.get_handler())
-        return logger, logging_streaming_provider
-
-    def load_config(self, config_file_uri, environment):
-        """
-        Loads config from file and returns.
-        """
-        config_file_path = io_utils.fetch_file(config_file_uri)
-        config_file = io_utils.load_yaml(config_file_path)
-        return config_file[environment]
 
     def check_configuration_settings(self, config):
         """
@@ -268,7 +235,7 @@ class ConfigUtils:
             result = input.replace('{major-version}', major_version)
         return result
 
-    def create_analyzers(self, analyzers_config, logger):
+    def create_analyzers(self, analyzers_config):
         """
         Creates an instance of the each target analyzer that should be verifying a given contract.
         """
@@ -293,8 +260,7 @@ class ConfigUtils:
                 analyzer_name=analyzer_name,
                 args=analyzer_config.get('args', ""),
                 storage_dir=analyzer_config.get('storage_dir', default_storage),
-                timeout_sec=analyzer_config.get('timeout_sec', default_timeout_sec),
-                logger=self.__logger,
+                timeout_sec=analyzer_config.get('timeout_sec', default_timeout_sec)
             )
 
             default_storage = "{0}/.{1}".format(
@@ -302,7 +268,7 @@ class ConfigUtils:
                 analyzer_name,
             )
 
-            analyzers.append(Analyzer(wrapper, logger))
+            analyzers.append(Analyzer(wrapper))
 
         return analyzers
 

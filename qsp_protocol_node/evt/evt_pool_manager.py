@@ -7,12 +7,16 @@
 #                                                                                                  #
 ####################################################################################################
 
-import os
 import apsw
+import os
+
+from log_streaming import get_logger
 
 from pathlib import Path
 from utils.db import Sqlite3Worker
 from utils.db import get_first
+
+logger = get_logger(__name__)
 
 
 class EventPoolManager:
@@ -67,21 +71,21 @@ class EventPoolManager:
                 and isinstance(err, apsw.ConstraintError) \
                 and "audit_evt.request_id" in str(err):
             # this error was caused by an already existing event
-            sql_worker.logger.warning(
+            logger.warning(
                 "Audit request already exists: %s: %s: %s",
                 query,
                 values,
-                err,
+                err
             )
         else:
-            sql_worker.logger.error(
+            logger.error(
                 "Query returned error: %s: %s: %s",
                 query,
                 values,
-                err,
+                err
             )
 
-    def __init__(self, db_path, logger):
+    def __init__(self, db_path):
         # Gets a connection with the SQL3Lite server
         # Must be explicitly closed by calling `close` on the same
         # EventPool object. The connection is created with autocommit
@@ -98,7 +102,7 @@ class EventPoolManager:
             if db_file.is_file() and db_file.stat().st_size > 0:
                 db_existed = True
 
-            self.__sqlworker = Sqlite3Worker(logger, file_name=db_path, max_queue_size=10000)
+            self.__sqlworker = Sqlite3Worker(file_name=db_path, max_queue_size=10000)
             db_created = True
 
             if not db_existed:

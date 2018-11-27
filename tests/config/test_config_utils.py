@@ -7,16 +7,17 @@
 #                                                                                                  #
 ####################################################################################################
 
+import utils.io as io_utils
+
+import logging
+import logging.config
+import structlog
 import unittest
 
 from config import ConfigUtils
 from config import ConfigurationException
-from config import configure_basic_logging
 from upload import S3Provider
 from helpers.resource import resource_uri
-import utils.io as io_utils
-from streaming import CloudWatchProvider
-from os.path import expanduser
 from web3 import (
     Web3,
     TestRPCProvider,
@@ -92,6 +93,12 @@ class TestConfigUtil(unittest.TestCase):
         dummy_node_version = '1.0.0'
         self.config_utils = ConfigUtils(dummy_node_version)
 
+        # Assures structlog has been minimally configured
+        structlog.configure_once(
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+        )
+
     def test_create_report_uploader_provider_ok(self):
         """
         Tests that the S3Provider can be created and is properly returend.
@@ -131,48 +138,6 @@ class TestConfigUtil(unittest.TestCase):
         except ConfigurationException:
             # expected
             pass
-
-    def test_create_logging_streaming_provider_ok(self):
-        """
-        Tests that the CloudWatch provider can be created and is properly returned.
-        """
-        streaming_provider_name = "CloudWatchProvider"
-        streaming_provider_args = {'log_group': 'grp', 'log_stream': 'stream',
-                                   'send_interval_seconds': 10}
-        result = self.config_utils.create_logging_streaming_provider(streaming_provider_name,
-                                                                     streaming_provider_args,
-                                                                     '0x12345')
-        self.assertTrue(isinstance(result, CloudWatchProvider),
-                        "The created provider is not a CloudWatchProvider")
-
-    def test_create_logging_streaming_provider_not_ok(self):
-        """
-        Tests that wrong streaming provider specification causes an exception being thrown.
-        """
-        streaming_provider_name = "nonsens"
-        streaming_provider_args = {'log_group': 'grp', 'log_stream': 'stream',
-                                   'send_interval_seconds': 10}
-        try:
-            self.config_utils.create_logging_streaming_provider(streaming_provider_name,
-                                                                streaming_provider_args,
-                                                                '0x12345')
-            self.fail("Succeeded to create streaming provider without proper provider name.")
-        except ConfigurationException:
-            # expected
-            pass
-
-    def test_configure_logging_no_stream(self):
-        """
-        Tests that logging can be configured properly without throwing exceptions.
-        """
-        logging_dir = "/var/log"
-        account = "0x12345"
-        self.config_utils.configure_logging(True, None, {}, account, logging_dir)
-        self.config_utils.configure_logging(False, None, {}, account, logging_dir)
-        args = {'log_group': 'grp', 'log_stream': 'stream', 'send_interval_seconds': 10}
-        self.config_utils.configure_logging(True, "CloudWatchProvider", args, account, logging_dir)
-        # this has to stay in order to disable streaming again
-        configure_basic_logging()
 
     def test_raise_error(self):
         """

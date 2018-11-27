@@ -53,7 +53,14 @@ the value of `QSP_ETH_PASSPHRASE`. In a terminal, type:
 If the output matches your original password, the latter is correctly set.
 Otherwise, launching the audit node will fail.
 
-1. If you would like to proceed with Infura as a back-end (default), sign up on https://infura.io/register, record the token (e.g., in  `https://mainnet.infura.io/v3/abcdefg`, `abcdefg` is the token), and set the environment variable `ETH_AUTH_TOKEN` to this token. If you'd like to use your own endpoint, modify `eth_node/args/endpoint_uri` in `config.yaml` to the endpoint of your choice.
+1. If you would like to proceed with Infura as a back-end (default), sign up on
+   https://infura.io/register, create a project, and then check the associated
+   endpoint
+   (something like `https://mainnet.infura.io/v3/abcdefg`). The last part of the
+   URL (in our example  `abcdefg`) is the authentication token. Copy it and assign it to
+   the environment variable `QSP_ETH_AUTH_TOKEN`. If you'd like to use
+   your own endpoint, modify `eth_node/args/endpoint_uri` in `config.yaml` to
+   the endpoint of your choice.
 
 1. If the location of your keystore file is different from the default one, in `config.yaml`, edit the line `keystore_file: !!str "./keystore/default.json"`
 
