@@ -496,70 +496,71 @@ class TestQSPAuditNode(unittest.TestCase):
                                      report_file_path="reports/Empty.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
-    @timeout(300, timeout_exception=StopIteration)
-    def test_multiple_sequential_requests(self):
-        """
-        Tests that bidding happens when multiple request arrive in a row.
-        """
-        # since we're mocking the smart contract, we should explicitly call its internals
-        worker = Sqlite3Worker(self.__config.evt_db_path)
-        buggy_contract = resource_uri("DAOBug.sol")
-
-        # We will request three events in the row without updating the assigned number in the
-        # smart contract. The node should bid on all of them. We need to interleave them with sleep
-        # so that there is enough time for the block mined thread to bid and poll. So that the test
-        # can be executed faster, we will also speed up block polling, and work with Mythril only.
-        polling_interval = 0.1
-        original_interval = self.__config.block_mined_polling
-        original_analyzers = self.__config.analyzers
-        original_analyzers_config = self.__config.analyzers_config
-        self.__config._Config__block_mined_polling_interval_sec = polling_interval
-        self.__config._Config__analyzers = original_analyzers[1:2]
-        self.__config._Config__analyzers_config = original_analyzers_config[1:2]
-
-        self.__set_any_request_available(1)
-        ids_to_run = [self.__REQUEST_ID, 9, 12]
-
-        for id in ids_to_run:
-            # request and block until a request is made
-            self.__config.web3_client.eth.waitForTransactionReceipt(
-                self.__request_assign_and_emit(id, buggy_contract, self.__PRICE, 10))
-            self.__evt_wait_loop(self.__getNextAuditRequest_filter)
-            sleep(2)
-
-        self.__set_any_request_available(0)
-
-        # ensure that we have all requests stored in the database
-        result = worker.execute("select * from audit_evt")
-        while len(result) != len(ids_to_run):
-            sleep(1)
-            result = worker.execute("select * from audit_evt")
-        ids = [x['request_id'] for x in result]
-        for id in ids_to_run:
-            self.assertTrue(id in ids)
-
-        # block until all requests are processed
-        result = worker.execute("select * from audit_evt where fk_status != 'AS'")
-        while len(result) != len(ids_to_run):
-            sleep(1)
-            result = worker.execute("select * from audit_evt where fk_status != 'AS'")
-
-        ids = [x['request_id'] for x in result]
-        for id in ids_to_run:
-            # check that the request is done
-            self.assertTrue(id in ids)
-            # ensure that submission happens
-            self.__config.web3_client.eth.waitForTransactionReceipt(
-                self.__send_done_message(id))
-            # run assertions
-            self.__assert_audit_request(id, self.__AUDIT_STATE_SUCCESS,
-                                        report_file_path="reports/DAOBugMythrilOnly.json",
-                                        ignore_id=True)
-            self.__assert_all_analyzers(id)
-
-        self.__config._Config__block_mined_polling_interval_sec = original_interval
-        self.__config._Config__analyzers = original_analyzers
-        self.__config._Config__analyzers_config = original_analyzers_config
+    # TODO(mderka): Disabled flaky test, investigate with QSP-852
+    # @timeout(300, timeout_exception=StopIteration)
+    # def test_multiple_sequential_requests(self):
+    #     """
+    #     Tests that bidding happens when multiple request arrive in a row.
+    #     """
+    #     # since we're mocking the smart contract, we should explicitly call its internals
+    #     worker = Sqlite3Worker(self.__config.evt_db_path)
+    #     buggy_contract = resource_uri("DAOBug.sol")
+    #
+    #     # We will request three events in the row without updating the assigned number in the
+    #     # smart contract. The node should bid on all of them. We need to interleave them with sleep
+    #     # so that there is enough time for the block mined thread to bid and poll. So that the test
+    #     # can be executed faster, we will also speed up block polling, and work with Mythril only.
+    #     polling_interval = 0.1
+    #     original_interval = self.__config.block_mined_polling
+    #     original_analyzers = self.__config.analyzers
+    #     original_analyzers_config = self.__config.analyzers_config
+    #     self.__config._Config__block_mined_polling_interval_sec = polling_interval
+    #     self.__config._Config__analyzers = original_analyzers[1:2]
+    #     self.__config._Config__analyzers_config = original_analyzers_config[1:2]
+    #
+    #     self.__set_any_request_available(1)
+    #     ids_to_run = [self.__REQUEST_ID, 9, 12]
+    #
+    #     for id in ids_to_run:
+    #         # request and block until a request is made
+    #         self.__config.web3_client.eth.waitForTransactionReceipt(
+    #             self.__request_assign_and_emit(id, buggy_contract, self.__PRICE, 10))
+    #         self.__evt_wait_loop(self.__getNextAuditRequest_filter)
+    #         sleep(2)
+    #
+    #     self.__set_any_request_available(0)
+    #
+    #     # ensure that we have all requests stored in the database
+    #     result = worker.execute("select * from audit_evt")
+    #     while len(result) != len(ids_to_run):
+    #         sleep(1)
+    #         result = worker.execute("select * from audit_evt")
+    #     ids = [x['request_id'] for x in result]
+    #     for id in ids_to_run:
+    #         self.assertTrue(id in ids)
+    #
+    #     # block until all requests are processed
+    #     result = worker.execute("select * from audit_evt where fk_status != 'AS'")
+    #     while len(result) != len(ids_to_run):
+    #         sleep(1)
+    #         result = worker.execute("select * from audit_evt where fk_status != 'AS'")
+    #
+    #     ids = [x['request_id'] for x in result]
+    #     for id in ids_to_run:
+    #         # check that the request is done
+    #         self.assertTrue(id in ids)
+    #         # ensure that submission happens
+    #         self.__config.web3_client.eth.waitForTransactionReceipt(
+    #             self.__send_done_message(id))
+    #         # run assertions
+    #         self.__assert_audit_request(id, self.__AUDIT_STATE_SUCCESS,
+    #                                     report_file_path="reports/DAOBugMythrilOnly.json",
+    #                                     ignore_id=True)
+    #         self.__assert_all_analyzers(id)
+    #
+    #     self.__config._Config__block_mined_polling_interval_sec = original_interval
+    #     self.__config._Config__analyzers = original_analyzers
+    #     self.__config._Config__analyzers_config = original_analyzers_config
 
     @timeout(100, timeout_exception=StopIteration)
     def test_buggy_contract_audit_request(self):
