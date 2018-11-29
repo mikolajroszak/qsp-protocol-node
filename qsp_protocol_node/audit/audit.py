@@ -14,7 +14,6 @@ import calendar
 import copy
 import json
 import os
-import structlog
 
 import threading
 import time
@@ -43,8 +42,6 @@ from solc import compile_standard
 from solc.exceptions import ContractsNotFound, SolcError
 from subprocess import TimeoutExpired
 from .exceptions import NonWhitelistedNodeException
-
-logger = get_logger(__name__)
 
 
 class QSPAuditNode:
@@ -80,6 +77,7 @@ class QSPAuditNode:
         """
         Builds a QSPAuditNode object from the given input parameters.
         """
+        self.__logger = get_logger(self.__class__.__qualname__)
         self.__config = config
         self.__metric_collector = None
         self.__exec = False
@@ -148,11 +146,11 @@ class QSPAuditNode:
             except Exception as error:
                 if hasattr(error, 'message') and error.message == 'filter not found':
                     # This is not actionable so it should be silenced from logs.
-                    logger.info("Filter not found in the audit event thread {0}: {1}".format(
+                    self.__logger.info("Filter not found in the audit event thread {0}: {1}".format(
                         evt_name, str(error))
                     )
                 else:
-                    logger.exception("Error in the audit event thread {0}: {1}".format(
+                    self.__logger.exception("Error in the audit event thread {0}: {1}".format(
                         evt_name, str(error))
                     )
                 raise error
@@ -175,11 +173,11 @@ class QSPAuditNode:
                     last_called = now
                     if current_block < self.__config.web3_client.eth.blockNumber:
                         current_block = self.__config.web3_client.eth.blockNumber
-                        logger.debug("A new block is mined # {0}".format(str(current_block)))
+                        self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
                         try:
                             handler()
                         except Exception as e:
-                            logger.exception(
+                            self.__logger.exception(
                                 "Error in block mined thread handler: {0}".format(str(e)))
                             raise e
                 sleep(QSPAuditNode.__THREAD_SLEEP_TIME)
@@ -206,7 +204,7 @@ class QSPAuditNode:
         gas_price = int(min(gas_price, self.__config.max_gas_price_wei))
         # set the gas_price in config
         self.__config.gas_price_wei = gas_price
-        logger.debug("Current gas price: {0}".format(str(gas_price)))
+        self.__logger.debug("Current gas price: {0}".format(str(gas_price)))
 
     def run(self):
         """
@@ -220,7 +218,7 @@ class QSPAuditNode:
         # First thing is to check whether the audit node is whitelisted or not.
         if not self.__check_whitelist(self.config.account):
             msg = "Node address {0} is not whitelisted. Please contact Quantstamp: protocol@quantstamp.com"
-            logger.error(msg.format(self.config.account))
+            self.__logger.error(msg.format(self.config.account))
             raise NonWhitelistedNodeException(msg.format(self.config.account))
 
         # Initialize the gas price
@@ -251,7 +249,7 @@ class QSPAuditNode:
             n_blocks_in_the_past = self.__config.start_n_blocks_in_the_past
             start_block = max(0, current_block_number - n_blocks_in_the_past)
 
-        logger.debug("Filtering events from block # {0}".format(str(start_block)))
+        self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
         self.__internal_threads.append(self.__run_block_mined_thread(
             "check_available_requests",
@@ -302,11 +300,11 @@ class QSPAuditNode:
                     evt['status_info'] = "Submission timeout"
                     self.__config.event_pool_manager.set_evt_to_error(evt)
             except KeyError as error:
-                logger.exception(
+                self.__logger.exception(
                     "KeyError when handling timeout on restart: {0}".format(str(error))
                 )
             except Exception as error:
-                logger.exception(
+                self.__logger.exception(
                     "Unexpected error when handling timeout on restart: {0}".format(error))
 
         self.__config.event_pool_manager.process_incoming_events(timeout_event)
@@ -321,7 +319,7 @@ class QSPAuditNode:
                 self.config,
                 self.config.audit_contract.functions.assignedRequestCount(self.__config.account))
             if pending_requests_count >= self.__config.max_assigned_requests:
-                logger.debug(
+                self.__logger.debug(
                     "Skip bidding the request as currently processing {0} requests".format(
                         str(pending_requests_count)))
                 return
@@ -329,20 +327,20 @@ class QSPAuditNode:
                 self.config,
                 self.config.audit_contract.functions.anyRequestAvailable())
             if any_request_available == self.__AVAILABLE_AUDIT_STATE_READY:
-                logger.debug("There is request available to bid on.")
+                self.__logger.debug("There is request available to bid on.")
                 self.__get_next_audit_request()
                 # persists the event in the database for processing
                 self.convert_to_event_and_handle(self.__on_audit_assigned)
             else:
-                logger.debug(
+                self.__logger.debug(
                     "No request available as the contract returned {0}.".format(
                         str(any_request_available)))
         except DeduplicationException as error:
-            logger.debug(
+            self.__logger.debug(
                 "Error when attempting to perform an audit request: {0}".format(str(error))
             )
         except Exception as error:
-            logger.exception(str(error))
+            self.__logger.exception(str(error))
 
     def __check_whitelist(self, node):
         """
@@ -354,7 +352,7 @@ class QSPAuditNode:
                 self.config.audit_data_contract.functions.isWhitelisted(node)
             )
         except Exception as error:
-            logger.exception(
+            self.__logger.exception(
                 "Error when checking whitelist {0}".format(str(error))
             )
 
@@ -394,7 +392,7 @@ class QSPAuditNode:
               + "and restart your node to try again."
 
         min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
-        logger.info(
+        self.__logger.info(
             "Updating min_price in the smart contract for address {0}.".format(
                 self.__config.account
             ))
@@ -407,11 +405,11 @@ class QSPAuditNode:
             # If the tx_hash is None, the transaction did not actually complete. Exit.
             if not tx_hash:
                 raise Exception("The min price transaction did not complete")
-            logger.debug("Successfully updated min price to {0}.".format(
+            self.__logger.debug("Successfully updated min price to {0}.".format(
                 self.__config.min_price_in_qsp))
         except Timeout as e:
             error_msg = "Update min price timed out. " + msg + " {0}, {1}."
-            logger.debug(error_msg.format(
+            self.__logger.debug(error_msg.format(
                 str(transaction),
                 str(e)))
             raise e
@@ -419,13 +417,13 @@ class QSPAuditNode:
             error_msg = "A transaction already exists for updating min price," \
                         + " but has not yet been mined. " + msg \
                         + " This may take several iterations. {0}, {1}."
-            logger.debug(error_msg.format(
+            self.__logger.debug(error_msg.format(
                 str(transaction),
                 str(e)))
             raise e
         except Exception as e:
             error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
-            logger.exception(error_msg.format(
+            self.__logger.exception(error_msg.format(
                 str(transaction),
                 str(e)))
             raise e
@@ -439,7 +437,7 @@ class QSPAuditNode:
             # If an audit request is not targeted to the
             # running audit node, just disconsider it
             if target_auditor.lower() != self.__config.account.lower():
-                logger.debug(
+                self.__logger.debug(
                     "Ignoring audit request (not directed at current node): {0}".format(
                         str(evt)
                     ),
@@ -447,7 +445,7 @@ class QSPAuditNode:
                 )
                 return
 
-            logger.debug(
+            self.__logger.debug(
                 "Saving audit request for processing (if new): {0}".format(
                     str(evt)
                 ),
@@ -469,11 +467,11 @@ class QSPAuditNode:
                 audit_evt
             )
         except KeyError as error:
-            logger.exception(
+            self.__logger.exception(
                 "KeyError when processing audit assigned event: {0}".format(str(error))
             )
         except Exception as error:
-            logger.exception(
+            self.__logger.exception(
                 "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
@@ -491,7 +489,7 @@ class QSPAuditNode:
                     error = "Could not generate report"
                     evt['status_info'] = error
                     evt['compressed_report'] = QSPAuditNode.__EMPTY_COMPRESSED_REPORT
-                    logger.exception(error, requestId=request_id)
+                    self.__logger.exception(error, requestId=request_id)
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                 else:
                     evt['audit_uri'] = audit_result['audit_uri']
@@ -501,16 +499,16 @@ class QSPAuditNode:
                     evt['status_info'] = "Sucessfully generated report"
                     msg = "Generated report URI is {0}. Saving it in the internal database " \
                           "(if not previously saved)"
-                    logger.debug(
+                    self.__logger.debug(
                         msg.format(str(evt['audit_uri'])), requestId=request_id, evt=evt
                     )
                     self.__config.event_pool_manager.set_evt_to_be_submitted(evt)
             except KeyError as error:
-                logger.exception(
+                self.__logger.exception(
                     "KeyError when processing audit for request event: {0}".format(str(error))
                 )
             except Exception as error:
-                logger.exception(
+                self.__logger.exception(
                     "Error when performing audit for request event {0}: {1}".format(str(evt),
                                                                                     str(error)),
                     requestId=request_id,
@@ -545,15 +543,15 @@ class QSPAuditNode:
                 self.__config.event_pool_manager.set_evt_to_submitted(evt)
                 self.__on_successful_submission(int(evt['request_id']))
             except DeduplicationException as error:
-                logger.debug(
+                self.__logger.debug(
                     "Error when submiting report {0}".format(str(error))
                 )
             except KeyError as error:
-                logger.exception(
+                self.__logger.exception(
                     "KeyError when processing submission event: {0}".format(str(error))
                 )
             except Exception as error:
-                logger.exception(
+                self.__logger.exception(
                     "Error when processing submission event {0}: {1}.".format(
                         str(evt['request_id']),
                         str(error),
@@ -587,7 +585,7 @@ class QSPAuditNode:
             if is_finished and audit_evt != {}:
                 audit_evt['status_info'] = 'Report successfully submitted'
                 self.__config.event_pool_manager.set_evt_to_done(audit_evt)
-                logger.debug(
+                self.__logger.debug(
                     "Report successfully submitted for event: {0}".format(
                         str(audit_evt)
                     ),
@@ -595,11 +593,11 @@ class QSPAuditNode:
                 )
 
         except KeyError as error:
-            logger.exception(
+            self.__logger.exception(
                 "KeyError when processing submission event: {0}".format(str(error))
             )
         except Exception as error:
-            logger.exception(
+            self.__logger.exception(
                 "Error when processing changing event status: {0}. Audit event is {1}".format(
                     str(error),
                     str(audit_evt)
@@ -616,14 +614,14 @@ class QSPAuditNode:
                     evt['status_info'] = "Submission timeout"
                     self.__config.event_pool_manager.set_evt_to_error(evt)
                     msg = "Submission timeout for audit {0}. Setting to error"
-                    logger.debug(msg.format(str(evt['request_id'])))
+                    self.__logger.debug(msg.format(str(evt['request_id'])))
             except KeyError as error:
-                logger.exception(
+                self.__logger.exception(
                     "KeyError when monitoring timeout: {0}".format(str(error))
                 )
             except Exception as error:
                 # TODO How to inform the network of a submission timeout?
-                logger.exception(
+                self.__logger.exception(
                     "Unexpected error when monitoring timeout: {0}".format(error))
 
         def process_submissions():
@@ -638,7 +636,7 @@ class QSPAuditNode:
             try:
                 self.__run_with_interval(process_submissions, self.__config.evt_polling)
             except Exception as error:
-                logger.exception("Error in the monitor thread: {0}".format(str(error)))
+                self.__logger.exception("Error in the monitor thread: {0}".format(str(error)))
 
         monitor_thread = Thread(target=exec, name="monitor thread")
         self.__internal_threads.append(monitor_thread)
@@ -662,7 +660,7 @@ class QSPAuditNode:
         Signals to the executing QSP audit node that is should stop the execution of the node.
         """
 
-        logger.info("Stopping QSP Audit Node")
+        self.__logger.info("Stopping QSP Audit Node")
         self.__exec = False
 
         for internal_thread in self.__internal_threads:
@@ -685,7 +683,7 @@ class QSPAuditNode:
             jsonschema.validate(report, schema)
             return report
         except jsonschema.ValidationError as e:
-            logger.exception(
+            self.__logger.exception(
                 "Error: JSON could not be validated: {0}.".format(str(e)),
                 requestId=request_id,
             )
@@ -695,7 +693,7 @@ class QSPAuditNode:
         """
         Audits a target contract.
         """
-        logger.info(
+        self.__logger.info(
             "Executing audit on contract at {0}".format(uri),
             requestId=request_id,
         )
@@ -713,7 +711,7 @@ class QSPAuditNode:
             if len(warnings) != 0:
                 audit_report['compilation_warnings'] = warnings
 
-        logger.info(
+        self.__logger.info(
             "Analyzer report contents",
             requestId=request_id,
             contents=audit_report,
@@ -730,7 +728,7 @@ class QSPAuditNode:
         upload_result = self.__config.report_uploader.upload_report(audit_report_str,
                                                                     audit_report_hash=audit_hash)
 
-        logger.info(
+        self.__logger.info(
             "Report upload result: {0}".format(upload_result),
             requestId=request_id,
         )
@@ -745,13 +743,13 @@ class QSPAuditNode:
                                                                                contract_body,
                                                                                original_file_name)
         if contract_upload_result['success']:
-            logger.info(
+            self.__logger.info(
                 "Contract upload result: {0}".format(contract_upload_result),
                 requestId=request_id,
             )
         else:
             # We just log on error, not raise an exception
-            logger.error(
+            self.__logger.error(
                 "Contract upload result: {0}".format(contract_upload_result),
                 requestId=request_id,
             )
@@ -927,9 +925,9 @@ class QSPAuditNode:
                 self.__config,
                 transaction,
                 wait_for_transaction_receipt=True)
-            logger.debug("A getNextAuditRequest transaction has been sent")
+            self.__logger.debug("A getNextAuditRequest transaction has been sent")
         except Timeout as e:
-            logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
+            self.__logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
                 str(transaction),
                 e))
         return tx_hash
@@ -946,7 +944,7 @@ class QSPAuditNode:
                                             request_id,
                                             audit_state,
                                             compressed_report_bytes))
-        logger.debug("Report {0} has been submitted".format(str(request_id)))
+        self.__logger.debug("Report {0} has been submitted".format(str(request_id)))
         return tx_hash
 
     def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
@@ -969,7 +967,7 @@ class QSPAuditNode:
         return result
 
     def check_compilation(self, contract, request_id, uri):
-        logger.debug("Running compilation check. About to check {0}".format(contract),
+        self.__logger.debug("Running compilation check. About to check {0}".format(contract),
                             requestId=request_id)
         parse_uri = urllib.parse.urlparse(uri)
         original_file_name = os.path.basename(parse_uri.path)
@@ -994,23 +992,23 @@ class QSPAuditNode:
                     errors += [err['formattedMessage'].replace(temp_file_name, original_file_name)]
 
         except ContractsNotFound as error:
-            logger.debug(
+            self.__logger.debug(
                 "ContractsNotFound before calling analyzers: {0}".format(str(error)),
                 requestId=request_id)
             errors += [str(error)]
         except SolcError as error:
-            logger.debug(
+            self.__logger.debug(
                 "SolcError before calling analyzers: {0}".format(str(error)),
                 requestId=request_id)
             errors += [str(error)]
         except KeyError as error:
-            logger.error(
+            self.__logger.error(
                 "KeyError when calling analyzers: {0}".format(str(error)),
                 requestId=request_id)
             # This is thrown because a bug in our own code. We only log, but do not record the error
             # so that the analyzers are still executed.
         except Exception as error:
-            logger.error(
+            self.__logger.error(
                 "Error before calling analyzers: {0}".format(str(error)),
                 requestId=request_id)
             errors += [str(error)]

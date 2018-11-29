@@ -52,7 +52,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         Tests that the worker is capable of creating the database and insert items by executing a
         script.
         """
-        with mock.patch('utils.db.sql3liteworker.logger') as logger_mock:
+        with mock.patch.object(self.worker, 'logger') as logger_mock:
             self.assertFalse(logger_mock.error.called)
             result = self.worker.execute("select * from evt_status")
             self.assertEqual(len(result), 5,
@@ -66,7 +66,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         primary key are inserted in the database. Also tests that if such an insert is invoked, the
         existing values remain the same.
         """
-        with mock.patch('utils.db.sql3liteworker.logger') as logger_mock:
+        with mock.patch.object(self.worker, 'logger') as logger_mock:
             self.assertFalse(logger_mock.error.called)
             result = self.worker.execute("select * from evt_status")
 
@@ -75,7 +75,7 @@ class TestSqlLite3Worker(unittest.TestCase):
             self.assertFalse(logger_mock.error.called)
             original_value = [x for x in result if x['id'] == 'AS'][0]
 
-        with mock.patch('utils.db.sql3liteworker.logger') as logger_mock:
+        with mock.patch.object(self.worker, 'logger') as logger_mock:
             # Inserts a repeated primary key
             self.worker.execute("insert into evt_status values ('AS', 'Updated received')")
             result = self.worker.execute("select * from evt_status")
@@ -102,7 +102,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         primary key are inserted in the database. Also tests that if such an insert is invoked, the
         existing values remain the same.
         """
-        with mock.patch('utils.db.sql3liteworker.logger') as sql3liteworker_logger_mock:
+        with mock.patch.object(self.worker, 'logger') as sql3liteworker_logger_mock:
             with mock.patch('evt.evt_pool_manager.logger') as evt_pool_manager_logger_mock:
                 self.assertFalse(sql3liteworker_logger_mock.warning.called)
 
@@ -115,7 +115,7 @@ class TestSqlLite3Worker(unittest.TestCase):
                 self.assertFalse(sql3liteworker_logger_mock.warning.called)
                 self.assertFalse(evt_pool_manager_logger_mock.warning.called)
 
-        with mock.patch('utils.db.sql3liteworker.logger') as sql3liteworker_logger_mock:
+        with mock.patch.object(self.worker, 'logger') as sql3liteworker_logger_mock:
             with mock.patch('evt.evt_pool_manager.logger') as evt_pool_manager_logger_mock:
                 self.worker.execute_script(
                     fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
@@ -137,7 +137,7 @@ class TestSqlLite3Worker(unittest.TestCase):
         """
         Tests that wrong select returns string and logs an error.
         """
-        with mock.patch('utils.db.sql3liteworker.logger') as logger_mock:
+        with mock.patch.object(self.worker, 'logger') as logger_mock:
             self.assertFalse(logger_mock.warning.called)
             result = self.worker.execute("select * from nonexistent_table")
 

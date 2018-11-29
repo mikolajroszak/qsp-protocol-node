@@ -18,8 +18,6 @@ from utils.io import (
 )
 from log_streaming import get_logger
 
-logger = get_logger(__name__)
-
 
 class Wrapper:
 
@@ -29,6 +27,7 @@ class Wrapper:
         is_executable(script, throw_exception=True)
 
     def __init__(self, wrappers_dir, analyzer_name, args, storage_dir, timeout_sec):
+        self.__logger = get_logger(self.__class__.__qualname__)
         self.__analyzer_name = analyzer_name
 
         self.__home = "{0}/{1}".format(wrappers_dir, analyzer_name)
@@ -87,7 +86,7 @@ class Wrapper:
         metadata = {'name': self.__analyzer_name}
         try:
             env_vars = self.setup_environment(contract_path, original_file_name)
-            logger.debug(
+            self.__logger.debug(
                 "Getting {0}'s metadata as subprocess".format(self.analyzer_name),
                 requestId=request_id,
             )
@@ -106,7 +105,7 @@ class Wrapper:
             metadata = json.loads(analyzer.stdout)
 
         except Exception as inner_error:
-            logger.error("Error collecting the metadata from {0}'s wrapper: {1}".format(
+            self.__logger.error("Error collecting the metadata from {0}'s wrapper: {1}".format(
                     self.analyzer_name,
                     str(inner_error),
                 ),
@@ -119,7 +118,7 @@ class Wrapper:
         json_report = {}
         try:
             env_vars = self.setup_environment(contract_path, original_file_name)
-            logger.debug("Invoking {0}'s wrapper as subprocess".format(
+            self.__logger.debug("Invoking {0}'s wrapper as subprocess".format(
                     self.analyzer_name
                 ),
                 requestId=request_id,
@@ -136,13 +135,15 @@ class Wrapper:
                 cwd=self.__home,
             )
 
-            logger.debug("Wrapper stdout is: {0}".format(str(analyzer.stdout)), requestId=request_id)
-            logger.debug("Wrapper stderr is: {0}".format(str(analyzer.stderr)), requestId=request_id)
+            self.__logger.debug("Wrapper stdout is: {0}".format(str(analyzer.stdout)),
+                                requestId=request_id)
+            self.__logger.debug("Wrapper stderr is: {0}".format(str(analyzer.stderr)),
+                                requestId=request_id)
 
             json_report = json.loads(analyzer.stdout)
 
         except Exception as err:
-            logger.error("Error running {0}'s wrapper: {1}".format(
+            self.__logger.error("Error running {0}'s wrapper: {1}".format(
                     self.analyzer_name,
                     str(err),
                 ),

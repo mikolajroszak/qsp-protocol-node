@@ -38,8 +38,6 @@ import uuid
 
 from log_streaming import get_logger
 
-logger = get_logger(__name__)
-
 
 class Sqlite3Worker(threading.Thread):
     """Sqlite thread safe object.
@@ -73,6 +71,7 @@ class Sqlite3Worker(threading.Thread):
             file_name: The name of the file.
             max_queue_size: The max queries that will be queued.
         """
+        self.logger = get_logger(self.__class__.__qualname__)
         threading.Thread.__init__(self)
         self.daemon = True
         self.sqlite3_conn = apsw.Connection(file_name)
@@ -104,12 +103,9 @@ class Sqlite3Worker(threading.Thread):
         calling commit() to speed things up by reducing the number of times
         commit is called.
         """
-        # logger.debug("run: Thread started")
         execute_count = 0
         for token, query, values, error_handler in iter(self.sql_queue.get, None):
-            # logger.debug("sql_queue: %s", self.sql_queue.qsize())
             if token != self.exit_token:
-                # logger.debug("run: %s", query)
                 self.run_query(token, query, values, error_handler)
                 execute_count += 1
 
@@ -141,7 +137,7 @@ class Sqlite3Worker(threading.Thread):
                 # is required.
                 self.results[token] = ("Query returned error: %s: %s: %s" % (query, values, err))
                 if error_handler is None:
-                    logger.error("Query returned error: %s: %s: %s", query, values, err)
+                    self.logger.error("Query returned error: %s: %s: %s".format(query, values, err))
                 else:
                     error_handler(self, query, values, err)
         else:
@@ -153,7 +149,7 @@ class Sqlite3Worker(threading.Thread):
                 self.results[token] = err
                 self.sqlite3_cursor.execute("rollback")
                 if error_handler is None:
-                    logger.error(
+                    self.logger.error(
                         "Query returned error: %s: %s: %s",
                         query,
                         values,
@@ -193,7 +189,7 @@ class Sqlite3Worker(threading.Thread):
             # Double back on the delay to a max of 8 seconds.  This prevents
             # a long lived select statement from trashing the CPU with this
             # infinite loop as it's waiting for the query results.
-            # logger.debug("Sleeping: %s %s", delay, token)
+            # self.logger.debug("Sleeping: %s %s", delay, token)
             time.sleep(delay)
             if delay < 8:
                 delay += delay
@@ -210,9 +206,7 @@ class Sqlite3Worker(threading.Thread):
             If it's a select query it will return the results of the query.
         """
         if self.exit_set:
-            # logger.debug("Exit set, not running: %s", query)
             return "Exit Called"
-        # logger.debug("execute: %s", query)
         values = values or []
         # A token to track this query with.
         token = str(uuid.uuid4())

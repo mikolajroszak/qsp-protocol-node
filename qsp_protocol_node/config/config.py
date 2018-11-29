@@ -11,8 +11,6 @@
 Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file
 """
-import structlog
-
 import utils.io as io_utils
 
 from dpath.util import get
@@ -20,11 +18,7 @@ from os.path import expanduser
 
 from audit.report_processing import ReportEncoder
 from evt import EventPoolManager
-from log_streaming import get_logger
 from utils.eth import mk_checksum_address
-from pathlib import Path
-
-logger = get_logger(__name__)
 
 # FIXME
 # There is some technical debt accumulating in this file. Config started simple and therefore justified

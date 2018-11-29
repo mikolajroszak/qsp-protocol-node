@@ -109,7 +109,7 @@ class TestFile(unittest.TestCase):
         self.__config_mock.metric_collection_destination_endpoint = 'some-value'
         metrics = MetricCollector(self.__config_mock)
 
-        with patch('utils.metrics.logger') as logger_mock:
+        with patch.object(metrics, '_MetricCollector__logger') as logger_mock:
             with patch.object(metrics, 'send_to_dashboard', side_effect=Exception('Boom!')) as mock_method:
                 metrics.collect_and_send()
                 logger_mock.error.assert_called_with('Could not collect metrics due to the error: "Boom!"')
@@ -132,7 +132,7 @@ class TestFile(unittest.TestCase):
         response = MagicMock()
         response.__enter__().read.return_value = 'ok'
 
-        with patch('utils.metrics.logger') as logger_mock:
+        with patch.object(metrics, '_MetricCollector__logger') as logger_mock:
             with patch.object(urllib.request, 'urlopen', return_value=response) as mock_method:
                 metrics.send_to_dashboard(self.__fake_metrics_json)
                 logger_mock.debug.assert_called_with(
@@ -157,7 +157,7 @@ class TestFile(unittest.TestCase):
         response = MagicMock()
         response.__enter__().read.side_effect = urllib.request.HTTPError(401, 'authentication failure', MagicMock(), MagicMock(), MagicMock())
 
-        with patch('utils.metrics.logger') as logger_mock:
+        with patch.object(metrics, '_MetricCollector__logger') as logger_mock:
             with patch.object(urllib.request, 'urlopen', return_value=response) as mock_method:
                 metrics.send_to_dashboard(self.__fake_metrics_json)
                 logger_mock.debug.assert_called_with('HTTPError occurred when sending metrics', code='authentication failure', endpoint='http://localhost:1234')
@@ -174,7 +174,7 @@ class TestFile(unittest.TestCase):
         response = MagicMock()
         response.__enter__().read.side_effect = urllib.request.URLError(400, 'URL invalid')
 
-        with patch('utils.metrics.logger') as logger_mock:
+        with patch.object(metrics, '_MetricCollector__logger') as logger_mock:
             with patch.object(urllib.request, 'urlopen', return_value=response) as mock_method:
                 metrics.send_to_dashboard(self.__fake_metrics_json)
                 logger_mock.debug.assert_called_with('URLError occurred when sending metrics', endpoint='http://localhost:1234', reason=400)
@@ -191,7 +191,7 @@ class TestFile(unittest.TestCase):
         response = MagicMock()
         response.__enter__().read.side_effect = Exception('Generic exception')
 
-        with patch('utils.metrics.logger') as logger_mock:
+        with patch.object(metrics, '_MetricCollector__logger') as logger_mock:
             with patch.object(urllib.request, 'urlopen', return_value=response) as mock_method:
                 metrics.send_to_dashboard(self.__fake_metrics_json)
                 logger_mock.debug.assert_called_with('Unhandled exception occurred when sending metrics', endpoint='http://localhost:1234', message='Generic exception')

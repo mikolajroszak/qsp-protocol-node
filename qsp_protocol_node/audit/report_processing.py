@@ -33,7 +33,6 @@ This could be a top-level package/executable, similar to the analyzers.
 
 import argparse
 import json
-import logging
 import math
 import os
 
@@ -41,8 +40,6 @@ from log_streaming import get_logger
 
 from collections import OrderedDict
 from pprint import pprint
-
-logger = get_logger(__name__)
 
 
 class ReportFormattingException(Exception):
@@ -80,6 +77,7 @@ class ReportEncoder:
     __HEX_BITS = 4
 
     def __init__(self):
+        self.__logger = get_logger(self.__class__.__qualname__)
         self.__vulnerability_types, self.__vulnerability_types_inverted = \
             ReportEncoder.__initialize_vulnerability_types()
 
@@ -310,7 +308,7 @@ class ReportEncoder:
             spaces/QUAN/pages/115212289/Compressed+Reports+for+On-Chain+Storage
         """
         try:
-            logger.info("Compressing report {0}".format(request_id))
+            self.__logger.info("Compressing report {0}".format(request_id))
             audit_state = report["audit_state"]
             status = report["status"]
             version = report["version"]
@@ -329,14 +327,14 @@ class ReportEncoder:
             b_report = b_header + b_contract_hash + b_vulnerabilities
             return ReportEncoder.__to_hex(b_report)
         except ReportFormattingException as e:
-            logger.exception(
+            self.__logger.exception(
                 "Error: report formatting error occurred during compression: {0}.".format(str(e)),
                 requestId=request_id,
             )
             raise e
         except Exception as e:
             # defensive programming
-            logger.exception(
+            self.__logger.exception(
                 "Error: report could not be compressed: {0}.".format(str(e)),
                 requestId=request_id,
             )
@@ -349,7 +347,7 @@ class ReportEncoder:
         NOTE: if the compression format gets updated, the decoder should be maintained
               to support deprecated formats. This may be in a separate UI repository.
         """
-        logger.info("Decoding report {0}".format(request_id))
+        self.__logger.info("Decoding report {0}".format(request_id))
 
         b_report = ReportEncoder.__to_bitstring(report, is_hex=True)
         # the first sequence of bits is the header
@@ -380,7 +378,7 @@ def main():
     Takes as input a hexstring-encoded report and decodes it.
     """
     encoder = ReportEncoder()
-    REQUEST_ID = 0
+    request_id = 0
 
     try:
         # Sets the program's arguments
@@ -398,12 +396,12 @@ def main():
         )
         args = parser.parse_args()
         if args.decode_report:
-            report = encoder.decode_report(args.decode_report, REQUEST_ID)
+            report = encoder.decode_report(args.decode_report, request_id)
             pprint(report)
         else:
             with open(args.encode_report) as stream:
                 json_report = json.load(stream)
-                hexstring = encoder.compress_report(json_report, REQUEST_ID)
+                hexstring = encoder.compress_report(json_report, request_id)
                 print(hexstring)
     except Exception as error:
         raise error

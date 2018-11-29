@@ -14,7 +14,6 @@ Provides an interface for invoking the analyzer software.
 import json
 
 from log_streaming import get_logger
-logger = get_logger(__name__)
 
 
 class Analyzer:
@@ -24,6 +23,7 @@ class Analyzer:
         Builds an Analyzer object from a given arguments string.
         """
         self.__wrapper = wrapper
+        self.__logger = get_logger(self.__class__.__qualname__)
 
     @property
     def wrapper(self):
@@ -34,7 +34,7 @@ class Analyzer:
         Returns the metadata {name, version, vulnerabilities_checked, command}
         associated with a call to the analyzer.
         """
-        logger.debug("Getting {0}'s metadata. About to check {1}".format(
+        self.__logger.debug("Getting {0}'s metadata. About to check {1}".format(
             self.wrapper.analyzer_name,
             contract_path,
         ),
@@ -47,7 +47,7 @@ class Analyzer:
         Checks for potential vulnerabilities in a target contract writen in a given
         version of Solidity, writing the result in a json report.
         """
-        logger.debug("Running {0}'s wrapper. About to check {1}".format(
+        self.__logger.debug("Running {0}'s wrapper. About to check {1}".format(
             self.wrapper.analyzer_name,
             contract_path,
         ),
@@ -56,7 +56,7 @@ class Analyzer:
 
         json_report = self.__wrapper.check(contract_path, request_id, original_file_name)
         str_report = json.dumps(json_report)
-        logger.debug("{0}'s wrapper finished execution. Produced report is {1}".format(
+        self.__logger.debug("{0}'s wrapper finished execution. Produced report is {1}".format(
             self.wrapper.analyzer_name,
             str_report,
         ),

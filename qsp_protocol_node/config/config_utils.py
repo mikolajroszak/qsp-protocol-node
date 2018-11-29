@@ -7,7 +7,6 @@
 #                                                                                                  #
 ####################################################################################################
 
-import config
 import os
 
 import utils.io as io_utils
@@ -18,7 +17,6 @@ from audit import (
 )
 from log_streaming import get_logger
 
-from dpath.util import get
 from pathlib import Path
 from tempfile import gettempdir
 from time import sleep
@@ -31,8 +29,6 @@ from web3 import (
     IPCProvider,
     EthereumTesterProvider,
 )
-
-logger = get_logger(__name__)
 
 
 class ConfigurationException(Exception):
@@ -57,6 +53,7 @@ class ConfigUtils:
         return config_file[environment]
 
     def __init__(self, node_version):
+        self.__logger = get_logger(self.__class__.__qualname__)
         self.__node_version = node_version
 
     def create_report_uploader_provider(self, account, report_uploader_provider_name,
@@ -119,12 +116,12 @@ class ConfigUtils:
                 # the following throws if Geth is not reachable
                 _ = web3_client.eth.accounts
                 connected = True
-                logger.debug("Connected on attempt {0}".format(attempts))
+                self.__logger.debug("Connected on attempt {0}".format(attempts))
             except Exception as exception:
                 # An exception has occurred. Increment the number of attempts
                 # made, and retry after 5 seconds
                 attempts = attempts + 1
-                logger.debug(
+                self.__logger.debug(
                     "Connection attempt ({0}) failed due to {1}. Retrying in 10 seconds".format(attempts, str(exception)))
                 sleep(10)
 
@@ -142,7 +139,7 @@ class ConfigUtils:
                 raise ConfigurationException("Could not find an account. Please provide a valid keystore file")
 
             new_account = web3_client.eth.accounts[0]
-            logger.debug("No account was provided, using the account at index [0]", account=new_account)
+            self.__logger.debug("No account was provided, using the account at index [0]", account=new_account)
         else:
             try:
                 with open(keystore_file) as keyfile:
@@ -225,14 +222,14 @@ class ConfigUtils:
             abi=abi_json,
         )
 
-    def resolve_version(self, input):
+    def resolve_version(self, version):
         """
         Instruments a given string with the version of the protocol
         """
         major_version = self.__node_version[0:self.__node_version.index('.')]
         result = None
-        if input is not None:
-            result = input.replace('{major-version}', major_version)
+        if version is not None:
+            result = version.replace('{major-version}', major_version)
         return result
 
     def create_analyzers(self, analyzers_config):
