@@ -351,7 +351,7 @@ class QSPAuditNode:
         try:
             return mk_read_only_call(
                 self.config,
-                self.config.audit_data_contract.functions.isWhitelisted(node)
+                self.config.audit_contract.functions.isWhitelisted(node)
             )
         except Exception as error:
             logger.exception(
@@ -379,7 +379,7 @@ class QSPAuditNode:
         """
         contract_price = mk_read_only_call(
             self.__config,
-            self.__config.audit_data_contract.functions.getMinAuditPrice(self.__config.account)
+            self.__config.audit_contract.functions.getMinAuditPrice(self.__config.account)
         )
         min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
         if min_price_in_mini_qsp != contract_price:
