@@ -41,7 +41,7 @@ class ConfigStub:
         self.audit_data_contract_address = data_contract_address
 
 
-class AuditContractStub:
+class AuditDataContractStub:
 
     class Function:
         def __init__(self, value):
@@ -52,11 +52,11 @@ class AuditContractStub:
 
     class Functions:
         def __init__(self):
-            self.getAuditTimeoutInBlocks = lambda: AuditContractStub.Function(25)
-            self.getMaxAssignedRequests = lambda: AuditContractStub.Function(5)
+            self.auditTimeoutInBlocks = lambda: AuditDataContractStub.Function(25)
+            self.maxAssignedRequests = lambda: AuditDataContractStub.Function(5)
 
     def __init__(self):
-        self.functions = AuditContractStub.Functions()
+        self.functions = AuditDataContractStub.Functions()
 
 
 class ConfigStubForCheckSettings:
@@ -83,7 +83,7 @@ class ConfigStubForCheckSettings:
         if not gas_price_strategy:
             gas_price_strategy = "dynamic"
         self.gas_price_strategy = gas_price_strategy
-        self.audit_contract = AuditContractStub()
+        self.audit_data_contract = AuditDataContractStub()
         self.analyzers = []
 
 

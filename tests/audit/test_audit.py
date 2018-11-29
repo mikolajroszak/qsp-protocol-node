@@ -76,7 +76,7 @@ class TestQSPAuditNode(unittest.TestCase):
 
     @staticmethod
     def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
-                                       constructor_from):
+                                       data_contract_name, constructor_from):
         """
         Loads the QuantstampAuditMock contract from source code returning the (address, contract)
         pair.
@@ -87,14 +87,33 @@ class TestQSPAuditNode(unittest.TestCase):
             contract_src_uri,
             contract_name,
         )
+        data_contract_id = "{0}:{1}".format(
+            contract_src_uri,
+            data_contract_name,
+        )
         contract_interface = contract_dict[contract_id]
+        data_contract_interface = contract_dict[data_contract_id]
+
+        # deploy the data contract
+        data_contract = web3_client.eth.contract(
+            abi=data_contract_interface['abi'],
+            bytecode=data_contract_interface['bin']
+        )
+        tx_hash = TestQSPAuditNode.__safe_transact(data_contract.constructor(),
+                                                   {'from': constructor_from, 'gasPrice': 0})
+        receipt = web3_client.eth.getTransactionReceipt(tx_hash)
+        data_address = receipt['contractAddress']
+        data_contract = web3_client.eth.contract(
+            abi=data_contract_interface['abi'],
+            address=data_address,
+        )
 
         # deploy the audit contract
         audit_contract = web3_client.eth.contract(
             abi=contract_interface['abi'],
             bytecode=contract_interface['bin']
         )
-        tx_hash = TestQSPAuditNode.__safe_transact(audit_contract.constructor(),
+        tx_hash = TestQSPAuditNode.__safe_transact(audit_contract.constructor(data_address),
                                                    {'from': constructor_from, 'gasPrice': 0})
         receipt = web3_client.eth.getTransactionReceipt(tx_hash)
         address = receipt['contractAddress']
@@ -102,7 +121,7 @@ class TestQSPAuditNode(unittest.TestCase):
             abi=contract_interface['abi'],
             address=address,
         )
-        return address, audit_contract
+        return address, audit_contract, data_contract
 
     def __compare_json(self, audit_file, report_file_path, json_loaded=False, ignore_id=False):
         if not json_loaded:
@@ -155,19 +174,20 @@ class TestQSPAuditNode(unittest.TestCase):
         # compile and inject contract
         contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
         contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
+        data_contract_metadata_uri = "./tests/resources/QuantstampAuditData-metadata.json"
         audit_contract_metadata = load_json(fetch_file(contract_metadata_uri))
+        data_contract_metadata = load_json(fetch_file(data_contract_metadata_uri))
         audit_contract_name = get(audit_contract_metadata, '/contractName')
-
-        addr, contract = \
+        data_contract_name = get(data_contract_metadata, '/contractName')
+        config._Config__audit_contract_address, \
+        config._Config__audit_contract, \
+        config._Config__audit_data_contract = \
             TestQSPAuditNode.__load_audit_contract_from_src(
                 config.web3_client,
                 contract_source_uri,
                 audit_contract_name,
+                data_contract_name,
                 config.account)
-
-        config._Config__audit_contract_address = addr
-        config._Config__audit_contract = contract
-
         config_utils = ConfigUtils(config.node_version)
         config_utils.check_configuration_settings(config)
         return config
