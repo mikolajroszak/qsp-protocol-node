@@ -14,6 +14,7 @@ import unittest
 import json
 
 from random import random
+from time import time
 from helpers.resource import project_root
 from helpers.resource import resource_uri
 from audit import Analyzer, Wrapper
@@ -31,7 +32,7 @@ class TestAnalyzerOyente(unittest.TestCase):
             wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
             analyzer_name="oyente",
             args="-ce",
-            storage_dir=storage_dir,
+            storage_dir="/tmp/{}{}".format(time(), random()),
             timeout_sec=timeout_sec,
         )
         return Analyzer(oyente_wrapper)

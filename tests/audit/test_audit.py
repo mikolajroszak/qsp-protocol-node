@@ -16,6 +16,7 @@ import ntpath
 import os
 import unittest
 import structlog
+import shutil
 
 from audit import QSPAuditNode
 from audit import ExecutionException
@@ -25,6 +26,8 @@ from helpers.resource import (
     resource_uri,
     project_root,
 )
+from random import random
+from time import time
 from upload import DummyProvider
 
 from utils.eth.singleton_lock import SingletonLock
@@ -202,12 +205,21 @@ class TestQSPAuditNode(unittest.TestCase):
         )
         TestQSPAuditNode.__clean_up_file(config.evt_db_path)
 
+    def __unique_storage_dir(self):
+        """
+        Generates a unique directory for each test run
+        """
+        for analyzer in self.__audit_node.config.analyzers:
+            analyzer.wrapper._Wrapper__storage_dir += "/{}{}".format(time(), random())
+
     def setUp(self):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
         self.__config = TestQSPAuditNode.fetch_config()
         self.__audit_node = QSPAuditNode(self.__config)
+
+        self.__unique_storage_dir()
 
         # Forces analyzer wrapper to always execute their `once` script prior
         # to executing `run`

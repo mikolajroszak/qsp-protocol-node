@@ -34,7 +34,7 @@ if [ -z ${COMMON_GLOBAL_SETTINGS+x} ] ; then
     readonly VULNERABILITY_MAPPING="$WRAPPER_HOME/resources/vulnerabilities.json"
 
     readonly TMP_FOLDER="$STORAGE_DIR/$$"
-    mkdir "$TMP_FOLDER" &> /dev/null
+    mkdir -p "$TMP_FOLDER" &> /dev/null
     on_exit_do rm -rf "$TMP_FOLDER"
 
     readonly LOG_OUTPUT="$TMP_FOLDER/output.log"
