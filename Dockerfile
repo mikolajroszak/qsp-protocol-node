@@ -24,6 +24,7 @@ RUN apk add --no-cache openssl-dev make
 RUN apk add --no-cache jq
 RUN apk add --no-cache libffi-dev
 RUN apk add --no-cache linux-headers
+RUN apk add --no-cache vim
 
 # Install aws-cli
 RUN pip3 install -U awscli

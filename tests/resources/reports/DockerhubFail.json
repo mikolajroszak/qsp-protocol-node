@@ -1,0 +1,84 @@
+{
+  "timestamp": 1543618114,
+  "contract_uri": "file:///app/tests/helpers/../resources/DAOBug.sol",
+  "contract_hash": "b7f55bc69671c5f4fb295fd5acf1375eb7f1363093176f4bec190c39f95c235b",
+  "requestor": "0x82A978B3f5962A5b0957d9ee9eEf472EE55B42F1",
+  "auditor": "0x82A978B3f5962A5b0957d9ee9eEf472EE55B42F1",
+  "request_id": 1,
+  "version": "1.0.0",
+  "audit_state": 5,
+  "status": "error",
+  "analyzers_reports": [
+    {
+      "status": "error",
+      "errors": [
+        "Error response from daemon: pull access denied for qspprotocol/does-not-exist-0.4.25, repository does not exist or may require 'docker login'\n"
+      ],
+      "trace": [
+        ">> Wrapper setup finished\n",
+        ">> About to execute once script\n"
+      ],
+      "analyzer": {
+        "name": "dockerhub_fail",
+        "version": "9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316",
+        "vulnerabilities_checked": {
+          "Call data forwarded with delegatecall()": {
+            "type": "delegate_call_to_untrusted_contract"
+          },
+          "Dependence on predictable environment variable": {
+            "type": "dependence_on_environment_variable"
+          },
+          "Call to a user-supplied address": {
+            "type": "delegate_call_to_untrusted_contract"
+          },
+          "Use of tx.origin": {
+            "type": "tx_origin_usage"
+          },
+          "Ether send": {
+            "type": "unprotected_ether_withdrawal"
+          },
+          "Exception state": {
+            "type": "exception_state"
+          },
+          "Message call to external contract": {
+            "type": "call_to_external_contract"
+          },
+          "State change after external call": {
+            "type": "reentrancy"
+          },
+          "Integer Overflow": {
+            "type": "integer_overflow"
+          },
+          "Integer Underflow": {
+            "type": "integer_underflow"
+          },
+          "Multiple Calls": {
+            "type": "multiple_calls"
+          },
+          "Unchecked SUICIDE": {
+            "type": "unprotected_self_destruct"
+          },
+          "Transaction order dependence": {
+            "type": "transaction_order_dependency"
+          },
+          "Unchecked CALL return value": {
+            "type": "unchecked_call_return_value"
+          },
+          "Unknown": {
+            "type": "other"
+          }
+        },
+        "command": "docker run --rm -v /tmp/1543618103.00930830.8891051666701546/725:/shared/ -i qspprotocol/does-not-exist-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316  -o json -x /shared/DAOBug.sol"
+      },
+      "start_time": 1543618113,
+      "end_time": 1543618114
+    }
+  ],
+  "compilation_warnings": [
+    "DAOBug.sol:26:7: Warning: \"throw\" is deprecated in favour of \"revert()\", \"require()\" and \"assert()\".\n      throw;\n      ^---^\n",
+    "DAOBug.sol:16:3: Warning: No visibility specified. Defaulting to \"public\". \n  function getBalance(address u) constant returns (uint) {\n  ^ (Relevant source part starts here and spans across multiple lines).\n",
+    "DAOBug.sol:20:3: Warning: No visibility specified. Defaulting to \"public\". \n  function addToBalance() {\n  ^ (Relevant source part starts here and spans across multiple lines).\n",
+    "DAOBug.sol:21:33: Warning: \"msg.value\" used in non-payable function. Do you want to add the \"payable\" modifier to this function?\n    userBalances[msg.sender] += msg.value;\n                                ^-------^\n",
+    "DAOBug.sol:24:3: Warning: No visibility specified. Defaulting to \"public\". \n  function withdrawBalance() {\n  ^ (Relevant source part starts here and spans across multiple lines).\n"
+  ]
+}

@@ -20,6 +20,7 @@ import shutil
 
 from audit import QSPAuditNode
 from audit import ExecutionException
+from audit import Analyzer, Wrapper
 from config import ConfigFactory, ConfigUtils, ConfigurationException
 from dpath.util import get
 from helpers.resource import (
@@ -458,6 +459,82 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_SUCCESS,
                                     report_file_path="reports/DAOBug.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
+
+    @timeout(300, timeout_exception=StopIteration)
+    def test_successful_contract_audit_request_dockerhub_fail_isolation(self):
+        """
+        Tests that a report is generated when the dockerhub fails
+        """
+        # Replace analyzers with a single dockerhub fail analyzer
+        faulty_wrapper = Wrapper(
+            wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
+            analyzer_name="dockerhub_fail",
+            args="",
+            storage_dir="/tmp/{}{}".format(time(), random()),
+            timeout_sec=60,
+        )
+        analyzer = Analyzer(faulty_wrapper)
+        original_analyzers = self.__audit_node.config._Config__analyzers
+        original_analyzers_config = self.__audit_node.config._Config__analyzers_config
+        self.__audit_node.config._Config__analyzers = [analyzer]
+        self.__audit_node.config._Config__analyzers_config = [{"dockerhub_fail": analyzer}]
+
+        # since we're mocking the smart contract, we should explicitly call its internals
+        buggy_contract = resource_uri("DAOBug.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__request_audit(buggy_contract, self.__PRICE)
+        )
+
+        self.__evt_wait_loop(self.__submitReport_filter)
+
+        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__send_done_message(self.__REQUEST_ID))
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
+                                    report_file_path="reports/DockerhubFail.json")
+        self.__assert_all_analyzers(self.__REQUEST_ID)
+
+        # set the values back
+        self.__audit_node.config._Config__analyzers = original_analyzers
+        self.__audit_node.config._Config__analyzers_config = original_analyzers_config
+
+    @timeout(300, timeout_exception=StopIteration)
+    def test_successful_contract_audit_request_dockerhub_fail_multiple_analyzers(self):
+        """
+        Tests that a report is generated when the dockerhub fails
+        """
+        # Replace analyzers with a single dockerhub fail analyzer
+        faulty_wrapper = Wrapper(
+            wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
+            analyzer_name="dockerhub_fail",
+            args="",
+            storage_dir="/tmp/{}{}".format(time(), random()),
+            timeout_sec=60,
+        )
+        analyzer = Analyzer(faulty_wrapper)
+        original_analyzers = self.__audit_node.config._Config__analyzers
+        original_analyzers_config = self.__audit_node.config._Config__analyzers_config
+        self.__audit_node.config._Config__analyzers[2] = analyzer
+        self.__audit_node.config._Config__analyzers_config[2] = {"dockerhub_fail": analyzer}
+
+        # since we're mocking the smart contract, we should explicitly call its internals
+        buggy_contract = resource_uri("DAOBug.sol")
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__request_audit(buggy_contract, self.__PRICE)
+        )
+
+        self.__evt_wait_loop(self.__submitReport_filter)
+
+        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
+        self.__config.web3_client.eth.waitForTransactionReceipt(
+            self.__send_done_message(self.__REQUEST_ID))
+        self.__assert_audit_request(self.__REQUEST_ID, self.__AUDIT_STATE_ERROR,
+                                    report_file_path="reports/DockerhubFailAllAnalyzers.json")
+        self.__assert_all_analyzers(self.__REQUEST_ID)
+
+        # set the values back
+        self.__audit_node.config._Config__analyzers = original_analyzers
+        self.__audit_node.config._Config__analyzers_config = original_analyzers_config
 
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_contract_audit_request_with_disabled_upload(self):

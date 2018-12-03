@@ -1,0 +1,50 @@
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
+declare -a ON_EXIT_HANDLERS
+
+if [ -z ${COMMON_GLOBAL_SETTINGS+x} ] ; then
+    readonly COMMON_GLOBAL_SETTINGS="done"
+
+    function on_exit()
+    {
+        for i in "${ON_EXIT_HANDLERS[@]}"
+        do
+            eval $i
+        done
+    }
+
+    function on_exit_do()
+    {
+        local n=${#ON_EXIT_HANDLERS[*]}
+        ON_EXIT_HANDLERS[$n]="$*"
+        if [[ $n -eq 0 ]]; then
+            # TODO
+            # Check how complete ths list of signals is
+            trap on_exit EXIT SIGINT SIGTERM SIGKILL
+        fi
+    }
+
+    readonly VULNERABILITY_MAPPING="$WRAPPER_HOME/resources/vulnerabilities.json"
+
+    readonly TMP_FOLDER="$STORAGE_DIR/$$"
+    mkdir -p "$TMP_FOLDER" &> /dev/null
+    on_exit_do rm -rf "$TMP_FOLDER"
+
+    readonly LOG_OUTPUT="$TMP_FOLDER/output.log"
+    > "$LOG_OUTPUT"
+    on_exit_do rm -f "$LOG_OUTPUT"
+
+    readonly TRACE_OUTPUT="$TMP_FOLDER/trace.log"
+    > "$TRACE_OUTPUT"
+    on_exit_do rm -f "$TRACE_OUTPUT"
+
+    source "$WRAPPER_HOME"/settings
+fi
+

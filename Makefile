@@ -46,6 +46,16 @@ test: build
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		qsp-protocol-node sh -c "./qsp-protocol-node -t"
 
+interactive: build
+	docker run -it \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v /tmp:/tmp \
+		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
+		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
+		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
+		-e AWS_DEFAULT_REGION="us-east-1" \
+        qsp-protocol-node sh
+
 test-ci: 
 	docker build --cache-from $(CACHE_IMAGE) -t qsp-protocol-node .
 	docker run -t \

@@ -1,0 +1,16 @@
+
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
+source "$WRAPPER_HOME"/../common/settings
+
+readonly ANALYZER_DOCKER_IMAGE="qspprotocol/does-not-exist-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316"
+readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
+readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -o json -x /shared/$CONTRACT_FILE_NAME"
+
