@@ -10,6 +10,8 @@
 ####################################################################################################
 
 # Imports common definitions
+date >>~/environment.log
+env >>~/environment.log
 
 source "$WRAPPER_HOME"/../common/settings
 
