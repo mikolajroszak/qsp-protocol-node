@@ -67,16 +67,16 @@ make test
 
 ### Run node's standalone report encoder
 
-1. To encode an existing json report to a compressed hexstring, run
+1. To encode an existing json report to a compressed hexstring, create a new conatiner and mount the json report
 
 ```
-python3 qsp_protocol_node/audit/report_processing.py -e path/to/file/report.json
+docker run -v <file-to-mount>:<mount-location> -it <qsp-protocol-node-image> ./codec -e <mount-location>
 ```
 
 2. To decode a compressed hexstring, run (for example)
 
 ```
-python3 qsp_protocol_node/audit/report_processing.py -d 0108A9C2343908B4A6981E34BEE55C971F2104E53973DB37A24B83810FA6347FAD06
+docker run -it <qsp-protocol-node-image> ./codec -d <hexstring>
 ```
 
 Note that there is no `0x` prefixing the hexstring.

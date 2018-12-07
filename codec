@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+if [ $# -ne 2 ] || [[ "$1" != "-d" && "$1" != "-e" ]]; then
+    echo "codec [-de] <file-name-or-hexstring>"
+    exit 1
+fi
+
+if [ "$1" == "-d" ]; then
+    action="PYTHONPATH=./qsp_protocol_node python3 qsp_protocol_node/audit/report_processing.py -d $2"
+
+elif [ "$1" == "-e" ]; then
+    action="PYTHONPATH=./qsp_protocol_node python3 qsp_protocol_node/audit/report_processing.py -e $2"
+fi
+
+bash -c "$action"
+
+
