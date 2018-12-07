@@ -93,12 +93,10 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                 return tx_hash
             except ValueError as e:
                 if i == attempts - 1:
-                    logger.debug("Maximum number of retries reached. {}"
-                                        .format(e))
+                    logger.debug("Maximum number of retries reached. {}".format(e))
                     raise e
                 elif "replacement transaction underpriced" in repr(e):
-                    logger.debug("Another transaction is queued with the same nonce. {}"
-                                        .format(e))
+                    logger.debug("Another transaction is queued with the same nonce. {}".format(e))
                     nonce += 1
                 elif "nonce too low" in repr(e):
                     msg = "This nonce is too low {}. Web3 says transaction count is {}. " \
@@ -115,7 +113,7 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                     raise DeduplicationException(e)
                 else:
                     logger.error("Unknown error while sending transaction. {}".format(e))
-                    raise e
+
             except Timeout as e:
                 # If we time out after the default 120 seconds when waiting for a receipt,
                 # throw the exception to the calling thread.

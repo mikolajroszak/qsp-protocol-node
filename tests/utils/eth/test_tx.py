@@ -28,9 +28,10 @@ class AccountMock:
 
 
 class EthMock:
-    def __init__(self):
+    def __init__(self, repeat=False):
         self.account = AccountMock()
         self.transaction_sent = None
+        self.repeat = repeat
 
     def getTransactionCount(self, account_number):
         return 123
@@ -38,7 +39,8 @@ class EthMock:
     def sendRawTransaction(self, tx):
         if tx.error_to_throw is not None:
             to_throw = tx.error_to_throw
-            tx.error_to_throw = None
+            if not self.repeat:
+                tx.error_to_throw = None
             raise to_throw
         return tx
 
@@ -84,13 +86,13 @@ class ReadOnlyMethodMock:
 class TestFile(unittest.TestCase):
 
     @staticmethod
-    def get_config_mock(gas_price_wei, gas, private_key=None):
+    def get_config_mock(gas_price_wei, gas, private_key=None, repeat=False):
         mock = Mock()
         mock.gas = gas
         mock.gas_price_wei = gas_price_wei
         mock.account = "account"
         mock.account_private_key = private_key
-        mock.web3_client.eth = EthMock()
+        mock.web3_client.eth = EthMock(repeat=repeat)
         mock.logger = Mock()
         return mock
 
@@ -177,7 +179,7 @@ class TestFile(unittest.TestCase):
         error = ValueError("unknown error")
         transaction = SimpleTransactionMock(error_to_throw=error)
         private_key = "abc"
-        config = TestFile.get_config_mock(4000000000, 0, private_key)
+        config = TestFile.get_config_mock(4000000000, 0, private_key, repeat=True)
         try:
             send_signed_transaction(config, transaction)
             self.fail("An error was expected")

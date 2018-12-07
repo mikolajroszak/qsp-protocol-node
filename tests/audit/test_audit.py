@@ -80,7 +80,6 @@ class TestQSPAuditNode(unittest.TestCase):
                 x[key] = "Ignored"
             for x in data:
                 x[key] = "Ignored"
-
         self.assertEqual(len([x for x in content if x in data]), len(data),
                          TestQSPAuditNode.find_difference(data, content))
 
@@ -739,71 +738,99 @@ class TestQSPAuditNode(unittest.TestCase):
         self.assert_event_table_contains(expected_content,
                                          ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
 
-    # TODO(mderka): Disabled flaky test, investigate with QSP-852
-    # @timeout(300, timeout_exception=StopIteration)
-    # def test_multiple_sequential_requests(self):
-    #     """
-    #     Tests that bidding happens when multiple request arrive in a row.
-    #     """
-    #     # since we're mocking the smart contract, we should explicitly call its internals
-    #     worker = Sqlite3Worker(self.__config.evt_db_path)
-    #     buggy_contract = resource_uri("DAOBug.sol")
-    #
-    #     # We will request three events in the row without updating the assigned number in the
-    #     # smart contract. The node should bid on all of them. We need to interleave them with sleep
-    #     # so that there is enough time for the block mined thread to bid and poll. So that the test
-    #     # can be executed faster, we will also speed up block polling, and work with Mythril only.
-    #     polling_interval = 0.1
-    #     original_interval = self.__config.block_mined_polling
-    #     original_analyzers = self.__config.analyzers
-    #     original_analyzers_config = self.__config.analyzers_config
-    #     self.__config._Config__block_mined_polling_interval_sec = polling_interval
-    #     self.__config._Config__analyzers = original_analyzers[1:2]
-    #     self.__config._Config__analyzers_config = original_analyzers_config[1:2]
-    #
-    #     self.__set_any_request_available(1)
-    #     ids_to_run = [self.__REQUEST_ID, 9, 12]
-    #
-    #     for id in ids_to_run:
-    #         # request and block until a request is made
-    #         self.__config.web3_client.eth.waitForTransactionReceipt(
-    #             self.__request_assign_and_emit(id, buggy_contract, self.__PRICE, 10))
-    #         self.__evt_wait_loop(self.__getNextAuditRequest_filter)
-    #         sleep(2)
-    #
-    #     self.__set_any_request_available(0)
-    #
-    #     # ensure that we have all requests stored in the database
-    #     result = worker.execute("select * from audit_evt")
-    #     while len(result) != len(ids_to_run):
-    #         sleep(1)
-    #         result = worker.execute("select * from audit_evt")
-    #     ids = [x['request_id'] for x in result]
-    #     for id in ids_to_run:
-    #         self.assertTrue(id in ids)
-    #
-    #     # block until all requests are processed
-    #     result = worker.execute("select * from audit_evt where fk_status != 'AS'")
-    #     while len(result) != len(ids_to_run):
-    #         sleep(1)
-    #         result = worker.execute("select * from audit_evt where fk_status != 'AS'")
-    #
-    #     ids = [x['request_id'] for x in result]
-    #     for id in ids_to_run:
-    #         # check that the request is done
-    #         self.assertTrue(id in ids)
-    #         # ensure that submission happens
-    #         self.__config.web3_client.eth.waitForTransactionReceipt(
-    #             self.__send_done_message(id))
-    #         # run assertions
-    #         self.__assert_audit_request(id, self.__AUDIT_STATE_SUCCESS,
-    #                                     report_file_path="reports/DAOBugMythrilOnly.json",
-    #                                     ignore_id=True)
-    #         self.__assert_all_analyzers(id)
-    #
-    #     self.__config._Config__block_mined_polling_interval_sec = original_interval
-    #     self.__config._Config__analyzers = original_analyzers
-    #     self.__config._Config__analyzers_config = original_analyzers_config
+    def __block_until_n_audits(self, number):
+        """
+        Blocks until the audit_evt table contains the given number of audit records.
+        """
+        worker = self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker
+        result = worker.execute("select * from audit_evt")
+        while len(result) < number:
+            sleep(0.1)
+            result = worker.execute("select * from audit_evt")
+
+    @timeout(300, timeout_exception=StopIteration)
+    def test_multiple_sequential_requests(self):
+        """
+        Tests that bidding happens when multiple request arrive in a row.
+        """
+        # since we're mocking the smart contract, we should explicitly call its internals
+        worker = self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker
+        buggy_contract = resource_uri("DAOBug.sol")
+
+        # We will request three events in the row without updating the assigned number in the
+        # smart contract. The node should bid on all of them. We need to interleave them with sleep
+        # so that there is enough time for the block mined thread to bid and poll. So that the test
+        # can be executed faster, we will also speed up block polling, and work with Mythril only.
+        polling_interval = 0.1
+        original_interval = self.__config.block_mined_polling
+        original_analyzers = self.__config.analyzers
+        original_analyzers_config = self.__config.analyzers_config
+        self.__config._Config__block_mined_polling_interval_sec = polling_interval
+        self.__config._Config__analyzers = original_analyzers[1:2]
+        self.__config._Config__analyzers_config = original_analyzers_config[1:2]
+
+        self.__set_any_request_available(1)
+        ids_to_run = [self.__REQUEST_ID, 9, 12]
+
+        counter = 1
+        for id in ids_to_run:
+            # request and block until a request is made
+            self.__request_assign_and_emit(id, buggy_contract, self.__PRICE, 10)
+            self.__block_until_n_audits(counter)
+            counter += 1
+
+        self.__set_any_request_available(0)
+
+        # block until all requests are processed
+        result = worker.execute("select * from audit_evt where fk_status != 'AS'")
+        while len(result) != len(ids_to_run):
+            sleep(1)
+            result = worker.execute("select * from audit_evt where fk_status != 'AS'")
+
+        for id in ids_to_run:
+            self.__send_done_message(id)
+
+        result = worker.execute("select * from audit_evt where fk_status = 'DN'")
+        while len(result) != len(ids_to_run):
+            sleep(1)
+            result = worker.execute("select * from audit_evt where fk_status = 'DN'")
+
+        ids = [x['request_id'] for x in result]
+        for id in ids_to_run:
+            # check that the request is done
+            self.assertTrue(id in ids)
+            # ensure that submission happens
+            self.__config.web3_client.eth.waitForTransactionReceipt(
+                self.__send_done_message(id))
+            # run assertions
+            self.__assert_audit_request_report(id,
+                                               report_file_path="reports/DAOBugMythrilOnly.json",
+                                               ignore_id=True)
+            self.__assert_all_analyzers(id)
+
+        expected_content = [{"request_id": id,
+                             "requestor": self.__config.account,
+                             "contract_uri": buggy_contract,
+                             "evt_name": "LogAuditAssigned",
+                             "block_nbr": "10",
+                             "fk_status": "DN",
+                             "price": str(self.__PRICE),
+                             "status_info": "Report successfully submitted",
+                             "tx_hash": "IGNORE",
+                             "submission_attempts": 1,
+                             "is_persisted": 1,
+                             "audit_uri": "IGNORE",
+                             "audit_hash": "IGNORE",
+                             "audit_state": self.__AUDIT_STATE_SUCCESS,
+                             "compressed_report": "1003B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0C00190D001905001D"
+                             } for id in ids_to_run]
+        self.assert_event_table_contains(expected_content,
+                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"],
+                                         close=False)
+
+        self.__config._Config__block_mined_polling_interval_sec = original_interval
+        self.__config._Config__analyzers = original_analyzers
+        self.__config._Config__analyzers__analyzers_config = original_analyzers_config
 
     @timeout(100, timeout_exception=StopIteration)
     def test_buggy_contract_audit_request(self):
@@ -951,9 +978,7 @@ class TestQSPAuditNode(unittest.TestCase):
             self.__set_assigned_request_count(1))
 
         buggy_contract = resource_uri("DappBinWallet.sol")
-        self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__request_assign_and_emit(self.__REQUEST_ID, buggy_contract, self.__PRICE, 100)
-        )
+        self.__request_assign_and_emit(self.__REQUEST_ID, buggy_contract, self.__PRICE, 100)
 
         # Node should not ask for further request
         self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
@@ -1188,7 +1213,6 @@ class TestQSPAuditNode(unittest.TestCase):
         self.__evt_wait_loop(self.__getNextAuditRequest_filter)
         self.__set_any_request_available(0)
         self.__evt_wait_loop(self.__setAnyRequestAvailableResult_filter)
-        self.__config.web3_client.eth.waitForTransactionReceipt(result)
         return result
 
     def __request_assign_and_emit(self, request_id, contract_uri, price, request_block_number):
@@ -1198,7 +1222,7 @@ class TestQSPAuditNode(unittest.TestCase):
         """
         requestor = self.__config.account
         auditor = self.__config.account
-        return TestQSPAuditNode.__safe_transact(
+        result = TestQSPAuditNode.__safe_transact(
             self.__config.audit_contract.functions.assignAuditAndEmit(
                 request_id,
                 requestor,
@@ -1208,6 +1232,8 @@ class TestQSPAuditNode(unittest.TestCase):
                 request_block_number),
             {"from": requestor}
         )
+        self.__config.web3_client.eth.waitForTransactionReceipt(result)
+        return result
 
     def __send_done_message(self, request_id):
         result = TestQSPAuditNode.__safe_transact(
