@@ -1,0 +1,168 @@
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
+import unittest
+import log_streaming
+import logging
+import logging.config
+import structlog
+
+from config import ConfigFactory, config_value
+from helpers.resource import resource_uri
+from streaming import CloudWatchProvider
+
+
+def get_config():
+    return log_streaming.__config
+
+
+def get_account():
+    return log_streaming.__account
+
+
+def get_loggers():
+    return log_streaming.__stream_loggers
+
+
+class TestLoggingInit(unittest.TestCase):
+
+    def test_initialize(self):
+        config_file_uri = resource_uri("test_config.yaml")
+        config = ConfigFactory.create_from_file(config_file_uri, "dev",
+                                                validate_contract_settings=False)
+        log_streaming.initialize("account", config_value(config, "/logging/streaming", {}),
+                                 force=True)
+        self.assertEqual(get_config(), {})
+        self.assertEqual(get_account(), "account")
+        self.assertEqual(get_loggers(), {})
+        try:
+            log_streaming.initialize("account", {})
+            self.fail("An exception was expected")
+        except Exception:
+            # expected
+            pass
+
+    def test_create_logging_streaming_provider_ok(self):
+        """
+        Tests that the CloudWatch provider can be created and is properly returned.
+        """
+        log_streaming.initialize("account", {}, force=True)
+        streaming_provider_name = "CloudWatchProvider"
+        streaming_provider_args = {'log_group': 'grp', 'log_stream': 'stream',
+                                   'send_interval_seconds': 10}
+
+        result = log_streaming.create_streaming_provider(streaming_provider_name,
+                                                         streaming_provider_args)
+        self.assertTrue(isinstance(result, CloudWatchProvider),
+                        "The created provider is not a CloudWatchProvider")
+
+    def test_create_logging_streaming_provider_not_ok(self):
+        """
+        Tests that wrong streaming provider specification causes an exception being thrown.
+        """
+        log_streaming.initialize("account", {}, force=True)
+        streaming_provider_name = "nonsense"
+        streaming_provider_args = {'log_group': 'grp', 'log_stream': 'stream',
+                                   'send_interval_seconds': 10}
+        try:
+            log_streaming.create_streaming_provider(streaming_provider_name,
+                                                    streaming_provider_args)
+            self.fail("Succeeded to create streaming provider without proper provider name.")
+        except Exception:
+            # expected
+            pass
+
+    def test_configure_logging_no_stream(self):
+        # Since streaming is set to False, this will not invoke logger creating and will pass
+        streaming_provider_name = "Nonsense"
+        # The logger is not initialized proper
+        streaming_provider_args = {'log_group': 'grp', 'log_stream': 'stream',
+                                   'send_interval_seconds': 10}
+        config = {'is_enabled': False, 'provider': streaming_provider_name,
+                  'args': streaming_provider_args}
+        log_streaming.initialize("test-account", config, force=True)
+        self.assertEqual(get_loggers(), {})
+        logger = log_streaming.get_logger("test_get_logger")
+        # No configuration should happen
+        self.assertFalse("test_get_logger" in get_loggers())
+
+    def test_configure_logging_stream_provider(self):
+        streaming_provider_name = "CloudWatchProvider"
+        # The logger is not initialized proper
+        streaming_provider_args = {'log_group': 'grp', 'log_stream': 'stream',
+                                   'send_interval_seconds': 10}
+        config = {'is_enabled': True, 'provider': streaming_provider_name,
+                  'args': streaming_provider_args}
+        log_streaming.initialize("test-account", config, force=True)
+        logger = log_streaming.get_logger("test_get_logger")
+        self.assertTrue(logger is log_streaming.get_logger("test_get_logger"))
+        self.assertTrue("test_get_logger" in get_loggers())
+        # Reset logging after this call
+        log_streaming.initialize("account", {'is_enabled': False}, force=True)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.__setup_basic_logging('DEBUG')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.__setup_basic_logging('DEBUG')
+        log_streaming.initialize("account", {'is_enabled': False}, force=True)
+
+    @classmethod
+    def __setup_basic_logging(cls, level):
+        logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+        logging.getLogger('botocore').setLevel(logging.CRITICAL)
+
+        structlog.configure_once(
+            context_class=structlog.threadlocal.wrap_dict(dict),
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            processors=[
+                structlog.stdlib.filter_by_level,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+                structlog.stdlib.PositionalArgumentsFormatter(),
+                structlog.processors.TimeStamper(fmt="iso"),
+                structlog.processors.StackInfoRenderer(),
+                structlog.processors.format_exc_info,
+                structlog.processors.UnicodeDecoder(),
+                structlog.stdlib.render_to_log_kwargs]
+        )
+        level_map = {
+            'CRITICAL': 50,
+            'ERROR': 40,
+            'WARNING': 30,
+            'INFO': 20,
+            'DEBUG': 10,
+            'NOTSET': 0,
+        }
+        dict_config = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'json': {
+                    'format': '%(message)s %(threadName)s %(lineno)d %(pathname)s ',
+                    'class': 'pythonjsonlogger.jsonlogger.JsonFormatter'
+                }
+            },
+            'handlers': {
+                'json': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'json'
+                }
+            },
+            'loggers': {
+                '': {
+                    'handlers': ['json'],
+                    'level': level_map[level],
+                }
+            }
+        }
+        logging.config.dictConfig(dict_config)
