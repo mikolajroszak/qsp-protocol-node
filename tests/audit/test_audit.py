@@ -63,12 +63,17 @@ class TestQSPAuditNode(unittest.TestCase):
                 for key in x.keys():
                     if x[key] != y[key]:
                         msg = "Key: {}, Value 1:{} Values 2:{} \nList1: {}\nList2: {}"
-                        msg.format(key, x[key], y[key], list1, list2)
+                        return msg.format(key, x[key], y[key], list1, list2)
         return "No difference found"
+
+    def block_until_queue_empty(self):
+        while not self.__config.event_pool_manager.sql3lite_worker.empty():
+            sleep(0.1)
 
     def assert_event_table_contains(self, data, ignore_keys=(), close=True):
         """Checks that the table audit_evt contains all dictionaries that are in data"""
 
+        self.block_until_queue_empty()
         query = "select * from audit_evt"
         content = self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker.execute(
             query)
@@ -473,17 +478,12 @@ class TestQSPAuditNode(unittest.TestCase):
                                          ignore_keys=["tx_hash", "audit_hash", "audit_uri"],
                                          close=False)
 
-        # test real auditor id with case mismatch and successful submit
+        # test successful request
         buggy_contract = resource_uri("DAOBug.sol")
-        self.__request_audit(buggy_contract, self.__PRICE)
-
         auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
         evt = {'args': {'auditor': auditor_id, 'requestId': 1, 'price': self.__PRICE,
                         'requestor': auditor_id, 'uri': buggy_contract}, 'blockNumber': 1}
         self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
-        sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
-        row = get_first(sql3lite_worker.execute("select * from audit_evt"))
-        self.assertEqual(row['fk_status'], 'AS')
 
         # asserting the database content
         expected_content = [{"request_id": 1,

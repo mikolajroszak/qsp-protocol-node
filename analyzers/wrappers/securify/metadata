@@ -10,7 +10,6 @@
 ####################################################################################################
 
 # Imports common definitions
-
 source "$WRAPPER_HOME"/../common/settings
 
 readonly VULNERABILITIES_JSON_MAPPING=$(cat "$VULNERABILITY_MAPPING")

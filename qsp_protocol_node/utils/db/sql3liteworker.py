@@ -21,7 +21,7 @@
 # Author: Shawn Lee
 # Changes by Leonardo Passos (Quantstamp Inc): support aspw layer, plus transaction control
 # Changes by Martin Derka (Quantstamp Inc): Exception handling and rollbacks, support of custom
-#     error handlers
+#     error handlers, method for checking queue emptiness
 
 
 """Thread safe sqlite3 interface."""
@@ -225,3 +225,9 @@ class Sqlite3Worker(threading.Thread):
             query = query_stream.read().strip()
 
         return self.execute(query, values, error_handler)
+
+    def empty(self):
+        """
+        Returns true if the queue is empty. Used in tests.
+        """
+        return self.sql_queue.empty()

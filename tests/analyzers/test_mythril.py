@@ -72,7 +72,7 @@ class TestAnalyzerMythril(unittest.TestCase):
         self.assertTrue(report['status'], 'error')
 
         self.assertTrue(len(report['errors']) > 0)
-        self.assertEquals(6, len(report['trace']))
+        self.assertEquals(9, len(report['trace']))
         self.assertTrue("No such file or directory" in ''.join(err + '\n' for err in report['errors']))
 
     def test_old_pragma(self):
@@ -88,7 +88,7 @@ class TestAnalyzerMythril(unittest.TestCase):
         self.assertTrue(report['status'], 'error')
 
         self.assertTrue(len(report['errors']) > 0)
-        self.assertEquals(9, len(report['trace']))
+        self.assertEquals(12, len(report['trace']))
         self.assertTrue("Error: Source file requires different compiler version" in ''.join(err + '\n' for err in report['errors']))
 
     def test_old_pragma_with_caret(self):

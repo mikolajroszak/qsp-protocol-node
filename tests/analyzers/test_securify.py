@@ -72,7 +72,7 @@ class TestAnalyzerSecurify(unittest.TestCase):
         self.assertTrue(report['status'], 'error')
 
         self.assertTrue(len(report['errors']) > 0)
-        self.assertEquals(5, len(report['trace']))
+        self.assertEquals(8, len(report['trace']))
         self.assertTrue(
             "No such file or directory" in ''.join(err + '\n' for err in report['errors']))
 
@@ -89,7 +89,7 @@ class TestAnalyzerSecurify(unittest.TestCase):
         self.assertTrue(report['status'], 'error')
 
         self.assertTrue(len(report['errors']) > 0)
-        self.assertEquals(8, len(report['trace']))
+        self.assertEquals(11, len(report['trace']))
         self.assertTrue("ch.securify.CompilationHelpers.compileContracts" in ''.join(
             err + '\n' for err in report['errors']))
 

@@ -9,12 +9,5 @@
 #                                                                                                  #
 ####################################################################################################
 
-# Imports common definitions
-
-source "$WRAPPER_HOME"/../common/settings
-
-# Pull docker image
-docker pull "$ANALYZER_DOCKER_IMAGE" || exit 1
-
-> "$STORAGE_DIR/.once"
+../common/once
 

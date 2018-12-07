@@ -49,7 +49,8 @@ echo ">> Done" >> "$TRACE_OUTPUT"
 
 echo ">> About to execute pre_run script" >> "$TRACE_OUTPUT"
 
-"$WRAPPER_HOME"/pre_run >> "$LOG_OUTPUT" || \
+# Pre-run currently pulls docker image. We are redirecting to trace.
+"$WRAPPER_HOME"/pre_run >> "$TRACE_OUTPUT" 2>&1 || \
     { report_errors "$LOG_OUTPUT" "$TRACE_OUTPUT"; exit 1; }
 
 echo ">> Done" >> "$TRACE_OUTPUT"
