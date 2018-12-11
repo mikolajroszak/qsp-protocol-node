@@ -55,11 +55,19 @@ dict_config = {
         'json': {
             'class': 'logging.StreamHandler',
             'formatter': 'json'
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'json',
+            'filename': '/var/log/qsp-protocol/qsp-protocol.log',
+            'mode': 'a',
+            'maxBytes': 10485760,
+            'backupCount': 5
         }
     },
     'loggers': {
         '': {
-            'handlers': ['json'],
+            'handlers': ['json', 'file'],
             'level': level_map["DEBUG"],
         }
     }
