@@ -134,7 +134,6 @@ class Config:
         # HTTPProvider
         # IPCProvider
         # EthereumTesterProvider
-        # TestRPCProvider
         #
         # See: http://web3py.readthedocs.io/en/stable/providers.html
         return config_utils.create_eth_provider(self.eth_provider_name,

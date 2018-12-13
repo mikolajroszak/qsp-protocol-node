@@ -20,7 +20,6 @@ from upload import S3Provider
 from helpers.resource import resource_uri
 from web3 import (
     Web3,
-    TestRPCProvider,
     HTTPProvider,
     IPCProvider,
     EthereumTesterProvider,
@@ -268,8 +267,6 @@ class TestConfigUtil(unittest.TestCase):
         self.assertTrue(isinstance(result, IPCProvider))
         result = self.config_utils.create_eth_provider("HTTPProvider", {})
         self.assertTrue(isinstance(result, HTTPProvider))
-        result = self.config_utils.create_eth_provider("TestRPCProvider", {})
-        self.assertTrue(isinstance(result, TestRPCProvider))
         try:
             self.config_utils.create_eth_provider("NonesenseProvider", {})
             self.fail("This provider does not exist, a configuration error should be raised.")

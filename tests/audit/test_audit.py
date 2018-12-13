@@ -42,9 +42,10 @@ from threading import Thread
 from utils.eth import DeduplicationException
 from unittest import mock
 from web3.utils.threads import Timeout
+from helpers.qsp_test import QSPTest
 
 
-class TestQSPAuditNode(unittest.TestCase):
+class TestQSPAuditNode(QSPTest):
     __AUDIT_STATE_SUCCESS = 4
     __AUDIT_STATE_ERROR = 5
     __AVAILABLE_AUDIT_STATE_READY = 1
@@ -237,12 +238,8 @@ class TestQSPAuditNode(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        QSPTest.setUpClass()
         config = TestQSPAuditNode.fetch_config()
-        # Assures structlog has been minimally configured
-        structlog.configure_once(
-            logger_factory=structlog.stdlib.LoggerFactory(),
-            wrapper_class=structlog.stdlib.BoundLogger,
-        )
         TestQSPAuditNode.__clean_up_file(config.evt_db_path)
 
     def __unique_storage_dir(self):

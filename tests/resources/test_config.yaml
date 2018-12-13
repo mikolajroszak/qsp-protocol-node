@@ -10,7 +10,6 @@
 dev:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
-    #provider: !!str "TestRPCProvider"
   # audit_contract_abi: The contract is injected in tests
   min_price_in_qsp: !!int 0
   gas_price:
@@ -57,7 +56,6 @@ dev:
 staging:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
-    #provider: !!str "TestRPCProvider"
   # audit_contract_abi: The contract is injected in tests
   min_price_in_qsp: !!int 0
   gas_price:

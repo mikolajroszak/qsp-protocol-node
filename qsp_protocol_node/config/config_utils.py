@@ -24,7 +24,6 @@ from upload import S3Provider, DummyProvider
 from utils.eth import mk_read_only_call
 from web3 import (
     Web3,
-    TestRPCProvider,
     HTTPProvider,
     IPCProvider,
     EthereumTesterProvider,
@@ -86,9 +85,6 @@ class ConfigUtils:
         if provider == "EthereumTesterProvider":
             return EthereumTesterProvider()
 
-        if provider == "TestRPCProvider":
-            return TestRPCProvider(**args)
-
         ConfigUtils.raise_err(True, "Unknown/Unsupported provider: {0}".format(provider))
 
     def create_web3_client(self,
@@ -133,9 +129,9 @@ class ConfigUtils:
             )
 
         # It could be the case that account is not setup, which may happen for
-        # test-related providers (e.g., TestRPCProvider or EthereumTestProvider)
+        # test-related providers (e.g., EthereumTestProvider)
         if keystore_file is None:
-            if eth_provider.__class__.__name__ not in ['TestRPCProvider', 'EthereumTesterProvider']:
+            if eth_provider.__class__.__name__ not in ['EthereumTesterProvider']:
                 raise ConfigurationException("Could not find an account. Please provide a valid keystore file")
 
             new_account = web3_client.eth.accounts[0]
