@@ -17,11 +17,12 @@ from random import random
 from time import time
 from helpers.resource import project_root
 from helpers.resource import resource_uri
+from helpers.qsp_test import QSPTest
 from audit import Analyzer, Wrapper
 from utils.io import fetch_file
 
 
-class TestAnalyzerMythril(unittest.TestCase):
+class TestAnalyzerMythril(QSPTest):
     """
     Asserts different properties over Analyzer objects.
     """

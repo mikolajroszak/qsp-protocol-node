@@ -7,12 +7,11 @@
 #                                                                                                  #
 ####################################################################################################
 
-import unittest
-
 from streaming import CloudWatchProvider
+from helpers.qsp_test import QSPTest
 
 
-class TestCloudWatchProvider(unittest.TestCase):
+class TestCloudWatchProvider(QSPTest):
     def test_init(self):
         """
         Tests that the constructor properly initializes the parameters and that a handler can be

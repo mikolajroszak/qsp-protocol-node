@@ -7,13 +7,13 @@
 #                                                                                                  #
 ####################################################################################################
 
-import unittest
 import os
 
+from helpers.qsp_test import QSPTest
 from upload import S3Provider
 
 
-class TestS3Provider(unittest.TestCase):
+class TestS3Provider(QSPTest):
     """
     Tests uploads to Amazon S3.
     """

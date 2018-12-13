@@ -11,7 +11,6 @@
 Tests report compression and decoding
 """
 import unittest
-import structlog
 import os
 import json
 
@@ -20,10 +19,11 @@ import audit.report_processing
 from audit.report_processing import ReportEncoder
 from audit.report_processing import ReportFormattingException
 from helpers.resource import resource_uri
+from helpers.qsp_test import QSPTest
 from utils.io import load_json, fetch_file
 
 
-class TestReportProcessing(unittest.TestCase):
+class TestReportProcessing(QSPTest):
     """
     Tests correctness of encoding and decoding functions
     """

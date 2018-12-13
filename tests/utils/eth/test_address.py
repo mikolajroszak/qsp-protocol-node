@@ -7,12 +7,11 @@
 #                                                                                                  #
 ####################################################################################################
 
-import unittest
-
+from helpers.qsp_test import QSPTest
 from utils.eth.address import mk_checksum_address
 
 
-class TestFile(unittest.TestCase):
+class TestFile(QSPTest):
 
     def test_valid_address(self):
         """

@@ -7,6 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
+from helpers.qsp_test import QSPTest
 from tempfile import mkstemp
 from random import random
 
@@ -17,7 +18,7 @@ import unittest
 from utils.io import load_json
 
 
-class TestFile(unittest.TestCase):
+class TestFile(QSPTest):
 
     def test_load_json_for_inexistent_file(self):
         target = str(random())

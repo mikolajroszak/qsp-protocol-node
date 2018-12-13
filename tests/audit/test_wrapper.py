@@ -8,16 +8,16 @@
 ####################################################################################################
 
 import os
-import unittest
 
 from helpers.resource import (
     resource_uri
 )
+from helpers.qsp_test import QSPTest
 
 from config import ConfigFactory
 
 
-class TestWrapper(unittest.TestCase):
+class TestWrapper(QSPTest):
     __MYTHRIL_METADATA = {'name': 'mythril',
                           'version': '9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316',
                           'vulnerabilities_checked': {'Call data forwarded with delegatecall()': {

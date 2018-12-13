@@ -9,8 +9,6 @@
 
 import utils.io as io_utils
 
-import logging
-import logging.config
 import structlog
 import unittest
 
@@ -18,6 +16,7 @@ from config import ConfigUtils
 from config import ConfigurationException
 from upload import S3Provider
 from helpers.resource import resource_uri
+from helpers.qsp_test import QSPTest
 from web3 import (
     Web3,
     HTTPProvider,
@@ -86,17 +85,11 @@ class ConfigStubForCheckSettings:
         self.analyzers = []
 
 
-class TestConfigUtil(unittest.TestCase):
+class TestConfigUtil(QSPTest):
 
     def setUp(self):
         dummy_node_version = '1.0.0'
         self.config_utils = ConfigUtils(dummy_node_version)
-
-        # Assures structlog has been minimally configured
-        structlog.configure_once(
-            logger_factory=structlog.stdlib.LoggerFactory(),
-            wrapper_class=structlog.stdlib.BoundLogger,
-        )
 
     def test_create_report_uploader_provider_ok(self):
         """

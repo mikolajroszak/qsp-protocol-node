@@ -19,12 +19,13 @@ from unittest import mock
 from config import config_value
 from evt.evt_pool_manager import EventPoolManager
 from helpers.resource import resource_uri
+from helpers.qsp_test import QSPTest
 from timeout_decorator import timeout
 from utils.db import Sqlite3Worker
 from utils.io import fetch_file
 
 
-class TestSqlLite3Worker(unittest.TestCase):
+class TestSqlLite3Worker(QSPTest):
     """
     Tests the functionality of the SQLite worker.
     """

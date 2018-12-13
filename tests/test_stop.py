@@ -7,9 +7,9 @@
 #                                                                                                  #
 ####################################################################################################
 
-import unittest
 import uuid
 
+from helpers.qsp_test import QSPTest
 from utils.stop import Stop
 from utils.stop import __handle_sigkill_signal as handle
 
@@ -33,7 +33,7 @@ class Stoppable:
         return self.__id
 
 
-class StopTest(unittest.TestCase):
+class StopTest(QSPTest):
 
     def setUp(self):
         Stop.__objects = []

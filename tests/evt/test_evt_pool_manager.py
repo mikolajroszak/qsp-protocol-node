@@ -15,11 +15,12 @@ from unittest import mock
 from config import ConfigFactory
 from evt import EventPoolManager
 from helpers.resource import resource_uri
+from helpers.qsp_test import QSPTest
 from pathlib import Path
 from utils.io import fetch_file
 
 
-class TestEvtPoolManager(unittest.TestCase):
+class TestEvtPoolManager(QSPTest):
     PROCESSED = []
 
     def setUp(self):

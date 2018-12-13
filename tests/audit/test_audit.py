@@ -14,7 +14,6 @@ import contextlib
 import ntpath
 import os
 import unittest
-import structlog
 
 from audit import QSPAuditNode
 from audit import ExecutionException

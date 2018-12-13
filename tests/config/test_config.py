@@ -21,8 +21,7 @@ from utils.io import (
     fetch_file,
     load_yaml,
 )
-from unittest.mock import Mock
-from os.path import expanduser
+from helpers.qsp_test import QSPTest
 
 
 class ConfigUtilsDummy:
@@ -121,7 +120,7 @@ class Web3Mock:
         return address == "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
 
 
-class TestConfig(unittest.TestCase):
+class TestConfig(QSPTest):
     """
     Asserts different properties of Config objects.
     """

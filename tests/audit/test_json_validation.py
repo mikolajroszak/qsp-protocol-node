@@ -24,13 +24,15 @@ from helpers.resource import (
     resource_uri,
     project_root,
 )
+from helpers.qsp_test import QSPTest
 
 
-class TestJsonReportValidation(unittest.TestCase):
+class TestJsonReportValidation(QSPTest):
     schema = None
 
     @classmethod
     def setUpClass(cls):
+        QSPTest.setUpClass()
         file_path = os.path.realpath(__file__)
         schema_file = '{0}/../../analyzers/schema/analyzer_integration.json'.format(
             os.path.dirname(file_path))

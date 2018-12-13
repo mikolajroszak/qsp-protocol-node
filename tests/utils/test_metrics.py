@@ -7,11 +7,10 @@
 #                                                                                                  #
 ####################################################################################################
 
-import unittest
-import psutil
 import urllib
 
-from unittest.mock import Mock, MagicMock
+from helpers.qsp_test import QSPTest
+from unittest.mock import MagicMock
 from utils.metrics import MetricCollector
 from unittest.mock import patch
 from web3 import (
@@ -20,7 +19,7 @@ from web3 import (
 )
 
 
-class TestFile(unittest.TestCase):
+class TestFile(QSPTest):
     def setUp(self):
         self.__fake_metrics_json = {
             'processIdentifier': 'test-host-123',

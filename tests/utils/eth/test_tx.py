@@ -11,6 +11,7 @@ import unittest
 
 from web3.utils.threads import Timeout
 
+from helpers.qsp_test import QSPTest
 from utils.eth.tx import mk_args, send_signed_transaction, mk_read_only_call
 from utils.eth.tx import DeduplicationException
 from unittest.mock import Mock
@@ -83,7 +84,7 @@ class ReadOnlyMethodMock:
         raise self.exception
 
 
-class TestFile(unittest.TestCase):
+class TestFile(QSPTest):
 
     @staticmethod
     def get_config_mock(gas_price_wei, gas, private_key=None, repeat=False):
