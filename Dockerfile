@@ -43,5 +43,6 @@ RUN pip3 install -r requirements.txt
 COPY . .
 RUN chmod +x ./qsp-protocol-node
 RUN chmod +x ./codec
+RUN mkdir -p /var/log/qsp-protocol/
 RUN find "./analyzers/wrappers" -type f -exec chmod +x {} \;
 CMD [ "./qsp-protocol-node" ]
