@@ -326,9 +326,6 @@ class TestConfig(QSPTest):
         self.assertTrue(config.heartbeat_allowed)
 
     def test_create_components(self):
-        logging_provider_name = "provider name"
-        logging_provider_args = "arguments"
-        streaming_provider = "created streaming provider"
         eth_provider_name = "eth provider name"
         eth_provider_args = "eth provider arguments"
         created_eth_provider = "created_eth_provider"

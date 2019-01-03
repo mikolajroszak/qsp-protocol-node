@@ -86,7 +86,7 @@ class TestLoggingInit(QSPTest):
                   'args': streaming_provider_args}
         log_streaming.initialize("test-account", config, force=True)
         self.assertEqual(get_loggers(), {})
-        logger = log_streaming.get_logger("test_get_logger")
+        log_streaming.get_logger("test_get_logger")
         # No configuration should happen
         self.assertFalse("test_get_logger" in get_loggers())
 

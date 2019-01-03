@@ -8,3 +8,5 @@
 ####################################################################################################
 
 from .evt_pool_manager import EventPoolManager
+
+__all__ = ['EventPoolManager', ]

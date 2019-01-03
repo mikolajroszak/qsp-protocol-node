@@ -110,7 +110,7 @@ class ConfigUtils:
             try:
                 web3_client = Web3(eth_provider)
                 # the following throws if Geth is not reachable
-                _ = web3_client.eth.accounts
+                web3_client.eth.accounts
                 connected = True
                 self.__logger.debug("Connected on attempt {0}".format(attempts))
             except Exception as exception:

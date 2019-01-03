@@ -15,14 +15,12 @@ import unittest
 import json
 from jsonschema import (
     validate,
-    SchemaError,
     ValidationError
 )
 
 from utils.io import fetch_file, load_json
 from helpers.resource import (
-    resource_uri,
-    project_root,
+    resource_uri
 )
 from helpers.qsp_test import QSPTest
 

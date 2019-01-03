@@ -410,7 +410,7 @@ class TestQSPAuditNode(QSPTest):
     @timeout(10, timeout_exception=StopIteration)
     def test_check_and_update_min_price_call(self):
         value = self.__config.min_price_in_qsp + 1
-        with mock.patch('audit.audit.mk_read_only_call', return_value=value) as mocked_read, \
+        with mock.patch('audit.audit.mk_read_only_call', return_value=value), \
                 mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             self.__audit_node._QSPAuditNode__check_and_update_min_price()
             mocked_sign.assert_called()
@@ -420,13 +420,13 @@ class TestQSPAuditNode(QSPTest):
     def test_update_min_price_timeout_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
-        with mock.patch('audit.audit.mk_read_only_call', return_value=-1) as mocked_read, \
+        with mock.patch('audit.audit.mk_read_only_call', return_value=-1), \
                 mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = Timeout()
                 self.__audit_node._QSPAuditNode__update_min_price()
                 self.fail("An exception should have been thrown")
-            except Timeout as e:
+            except Timeout:
                 pass
         self.assert_event_table_contains([])
 
@@ -434,13 +434,13 @@ class TestQSPAuditNode(QSPTest):
     def test_update_min_price_deduplication_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
-        with mock.patch('audit.audit.mk_read_only_call', return_value=-1) as mocked_read, \
+        with mock.patch('audit.audit.mk_read_only_call', return_value=-1), \
                 mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = DeduplicationException()
                 self.__audit_node._QSPAuditNode__update_min_price()
                 self.fail("An exception should have been thrown")
-            except DeduplicationException as e:
+            except DeduplicationException:
                 pass
         self.assert_event_table_contains([])
 
@@ -448,13 +448,13 @@ class TestQSPAuditNode(QSPTest):
     def test_update_min_price_other_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
-        with mock.patch('audit.audit.mk_read_only_call', return_value=-1) as mocked_read, \
+        with mock.patch('audit.audit.mk_read_only_call', return_value=-1), \
                 mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             try:
                 mocked_sign.side_effect = ValueError()
                 self.__audit_node._QSPAuditNode__update_min_price()
                 self.fail("An exception should have been thrown")
-            except ValueError as e:
+            except ValueError:
                 pass
         self.assert_event_table_contains([])
 

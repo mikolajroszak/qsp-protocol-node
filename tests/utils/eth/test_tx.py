@@ -7,8 +7,6 @@
 #                                                                                                  #
 ####################################################################################################
 
-import unittest
-
 from web3.utils.threads import Timeout
 
 from helpers.qsp_test import QSPTest
@@ -106,12 +104,7 @@ class TestFile(QSPTest):
         result = mk_args(config)
         self.assertEqual(gas_price_wei, result['gasPrice'])
         self.assertEqual('account', result['from'])
-        try:
-            temp = result['gas']
-            self.fail("The gas record should not be contained in the dictionary")
-        except KeyError:
-            # Expected
-            pass
+        self.assertTrue('gas' not in result)
 
     def test_mk_args_zero_gas(self):
         """
@@ -200,7 +193,7 @@ class TestFile(QSPTest):
         try:
             send_signed_transaction(config, transaction)
             self.fail("An error was expected")
-        except DeduplicationException as e:
+        except DeduplicationException:
             # the error is supposed to be re-raised for de-duplication, but wrapped
             # as DeduplicationException instead of ValueError
             pass
@@ -293,7 +286,6 @@ class TestFile(QSPTest):
         provided).
         """
         transaction = SimpleTransactionMock()
-        private_key = "abc"
         config = TestFile.get_config_mock(4000000000, 0)
         result = send_signed_transaction(config, transaction)
 

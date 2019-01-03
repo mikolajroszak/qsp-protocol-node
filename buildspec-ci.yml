@@ -22,6 +22,7 @@ phases:
       - apt-get update
       - apt-get -y install python3-pip
       - pip3 install pycodestyle==2.4.0
+      - pip3 install flake8==3.6.0
   build:
     commands:
       # Tests are run inside the container that is built and run

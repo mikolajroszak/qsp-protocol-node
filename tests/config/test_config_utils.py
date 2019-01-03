@@ -8,10 +8,6 @@
 ####################################################################################################
 
 import utils.io as io_utils
-
-import structlog
-import unittest
-
 from config import ConfigUtils
 from config import ConfigurationException
 from upload import S3Provider
@@ -139,7 +135,7 @@ class TestConfigUtil(QSPTest):
         try:
             self.config_utils.raise_err(True, "Message")
             self.fail("An exception was not raised")
-        except ConfigurationException as e:
+        except ConfigurationException:
             # Expected
             pass
 

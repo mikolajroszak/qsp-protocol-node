@@ -74,6 +74,7 @@ bundle:	test
 
 stylecheck:
 	echo "Running Stylecheck"
+	find . -name \*.py -exec flake8 --ignore=$(QSP_IGNORE_CODES) {} +
 	find . -name \*.py -exec pycodestyle --ignore=$(QSP_IGNORE_CODES) {} +
 	echo "Stylecheck passed"
 

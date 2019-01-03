@@ -890,7 +890,7 @@ class QSPAuditNode:
             # This is a fail safe mechanism (defensive programming)
             if 'analyzer' not in analyzer_report:
                 analyzer_report['analyzer'] = {
-                    'name': wrapper[i].analyzer_name
+                    'name': wrappers[i].analyzer_name
                 }
 
             # Another fail safe mechanism (defensive programming)
