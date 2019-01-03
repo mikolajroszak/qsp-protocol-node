@@ -117,11 +117,10 @@ Make sure that the AWS role has [correct permissions](https://docs.aws.amazon.co
     1. `bucket_name`
     1. `contract_bucket_name`
 
-<!-- TODO: Add quick instructions on how to setup a log entry in CloudWatch
-See https://quantstamp.atlassian.net/browse/QSP-854
--->
-Additionally, one can also stream logs to CloudWatch. Once AWS credentials are in place, simply enable `logging/streaming` in
- `deployment/local/config.yaml`, changing the default parameters (if desired).
+1. Additionally, one can also [stream logs to CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html). Once AWS credentials are in place, simply enable `logging/streaming` in
+ `deployment/local/config.yaml`, changing the following default parameters (if desired):
+    1. `log_group`
+    1. `log_stream`
 
 ## CI and deployment pipeline
 
