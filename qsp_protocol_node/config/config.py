@@ -100,14 +100,13 @@ class Config:
         self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False)
         self.__account_keystore_file = config_value(cfg, '/keystore_file', None)
         self.__account_private_key = None
-        self.__gas = config_value(cfg, '/gas')
+        self.__gas_limit = config_value(cfg, '/gas_limit')
         self.__evt_db_path = config_value(cfg, '/evt_db_path',
                                           expanduser("~") + "/" + ".audit_node.db")
         self.__submission_timeout_limit_blocks = config_value(cfg,
                                                               '/submission_timeout_limit_blocks',
                                                               10)
         self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0)
-        self.__default_gas = config_value(cfg, '/default_gas')
         self.__gas_price_strategy = config_value(cfg, '/gas_price/strategy', accept_none=False)
         self.__default_gas_price_wei = config_value(cfg, '/gas_price/default_gas_price_wei', 0)
         self.__gas_price_wei = self.__default_gas_price_wei
@@ -243,7 +242,7 @@ class Config:
         self.__account_passwd = None
         self.__auth_token = None
         self.__config_file_uri = None
-        self.__gas = 0
+        self.__gas_limit = 0
         self.__evt_db_path = None
         self.__evt_polling_sec = 0
         self.__event_pool_manager = None
@@ -462,11 +461,11 @@ class Config:
         return self.__env
 
     @property
-    def gas(self):
+    def gas_limit(self):
         """
         Returns a fixed amount of gas to be used when interacting with the audit contract.
         """
-        return self.__gas
+        return self.__gas_limit
 
     @property
     def gas_price_strategy(self):

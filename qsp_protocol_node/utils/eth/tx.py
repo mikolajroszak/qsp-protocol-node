@@ -16,12 +16,12 @@ logger = get_logger(__name__)
 
 
 def mk_args(config):
-    gas = config.gas
+    gas_limit = config.gas_limit
     gas_price_wei = config.gas_price_wei
-    if gas is None:
+    if gas_limit is None:
         args = {'from': config.account, 'gasPrice': gas_price_wei}
     else:
-        gas_value = int(gas)
+        gas_value = int(gas_limit)
         if gas_value >= 0:
             args = {'from': config.account, 'gas': gas_value, 'gasPrice': gas_price_wei}
         else:

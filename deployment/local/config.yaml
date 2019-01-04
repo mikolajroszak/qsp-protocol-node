@@ -44,7 +44,7 @@ testnet:
         bucket_name: "qsp-protocol-reports-dev"
         contract_bucket_name: "qsp-protocol-reports-dev"
   keystore_file: !!str "./keystore/default.json"
-  default_gas: !!int 500000
+  gas_limit: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
     strategy: !!str "dynamic"
@@ -100,7 +100,7 @@ mainnet:
   report_uploader:
       is_enabled: False
   keystore_file: !!str "./keystore/default.json"
-  default_gas: !!int 500000
+  gas_limit: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
     strategy: !!str "dynamic"

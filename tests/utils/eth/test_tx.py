@@ -85,9 +85,9 @@ class ReadOnlyMethodMock:
 class TestFile(QSPTest):
 
     @staticmethod
-    def get_config_mock(gas_price_wei, gas, private_key=None, repeat=False):
+    def get_config_mock(gas_price_wei, gas_limit, private_key=None, repeat=False):
         mock = Mock()
-        mock.gas = gas
+        mock.gas_limit = gas_limit
         mock.gas_price_wei = gas_price_wei
         mock.account = "account"
         mock.account_private_key = private_key

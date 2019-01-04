@@ -306,7 +306,7 @@ class TestConfig(QSPTest):
         self.assertIsNone(config.audit_contract)
         self.assertIsNone(config.audit_contract_name)
         self.assertEqual(0, len(config.analyzers))
-        self.assertEqual(0, config.gas)
+        self.assertEqual(0, config.gas_limit)
         self.assertIsNone(config.env)
         self.assertEqual(0, config.default_gas_price_wei)
         self.assertEqual(-1, config.max_gas_price_wei)
