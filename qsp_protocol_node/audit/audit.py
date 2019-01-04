@@ -689,15 +689,10 @@ class QSPAuditNode:
             )
             raise Exception("JSON could not be validated") from e
 
-    def audit(self, requestor, uri, request_id):
+    def get_full_report(self, requestor, uri, request_id):
         """
-        Audits a target contract.
+        Produces the full report for a smart contract.
         """
-        self.__logger.info(
-            "Executing audit on contract at {0}".format(uri),
-            requestId=request_id,
-        )
-
         target_contract = fetch_file(uri)
 
         warnings, errors = self.check_compilation(target_contract, request_id, uri)
@@ -716,6 +711,17 @@ class QSPAuditNode:
             requestId=request_id,
             contents=audit_report,
         )
+        return target_contract, audit_report
+
+    def audit(self, requestor, uri, request_id):
+        """
+        Audits a target contract.
+        """
+        self.__logger.info(
+            "Executing audit on contract at {0}".format(uri),
+            requestId=request_id,
+        )
+        target_contract, audit_report = self.get_full_report(requestor, uri, request_id)
 
         self.__validate_json(audit_report, request_id)
 

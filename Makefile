@@ -50,10 +50,15 @@ interactive: build
 	docker run -it \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
+		-v $(PWD)/deployment/local/keystore:/app/keystore:Z \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
+		-e QSP_ETH_AUTH_TOKEN=$(QSP_ETH_AUTH_TOKEN) \
+		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
+		-e QSP_ENV="$(QSP_ENV)" \
+        -e QSP_CONFIG="$(QSP_CONFIG)" \
         qsp-protocol-node sh
 
 test-ci: 

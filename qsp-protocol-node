@@ -7,7 +7,7 @@
 readonly SUCCESS="0"
 
 function usage() {
-    echo "usage: qsp-audit-node [-t | [-h] [-d] [-a AUTO_RESTART]" &> /dev/stderr
+    echo "usage: qsp-audit-node [-t | [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]" &> /dev/stderr
     echo "                      environment config-yaml]"          &> /dev/stderr
     exit 1
 }
@@ -24,10 +24,13 @@ fi
 # Set auto restart to off by default
 AUTO_RESTART="0"
 
+# Set the solidity file to "" in order to run the node in normal operating mode
+export SOL_FILE=""
+
 # Default logging level: debug node
 export QSP_LOGGING_LEVEL="DEBUG"
 
-while getopts "d:ah" FLAG; do
+while getopts "d:f:ah" FLAG; do
     case $FLAG in
         # Debug level
         d)
@@ -44,9 +47,13 @@ while getopts "d:ah" FLAG; do
             esac
         ;;
 
-        # Enables audto restart
+        # Enables auto restart
         a)
             export AUTO_RESTART="1"
+        ;;
+
+        f)
+            export SOL_FILE="$OPTARG"
         ;;
 
         # Incorrect usage
@@ -58,10 +65,14 @@ done
 
 shift $(($OPTIND-1))
 
-
 if [[ "$#" != "2" ]] ; then
    echo "environment and config-yaml are mandatory parameters, but not provided" &> /dev/stderr
    usage
+fi
+
+if [[ "$SOL_FILE" != "" ]] && [[ "$AUTO_RESTART" != "0" ]] ; then
+    echo "sol_file [-f] is mutually exclusive to auto_restart [-a]" &> /dev/stderr
+    usage
 fi
 
 # Two mandatory arguments are expected at this point:

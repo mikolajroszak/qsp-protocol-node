@@ -67,7 +67,7 @@ make test
 
 ### Run node's standalone report encoder
 
-1. To encode an existing json report to a compressed hexstring, create a new conatiner and mount the json report
+1. To encode an existing json report to a compressed hexstring, create a new container and mount the json report
 
 ```
 docker run -v <file-to-mount>:<mount-location> -it <qsp-protocol-node-image> ./codec -e <mount-location>
@@ -96,6 +96,14 @@ with
 Do it for all the contract URIs.
 
 1. Run the node.
+
+### Run node locally to produce a report for a given contract
+
+This allows one to produce a non-compressed audit report for a given solidity file.
+
+1. Copy the solidity file into the project directory (this ensures it will be included in the produced docker image).
+1. Run `make interactive`.
+1. Within the docker shell, run `./create_report path/to/file.sol`
 
 
 ## Optional features

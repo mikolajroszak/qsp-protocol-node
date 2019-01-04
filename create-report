@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Set the solidity file to "" by default
+export SOL_FILE=""
+
+# Default logging level
+export QSP_LOGGING_LEVEL="ERROR"
+
+if [[ $# -ne 1 ]]; then
+    echo "create_report <sol_file>"
+    exit 1
+fi
+
+export SOL_FILE="$1"
+
+./qsp-protocol-node -f "$SOL_FILE" -d ERROR "$QSP_ENV" "$QSP_CONFIG"
+
+

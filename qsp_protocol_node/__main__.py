@@ -10,6 +10,8 @@
 import logging
 import logging.config
 import os
+from pprint import pprint
+
 import structlog
 import sys
 import traceback
@@ -119,7 +121,7 @@ class Program:
         Program.__setup_log_streaming()
 
     @classmethod
-    def run(cls, eth_passphrase, eth_auth_token):
+    def run(cls, eth_passphrase, eth_auth_token, sol_file):
         """
         Runs the backend
         """
@@ -154,8 +156,15 @@ class Program:
 
         logger.info("Running QSP audit node")
 
+        # if a sol file is given, produce the audit report for that file and exit
+        if sol_file:
+            STUB_REQUESTOR_ADDR = "0x1234567890123456789012345678901234567890"
+            STUB_REQUEST_ID = 1
+            _, audit_report = audit_node.get_full_report(STUB_REQUESTOR_ADDR, sol_file, STUB_REQUEST_ID)
+            pprint(audit_report)
         # Runs the QSP audit node in a busy loop fashion
-        audit_node.run()
+        else:
+            audit_node.run()
 
 
 if __name__ == "__main__":
@@ -166,11 +175,12 @@ if __name__ == "__main__":
             os.environ['QSP_CONFIG'],
             os.environ['QSP_LOGGING_LEVEL']
         )
+        sol_file = os.environ.get('SOL_FILE', None)
 
         from log_streaming import get_logger
         logger = get_logger(__name__)
 
-        Program.run(os.environ['QSP_ETH_PASSPHRASE'], os.environ['QSP_ETH_AUTH_TOKEN'])
+        Program.run(os.environ['QSP_ETH_PASSPHRASE'], os.environ['QSP_ETH_AUTH_TOKEN'], sol_file)
 
     except Exception as error:
         if logger is not None:
