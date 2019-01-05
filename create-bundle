@@ -3,7 +3,7 @@
 set -e
 readonly ZIP_FILENAME=qsp-protocol-v1.zip
 
-make clean test-docker
+make clean test
 docker save -o deployment/local/app.tar qsp-protocol-node:latest
 
 cd ./deployment/local

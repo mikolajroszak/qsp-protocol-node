@@ -74,8 +74,8 @@ test-ci:
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		qsp-protocol-node sh -c "./qsp-protocol-node -t"
 
-bundle:	test
-	./create-bundle.sh
+bundle:	
+	./create-bundle
 
 stylecheck:
 	echo "Running Stylecheck"
