@@ -83,6 +83,7 @@ class QSPAuditNode:
         self.__exec = False
         self.__internal_threads = []
         self.__audit_node_initialized = False
+        self.__most_recent_audit = [0]
 
         # There are some important invariants that are to be respected at all
         # times when the audit node (re-)processes events (see associated queries):
@@ -118,19 +119,15 @@ class QSPAuditNode:
             sleep(QSPAuditNode.__THREAD_SLEEP_TIME)
 
     def convert_to_event_and_handle(self, evt_handler):
-        most_recent_audit = mk_read_only_call(
-            self.config,
-            self.__config.audit_contract.functions.myMostRecentAssignedAudit()
-        )
         # convert to event in order to reuse code
         evt = {"args": {
-            "requestId": most_recent_audit[0],
-            "requestor": str(most_recent_audit[1]),
-            "uri": most_recent_audit[2],
-            "price": most_recent_audit[3],
+            "requestId": self.__most_recent_audit[0],
+            "requestor": str(self.__most_recent_audit[1]),
+            "uri": self.__most_recent_audit[2],
+            "price": self.__most_recent_audit[3],
             "auditor": self.config.account
         },
-            "blockNumber": most_recent_audit[4],
+            "blockNumber": self.__most_recent_audit[4],
         }
         if evt["args"]["requestId"] != 0:
             evt_handler(evt)
@@ -315,6 +312,17 @@ class QSPAuditNode:
         Checks first an audit is assignable; then, bids to get an audit request.
         """
         try:
+            most_recent_audit = mk_read_only_call(
+                self.config,
+                self.__config.audit_contract.functions.myMostRecentAssignedAudit()
+            )
+
+            if (most_recent_audit[0] != self.__most_recent_audit[0]):
+                # if request id has changed
+                self.__most_recent_audit = most_recent_audit
+                # persists the event in the database for processing
+                self.convert_to_event_and_handle(self.__on_audit_assigned)
+
             pending_requests_count = mk_read_only_call(
                 self.config,
                 self.config.audit_contract.functions.assignedRequestCount(self.__config.account))
@@ -329,8 +337,6 @@ class QSPAuditNode:
             if any_request_available == self.__AVAILABLE_AUDIT_STATE_READY:
                 self.__logger.debug("There is request available to bid on.")
                 self.__get_next_audit_request()
-                # persists the event in the database for processing
-                self.convert_to_event_and_handle(self.__on_audit_assigned)
             else:
                 self.__logger.debug(
                     "No request available as the contract returned {0}.".format(
