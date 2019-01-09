@@ -12,66 +12,6 @@
     {
       "status": "error",
       "errors": [
-        "root:/shared/BasicToken.sol:13:1: Error: Source \"/shared/ERC20Basic.sol\" not found: File not found.\n",
-        "root:Solidity compilation failed.\n"
-      ],
-      "warnings": [
-        "root:You are using evm version 1.8.2. The supported version is 1.7.3\n",
-        "root:You are using solc version 0.4.25, The latest supported version is 0.4.19\n"
-      ],
-      "analyzer": {
-        "name": "oyente",
-        "version": "f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8",
-        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/BasicToken.sol",
-        "vulnerabilities_checked": {
-          "integer_underflow": {
-            "type": "integer_underflow"
-          },
-          "integer_overflow": {
-            "type": "integer_overflow"
-          },
-          "callstack": {
-            "type": "callstack"
-          },
-          "money_concurrency": {
-            "type": "transaction_order_dependency"
-          },
-          "time_dependency": {
-            "type": "time_dependency"
-          },
-          "reentrancy": {
-            "type": "reentrancy"
-          },
-          "parity_multisig_bug_2": {
-            "type": "parity_multisig_bug"
-          },
-          "assertion_failure": {
-            "type": "exception_state"
-          }
-        },
-        "command": "docker run --rm -v /tmp/.oyente/593:/shared/ -i qspprotocol/oyente-0.4.25@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67 bash -c python /oyente/oyente/oyente.py -ce -j -s /shared/BasicToken.sol"
-      },
-      "trace": [
-        ">> Wrapper setup finished\n",
-        ">> About to execute once script\n",
-        ">> Done\n",
-        ">> About to execute pre_run script\n",
-        "sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8: Pulling from qspprotocol/oyente-0.4.25\n",
-        "Digest: sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8\n",
-        "Status: Image is up to date for qspprotocol/oyente-0.4.25@sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8\n",
-        ">> Done\n",
-        ">> Copying contract(s) to docker's mounted volume\n",
-        ">> Done\n",
-        ">> About to invoke oyente\n",
-        ">> Done\n",
-        ">> Cleaning up\n"
-      ],
-      "start_time": 1535569896,
-      "end_time": 1535569899
-    },
-    {
-      "status": "error",
-      "errors": [
         "{\"success\": false, \"error\": \"Solc experienced a fatal error (code 1).\\n\\n/shared/BasicToken.sol:13:1: Error: Source \\\"/shared/ERC20Basic.sol\\\" not found: File not found.\\nimport \\\"./ERC20Basic.sol\\\";\\n^------------------------^\\n/shared/BasicToken.sol:14:1: Error: Source \\\"math/SafeMath.sol\\\" not found: File not found.\\nimport \\\"../../math/SafeMath.sol\\\";\\n^-------------------------------^\\n\", \"issues\": []}\n"
       ],
       "trace": [

@@ -82,18 +82,6 @@ class TestWrapper(QSPTest):
                                'SecurifyBug': {'type': 'securify_bug'},
                                'Unknown': {'type': 'other'}},
                            'command': 'docker run --rm -v /tmp/.securify/37:/shared/ -i qspprotocol/securify-0.4.25@sha256:16e13ac1bfc7935ca16422b9949d9a9567231fe01c09576275f6caa46d9cf8b4  -fs /shared/x'}
-    __OYENTE_METADATA = {'name': 'oyente',
-                         'version': 'f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8',
-                         'vulnerabilities_checked': {
-                             'integer_underflow': {'type': 'integer_underflow'},
-                             'integer_overflow': {'type': 'integer_overflow'},
-                             'callstack': {'type': 'callstack'},
-                             'money_concurrency': {'type': 'transaction_order_dependency'},
-                             'time_dependency': {'type': 'time_dependency'},
-                             'reentrancy': {'type': 'reentrancy'},
-                             'parity_multisig_bug_2': {'type': 'parity_multisig_bug'},
-                             'assertion_failure': {'type': 'exception_state'}},
-                         'command': 'docker run --rm -v /tmp/.oyente/13:/shared/ -i qspprotocol/oyente-0.4.25@sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8 -ce -j -s /shared/x'}
 
     @classmethod
     def fetch_config(cls):
@@ -110,7 +98,7 @@ class TestWrapper(QSPTest):
         """
         config = TestWrapper.fetch_config()
         data = []
-        for meta in [self.__MYTHRIL_METADATA, self.__OYENTE_METADATA, self.__SECURIFY_METADATA]:
+        for meta in [self.__MYTHRIL_METADATA, self.__SECURIFY_METADATA]:
             start = meta["command"].find("-v /tmp/.") + len("-v /tmp/.")
             end = meta["command"].find("shared/ -i qspprotocol")
             meta["command"] = meta["command"][0:start] + meta["command"][end:]

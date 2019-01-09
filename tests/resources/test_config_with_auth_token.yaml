@@ -25,10 +25,6 @@ dev:
     evt_polling_sec: !!int 5
     block_mined_polling_interval_sec: !!int 5
     analyzers:
-        - oyente:
-            args: "-ce"
-            storage_dir: /tmp/.oyente
-            timeout_sec: 120
         - mythril:
             args: "" # No args provided; rely on defaults for now
             storage_dir: /tmp/.mythril

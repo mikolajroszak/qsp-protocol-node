@@ -37,12 +37,12 @@ In the case of `run`, `pre_run`, and `post_run`, two other variables exist in th
 ## Registering analyzers
 
 After wrapping an analyzer, the latter must be registered in the [`config.yaml` file](../../config.yaml),
-under the `analyzers` entry. Analyzer-specific command-line attributes, in turn, are passed in by means of the `args` attribute. As an illustrarting snippet, registering `oyente` look as:
+under the `analyzers` entry. Analyzer-specific command-line attributes, in turn, are passed in by means of the `args` attribute. As an illustrarting snippet, registering `mythril` look as:
 
 ```
 - analyzers:
-    - oyente:
+    - mythril:
         args: "--depthlimit 50 --looplimit 20"
-        storage_dir: ~/.oyente
+        storage_dir: ~/.mythril
         timeout_sec: 120
 ```

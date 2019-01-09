@@ -12,46 +12,6 @@
     {
       "status": "error",
       "analyzer": {
-        "name": "oyente",
-        "version": "f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8",
-        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/kyber.sol",
-        "vulnerabilities_checked": {
-          "integer_underflow": {
-            "type": "integer_underflow"
-          },
-          "integer_overflow": {
-            "type": "integer_overflow"
-          },
-          "callstack": {
-            "type": "callstack"
-          },
-          "money_concurrency": {
-            "type": "transaction_order_dependency"
-          },
-          "time_dependency": {
-            "type": "time_dependency"
-          },
-          "reentrancy": {
-            "type": "reentrancy"
-          },
-          "parity_multisig_bug_2": {
-            "type": "parity_multisig_bug"
-          },
-          "assertion_failure": {
-            "type": "exception_state"
-          }
-        },
-        "command": "docker run --rm -v /tmp/.oyente/1524:/shared/ -i qspprotocol/oyente-0.4.25@sha256:7d8e53322957adb11983cc05aa04a410aa320e078bdfe2e9e395dcdde9610e67 bash -c python /oyente/oyente/oyente.py -ce -j -s /shared/kyber.sol"
-      },
-      "start_time": 1541708919,
-      "errors": [
-        "Time out occurred. Could not finish oyente within 6 seconds"
-      ],
-      "end_time": 1541708925
-    },
-    {
-      "status": "error",
-      "analyzer": {
         "name": "mythril",
         "version": "9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316",
         "command": "docker run -v \"\":/shared/ -i \"qspprotocol/mythril-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316\" -o json -x \"/shared/kyber.sol\"",

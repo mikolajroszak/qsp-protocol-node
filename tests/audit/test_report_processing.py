@@ -398,7 +398,6 @@ class TestReportProcessing(QSPTest):
             "contract_hash": report["contract_hash"].upper(),
             "vulnerabilities": [
                 # TODO fix types
-                ('reentrancy', 25, 25),
                 ('unprotected_ether_withdrawal', 25, 25),
                 ('call_to_external_contract', 25, 25),
                 ('reentrancy', 29, 29),

@@ -3,52 +3,6 @@
   "bug_this_should_be_analyzers_reports": [
     {
       "analyzer": {
-        "command": "python /oyente/oyente/oyente.py -ce -j -s /shared/DAOBug.sol",
-        "name": "oyente",
-        "version": "f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8",
-        "vulnerabilities_checked": [
-          "integer_underflow",
-          "integer_overflow",
-          "callstack",
-          "money_concurrency",
-          "time_dependency",
-          "reentrancy",
-          "parity_multisig_bug_2",
-          "assertion_failure"
-        ]
-      },
-      "coverages": [
-        {
-          "contract": "SendBalance",
-          "file": "/tmp/.oyente/400/DAOBug.sol",
-          "percentage": 98.3
-        }
-      ],
-      "end_time": 1530192805,
-      "hash": "51ba8f68ef3215e3983c8b2d5caa2ded5b2ff4d3351403ed89e19ef98e2ef64f",
-      "potential_vulnerabilities": [
-        {
-          "contract": "SendBalance",
-          "file": "DAOBug.sol",
-          "instances": [
-            {
-              "end_line": 17,
-              "ref_id": 0,
-              "start_line": 17
-            }
-          ],
-          "name": "reentrancy"
-        }
-      ],
-      "start_time": 1530192801,
-      "status": "success",
-      "warnings": [
-        "root:You are using solc version 0.4.25, The latest supported version is 0.4.19",
-        "root:You are using evm version 1.8.2. The supported version is 1.7.3"
-      ]
-    },
-    {
-      "analyzer": {
         "command": "docker run -v \"/tmp/.mythril/403\":/shared/ -i \"qspprotocol/mythril-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316\" -o json -x \"/shared/DAOBug.sol\"",
         "name": "mythril",
         "version": "9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316",

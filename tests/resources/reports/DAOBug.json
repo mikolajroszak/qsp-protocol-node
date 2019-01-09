@@ -11,67 +11,6 @@
   "analyzers_reports": [
     {
       "status": "success",
-      "warnings": [
-        "root:You are using evm version 1.8.2. The supported version is 1.7.3",
-        "root:You are using solc version 0.4.25, The latest supported version is 0.4.19"
-      ],
-      "coverages": [
-        {
-          "percentage": 98.4,
-          "file": "DAOBug.sol",
-          "contract": "SendBalance"
-        }
-      ],
-      "potential_vulnerabilities": [
-        {
-          "type": "reentrancy",
-          "file": "DAOBug.sol",
-          "contract": "SendBalance",
-          "instances": [
-            {
-              "ref_id": 0,
-              "start_line": 25,
-              "end_line": 25
-            }
-          ]
-        }
-      ],
-      "analyzer": {
-        "name": "oyente",
-        "version": "f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8",
-        "vulnerabilities_checked": {
-          "integer_underflow": {
-            "type": "integer_underflow"
-          },
-          "integer_overflow": {
-            "type": "integer_overflow"
-          },
-          "callstack": {
-            "type": "callstack"
-          },
-          "money_concurrency": {
-            "type": "transaction_order_dependency"
-          },
-          "time_dependency": {
-            "type": "time_dependency"
-          },
-          "reentrancy": {
-            "type": "reentrancy"
-          },
-          "parity_multisig_bug_2": {
-            "type": "parity_multisig_bug"
-          },
-          "assertion_failure": {
-            "type": "exception_state"
-          }
-        },
-        "command": "docker run --rm -v /tmp/.oyente/1336:/shared/ -i qspprotocol/oyente-0.4.25@sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8 -ce -j -s /shared/DAOBug.sol"
-      },
-      "start_time": 1542045940,
-      "end_time": 1542045945
-    },
-    {
-      "status": "success",
       "potential_vulnerabilities": [
         {
           "type": "unprotected_ether_withdrawal",

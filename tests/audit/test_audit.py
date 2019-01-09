@@ -535,7 +535,7 @@ class TestQSPAuditNode(QSPTest):
                              "audit_uri": "IGNORE",
                              "audit_hash": "IGNORE",
                              "audit_state": 4,
-                             "compressed_report": "1003B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0500190C00190D001905001D0300190700191A0019150010120018120014"
+                             "compressed_report": "1003B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0C00190D001905001D0300190700191A0019150010120018120014"
                              }]
         self.assert_event_table_contains(expected_content,
                                          ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
@@ -611,8 +611,8 @@ class TestQSPAuditNode(QSPTest):
         analyzer = Analyzer(faulty_wrapper)
         original_analyzers = self.__audit_node.config._Config__analyzers
         original_analyzers_config = self.__audit_node.config._Config__analyzers_config
-        self.__audit_node.config._Config__analyzers[2] = analyzer
-        self.__audit_node.config._Config__analyzers_config[2] = {"dockerhub_fail": analyzer}
+        self.__audit_node.config._Config__analyzers[1] = analyzer
+        self.__audit_node.config._Config__analyzers_config[1] = {"dockerhub_fail": analyzer}
 
         # since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
@@ -645,7 +645,7 @@ class TestQSPAuditNode(QSPTest):
                              "audit_uri": "IGNORE",
                              "audit_hash": "IGNORE",
                              "audit_state": 5,
-                             "compressed_report": "1000B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0500190C00190D001905001D"
+                             "compressed_report": "1000B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0C00190D001905001D"
                              }]
         self.assert_event_table_contains(expected_content,
                                          ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
@@ -689,7 +689,7 @@ class TestQSPAuditNode(QSPTest):
                              "audit_uri": "Not available. Full report was not uploaded",
                              "audit_hash": "IGNORE",
                              "audit_state": 4,
-                             "compressed_report": "1003B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0500190C00190D001905001D0300190700191A0019150010120018120014"
+                             "compressed_report": "1003B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0C00190D001905001D0300190700191A0019150010120018120014"
                              }]
         self.assert_event_table_contains(expected_content,
                                          ignore_keys=["tx_hash", "audit_hash"])
@@ -762,8 +762,8 @@ class TestQSPAuditNode(QSPTest):
         original_analyzers = self.__config.analyzers
         original_analyzers_config = self.__config.analyzers_config
         self.__config._Config__block_mined_polling_interval_sec = polling_interval
-        self.__config._Config__analyzers = original_analyzers[1:2]
-        self.__config._Config__analyzers_config = original_analyzers_config[1:2]
+        self.__config._Config__analyzers = original_analyzers[0:1]
+        self.__config._Config__analyzers_config = original_analyzers_config[0:1]
 
         self.__set_any_request_available(1)
         ids_to_run = [self.__REQUEST_ID, 9, 12]
