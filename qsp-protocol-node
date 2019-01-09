@@ -83,6 +83,11 @@ export QSP_CONFIG="$2"
 
 while true ; do
 
+    # Prefetch analyzer images from dockerhub
+    echo -n "Downloading analyzers before starting the node "
+    docker pull qspprotocol/mythril-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316 || continue
+    docker pull qspprotocol/securify-0.4.25@sha256:16e13ac1bfc7935ca16422b9949d9a9567231fe01c09576275f6caa46d9cf8b4 || continue
+
     # Runs the audit node
     python -W ignore::DeprecationWarning -m qsp_protocol_node
 
