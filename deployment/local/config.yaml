@@ -13,11 +13,11 @@ testnet:
     args:
       endpoint_uri: !!str "https://ropsten.infura.io/v3/${token}"
   audit_contract_abi:
-    uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-abi.json"
-    metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-meta.json"
+    uri: !!str "./contracts/dev/QuantstampAudit-v-{major-version}-abi.json"
+    metadata: !!str "./contracts/dev/QuantstampAudit-v-{major-version}-meta.json"
   audit_data_contract_abi:
-    uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAuditData-v-{major-version}-abi.json"
-    metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAuditData-v-{major-version}-meta.json"
+    uri: !!str "./contracts/dev/QuantstampAuditData-v-{major-version}-abi.json"
+    metadata: !!str "./contracts/dev/QuantstampAuditData-v-{major-version}-meta.json"
   min_price_in_qsp: !!int 10
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
@@ -70,11 +70,11 @@ mainnet:
     args:
       endpoint_uri: !!str "https://mainnet.infura.io/v3/${token}"
   audit_contract_abi:
-    uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/prod/QuantstampAudit-v-{major-version}-abi.json"
-    metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/prod/QuantstampAudit-v-{major-version}-meta.json"
+    uri: !!str "./contracts/prod/QuantstampAudit-v-{major-version}-abi.json" #note that v1 production ABI is not available
+    metadata: !!str "./contracts/prod/QuantstampAudit-v-{major-version}-meta.json" #note that v1 production ABI is not available
   audit_data_contract_abi:
-    uri: !!str "https://s3.amazonaws.com/qsp-protocol-contract/prod/QuantstampAuditData-v-{major-version}-abi.json"
-    metadata: !!str "https://s3.amazonaws.com/qsp-protocol-contract/prod/QuantstampAuditData-v-{major-version}-meta.json"
+    uri: !!str "./contracts/prod/QuantstampAuditData-v-{major-version}-abi.json" #note that v1 production ABI is not available
+    metadata: !!str "./contracts/prod/QuantstampAuditData-v-{major-version}-meta.json" #note that v1 production ABI is not available
   min_price_in_qsp: !!int 1000
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
