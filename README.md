@@ -22,6 +22,13 @@ steps on how to perform common development tasks.
    Go to a [Ropsten faucet](https://faucet.ropsten.be/) and transfer testing ether
    to the node's target account (default is `0x60463b7ee0c3d33def3a05313597b1300f6de62b`).
 
+1. Configure Ethereum node's authentication token. To use Infura as a provider (default),
+   sign up on https://infura.io/register, create a new project, and then check the associated endpoint, e.g., `https://mainnet.infura.io/v3/abcdefg`.
+   The last part of the URL (`abcdefg`) is the authentication token. Set the environment variable `QSP_ETH_AUTH_TOKEN` to the token:
+
+   `export QSP_ETH_AUTH_TOKEN=abcdefg`
+
+   To use a different provider, modify `eth_node/args/endpoint_uri` in `config.yaml` accordingly.
 
 ## Running the node
 
@@ -35,7 +42,6 @@ variables used by the node. Specifically:
 
 * `QSP_ETH_AUTH_TOKEN`: Ethereum node's
    authentication token (e.g., one obtained for Infura, a proxy node, etc).
-   Default points to an Infura authentication token created for Quantstamp.
    
 * `QSP_ETH_PASSPHRASE`: passphrase of the target Ethereum account. 
 The password must **NOT** contain
@@ -55,7 +61,7 @@ yaml file (default is `deployment/local/config.yaml`).
 To run the node with an account different from the one given as default,
 create a new account (e.g., using MyEtherWallet). 
 
-Record the passphrase and the ew Ethereum account address, storing the keystore file in an accessible
+Record the passphrase and the new Ethereum account address, storing the keystore file in an accessible
 location. Change the keystore location in the yaml configuration file.
 
 
