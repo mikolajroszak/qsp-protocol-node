@@ -25,6 +25,7 @@ run: build
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
 		-v $(PWD)/deployment/local/keystore:/app/keystore:Z \
+		-v $(PWD)/deployment/local/contracts:/app/contracts:Z \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
@@ -51,6 +52,7 @@ interactive: build
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
 		-v $(PWD)/deployment/local/keystore:/app/keystore:Z \
+		-v $(PWD)/deployment/local/contracts:/app/contracts:Z \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
