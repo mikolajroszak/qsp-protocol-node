@@ -27,26 +27,26 @@ dev:
   analyzers:
     - mythril:
         args: "" # No args provided; rely on defaults for now
-        storage_dir: /tmp/.mythril
-        timeout_sec: 120
+        storage_dir: !!str "/tmp/.mythril"
+        timeout_sec: !!int 120
     - securify:
         args: "" # No args provided; rely on defaults for now
-        storage_dir: /tmp/.securify
-        timeout_sec: 300
+        storage_dir: !!str "/tmp/.securify"
+        timeout_sec: !!int 300
   report_uploader:
-      is_enabled: True
+      is_enabled: !!bool True
       provider: !!str "S3Provider"
       args:
-            bucket_name: "qsp-protocol-reports-dev"
-            contract_bucket_name: "qsp-protocol-reports-dev"
+        bucket_name: !!str "qsp-protocol-reports-dev"
+        contract_bucket_name: !!str "qsp-protocol-reports-dev"
   #account: No provided account hex (use the first one by default)
-  evt_db_path: "/tmp/evts.test"
+  evt_db_path: !!str "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
   metric_collection:
-    is_enabled: False
-    interval_seconds: 30
+    is_enabled: !!bool False
+    interval_seconds: !!int 30
     destination_endpoint: !!str "https://localhost/node-metrics"
-  heartbeat_allowed: False
+  heartbeat_allowed: !!bool False
 
 
 staging:
@@ -68,23 +68,23 @@ staging:
   block_discard_on_restart: !!int 1
   analyzers:
     - mythril:
-        args: "" # No args provided; rely on defaults for now
-        storage_dir: /tmp/.mythril
-        timeout_sec: 120
+        args: !!str "" # No args provided; rely on defaults for now
+        storage_dir: !!str "/tmp/.mythril"
+        timeout_sec: !!int 120
     - securify:
         args: "" # No args provided; rely on defaults for now
-        storage_dir: /tmp/.securify
-        timeout_sec: 300
+        storage_dir: !!str "/tmp/.securify"
+        timeout_sec: !!int 300
   report_uploader:
-      is_enabled: True
+      is_enabled: !!bool True
       provider: !!str "S3Provider"
       args:
-            bucket_name: "qsp-protocol-reports-staging"
-            contract_bucket_name: "qsp-protocol-reports-staging"
+        bucket_name: !!str "qsp-protocol-reports-staging"
+        contract_bucket_name: !!str "qsp-protocol-reports-staging"
   #account: No provided account hex (use the first one by default)
-  evt_db_path: "/tmp/evts.test"
+  evt_db_path: !!str "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
   metric_collection:
-    is_enabled: False
-    interval_seconds: 30
+    is_enabled: !!bool False
+    interval_seconds: !!int 30
     destination_endpoint: !!str "https://localhost/node-metrics"

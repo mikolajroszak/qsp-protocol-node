@@ -2,6 +2,6 @@
 ## Default Kibana configuration from kibana-docker.
 ## from https://github.com/elastic/kibana-docker/blob/master/build/kibana/config/kibana.yml
 #
-server.name: kibana
-server.host: "0"
-elasticsearch.url: http://elasticsearch:9200
+server.name: !!str "kibana"
+server.host: !!str "0"
+elasticsearch.url: !!str "http://elasticsearch:9200"
