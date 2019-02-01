@@ -19,6 +19,7 @@ from helpers.resource import resource_uri
 from helpers.qsp_test import QSPTest
 from audit import Analyzer, Wrapper
 from utils.io import fetch_file
+from subprocess import CalledProcessError
 
 
 class TestAnalyzerDockerhubFail(QSPTest):
@@ -27,22 +28,34 @@ class TestAnalyzerDockerhubFail(QSPTest):
     """
 
     @staticmethod
-    def __new_analyzer(timeout_sec=60):
+    def __new_analyzer(timeout_sec=60, prefetch=False):
         faulty_wrapper = Wrapper(
             wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
             analyzer_name="dockerhub_fail",
             args="",
             storage_dir="/tmp/./dockerhub_fail/{}{}".format(time(), random()),
             timeout_sec=timeout_sec,
+            prefetch=prefetch
         )
         return Analyzer(faulty_wrapper)
+
+    def test_excpetion_on_create(self):
+        """
+        Tests whether a report is created upon calling the analyzer on a buggy contract. This SHOULD
+        invoke dockerhub fail.
+        """
+        try:
+            TestAnalyzerDockerhubFail.__new_analyzer(prefetch=True)
+            self.fail("Expected an error from the wrapper pull")
+        except CalledProcessError:
+            # expected
+            pass
 
     def test_report_creation(self):
         """
         Tests whether a report is created upon calling the analyzer on a buggy contract. This SHOULD
         invoke dockerhub fail.
         """
-
         analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
 
         buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
@@ -53,6 +66,7 @@ class TestAnalyzerDockerhubFail(QSPTest):
         self.assertTrue(report)
 
         self.assertTrue(report['status'], 'error')
+
         self.assertEquals(2, len(report['trace']))
         self.assertEquals(1, len(report['errors']))
         msg = "Error response from daemon: pull access denied for qspprotocol/" \
@@ -66,6 +80,7 @@ class TestAnalyzerDockerhubFail(QSPTest):
         """
 
         analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
+
         open(analyzer.wrapper.storage_dir + "/.once", 'a').close()
 
         buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
@@ -89,6 +104,7 @@ class TestAnalyzerDockerhubFail(QSPTest):
         """
 
         no_file = str(random()) + ".sol"
+
         analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
         request_id = 15
         report = analyzer.check(no_file, request_id, no_file)
@@ -108,6 +124,7 @@ class TestAnalyzerDockerhubFail(QSPTest):
         """
 
         no_file = str(random()) + ".sol"
+
         analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
         open(analyzer.wrapper.storage_dir + "/.once", 'a').close()
         request_id = 15
@@ -128,6 +145,7 @@ class TestAnalyzerDockerhubFail(QSPTest):
         """
 
         old_contract = fetch_file(resource_uri("DAOBugOld.sol"))
+
         analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
         request_id = 15
         report = analyzer.check(old_contract, request_id, "DAOBugOld.sol")
@@ -148,6 +166,7 @@ class TestAnalyzerDockerhubFail(QSPTest):
         """
 
         old_contract = fetch_file(resource_uri("DAOBugOld-Caret.sol"))
+
         analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
         request_id = 15
         report = analyzer.check(old_contract, request_id, "DAOBugOld-Caret.sol")

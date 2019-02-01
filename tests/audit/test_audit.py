@@ -552,6 +552,7 @@ class TestQSPAuditNode(QSPTest):
             args="",
             storage_dir="/tmp/{}{}".format(time(), random()),
             timeout_sec=60,
+            prefetch=False
         )
         analyzer = Analyzer(faulty_wrapper)
         original_analyzers = self.__audit_node.config._Config__analyzers
@@ -607,6 +608,7 @@ class TestQSPAuditNode(QSPTest):
             args="",
             storage_dir="/tmp/{}{}".format(time(), random()),
             timeout_sec=60,
+            prefetch=False
         )
         analyzer = Analyzer(faulty_wrapper)
         original_analyzers = self.__audit_node.config._Config__analyzers

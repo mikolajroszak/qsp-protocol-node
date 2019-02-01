@@ -12,4 +12,4 @@
 source "$WRAPPER_HOME"/../common/settings
 
 # Pull docker image
-docker pull "$ANALYZER_DOCKER_IMAGE" || exit 1
+"$WRAPPER_HOME"/../common/pull_analyzer || exit 1
