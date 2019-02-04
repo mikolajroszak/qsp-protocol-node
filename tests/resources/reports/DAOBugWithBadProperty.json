@@ -3,9 +3,9 @@
   "bug_this_should_be_analyzers_reports": [
     {
       "analyzer": {
-        "command": "docker run -v \"/tmp/.mythril/403\":/shared/ -i \"qspprotocol/mythril-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316\" -o json -x \"/shared/DAOBug.sol\"",
+        "command": "docker run -v \"/tmp/.mythril/403\":/shared/ -i \"qspprotocol/mythril-usolc-0.5.3@sha256:e7ef40718273b6d400d45669500dd63a7017215aa8c5748fb3ff91faac73ad95\" -o json -x \"/shared/DAOBug.sol\"",
         "name": "mythril",
-        "version": "9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316",
+        "version": "e7ef40718273b6d400d45669500dd63a7017215aa8c5748fb3ff91faac73ad95",
         "vulnerabilities_checked": [
           "call_data_forwarded",
           "dependence_on_environment_variable",
