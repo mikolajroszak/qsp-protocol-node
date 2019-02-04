@@ -8,7 +8,7 @@
 ####################################################################################################
 
 resource "aws_iam_role" "main" {
-  name = "${var.environment}-main-beanstalk-ec2-role"
+  name = "${var.environment}-${var.stage}-main-beanstalk-ec2-role"
 
   assume_role_policy = <<EOF
 {
@@ -28,7 +28,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "main" {
-  name = "${var.environment}-beanstalk-ec2-role-policy"
+  name = "${var.environment}-${var.stage}-beanstalk-ec2-role-policy"
   role = "${aws_iam_role.main.id}"
 
   policy = <<EOF
@@ -130,6 +130,13 @@ resource "aws_iam_role_policy" "main" {
             "s3:ListObjects"
         ],
         "Resource": "*"
+    },
+    {
+        "Effect": "Allow",
+        "Action": [
+            "lambda:InvokeFunction"
+        ],
+        "Resource": "arn:aws:lambda:us-east-1:466368306539:function:qsp-protocol-node-keystore"
     }
   ]
 }

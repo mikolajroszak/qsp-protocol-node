@@ -7,14 +7,14 @@
 #                                                                                                  #
 ####################################################################################################
 
-resource "aws_iam_instance_profile" "audit" {
-  name  = "${var.environment}-${var.stage}-audit-beanstalk-ec2-profile"
+resource "aws_iam_instance_profile" "police" {
+  name  = "${var.environment}-${var.stage}-police-beanstalk-ec2-profile"
   role = "${aws_iam_role.main.name}"
 }
 
-resource "aws_elastic_beanstalk_environment" "audit" {
-  name                  = "qsp-protocol-node-${var.stage}"
-  application           = "qsp-protocol-node"
+resource "aws_elastic_beanstalk_environment" "police" {
+  name                  = "qsp-protocol-police-node-${var.stage}"
+  application           = "qsp-protocol-police-node"
   solution_stack_name   = "64bit Amazon Linux 2018.03 v2.11.4 running Multi-container Docker 18.06.1-ce (Generic)"
   tier                  = "WebServer"
 
@@ -28,19 +28,19 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "InstanceType"
-    value     = "${var.node_instance_type_audit}"
+    value     = "${var.node_instance_type_police}"
   }
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "SecurityGroups"
-    value = "${aws_security_group.audit.name}"
+    value = "${aws_security_group.police.name}"
   }
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "IamInstanceProfile"
-    value     = "${aws_iam_instance_profile.audit.name}"
+    value     = "${aws_iam_instance_profile.police.name}"
   }
 
   setting {
@@ -82,19 +82,19 @@ resource "aws_elastic_beanstalk_environment" "audit" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name = "QSP_ETH_PASSPHRASE"
-    value = "${var.QSP_ETH_PASSPHRASE}"
+    value = "${var.QSP_ETH_POLICE_PASSPHRASE}"
   }
 
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name = "QSP_ETH_AUTH_TOKEN"
-    value = "${var.QSP_ETH_AUTH_TOKEN}"
+    value = "${var.QSP_ETH_POLICE_AUTH_TOKEN}"
   }
   
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "QSP_NODE_TYPE"
-    value     = "audit"
+    value     = "police"
   }
   
   tags {

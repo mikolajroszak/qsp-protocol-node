@@ -37,10 +37,6 @@ Record for next steps:
 - Location of your keystore (JSON) file, e.g., `./keystore/default.json`. The location is
 relative to this README's folder.
 
-### Get whitelisted
-
-Contact the Protocol team (protocol@quantstamp.com) to whitelist your Ethereum address.
-
 ### Configure
 
 1. Set environment variable `QSP_ETH_PASSPHRASE` to your account's passphrase (or *wallet password*).

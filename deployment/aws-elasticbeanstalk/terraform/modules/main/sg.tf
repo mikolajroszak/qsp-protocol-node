@@ -8,7 +8,7 @@
 ####################################################################################################
 
 resource "aws_security_group" "audit" {
-  name        = "${var.environment}-audit"
+  name        = "${var.environment}-${var.stage}-audit"
   description = "Security group for the audit node"
   
   egress {
@@ -20,5 +20,21 @@ resource "aws_security_group" "audit" {
 
   tags {
     Name = "${var.environment}-node-sg"
+  }
+}
+
+resource "aws_security_group" "police" {
+  name        = "${var.environment}-${var.stage}-police"
+  description = "Security group for the police node"
+  
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags {
+    Name = "${var.environment}-${var.stage}-node-sg"
   }
 }

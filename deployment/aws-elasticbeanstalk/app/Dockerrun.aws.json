@@ -16,7 +16,7 @@
     {
       "name": "audit-db",
       "host": {
-        "sourcePath": "/var/audit-db-v0p4"
+        "sourcePath": "/var/audit-db-v0p8"
       }
     },
     {
@@ -36,7 +36,7 @@
     {
       "name": "audit",
       "image": "{{image}}",
-      "command": ["./qsp-protocol-node", "dev", "/app/node-config/config.yaml"],
+      "command": ["./qsp-protocol-node", "dev-feature", "/app/node-config/config.yaml"],
       "essential": true,
       "memory": 2048,
       "mountPoints": [
