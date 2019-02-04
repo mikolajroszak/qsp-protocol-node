@@ -144,7 +144,7 @@ class Program:
         logger.debug("account: {0}".format(cfg.account))
         logger.debug("analyzers: {0}".format(cfg.analyzers))
         logger.debug("audit contract address: {0}".format(cfg.audit_contract_address))
-        logger.debug("analyzers: {0}".format(cfg.analyzers))
+
         logger.debug("min_price_in_qsp: {0}".format(cfg.min_price_in_qsp))
         logger.debug("evt_polling: {0}".format(cfg.evt_polling))
         logger.debug("audit contract address: {0}".format(cfg.audit_contract_address))

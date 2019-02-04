@@ -25,6 +25,12 @@ class Analyzer:
         self.__wrapper = wrapper
         self.__logger = get_logger(self.__class__.__qualname__)
 
+    def __repr__(self):
+        """
+        Represents the analyzer using the name of the wrapped analyzer
+        """
+        return "empty_analyzer_object" if self.__wrapper is None else self.__wrapper.analyzer_name
+
     @property
     def wrapper(self):
         return self.__wrapper
