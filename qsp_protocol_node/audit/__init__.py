@@ -11,7 +11,9 @@ from .audit import QSPAuditNode
 from .wrapper import Wrapper
 from .analyzer import Analyzer
 from .exceptions import ExecutionException
-from .exceptions import NonWhitelistedNodeException
 from .exceptions import AnalyzerRunException
+from .exceptions import NotEnoughStake
+from .vulnerabilities_set import VulnerabilitiesSet
 
-__all__ = ['QSPAuditNode', 'Wrapper', 'Analyzer', 'ExecutionException', 'NonWhitelistedNodeException', 'AnalyzerRunException', ]
+__all__ = ['QSPAuditNode', 'Wrapper', 'Analyzer', 'ExecutionException',
+            'NonWhitelistedNodeException', 'AnalyzerRunException', 'NotEnoughStake', 'VulnerabilitiesSet', ]

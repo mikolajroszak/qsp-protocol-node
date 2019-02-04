@@ -219,6 +219,63 @@ class ReportEncoder:
 
         return version, audit_state, status
 
+    @staticmethod
+    def __produce_json(version, audit_state, status, contract_hash, vulnerabilities):
+        """
+        Produce a json report that adheres to the analyzers_integration schema.
+        This check does not occur here to keep this module self-contained,
+        but is enforced by police nodes during decoding.
+        """
+
+        # Upon decoding, we do not know which analyzer/file is associated with a given vulnerability
+        __UNKNOWN_ANALYZER = {
+            "name": "Unknown Analyzer"
+        }
+        __UNKNOWN_FILE = "Unknown File"
+
+        # Convert vulnerabilities into a schema-compliant format
+        vulnerability_group_instances = {}
+        # Do not use a mapping for this in order to preserve ordering
+        vulnerability_group_names = []
+        for (name, start_line, end_line) in vulnerabilities:
+            instances = vulnerability_group_instances.get(name, [])
+            if not instances:
+                vulnerability_group_names.append(name)
+            ref_id = len(instances)  # zero-based
+            instances.append(
+                {
+                    "ref_id": ref_id,
+                    "start_line": start_line,
+                    "end_line": end_line
+                }
+            )
+            vulnerability_group_instances[name] = instances
+
+        vulnerability_lists = []
+        for name in vulnerability_group_names:
+            vulnerability_lists.append(
+                {
+                    "type": name,
+                    "file": __UNKNOWN_FILE,
+                    "instances": vulnerability_group_instances[name]
+                }
+            )
+
+        report = {
+            "version": version,
+            "audit_state": audit_state,
+            "status": status,
+            "contract_hash": contract_hash,
+            "analyzers_reports": [
+                {
+                    "status": status,
+                    "analyzer": __UNKNOWN_ANALYZER,
+                    "potential_vulnerabilities": vulnerability_lists
+                }
+            ]
+        }
+        return report
+
     def __encode_vulnerabilities(self, analyzers_reports):
         """
         Encodes each vulnerability instance as a bitstring.
@@ -363,13 +420,9 @@ class ReportEncoder:
         b_vulnerabilities = b_report[ReportEncoder.__VULNERABILITIES_START:]
         vulnerabilities = self.__decode_vulnerabilities(b_vulnerabilities)
 
-        report = {
-            "version": version,
-            "audit_state": audit_state,
-            "status": status,
-            "contract_hash": contract_hash,
-            "vulnerabilities": vulnerabilities,
-        }
+        # produce the final json report
+        report = self.__produce_json(version, audit_state, status, contract_hash, vulnerabilities)
+
         return report
 
 

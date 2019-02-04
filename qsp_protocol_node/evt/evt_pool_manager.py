@@ -90,7 +90,6 @@ class EventPoolManager:
         # Must be explicitly closed by calling `close` on the same
         # EventPool object. The connection is created with autocommit
         # mode on
-
         db_existed = False
         db_created = False
         error = False
@@ -99,6 +98,7 @@ class EventPoolManager:
         db_file = None
         try:
             db_file = Path(db_path)
+
             if db_file.is_file() and db_file.stat().st_size > 0:
                 db_existed = True
 
@@ -150,6 +150,7 @@ class EventPoolManager:
 
     def add_evt_to_be_assigned(self, evt):
         encoded_evt = EventPoolManager.__encode(evt)
+
         EventPoolManager.__exec_sql(
             self.__sqlworker,
             'add_evt_to_be_assigned',
@@ -160,6 +161,7 @@ class EventPoolManager:
                 encoded_evt['evt_name'],
                 encoded_evt['block_nbr'],
                 encoded_evt['status_info'],
+                encoded_evt['fk_type'],
                 encoded_evt['price'],
             ),
             error_handler=EventPoolManager.insert_error_handler
@@ -199,26 +201,27 @@ class EventPoolManager:
             fct_kwargs=kw_args,
         )
 
-    def set_evt_to_be_submitted(self, evt):
+    def set_evt_status_to_be_submitted(self, evt):
         encoded_evt = EventPoolManager.__encode(evt)
         EventPoolManager.__exec_sql(
             self.__sqlworker,
-            'set_evt_to_be_submitted',
+            'set_evt_status_to_be_submitted',
             (encoded_evt['status_info'],
              encoded_evt['tx_hash'],
              encoded_evt['audit_uri'],
              encoded_evt['audit_hash'],
              encoded_evt['audit_state'],
+             encoded_evt['full_report'],
              encoded_evt['compressed_report'],
              encoded_evt['request_id'],
              ),
         )
 
-    def set_evt_to_submitted(self, evt):
+    def set_evt_status_to_submitted(self, evt):
         encoded_evt = EventPoolManager.__encode(evt)
         EventPoolManager.__exec_sql(
             self.__sqlworker,
-            'set_evt_to_submitted',
+            'set_evt_status_to_submitted',
             (encoded_evt['tx_hash'],
              encoded_evt['status_info'],
              encoded_evt['audit_uri'],
@@ -228,19 +231,19 @@ class EventPoolManager:
              ),
         )
 
-    def set_evt_to_done(self, evt):
+    def set_evt_status_to_done(self, evt):
         encoded_evt = EventPoolManager.__encode(evt)
         EventPoolManager.__exec_sql(
             self.__sqlworker,
-            'set_evt_to_done',
+            'set_evt_status_to_done',
             (encoded_evt['status_info'], encoded_evt['request_id'],),
         )
 
-    def set_evt_to_error(self, evt):
+    def set_evt_status_to_error(self, evt):
         encoded_evt = EventPoolManager.__encode(evt)
         EventPoolManager.__exec_sql(
             self.__sqlworker,
-            'set_evt_to_error',
+            'set_evt_status_to_error',
             (encoded_evt['status_info'], encoded_evt['request_id'],),
         )
 

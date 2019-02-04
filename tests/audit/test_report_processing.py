@@ -13,6 +13,10 @@ Tests report compression and decoding
 import unittest
 import os
 import json
+from pprint import pprint
+
+import jsonschema
+from deepdiff import DeepDiff
 
 import audit.report_processing
 
@@ -30,6 +34,16 @@ class TestReportProcessing(QSPTest):
 
     def setUp(self):
         self.__encoder = audit.report_processing.ReportEncoder()
+
+    def __compare_json(self, actual_json, expected_json):
+        diff = DeepDiff(
+            actual_json,
+            expected_json,
+            exclude_paths={
+                "root['version']"
+            }
+        )
+        self.assertEqual(diff, {})
 
     @staticmethod
     def mock_report(version=None,
@@ -51,7 +65,7 @@ class TestReportProcessing(QSPTest):
         if contract_hash is None:
             contract_hash = "0" * 64
         if vulnerabilities is None:
-            vulnerabilities = [("reentrancy", i, i) for i in range(vulnerabilities_count)]
+            vulnerabilities = [("reentrancy", i + 1, i + 1) for i in range(vulnerabilities_count)]
         report = {
             "version": version,
             "audit_state": audit_state,
@@ -82,15 +96,22 @@ class TestReportProcessing(QSPTest):
         return report
 
     @staticmethod
-    def equivalent_compressed_json(report1, report2):
+    def validate_json(report):
         """
-        Compares the fields of two JSON reports.
+        Validate that the report conforms to the schema.
         """
-        for i in ["version", "audit_state", "status", "contract_hash", "vulnerabilities"]:
-            if report1[i] != report2[i]:
-                print(report1[i], report2[i])
-                return False
-        return True
+        try:
+            file_path = os.path.realpath(__file__)
+            schema_file = '{0}/../../analyzers/schema/analyzer_integration.json'.format(
+                os.path.dirname(file_path))
+            with open(schema_file) as schema_data:
+                schema = json.load(schema_data)
+            jsonschema.validate(report, schema)
+            return True
+        except jsonschema.ValidationError as e:
+            pprint(report)
+            print(e)
+            return False
 
     def compress_report(self, report):
         """
@@ -102,7 +123,9 @@ class TestReportProcessing(QSPTest):
         """
         Decodes the hexstring report.
         """
-        return self.__encoder.decode_report(report, 1)
+        report = self.__encoder.decode_report(report, 1)
+        self.assertTrue(TestReportProcessing.validate_json(report))
+        return report
 
     def test_decimal_to_bitstring(self):
         """
@@ -350,11 +373,11 @@ class TestReportProcessing(QSPTest):
             report = TestReportProcessing.mock_report(vulnerabilities_count=count)
             hexstring = self.compress_report(report)
             decoded_report = self.decode_report(hexstring)
-            vulnerabilities = decoded_report["vulnerabilities"]
-            self.assertEqual(len(vulnerabilities), count)
-            for vulnerability, i in zip(vulnerabilities, range(len(vulnerabilities))):
+            vulnerabilities = decoded_report["analyzers_reports"][0]["potential_vulnerabilities"]
+            self.assertEqual(len(vulnerabilities[0]["instances"]), count)
+            for i in range(len(vulnerabilities[0]["instances"])):
                 # the encoded start_line numbers are correct
-                self.assertEqual(vulnerability[1], i)
+                self.assertEqual(vulnerabilities[0]["instances"][i]["start_line"], i + 1)
 
     def test_vulnerabilities_with_end_lines_compression_and_decoding(self):
         """
@@ -369,15 +392,15 @@ class TestReportProcessing(QSPTest):
         report = TestReportProcessing.mock_report(vulnerabilities=vulnerabilities)
         hexstring = self.compress_report(report)
         decoded_report = self.decode_report(hexstring)
-        decoded_vulnerabilities = decoded_report["vulnerabilities"]
+        decoded_vulnerabilities = decoded_report["analyzers_reports"][0]["potential_vulnerabilities"]
         self.assertEqual(len(vulnerabilities), len(decoded_vulnerabilities))
         for v1, v2 in zip(vulnerabilities, decoded_vulnerabilities):
             # the encoded types are correct
-            self.assertEqual(v1[0], v2[0])
+            self.assertEqual(v1[0], v2["type"])
             # the encoded start_line numbers are correct
-            self.assertEqual(v1[1], v2[1])
+            self.assertEqual(v1[1], v2["instances"][0]["start_line"])
             # the encoded end_line numbers are correct
-            self.assertEqual(v1[2], v2[2])
+            self.assertEqual(v1[2], v2["instances"][0]["end_line"])
 
     def test_compress_and_decode_full_report(self):
         """
@@ -385,33 +408,10 @@ class TestReportProcessing(QSPTest):
         """
         report = load_json(fetch_file(resource_uri("reports/DAOBug.json")))
         hexstring = self.compress_report(report)
-        print(hexstring)
         decoded_report = self.decode_report(hexstring)
-        print(decoded_report)
 
-        # amended version of the original report for comparison
-        expected_report = {
-            "version": report["version"],
-            "audit_state": report["audit_state"],
-            "status": report["status"],
-            # lower case hex characters are not preserved
-            "contract_hash": report["contract_hash"].upper(),
-            "vulnerabilities": [
-                # TODO fix types
-                ('unprotected_ether_withdrawal', 25, 25),
-                ('call_to_external_contract', 25, 25),
-                ('reentrancy', 29, 29),
-                ('transaction_order_dependency', 25, 25),
-                ('exception_state', 25, 25),
-                ('reentrancy_true_positive', 25, 25),
-                ('missing_input_validation_true_positive', 16, 16),
-                ('missing_input_validation', 24, 24),
-                ('missing_input_validation', 20, 20)
-            ]
-        }
-        self.assertTrue(
-            TestReportProcessing.equivalent_compressed_json(expected_report, decoded_report)
-        )
+        expected_report = load_json(fetch_file(resource_uri("reports/DAOBugDecompressed.json")))
+        self.__compare_json(decoded_report, expected_report)
 
     def test_buggy_empty_report(self):
         """
@@ -427,11 +427,11 @@ class TestReportProcessing(QSPTest):
         report = TestReportProcessing.mock_report(vulnerabilities_count=COUNT)
         hexstring = self.compress_report(report)
         decoded_report = self.decode_report(hexstring)
-        vulnerabilities = decoded_report["vulnerabilities"]
-        self.assertEqual(len(vulnerabilities), COUNT)
-        for vulnerability, i in zip(vulnerabilities, range(len(vulnerabilities))):
+        vulnerabilities = decoded_report["analyzers_reports"][0]["potential_vulnerabilities"]
+        self.assertEqual(len(vulnerabilities[0]["instances"]), COUNT)
+        for i in range(len(vulnerabilities[0]["instances"])):
             # the encoded start_line numbers are correct
-            self.assertEqual(vulnerability[1], i)
+            self.assertEqual(vulnerabilities[0]["instances"][i]["start_line"], i + 1)
 
     def test_vulnerability_types_compression_and_decoding(self):
         """
@@ -442,16 +442,17 @@ class TestReportProcessing(QSPTest):
         for i in range(len(type_bitstrings)):
             vulnerabilities.append(
                 (self.__encoder._ReportEncoder__vulnerability_types_inverted[type_bitstrings[i]],
-                 i,
+                 i + 1,
                  i + 1)
             )
         report = TestReportProcessing.mock_report(vulnerabilities=vulnerabilities)
         hexstring = self.compress_report(report)
         decoded_report = self.decode_report(hexstring)
-        decoded_vulnerabilities = decoded_report["vulnerabilities"]
+        decoded_vulnerabilities = decoded_report["analyzers_reports"][0]["potential_vulnerabilities"]
+
         for b, v in zip(type_bitstrings, decoded_vulnerabilities):
             self.assertEqual(self.__encoder._ReportEncoder__vulnerability_types_inverted[b],
-                             v[0])
+                             v["type"])
 
     def test_buggy_vulnerability_types_compression(self):
         """
@@ -496,6 +497,15 @@ class TestReportProcessing(QSPTest):
                 wrapper_types.add(types_json[name]["type"])
 
         self.assertEqual(set(types_list), wrapper_types)
+
+    def test_encode_decode_idempotence(self):
+        """
+        Ensures that encode(decode(report)) == encode(decode(encode(decode(report))))
+        """
+        report = load_json(fetch_file(resource_uri("reports/DAOBug.json")))
+        decoded_report = self.decode_report(self.compress_report(report))
+        twice_decoded_report = self.decode_report(self.compress_report(decoded_report))
+        self.__compare_json(decoded_report, twice_decoded_report)
 
 
 if __name__ == '__main__':

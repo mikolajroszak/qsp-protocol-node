@@ -26,7 +26,7 @@ dev:
   block_discard_on_restart: !!int 1
   analyzers:
     - mythril:
-        args: "" # No args provided; rely on defaults for now
+        args: !!str "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/.mythril"
         timeout_sec: !!int 120
     - securify:

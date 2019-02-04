@@ -28,7 +28,7 @@ class TestAnalyzerOyente(QSPTest):
     """
 
     @staticmethod
-    def __new_analyzer(storage_dir="/tmp", timeout_sec=120):
+    def __new_analyzer(storage_dir="/tmp", timeout_sec=600):
         oyente_wrapper = Wrapper(
             wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
             analyzer_name="oyente",

@@ -1,0 +1,109 @@
+{
+  "analyzers_reports": [
+    {
+      "analyzer": {
+        "name": "Unknown Analyzer"
+      },
+      "potential_vulnerabilities": [
+        {
+          "file": "Unknown File",
+          "instances": [
+            {
+              "end_line": 25,
+              "ref_id": 0,
+              "start_line": 25
+            }
+          ],
+          "type": "unprotected_ether_withdrawal"
+        },
+        {
+          "file": "Unknown File",
+          "instances": [
+            {
+              "end_line": 25,
+              "ref_id": 0,
+              "start_line": 25
+            }
+          ],
+          "type": "call_to_external_contract"
+        },
+        {
+          "file": "Unknown File",
+          "instances": [
+            {
+              "end_line": 29,
+              "ref_id": 0,
+              "start_line": 29
+            }
+          ],
+          "type": "reentrancy"
+        },
+        {
+          "file": "Unknown File",
+          "instances": [
+            {
+              "end_line": 25,
+              "ref_id": 0,
+              "start_line": 25
+            }
+          ],
+          "type": "transaction_order_dependency"
+        },
+        {
+          "file": "Unknown File",
+          "instances": [
+            {
+              "end_line": 25,
+              "ref_id": 0,
+              "start_line": 25
+            }
+          ],
+          "type": "exception_state"
+        },
+        {
+          "file": "Unknown File",
+          "instances": [
+            {
+              "end_line": 25,
+              "ref_id": 0,
+              "start_line": 25
+            }
+          ],
+          "type": "reentrancy_true_positive"
+        },
+        {
+          "file": "Unknown File",
+          "instances": [
+            {
+              "end_line": 16,
+              "ref_id": 0,
+              "start_line": 16
+            }
+          ],
+          "type": "missing_input_validation_true_positive"
+        },
+        {
+          "file": "Unknown File",
+          "instances": [
+            {
+              "end_line": 24,
+              "ref_id": 0,
+              "start_line": 24
+            },
+            {
+              "end_line": 20,
+              "ref_id": 1,
+              "start_line": 20
+            }
+          ],
+          "type": "missing_input_validation"
+        }
+      ],
+      "status": "success"
+    }
+  ],
+  "audit_state": 4,
+  "contract_hash": "B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B",
+  "status": "success",
+  "version": "2.0.0"
+}

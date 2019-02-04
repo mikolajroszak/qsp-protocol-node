@@ -82,7 +82,8 @@ export QSP_ENV="$1"
 export QSP_CONFIG="$2"
 
 while true ; do
-
+    echo `date`
+    
     # Runs the audit node
     python -W ignore::DeprecationWarning -m qsp_protocol_node
 

@@ -12,17 +12,16 @@ Tests our assumptions about the database client and SQLite3 engine.
 """
 import apsw
 import unittest
-import yaml
 
 from unittest import mock
+from timeout_decorator import timeout
 
 from config import config_value
 from evt.evt_pool_manager import EventPoolManager
-from helpers.resource import resource_uri
+from helpers.resource import remove, resource_uri
 from helpers.qsp_test import QSPTest
-from timeout_decorator import timeout
 from utils.db import Sqlite3Worker
-from utils.io import fetch_file
+from utils.io import fetch_file, load_yaml
 
 
 class TestSqlLite3Worker(QSPTest):
@@ -30,22 +29,26 @@ class TestSqlLite3Worker(QSPTest):
     Tests the functionality of the SQLite worker.
     """
 
+    @classmethod
+    def setUpClass(cls):
+        QSPTest.setUpClass()
+        cfg = load_yaml(fetch_file(resource_uri("test_config.yaml")))
+        TestSqlLite3Worker.db_file = config_value(cfg, '/dev/evt_db_path')
+        remove(TestSqlLite3Worker.db_file)
+
     def setUp(self):
         """
         Sets up fresh database for each test.
         """
-        cfg = TestSqlLite3Worker.read_yaml_setup('test_config.yaml')
-        file = config_value(cfg, '/dev/evt_db_path')
-        self.worker = Sqlite3Worker(file)
-        self.worker.execute_script(fetch_file(resource_uri('dropdb.sql')))
+        self.worker = Sqlite3Worker(TestSqlLite3Worker.db_file)
         self.worker.execute_script(fetch_file(resource_uri('evt/createdb.sql', is_main=True)))
 
     def tearDown(self):
         """
         Clears the database after the test.
         """
-        self.worker.execute_script(fetch_file(resource_uri('dropdb.sql')))
         self.worker.close()
+        remove(TestSqlLite3Worker.db_file)
 
     @timeout(3, timeout_exception=StopIteration)
     def test_execute_create_script(self):
@@ -109,7 +112,7 @@ class TestSqlLite3Worker(QSPTest):
 
                 self.worker.execute_script(
                     fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
-                    values=(1, 'x', 'x', 'x', 10, 'x', 12),
+                    values=(1, 'x', 'x', 'x', 10, 'x', 'x', 12),
                     error_handler=EventPoolManager.insert_error_handler
                 )
 
@@ -120,7 +123,7 @@ class TestSqlLite3Worker(QSPTest):
             with mock.patch('evt.evt_pool_manager.logger') as evt_pool_manager_logger_mock:
                 self.worker.execute_script(
                     fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
-                    values=(1, 'x', 'x', 'x', 10, 'x', 12),
+                    values=(1, 'x', 'x', 'x', 10, 'x', 'x', 12),
                     error_handler=EventPoolManager.insert_error_handler
                 )
                 # Ensure that threads were merged before assertions
@@ -148,14 +151,6 @@ class TestSqlLite3Worker(QSPTest):
             # This should stay at the very end after the worker thread has been merged
             self.worker.close()
             self.assertTrue(logger_mock.error.called)
-
-    @staticmethod
-    def read_yaml_setup(config_path):
-        test_config = fetch_file(resource_uri(config_path))
-        with open(test_config) as yaml_file:
-            cfg = yaml.load(yaml_file)
-
-        return cfg
 
 
 if __name__ == '__main__':

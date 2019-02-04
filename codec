@@ -2,7 +2,7 @@
 
 
 if [ $# -ne 2 ] || [[ "$1" != "-d" && "$1" != "-e" ]]; then
-    echo "codec [-de] <file-name-or-hexstring>"
+    echo "codec [-d |-e] <file-name-or-hexstring>"
     exit 1
 fi
 

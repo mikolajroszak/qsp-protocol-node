@@ -7,10 +7,23 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .evt import is_audit
-from .evt import is_police_check
-from .evt import set_evt_as_audit
-from .evt import set_evt_as_police_check
-from .evt_pool_manager import EventPoolManager
+__AUDIT = 'AU'
+__POLICE_CHECK = 'PC'
 
-__all__ = ['EventPoolManager', 'is_audit', 'is_police_check', 'set_evt_as_audit', 'set_evt_as_police_check']
+
+def is_audit(evt):
+    return evt['fk_type'] == __AUDIT
+
+
+def is_police_check(evt):
+    return evt['fk_type'] == __POLICE_CHECK
+
+
+def set_evt_as_audit(evt):
+    evt['fk_type'] = __AUDIT
+    return evt
+
+
+def set_evt_as_police_check(evt):
+    evt['fk_type'] = __POLICE_CHECK
+    return evt

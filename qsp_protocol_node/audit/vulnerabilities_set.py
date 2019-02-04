@@ -7,10 +7,19 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .evt import is_audit
-from .evt import is_police_check
-from .evt import set_evt_as_audit
-from .evt import set_evt_as_police_check
-from .evt_pool_manager import EventPoolManager
 
-__all__ = ['EventPoolManager', 'is_audit', 'is_police_check', 'set_evt_as_audit', 'set_evt_as_police_check']
+class VulnerabilitiesSet:
+
+    @classmethod
+    def from_uncompressed_report(cls, report):
+        if report is None or len(report) == 0:
+            return set()
+
+        vulnerabilities_set = set()
+        for analyzer_report in report.get('analyzers_reports', {}):
+            for vulnerability in analyzer_report.get('potential_vulnerabilities', []):
+                    vulnerability_type = vulnerability['type']
+                    for instance in vulnerability.get('instances', []):
+                        line = instance['start_line']
+                        vulnerabilities_set.add((vulnerability_type, line))
+        return vulnerabilities_set

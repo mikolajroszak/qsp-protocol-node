@@ -12,31 +12,34 @@ import unittest
 
 from unittest import mock
 
-from config import ConfigFactory
+from config import config_value
 from evt import EventPoolManager
+from helpers.resource import remove
 from helpers.resource import resource_uri
 from helpers.qsp_test import QSPTest
-from pathlib import Path
-from utils.io import fetch_file
+from utils.io import fetch_file, load_yaml
 
 
 class TestEvtPoolManager(QSPTest):
     PROCESSED = []
 
+    db_file = None
+
+    @classmethod
+    def setUpClass(cls):
+        cfg = load_yaml(fetch_file(resource_uri("test_config.yaml")))
+        TestEvtPoolManager.db_file = config_value(cfg, '/dev/evt_db_path')
+        remove(TestEvtPoolManager.db_file)
+
     def setUp(self):
-        config_file_uri = resource_uri("test_config.yaml")
-        self.config = ConfigFactory.create_from_file(config_file_uri, "dev",
-                                                     validate_contract_settings=False)
-        # this is here to make sure that the database is recreated
-        db_file = Path(self.config.evt_db_path)
-        db_file.unlink()
-        self.evt_pool_manager = EventPoolManager(self.config.evt_db_path)
+        self.evt_pool_manager = EventPoolManager(TestEvtPoolManager.db_file)
         self.evt_first = {'request_id': 1,
                           'requestor': 'x',
                           'contract_uri': 'x',
                           'evt_name': 'x',
                           'block_nbr': 111,
                           'status_info': 'x',
+                          'fk_type': 'AU',
                           'price': 12}
         self.evt_second = {'request_id': 17,
                            'requestor': 'x',
@@ -44,6 +47,7 @@ class TestEvtPoolManager(QSPTest):
                            'evt_name': 'x',
                            'block_nbr': 555,
                            'status_info': 'x',
+                           'fk_type': 'AU',
                            'price': 12}
         TestEvtPoolManager.PROCESSED = []
 
@@ -51,9 +55,8 @@ class TestEvtPoolManager(QSPTest):
         """
         Clears the database after the test.
         """
-        self.evt_pool_manager.sql3lite_worker.execute_script(
-            fetch_file(resource_uri('dropdb.sql')))
         self.evt_pool_manager.close()
+        remove(TestEvtPoolManager.db_file)
         TestEvtPoolManager.PROCESSED = []
 
     def test_encode(self):
@@ -158,40 +161,41 @@ class TestEvtPoolManager(QSPTest):
         self.assertTrue(self.evt_first["request_id"] in TestEvtPoolManager.PROCESSED)
         self.assertTrue(self.evt_second["request_id"] in TestEvtPoolManager.PROCESSED)
 
-    def test_set_evt_to_be_submitted(self):
+    def test_set_evt_status_to_be_submitted(self):
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_first)
         self.evt_first['tx_hash'] = 'hash'
         self.evt_first['audit_uri'] = 'uri'
         self.evt_first['audit_hash'] = 'hash'
         self.evt_first['audit_state'] = 'state'
+        self.evt_first['full_report'] = 'full_report'
         self.evt_first['compressed_report'] = 'compressed_report'
-        self.evt_pool_manager.set_evt_to_be_submitted(self.evt_first)
+        self.evt_pool_manager.set_evt_status_to_be_submitted(self.evt_first)
         evt = self.evt_pool_manager.get_event_by_request_id(self.evt_first['request_id'])
         self.assertEqual(evt['fk_status'], 'TS')
         self.evt_pool_manager.close()
 
-    def test_set_evt_to_submitted(self):
+    def test_set_evt_status_to_submitted(self):
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_first)
         self.evt_pool_manager.sql3lite_worker.execute("update audit_evt set fk_status = 'TS'")
         self.evt_first['tx_hash'] = 'hash'
         self.evt_first['audit_uri'] = 'uri'
         self.evt_first['audit_hash'] = 'hash'
         self.evt_first['audit_state'] = 'state'
-        self.evt_pool_manager.set_evt_to_submitted(self.evt_first)
+        self.evt_pool_manager.set_evt_status_to_submitted(self.evt_first)
         evt = self.evt_pool_manager.get_event_by_request_id(self.evt_first['request_id'])
         self.assertEqual(evt['fk_status'], 'SB')
         self.evt_pool_manager.close()
 
-    def test_set_evt_to_done(self):
+    def test_set_evt_status_to_done(self):
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_first)
-        self.evt_pool_manager.set_evt_to_done(self.evt_first)
+        self.evt_pool_manager.set_evt_status_to_done(self.evt_first)
         evt = self.evt_pool_manager.get_event_by_request_id(self.evt_first['request_id'])
         self.assertEqual(evt['fk_status'], 'DN')
         self.evt_pool_manager.close()
 
-    def test_set_evt_to_err(self):
+    def test_set_evt_status_to_err(self):
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_first)
-        self.evt_pool_manager.set_evt_to_error(self.evt_first)
+        self.evt_pool_manager.set_evt_status_to_error(self.evt_first)
         evt = self.evt_pool_manager.get_event_by_request_id(self.evt_first['request_id'])
         self.assertEqual(evt['fk_status'], 'ER')
         self.evt_pool_manager.close()

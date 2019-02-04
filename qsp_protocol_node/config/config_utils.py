@@ -155,9 +155,9 @@ class ConfigUtils:
         Performs sanity checks on configuration parameters.
         """
         # collect state variables from the smart contract
-        call = config.audit_data_contract.functions.auditTimeoutInBlocks()
+        call = config.audit_contract.functions.getAuditTimeoutInBlocks()
         contract_audit_timeout_in_blocks = mk_read_only_call(config, call)
-        call = config.audit_data_contract.functions.maxAssignedRequests()
+        call = config.audit_contract.functions.getMaxAssignedRequests()
         contract_max_assigned_requests = mk_read_only_call(config, call)
 
         # start_n_blocks_in_the_past should never exceed the submission timeout

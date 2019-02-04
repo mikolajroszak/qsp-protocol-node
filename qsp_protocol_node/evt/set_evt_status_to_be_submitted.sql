@@ -5,6 +5,7 @@ set fk_status = 'TS',
     audit_uri = ?,
     audit_hash = ?,
     audit_state = ?,
+    full_report = ?,
     compressed_report = ?,
     submission_attempts = audit_evt.submission_attempts + 1
 where request_id = ? and fk_status = 'AS'

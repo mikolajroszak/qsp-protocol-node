@@ -17,7 +17,7 @@ class ExecutionException(Exception):
     pass
 
 
-class NonWhitelistedNodeException(ExecutionException):
+class NotEnoughStake(Exception):
     pass
 
 

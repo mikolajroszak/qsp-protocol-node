@@ -5,7 +5,7 @@
   "requestor": "0x82A978B3f5962A5b0957d9ee9eEf472EE55B42F1",
   "auditor": "0x82A978B3f5962A5b0957d9ee9eEf472EE55B42F1",
   "request_id": 1,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "audit_state": 5,
   "status": "error",
   "analyzers_reports": [

@@ -141,20 +141,23 @@ class Program:
         )
 
         logger.info("Initializing QSP Audit Node")
-        logger.debug("account: {0}".format(str(cfg.account)))
-        logger.debug("analyzers: {0}".format(str(cfg.analyzers)))
-        logger.debug("audit contract address: {0}".format(str(cfg.audit_contract_address)))
-        logger.debug("analyzers: {0}".format(str(cfg.analyzers)))
-
-        logger.debug("min_price_in_qsp: {0}".format(str(cfg.min_price_in_qsp)))
-        logger.debug("evt_polling: {0}".format(str(cfg.evt_polling)))
+        logger.debug("account: {0}".format(cfg.account))
+        logger.debug("analyzers: {0}".format(cfg.analyzers))
+        logger.debug("audit contract address: {0}".format(cfg.audit_contract_address))
+        logger.debug("analyzers: {0}".format(cfg.analyzers))
+        logger.debug("min_price_in_qsp: {0}".format(cfg.min_price_in_qsp))
+        logger.debug("evt_polling: {0}".format(cfg.evt_polling))
+        logger.debug("audit contract address: {0}".format(cfg.audit_contract_address))
 
         # Based on the provided configuration, instantiates a new
         # QSP audit node
         audit_node = QSPAuditNode(cfg)
         Stop.register(audit_node)
 
-        logger.info("Running QSP audit node")
+        if audit_node.is_police_officer():
+            logger.info("Running QSP node (performs audits and police checks)")
+        else:
+            logger.info("Running QSP node (performs audits only)")
 
         # if a sol file is given, produce the audit report for that file and exit
         if sol_file:
@@ -184,6 +187,6 @@ if __name__ == "__main__":
 
     except Exception as error:
         if logger is not None:
-            logger.exception(error)
-
-        traceback.print_exc()
+            logger.exception("Error in running node: {0}".format(str(error)))
+        else:
+            traceback.print_exc()

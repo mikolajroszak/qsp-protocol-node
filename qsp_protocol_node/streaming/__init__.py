@@ -9,4 +9,4 @@
 
 from .cloudwatch import CloudWatchProvider
 
-__all__ = ['CloudWatchProvider', ]
+__all__ = ['CloudWatchProvider']

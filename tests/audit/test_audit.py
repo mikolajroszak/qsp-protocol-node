@@ -10,38 +10,37 @@
 """
 Tests the flow of receiving audit requests and their flow within the QSP audit node
 """
-import contextlib
 import ntpath
-import os
 import unittest
 
+
 from audit import QSPAuditNode
-from audit import ExecutionException
 from audit import Analyzer, Wrapper
-from config import ConfigFactory, ConfigUtils, ConfigurationException
-from dpath.util import get
+from audit.report_processing import ReportEncoder
+from config import ConfigUtils, ConfigurationException
+from helpers.qsp_test import QSPTest
 from helpers.resource import (
-    resource_uri,
+    fetch_config,
     project_root,
+    remove,
+    resource_uri,
 )
-from random import random
-from time import time
+from helpers.transact import safe_transact
 from upload import DummyProvider
 
-from utils.eth.singleton_lock import SingletonLock
 from utils.io import fetch_file, digest_file, load_json
 from utils.db import get_first
 
 from deepdiff import DeepDiff
 from pprint import pprint
-from solc import compile_files
+from random import random
 from time import sleep
+from time import time
 from timeout_decorator import timeout
 from threading import Thread
 from utils.eth import DeduplicationException
 from unittest import mock
 from web3.utils.threads import Timeout
-from helpers.qsp_test import QSPTest
 
 
 class TestQSPAuditNode(QSPTest):
@@ -53,214 +52,28 @@ class TestQSPAuditNode(QSPTest):
     __PRICE = 100
     __SLEEP_INTERVAL = 0.01
 
-    @staticmethod
-    def find_difference(list1, list2):
-        """
-        Returns the difference between two lists of audit_evt records.
-        """
-        for x in [item for item in list1 if item not in list2]:
-            for y in [y for y in list2 if y['request_id'] == x["request_id"]]:
-                for key in x.keys():
-                    if x[key] != y[key]:
-                        msg = "Key: {}, Value 1:{} Values 2:{} \nList1: {}\nList2: {}"
-                        return msg.format(key, x[key], y[key], list1, list2)
-        return "No difference found"
-
-    def block_until_queue_empty(self):
-        while not self.__config.event_pool_manager.sql3lite_worker.empty():
-            sleep(0.1)
-
-    def assert_event_table_contains(self, data, ignore_keys=(), close=True):
-        """Checks that the table audit_evt contains all dictionaries that are in data"""
-
-        self.block_until_queue_empty()
-        query = "select * from audit_evt"
-        content = self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker.execute(
-            query)
-        if close:
-            self.close_evt_manager()
-        self.assertEqual(len(content), len(data), "{} is not {}".format(content, data))
-        for key in ignore_keys:
-            for x in content:
-                x[key] = "Ignored"
-            for x in data:
-                x[key] = "Ignored"
-        self.assertEqual(len([x for x in content if x in data]), len(data),
-                         TestQSPAuditNode.find_difference(data, content))
-
-    def close_evt_manager(self):
-        """
-        Closes the event manager. This has to be done before asserting the final database state.
-        """
-        self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
-
-    @classmethod
-    def __clean_up_file(cls, path):
-        with contextlib.suppress(FileNotFoundError):
-            os.remove(path)
-
-    @staticmethod
-    def __safe_transact(contract_entity, tx_args):
-        """
-        The contract_entity should already be invoked, so that we can immediately call transact
-        """
-        try:
-            SingletonLock.instance().lock.acquire()
-            return contract_entity.transact(tx_args)
-        except Exception as e:
-            print("!!!!!!! Safe transaction in tests failed")
-            raise e
-        finally:
-            try:
-                SingletonLock.instance().lock.release()
-            except Exception as error:
-                print("Error when releasing a lock in test {0}".format(str(error)))
-
-    @staticmethod
-    def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
-                                       data_contract_name, constructor_from):
-        """
-        Loads the QuantstampAuditMock contract from source code returning the (address, contract)
-        pair.
-        """
-        audit_contract_src = fetch_file(contract_src_uri)
-        contract_dict = compile_files([audit_contract_src])
-        contract_id = "{0}:{1}".format(
-            contract_src_uri,
-            contract_name,
-        )
-        data_contract_id = "{0}:{1}".format(
-            contract_src_uri,
-            data_contract_name,
-        )
-        contract_interface = contract_dict[contract_id]
-        data_contract_interface = contract_dict[data_contract_id]
-
-        # deploy the data contract
-        data_contract = web3_client.eth.contract(
-            abi=data_contract_interface['abi'],
-            bytecode=data_contract_interface['bin']
-        )
-        tx_hash = TestQSPAuditNode.__safe_transact(data_contract.constructor(),
-                                                   {'from': constructor_from, 'gasPrice': 0})
-        receipt = web3_client.eth.getTransactionReceipt(tx_hash)
-        data_address = receipt['contractAddress']
-        data_contract = web3_client.eth.contract(
-            abi=data_contract_interface['abi'],
-            address=data_address,
-        )
-
-        # deploy the audit contract
-        audit_contract = web3_client.eth.contract(
-            abi=contract_interface['abi'],
-            bytecode=contract_interface['bin']
-        )
-        tx_hash = TestQSPAuditNode.__safe_transact(audit_contract.constructor(data_address),
-                                                   {'from': constructor_from, 'gasPrice': 0})
-        receipt = web3_client.eth.getTransactionReceipt(tx_hash)
-        address = receipt['contractAddress']
-        audit_contract = web3_client.eth.contract(
-            abi=contract_interface['abi'],
-            address=address,
-        )
-        return address, audit_contract, data_contract
-
-    def __compare_json(self, audit_file, report_file_path, json_loaded=False, ignore_id=False):
-        if not json_loaded:
-            actual_json = load_json(audit_file)
-        else:
-            actual_json = audit_file
-        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
-        if ignore_id:
-            expected_json['request_id'] = actual_json['request_id']
-        diff = DeepDiff(actual_json,
-                        expected_json,
-                        exclude_paths={
-                            "root['contract_uri']",
-                            # There is no keystore used for testing. Accounts
-                            # are dynamic and therefore cannot be compared
-                            "root['auditor']",
-                            "root['requestor']",
-                            # Path is different depending on whether running inside Docker
-                            "root['timestamp']",
-                            "root['start_time']",
-                            "root['end_time']",
-                            "root['analyzers_reports'][0]['analyzer']['command']",
-                            "root['analyzers_reports'][0]['coverages'][0]['file']",
-                            "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][0]['start_time']",
-                            "root['analyzers_reports'][0]['end_time']",
-                            "root['analyzers_reports'][1]['analyzer']['command']",
-                            "root['analyzers_reports'][1]['coverages'][0]['file']",
-                            "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][1]['start_time']",
-                            "root['analyzers_reports'][1]['end_time']",
-                            "root['analyzers_reports'][2]['analyzer']['command']",
-                            "root['analyzers_reports'][2]['coverages'][0]['file']",
-                            "root['analyzers_reports'][2]['potential_vulnerabilities'][0]['file']",
-                            "root['analyzers_reports'][2]['start_time']",
-                            "root['analyzers_reports'][2]['end_time']",
-                        }
-                        )
-        pprint(diff)
-        self.assertEqual(diff, {})
-        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
-                         ntpath.basename(expected_json['contract_uri']))
-
-    @classmethod
-    def fetch_config(cls):
-        # create config from file, the contract is not provided and will be injected separately
-        config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file(config_file_uri,
-                                                os.getenv("QSP_ENV", default="dev"),
-                                                validate_contract_settings=False)
-        # compile and inject contract
-        contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
-        contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
-        data_contract_metadata_uri = "./tests/resources/QuantstampAuditData-metadata.json"
-        audit_contract_metadata = load_json(fetch_file(contract_metadata_uri))
-        data_contract_metadata = load_json(fetch_file(data_contract_metadata_uri))
-        audit_contract_name = get(audit_contract_metadata, '/contractName')
-        data_contract_name = get(data_contract_metadata, '/contractName')
-        config._Config__audit_contract_address, \
-        config._Config__audit_contract, \
-        config._Config__audit_data_contract = \
-            TestQSPAuditNode.__load_audit_contract_from_src(
-                config.web3_client,
-                contract_source_uri,
-                audit_contract_name,
-                data_contract_name,
-                config.account)
-        config_utils = ConfigUtils(config.node_version)
-        config_utils.check_configuration_settings(config)
-        return config
+    ##############################################
+    # Setup-like methods
+    ##############################################
 
     @classmethod
     def setUpClass(cls):
         QSPTest.setUpClass()
-        config = TestQSPAuditNode.fetch_config()
-        TestQSPAuditNode.__clean_up_file(config.evt_db_path)
-
-    def __unique_storage_dir(self):
-        """
-        Generates a unique directory for each test run
-        """
-        for analyzer in self.__audit_node.config.analyzers:
-            analyzer.wrapper._Wrapper__storage_dir += "/{}{}".format(time(), random())
+        config = fetch_config()
+        remove(config.evt_db_path)
 
     def setUp(self):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
-        self.__config = TestQSPAuditNode.fetch_config()
+        self.__config = fetch_config()
         self.__audit_node = QSPAuditNode(self.__config)
-
-        self.__unique_storage_dir()
+        self.__mk_unique_storage_dir()
 
         # Forces analyzer wrapper to always execute their `once` script prior
         # to executing `run`
         for analyzer in self.__config.analyzers:
-            TestQSPAuditNode.__clean_up_file(analyzer.wrapper.storage_dir + '/.once')
+            remove(analyzer.wrapper.storage_dir + '/.once')
 
         self.__getNextAuditRequest_filter = \
             self.__config.audit_contract.events.getNextAuditRequest_called.createFilter(
@@ -287,7 +100,7 @@ class TestQSPAuditNode(QSPTest):
 
         max_initialization_seconds = 5
         num_checks = 0
-        while not self.__audit_node.audit_node_initialized:
+        while not self.__audit_node.is_initialized:
             sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
             num_checks += 100
             if num_checks == max_initialization_seconds:
@@ -299,7 +112,11 @@ class TestQSPAuditNode(QSPTest):
         Stops the execution of the current QSP audit node.
         """
         self.__audit_node.stop()
-        TestQSPAuditNode.__clean_up_file(self.__config.evt_db_path)
+        remove(self.__config.evt_db_path)
+
+    ##############################################
+    # Tests
+    ##############################################
 
     @timeout(8, timeout_exception=StopIteration)
     def test_timeout_stale_events(self):
@@ -338,6 +155,7 @@ class TestQSPAuditNode(QSPTest):
                      'evt_name': 'x',
                      'block_nbr': 10,
                      'status_info': 'x',
+                     'fk_type': 'AU',
                      'price': 12}
         # last block to time out
         evt_second = {'request_id': 17,
@@ -346,6 +164,7 @@ class TestQSPAuditNode(QSPTest):
                       'evt_name': 'x',
                       'block_nbr': 90 + 2,
                       'status_info': 'x',
+                      'fk_type': 'AU',
                       'price': 12}
         # first block not to time out
         evt_third = {'request_id': 18,
@@ -354,6 +173,7 @@ class TestQSPAuditNode(QSPTest):
                      'evt_name': 'x',
                      'block_nbr': 91 + 2,
                      'status_info': 'x',
+                     'fk_type': 'AU',
                      'price': 12}
         self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_first)
         self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(
@@ -376,7 +196,7 @@ class TestQSPAuditNode(QSPTest):
         self.assertEqual(thrd['fk_status'], 'AS')
 
     @timeout(10, timeout_exception=StopIteration)
-    def test_check_then_do_audit_request_exceptions(self):
+    def test_poll_audit_request_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
         get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
@@ -386,13 +206,13 @@ class TestQSPAuditNode(QSPTest):
 
         self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
         self.__set_any_request_available(1)
-        self.__audit_node._QSPAuditNode__check_then_do_audit_request()
+        self.__audit_node._QSPAuditNode__poll_audit_request()
         self.__set_any_request_available(0)
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
-        self.assert_event_table_contains([])
+        self.__assert_event_table_contains([])
 
     @timeout(10, timeout_exception=StopIteration)
-    def test_check_then_do_audit_request_deduplication_exceptions(self):
+    def test_poll_audit_request_deduplication_exceptions(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
         get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
@@ -402,10 +222,10 @@ class TestQSPAuditNode(QSPTest):
 
         self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
         self.__set_any_request_available(1)
-        self.__audit_node._QSPAuditNode__check_then_do_audit_request()
+        self.__audit_node._QSPAuditNode__poll_audit_request()
         self.__set_any_request_available(0)
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
-        self.assert_event_table_contains([])
+        self.__assert_event_table_contains([])
 
     @timeout(10, timeout_exception=StopIteration)
     def test_check_and_update_min_price_call(self):
@@ -414,7 +234,7 @@ class TestQSPAuditNode(QSPTest):
                 mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
             self.__audit_node._QSPAuditNode__check_and_update_min_price()
             mocked_sign.assert_called()
-        self.assert_event_table_contains([])
+        self.__assert_event_table_contains([])
 
     @timeout(10, timeout_exception=StopIteration)
     def test_update_min_price_timeout_exception(self):
@@ -428,7 +248,7 @@ class TestQSPAuditNode(QSPTest):
                 self.fail("An exception should have been thrown")
             except Timeout:
                 pass
-        self.assert_event_table_contains([])
+        self.__assert_event_table_contains([])
 
     @timeout(10, timeout_exception=StopIteration)
     def test_update_min_price_deduplication_exception(self):
@@ -442,7 +262,7 @@ class TestQSPAuditNode(QSPTest):
                 self.fail("An exception should have been thrown")
             except DeduplicationException:
                 pass
-        self.assert_event_table_contains([])
+        self.__assert_event_table_contains([])
 
     @timeout(10, timeout_exception=StopIteration)
     def test_update_min_price_other_exception(self):
@@ -456,50 +276,7 @@ class TestQSPAuditNode(QSPTest):
                 self.fail("An exception should have been thrown")
             except ValueError:
                 pass
-        self.assert_event_table_contains([])
-
-    @timeout(20, timeout_exception=StopIteration)
-    def test_on_audit_assigned(self):
-        # The following causes an exception in the auditing node, but it should be caught and
-        # should not propagate
-        self.__audit_node._QSPAuditNode__on_audit_assigned({})
-        self.assert_event_table_contains([],
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"],
-                                         close=False)
-
-        # This causes an auditor id mismatch
-        evt = {'args': {'auditor': 'this is not me', 'requestId': 1}}
-        self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
-        self.assert_event_table_contains([],
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"],
-                                         close=False)
-
-        # test successful request
-        buggy_contract = resource_uri("DAOBug.sol")
-        auditor_id = self.__audit_node._QSPAuditNode__config.account.upper()
-        evt = {'args': {'auditor': auditor_id, 'requestId': 1, 'price': self.__PRICE,
-                        'requestor': auditor_id, 'uri': buggy_contract}, 'blockNumber': 1}
-        self.__audit_node._QSPAuditNode__on_audit_assigned(evt)
-
-        # asserting the database content
-        expected_content = [{"request_id": 1,
-                             "requestor": auditor_id,
-                             "contract_uri": buggy_contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "1",
-                             "fk_status": "AS",
-                             "price": str(self.__PRICE),
-                             "status_info": "Audit Assigned",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 0,
-                             "is_persisted": 'false',
-                             "audit_uri": "IGNORE",
-                             "audit_hash": "IGNORE",
-                             "audit_state": None,
-                             "compressed_report": None
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
+        self.__assert_event_table_contains([])
 
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_contract_audit_request(self):
@@ -520,25 +297,29 @@ class TestQSPAuditNode(QSPTest):
                                            report_file_path="reports/DAOBug.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
-        # asserting the database content
-        expected_content = [{"request_id": 1,
-                             "requestor": self.__config.account,
-                             "contract_uri": buggy_contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "40",
-                             "fk_status": "DN",
-                             "price": str(self.__PRICE),
-                             "status_info": "Report successfully submitted",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 1,
-                             "is_persisted": 1,
-                             "audit_uri": "IGNORE",
-                             "audit_hash": "IGNORE",
-                             "audit_state": 4,
-                             "compressed_report": "1003B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0C00190D001905001D0300190700191A0019150010120018120014"
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
+        compressed_report = TestQSPAuditNode.__compress_report("reports/DAOBug.json")
+
+        # Asserts the database content.
+        expected_row = {"request_id": 1,
+                        "requestor": self.__config.account,
+                        "contract_uri": buggy_contract,
+                        "evt_name": "LogAuditAssigned",
+                        "block_nbr": "40",
+                        "fk_status": "DN",
+                        "fk_type": "AU",
+                        "price": str(self.__PRICE),
+                        "status_info": "Report successfully submitted",
+                        "tx_hash": "IGNORE",
+                        "submission_attempts": 1,
+                        "is_persisted": 1,
+                        "audit_uri": "IGNORE",
+                        "audit_hash": "IGNORE",
+                        "audit_state": 4,
+                        "full_report": "IGNORE",
+                        "compressed_report": compressed_report
+                        }
+        self.__assert_event_table_contains([expected_row],
+                                         ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_contract_audit_request_dockerhub_fail_isolation(self):
@@ -560,7 +341,7 @@ class TestQSPAuditNode(QSPTest):
         self.__audit_node.config._Config__analyzers = [analyzer]
         self.__audit_node.config._Config__analyzers_config = [{"dockerhub_fail": analyzer}]
 
-        # since we're mocking the smart contract, we should explicitly call its internals
+        # Since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
         self.__request_audit(buggy_contract, self.__PRICE)
 
@@ -572,29 +353,33 @@ class TestQSPAuditNode(QSPTest):
                                            report_file_path="reports/DockerhubFail.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
-        # set the values back
+        # Sets the values back.
         self.__audit_node.config._Config__analyzers = original_analyzers
         self.__audit_node.config._Config__analyzers_config = original_analyzers_config
 
-        # asserting the database content
-        expected_content = [{"request_id": 1,
-                             "requestor": self.__config.account,
-                             "contract_uri": buggy_contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "40",
-                             "fk_status": "DN",
-                             "price": str(self.__PRICE),
-                             "status_info": "Report successfully submitted",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 1,
-                             "is_persisted": 1,
-                             "audit_uri": "IGNORE",
-                             "audit_hash": "IGNORE",
-                             "audit_state": 5,
-                             "compressed_report": "1000B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B"
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
+        compressed_report = TestQSPAuditNode.__compress_report("reports/DockerhubFail.json")
+
+        # Asserts the database content.
+        expected_row = {"request_id": 1,
+                        "requestor": self.__config.account,
+                        "contract_uri": buggy_contract,
+                        "evt_name": "LogAuditAssigned",
+                        "block_nbr": "40",
+                        "fk_status": "DN",
+                        "fk_type": "AU",
+                        "price": str(self.__PRICE),
+                        "status_info": "Report successfully submitted",
+                        "tx_hash": "IGNORE",
+                        "submission_attempts": 1,
+                        "is_persisted": 1,
+                        "audit_uri": "IGNORE",
+                        "audit_hash": "IGNORE",
+                        "audit_state": 5,
+                        "full_report": "IGNORE",
+                        "compressed_report": compressed_report
+                        }
+        self.__assert_event_table_contains([expected_row],
+                                         ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_contract_audit_request_dockerhub_fail_multiple_analyzers(self):
@@ -632,25 +417,29 @@ class TestQSPAuditNode(QSPTest):
         self.__audit_node.config._Config__analyzers = original_analyzers
         self.__audit_node.config._Config__analyzers_config = original_analyzers_config
 
+        compressed_report = TestQSPAuditNode.__compress_report("reports/DockerhubFailAllAnalyzers.json")
+
         # asserting the database content
-        expected_content = [{"request_id": 1,
-                             "requestor": self.__config.account,
-                             "contract_uri": buggy_contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "40",
-                             "fk_status": "DN",
-                             "price": str(self.__PRICE),
-                             "status_info": "Report successfully submitted",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 1,
-                             "is_persisted": 1,
-                             "audit_uri": "IGNORE",
-                             "audit_hash": "IGNORE",
-                             "audit_state": 5,
-                             "compressed_report": "1000B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0C00190D001905001D"
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
+        expected_row = {"request_id": 1,
+                        "requestor": self.__config.account,
+                        "contract_uri": buggy_contract,
+                        "evt_name": "LogAuditAssigned",
+                        "block_nbr": "40",
+                        "fk_status": "DN",
+                        "fk_type": "AU",
+                        "price": str(self.__PRICE),
+                        "status_info": "Report successfully submitted",
+                        "tx_hash": "IGNORE",
+                        "submission_attempts": 1,
+                        "is_persisted": 1,
+                        "audit_uri": "IGNORE",
+                        "audit_hash": "IGNORE",
+                        "audit_state": 5,
+                        "full_report": "IGNORE",
+                        "compressed_report": compressed_report
+                        }
+        self.__assert_event_table_contains([expected_row],
+                                          ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_contract_audit_request_with_disabled_upload(self):
@@ -676,25 +465,29 @@ class TestQSPAuditNode(QSPTest):
         # blocks until the audit is completely recorded in DB
         self.__assert_audit_request_report(self.__REQUEST_ID)
 
+        compressed_report = TestQSPAuditNode.__compress_report("reports/DAOBug.json")
+
         # asserting the database content
-        expected_content = [{"request_id": 1,
-                             "requestor": self.__config.account,
-                             "contract_uri": buggy_contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "40",
-                             "fk_status": "DN",
-                             "price": str(self.__PRICE),
-                             "status_info": "Report successfully submitted",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 1,
-                             "is_persisted": 1,
-                             "audit_uri": "Not available. Full report was not uploaded",
-                             "audit_hash": "IGNORE",
-                             "audit_state": 4,
-                             "compressed_report": "1003B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0C00190D001905001D0300190700191A0019150010120018120014"
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash"])
+        expected_row = {"request_id": 1,
+                        "requestor": self.__config.account,
+                        "contract_uri": buggy_contract,
+                        "evt_name": "LogAuditAssigned",
+                        "block_nbr": "40",
+                        "fk_status": "DN",
+                        "fk_type": "AU",
+                        "price": str(self.__PRICE),
+                        "status_info": "Report successfully submitted",
+                        "tx_hash": "IGNORE",
+                        "submission_attempts": 1,
+                        "is_persisted": 1,
+                        "audit_uri": "Not available. Full report was not uploaded",
+                        "audit_hash": "IGNORE",
+                        "audit_state": 4,
+                        "full_report": "IGNORE",
+                        "compressed_report": compressed_report
+                        }
+        self.__assert_event_table_contains([expected_row],
+                                           ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_empty_contract_audit_request(self):
@@ -716,119 +509,95 @@ class TestQSPAuditNode(QSPTest):
                                            report_file_path="reports/Empty.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
+        compressed_report = TestQSPAuditNode.__compress_report("reports/Empty.json")
+
         # asserting the database content
-        expected_content = [{"request_id": 1,
-                             "requestor": self.__config.account,
-                             "contract_uri": empty_contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "40",
-                             "fk_status": "DN",
-                             "price": str(self.__PRICE),
-                             "status_info": "Report successfully submitted",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 1,
-                             "is_persisted": 1,
-                             "audit_uri": "IGNORE",
-                             "audit_hash": "IGNORE",
-                             "audit_state": self.__AUDIT_STATE_ERROR,
-                             "compressed_report": "1000E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
+        expected_row = {"request_id": 1,
+                        "requestor": self.__config.account,
+                        "contract_uri": empty_contract,
+                        "evt_name": "LogAuditAssigned",
+                        "block_nbr": "40",
+                        "fk_status": "DN",
+                        "fk_type": "AU",
+                        "price": str(self.__PRICE),
+                        "status_info": "Report successfully submitted",
+                        "tx_hash": "IGNORE",
+                        "submission_attempts": 1,
+                        "is_persisted": 1,
+                        "audit_uri": "IGNORE",
+                        "audit_hash": "IGNORE",
+                        "audit_state": self.__AUDIT_STATE_ERROR,
+                        "full_report": "IGNORE",
+                        "compressed_report": compressed_report
+                        }
+        self.__assert_event_table_contains([expected_row],
+                                            ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
-    def __block_until_n_audits(self, number):
-        """
-        Blocks until the audit_evt table contains the given number of audit records.
-        """
-        worker = self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker
-        result = worker.execute("select * from audit_evt")
-        while len(result) < number:
-            sleep(0.1)
-            result = worker.execute("select * from audit_evt")
-
-    @timeout(300, timeout_exception=StopIteration)
-    def test_multiple_sequential_requests(self):
-        """
-        Tests that bidding happens when multiple request arrive in a row.
-        """
-        # since we're mocking the smart contract, we should explicitly call its internals
-        worker = self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker
-        buggy_contract = resource_uri("DAOBug.sol")
-
-        # We will request three events in the row without updating the assigned number in the
-        # smart contract. The node should bid on all of them. We need to interleave them with sleep
-        # so that there is enough time for the block mined thread to bid and poll. So that the test
-        # can be executed faster, we will also speed up block polling, and work with Mythril only.
-        polling_interval = 0.1
-        original_interval = self.__config.block_mined_polling
-        original_analyzers = self.__config.analyzers
-        original_analyzers_config = self.__config.analyzers_config
-        self.__config._Config__block_mined_polling_interval_sec = polling_interval
-        self.__config._Config__analyzers = original_analyzers[0:1]
-        self.__config._Config__analyzers_config = original_analyzers_config[0:1]
-
-        self.__set_any_request_available(1)
-        ids_to_run = [self.__REQUEST_ID, 9, 12]
-
-        counter = 1
-        for id in ids_to_run:
-            # request and block until a request is made
-            self.__request_assign_and_emit(id, buggy_contract, self.__PRICE, 10)
-            self.__block_until_n_audits(counter)
-            counter += 1
-
-        self.__set_any_request_available(0)
-
-        # block until all requests are processed
-        result = worker.execute("select * from audit_evt where fk_status != 'AS'")
-        while len(result) != len(ids_to_run):
-            sleep(1)
-            result = worker.execute("select * from audit_evt where fk_status != 'AS'")
-
-        for id in ids_to_run:
-            self.__send_done_message(id)
-
-        result = worker.execute("select * from audit_evt where fk_status = 'DN'")
-        while len(result) != len(ids_to_run):
-            sleep(1)
-            result = worker.execute("select * from audit_evt where fk_status = 'DN'")
-
-        ids = [x['request_id'] for x in result]
-        for id in ids_to_run:
-            # check that the request is done
-            self.assertTrue(id in ids)
-            # ensure that submission happens
-            self.__config.web3_client.eth.waitForTransactionReceipt(
-                self.__send_done_message(id))
-            # run assertions
-            self.__assert_audit_request_report(id,
-                                               report_file_path="reports/DAOBugMythrilOnly.json",
-                                               ignore_id=True)
-            self.__assert_all_analyzers(id)
-
-        expected_content = [{"request_id": id,
-                             "requestor": self.__config.account,
-                             "contract_uri": buggy_contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "10",
-                             "fk_status": "DN",
-                             "price": str(self.__PRICE),
-                             "status_info": "Report successfully submitted",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 1,
-                             "is_persisted": 1,
-                             "audit_uri": "IGNORE",
-                             "audit_hash": "IGNORE",
-                             "audit_state": self.__AUDIT_STATE_SUCCESS,
-                             "compressed_report": "1003B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B0C00190D001905001D"
-                             } for id in ids_to_run]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"],
-                                         close=False)
-
-        self.__config._Config__block_mined_polling_interval_sec = original_interval
-        self.__config._Config__analyzers = original_analyzers
-        self.__config._Config__analyzers__analyzers_config = original_analyzers_config
+    # TODO(mderka): Disabled flaky test, investigate with QSP-852
+    # @timeout(300, timeout_exception=StopIteration)
+    # def test_multiple_sequential_requests(self):
+    #     """
+    #     Tests that bidding happens when multiple request arrive in a row.
+    #     """
+    #     # since we're mocking the smart contract, we should explicitly call its internals
+    #     worker = Sqlite3Worker(self.__config.evt_db_path)
+    #     buggy_contract = resource_uri("DAOBug.sol")
+    #
+    #     # We will request three events in the row without updating the assigned number in the
+    #     # smart contract. The node should bid on all of them. We need to interleave them with sleep
+    #     # so that there is enough time for the block mined thread to bid and poll. So that the test
+    #     # can be executed faster, we will also speed up block polling, and work with Mythril only.
+    #     polling_interval = 0.1
+    #     original_interval = self.__config.block_mined_polling
+    #     original_analyzers = self.__config.analyzers
+    #     original_analyzers_config = self.__config.analyzers_config
+    #     self.__config._Config__block_mined_polling_interval_sec = polling_interval
+    #     self.__config._Config__analyzers = original_analyzers[1:2]
+    #     self.__config._Config__analyzers_config = original_analyzers_config[1:2]
+    #
+    #     self.__set_any_request_available(1)
+    #     ids_to_run = [self.__REQUEST_ID, 9, 12]
+    #
+    #     for id in ids_to_run:
+    #         # request and block until a request is made
+    #         self.__config.web3_client.eth.waitForTransactionReceipt(
+    #             self.__request_assign_and_emit(id, buggy_contract, self.__PRICE, 10))
+    #         self.__evt_wait_loop(self.__getNextAuditRequest_filter)
+    #         sleep(2)
+    #
+    #     self.__set_any_request_available(0)
+    #
+    #     # ensure that we have all requests stored in the database
+    #     result = worker.execute("select * from audit_evt")
+    #     while len(result) != len(ids_to_run):
+    #         sleep(1)
+    #         result = worker.execute("select * from audit_evt")
+    #     ids = [x['request_id'] for x in result]
+    #     for id in ids_to_run:
+    #         self.assertTrue(id in ids)
+    #
+    #     # block until all requests are processed
+    #     result = worker.execute("select * from audit_evt where fk_status != 'AS'")
+    #     while len(result) != len(ids_to_run):
+    #         sleep(1)
+    #         result = worker.execute("select * from audit_evt where fk_status != 'AS'")
+    #
+    #     ids = [x['request_id'] for x in result]
+    #     for id in ids_to_run:
+    #         # check that the request is done
+    #         self.assertTrue(id in ids)
+    #         # ensure that submission happens
+    #         self.__config.web3_client.eth.waitForTransactionReceipt(
+    #             self.__send_done_message(id))
+    #         # run assertions
+    #         self.__assert_audit_request(id, self.__AUDIT_STATE_SUCCESS,
+    #                                     report_file_path="reports/DAOBugMythrilOnly.json",
+    #                                     ignore_id=True)
+    #         self.__assert_all_analyzers(id)
+    #
+    #     self.__config._Config__block_mined_polling_interval_sec = original_interval
+    #     self.__config._Config__analyzers = original_analyzers
+    #     self.__config._Config__analyzers_config = original_analyzers_config
 
     @timeout(100, timeout_exception=StopIteration)
     def test_buggy_contract_audit_request(self):
@@ -847,13 +616,16 @@ class TestQSPAuditNode(QSPTest):
         self.__assert_audit_request_report(self.__REQUEST_ID,
                                            report_file_path="reports/BasicToken.json")
 
-        # asserting the database content
-        expected_content = [{"request_id": 1,
+        compressed_report = TestQSPAuditNode.__compress_report("reports/BasicToken.json")
+
+        # Asserts the database content
+        expected_row = {"request_id": 1,
                              "requestor": self.__config.account,
                              "contract_uri": buggy_contract,
                              "evt_name": "LogAuditAssigned",
                              "block_nbr": "40",
                              "fk_status": "DN",
+                             "fk_type": "AU",
                              "price": str(self.__PRICE),
                              "status_info": "Report successfully submitted",
                              "tx_hash": "IGNORE",
@@ -862,10 +634,11 @@ class TestQSPAuditNode(QSPTest):
                              "audit_uri": "IGNORE",
                              "audit_hash": "IGNORE",
                              "audit_state": self.__AUDIT_STATE_ERROR,
-                             "compressed_report": "10008A4523C7BDDFDBF453F7D8C9618860C8D8EC921D0BDF8EF09FDCA9FE9637D9C7"
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
+                             "full_report": "IGNORE",
+                             "compressed_report": compressed_report
+                             }
+        self.__assert_event_table_contains([expected_row],
+                                            ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(100, timeout_exception=StopIteration)
     def test_target_contract_in_non_raw_text_file(self):
@@ -884,25 +657,29 @@ class TestQSPAuditNode(QSPTest):
         self.__assert_audit_request_report(self.__REQUEST_ID,
                                            report_file_path="reports/DappBinWallet.json")
 
-        # asserting the database content
-        expected_content = [{"request_id": 1,
-                             "requestor": self.__config.account,
-                             "contract_uri": buggy_contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "40",
-                             "fk_status": "DN",
-                             "price": str(self.__PRICE),
-                             "status_info": "Report successfully submitted",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 1,
-                             "is_persisted": 1,
-                             "audit_uri": "IGNORE",
-                             "audit_hash": "IGNORE",
-                             "audit_state": self.__AUDIT_STATE_ERROR,
-                             "compressed_report": "1000A9C2343908B4A6981E34BEE55C971F2104E53973DB37A24B83810FA6347FAD06"
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
+        compressed_report = TestQSPAuditNode.__compress_report("reports/DappBinWallet.json")
+
+        # Asserts the database content.
+        expected_row = {"request_id": 1,
+                        "requestor": self.__config.account,
+                        "contract_uri": buggy_contract,
+                        "evt_name": "LogAuditAssigned",
+                        "block_nbr": "40",
+                        "fk_status": "DN",
+                        "fk_type": "AU",
+                        "price": str(self.__PRICE),
+                        "status_info": "Report successfully submitted",
+                        "tx_hash": "IGNORE",
+                        "submission_attempts": 1,
+                        "is_persisted": 1,
+                        "audit_uri": "IGNORE",
+                        "audit_hash": "IGNORE",
+                        "audit_state": self.__AUDIT_STATE_ERROR,
+                        "full_report": "IGNORE",
+                        "compressed_report": compressed_report
+                        }
+        self.__assert_event_table_contains([expected_row],
+                                            ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
     def test_analyzer_produces_metadata_for_errors(self):
@@ -919,16 +696,6 @@ class TestQSPAuditNode(QSPTest):
                                                                    1)
         self.__compare_json(report, "reports/BasicTokenErrorWithMetadata.json", json_loaded=True)
 
-    @timeout(5, timeout_exception=StopIteration)
-    def test_run_audit_evt_thread(self):
-        """
-        Tests that the run_evt_thread dies upon an internal exception
-        """
-        # An exception should be re-thrown inside the thread
-        thread = self.__audit_node._QSPAuditNode__run_audit_evt_thread(None, None, None)
-        thread.join()
-        self.assertFalse(thread.is_alive(), "Thread was supposed be terminated by an exception")
-
     def test_run_repeated_start_expecting_fail(self):
         """
         Tests that a second instance of the node cannot be started
@@ -942,22 +709,13 @@ class TestQSPAuditNode(QSPTest):
             pass
         self.assertTrue(thrown, "No exception was thrown when starting multiple instances")
 
-    # Variable to be passed to the mocked function
-    __mocked__get_next_audit_request_called = False
-
-    def __set_any_request_available(self, number):
-        tx_hash = TestQSPAuditNode.__safe_transact(
-            self.__config.audit_contract.functions.setAnyRequestAvailableResult(number),
-            {"from": self.__config.account}
-        )
-        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
-        return tx_hash
-
-    @timeout(40, timeout_exception=StopIteration)
+    @timeout(100, timeout_exception=StopIteration)
     def test_restricting_local_max_assigned(self):
         """
         Tests if the limitation on the local maximum assigned requests is in effect
         """
+
+        mocked__get_next_audit_request_called = [False]
 
         # Mocking the QSPAuditNode.__get_next_audit_request. This function is supposed to be called
         # if the limit is not reached.
@@ -965,7 +723,7 @@ class TestQSPAuditNode(QSPTest):
 
         def mocked__get_next_audit_request():
             # this should be unreachable when the limit is reached
-            self.__mocked__get_next_audit_request_called = True
+            mocked__get_next_audit_request_called[0] = True
 
         self.assertEqual(int(self.__config.max_assigned_requests), 1)
 
@@ -1001,7 +759,7 @@ class TestQSPAuditNode(QSPTest):
         self.__set_any_request_available(0)
 
         # an extra call to get_next_audit is no accepted
-        self.assertFalse(self.__mocked__get_next_audit_request_called)
+        self.assertFalse(mocked__get_next_audit_request_called[0])
 
     @timeout(30, timeout_exception=StopIteration)
     def test_timeout_on_complex_file(self):
@@ -1040,25 +798,29 @@ class TestQSPAuditNode(QSPTest):
             self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][
                 analyzer_name]['timeout_sec'] = original_timeouts[i]
 
-        # asserting the database content
-        expected_content = [{"request_id": 1,
-                             "requestor": self.__config.account,
-                             "contract_uri": contract,
-                             "evt_name": "LogAuditAssigned",
-                             "block_nbr": "40",
-                             "fk_status": "DN",
-                             "price": str(self.__PRICE),
-                             "status_info": "Report successfully submitted",
-                             "tx_hash": "IGNORE",
-                             "submission_attempts": 1,
-                             "is_persisted": 1,
-                             "audit_uri": "IGNORE",
-                             "audit_hash": "IGNORE",
-                             "audit_state": self.__AUDIT_STATE_ERROR,
-                             "compressed_report": "10001F344220A1F2B24A7B263C41BA3F403A65C770DC8AEFF1BC5010E3E1902872C2"
-                             }]
-        self.assert_event_table_contains(expected_content,
-                                         ignore_keys=["tx_hash", "audit_hash", "audit_uri"])
+        compressed_report = TestQSPAuditNode.__compress_report("reports/kyber.json")
+
+        # Asserts the database content.
+        expected_row = {"request_id": 1,
+                        "requestor": self.__config.account,
+                        "contract_uri": contract,
+                        "evt_name": "LogAuditAssigned",
+                        "block_nbr": "40",
+                        "fk_status": "DN",
+                        "fk_type": "AU",
+                        "price": str(self.__PRICE),
+                        "status_info": "Report successfully submitted",
+                        "tx_hash": "IGNORE",
+                        "submission_attempts": 1,
+                        "is_persisted": 1,
+                        "audit_uri": "IGNORE",
+                        "audit_hash": "IGNORE",
+                        "audit_state": self.__AUDIT_STATE_ERROR,
+                        "full_report": "IGNORE",
+                        "compressed_report": compressed_report
+                        }
+        self.__assert_event_table_contains([expected_row],
+                                            ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(30, timeout_exception=StopIteration)
     def test_change_min_price(self):
@@ -1078,25 +840,6 @@ class TestQSPAuditNode(QSPTest):
                     break
             if not success:
                 sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
-
-    @timeout(10, timeout_exception=StopIteration)
-    def test_not_whitelisted(self):
-        # the address has to have fixed length, do not truncate
-        address = '0x0000000000000000000000000000000000000000'
-        self.assertFalse(self.__audit_node._QSPAuditNode__check_whitelist(address),
-                         "Address 0x0 is not whitelisted")
-
-    @timeout(10, timeout_exception=StopIteration)
-    def test_not_whitelisted_run(self):
-        self.__audit_node.stop()
-        # the address has to have fixed length, do not truncate
-        address = '0x0000000000000000000000000000000000000000'
-        self.__audit_node.config._Config__account = address
-        try:
-            self.__audit_node.run()
-            self.fail("This should throw an error")
-        except ExecutionException:
-            pass
 
     @timeout(30, timeout_exception=StopIteration)
     def test_gas_price_computation_static(self):
@@ -1150,20 +893,49 @@ class TestQSPAuditNode(QSPTest):
                 self.__audit_node._QSPAuditNode__config.analyzers[
                     i].wrapper._Wrapper__timeout_sec = temp
 
-    def __fetch_audit_from_db(self, request_id):
-        sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
+    ##############################################
+    # Helper methods (class/static level)
+    ##############################################
 
-        # Busy waits on receiving events up to the configured timeout (60s)
-        row = None
-        while True:
-            row = get_first(
-                sql3lite_worker.execute("select * from audit_evt where fk_status = 'DN' "
-                                        "and request_id = {}".format(request_id)))
-            if row != {} and row['request_id'] == request_id:
-                break
-            else:
-                sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
-        return row
+    @staticmethod
+    def __compress_report(report_path_uri):
+        full_report = load_json(fetch_file(resource_uri(report_path_uri)))
+        encoder = ReportEncoder()
+        return encoder.compress_report(full_report, full_report['request_id'])
+
+    @staticmethod
+    def __find_difference(list1, list2):
+        """
+        Returns the difference between two lists of audit_evt records.
+        """
+        for x in [item for item in list1 if item not in list2]:
+            for y in [y for y in list2 if y['request_id'] == x["request_id"]]:
+                for key in x.keys():
+                    if x[key] != y[key]:
+                        msg = "Key: {}, Value 1:{} Values 2:{} \nList1: {}\nList2: {}"
+                        return msg.format(key, x[key], y[key], list1, list2)
+        return "No difference found"
+
+    ##############################################
+    # Helper methods (object level)
+    ##############################################
+
+    def __assert_event_table_contains(self, data, ignore_keys=(), close=True):
+        """Checks that the table audit_evt contains all dictionaries that are in data"""
+
+        query = "select * from audit_evt"
+        content = self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker.execute(
+            query)
+        if close:
+            self.__close_evt_manager()
+        self.assertEqual(len(content), len(data), "{} is not {}".format(content, data))
+        for key in ignore_keys:
+            for row in content:
+                row[key] = "Ignored"
+            for row in data:
+                row[key] = "Ignored"
+        self.assertEqual(len([row for row in content if row in data]), len(data),
+                         TestQSPAuditNode.__find_difference(data, content))
 
     def __assert_audit_request_report(self, request_id, report_file_path=None, ignore_id=False):
         audit = self.__fetch_audit_from_db(request_id)
@@ -1186,12 +958,84 @@ class TestQSPAuditNode(QSPTest):
             name, conf = list(analyzer.items())[0]
             self.assertTrue(name in executed_analyzers)
 
+    def __close_evt_manager(self):
+        """
+        Closes the event manager. This has to be done before asserting the final database state.
+        """
+        self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
+
+    def __compare_json(self, audit_file, report_file_path, json_loaded=False, ignore_id=False):
+        if not json_loaded:
+            actual_json = load_json(audit_file)
+        else:
+            actual_json = audit_file
+        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
+        if ignore_id:
+            expected_json['request_id'] = actual_json['request_id']
+
+        diff = DeepDiff(
+            actual_json,
+            expected_json,
+            exclude_paths={
+                "root['contract_uri']",
+                # There is no keystore used for testing. Accounts
+                # are dynamic and therefore cannot be compared
+                "root['auditor']",
+                "root['requestor']",
+                # Path is different depending on whether running inside Docker
+                "root['timestamp']",
+                "root['start_time']",
+                "root['end_time']",
+                "root['analyzers_reports'][0]['analyzer']['command']",
+                "root['analyzers_reports'][0]['coverages'][0]['file']",
+                "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
+                "root['analyzers_reports'][0]['start_time']",
+                "root['analyzers_reports'][0]['end_time']",
+                "root['analyzers_reports'][1]['analyzer']['command']",
+                "root['analyzers_reports'][1]['coverages'][0]['file']",
+                "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
+                "root['analyzers_reports'][1]['start_time']",
+                "root['analyzers_reports'][1]['end_time']",
+                "root['analyzers_reports'][2]['analyzer']['command']",
+                "root['analyzers_reports'][2]['coverages'][0]['file']",
+                "root['analyzers_reports'][2]['potential_vulnerabilities'][0]['file']",
+                "root['analyzers_reports'][2]['start_time']",
+                "root['analyzers_reports'][2]['end_time']",
+            }
+        )
+        pprint(diff)
+        self.assertEqual(diff, {})
+        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
+                         ntpath.basename(expected_json['contract_uri']))
+
     def __evt_wait_loop(self, current_filter):
         events = current_filter.get_new_entries()
         while not bool(events):
             sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
             events = current_filter.get_new_entries()
         return events
+
+    def __fetch_audit_from_db(self, request_id):
+        sql3lite_worker = self.__config.event_pool_manager.sql3lite_worker
+
+        # Busy waits on receiving events up to the configured timeout (60s)
+        row = None
+        while True:
+            row = get_first(
+                sql3lite_worker.execute("select * from audit_evt where fk_status = 'DN' "
+                                        "and request_id = {}".format(request_id)))
+            if row != {} and row['request_id'] == request_id:
+                break
+            else:
+                sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
+        return row
+
+    def __mk_unique_storage_dir(self):
+        """
+        Generates a unique directory for each test run
+        """
+        for analyzer in self.__audit_node.config.analyzers:
+            analyzer.wrapper._Wrapper__storage_dir += "/{}{}".format(time(), random())
 
     def __request_audit(self, contract_uri, price):
         """
@@ -1220,7 +1064,7 @@ class TestQSPAuditNode(QSPTest):
         """
         requestor = self.__config.account
         auditor = self.__config.account
-        result = TestQSPAuditNode.__safe_transact(
+        return safe_transact(
             self.__config.audit_contract.functions.assignAuditAndEmit(
                 request_id,
                 requestor,
@@ -1230,11 +1074,17 @@ class TestQSPAuditNode(QSPTest):
                 request_block_number),
             {"from": requestor}
         )
-        self.__config.web3_client.eth.waitForTransactionReceipt(result)
-        return result
+
+    def __set_any_request_available(self, number):
+        tx_hash = safe_transact(
+            self.__config.audit_contract.functions.setAnyRequestAvailableResult(number),
+            {"from": self.__config.account}
+        )
+        self.__config.web3_client.eth.waitForTransactionReceipt(tx_hash)
+        return tx_hash
 
     def __send_done_message(self, request_id):
-        result = TestQSPAuditNode.__safe_transact(
+        return safe_transact(
             self.__config.audit_contract.functions.emitLogAuditFinished(
                 request_id,
                 self.__config.account,
@@ -1242,11 +1092,9 @@ class TestQSPAuditNode(QSPTest):
                 ""),
             {"from": self.__config.account}
         )
-        self.__config.web3_client.eth.waitForTransactionReceipt(result)
-        return result
 
     def __set_assigned_request_count(self, num, gas_price=0):
-        return TestQSPAuditNode.__safe_transact(
+        return safe_transact(
             self.__config.audit_contract.functions.setAssignedRequestCount(
                 self.__config.account,
                 num),

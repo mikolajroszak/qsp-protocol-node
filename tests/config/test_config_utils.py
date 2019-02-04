@@ -35,7 +35,7 @@ class ConfigStub:
         self.audit_data_contract_address = data_contract_address
 
 
-class AuditDataContractStub:
+class AuditContractStub:
 
     class Function:
         def __init__(self, value):
@@ -46,11 +46,11 @@ class AuditDataContractStub:
 
     class Functions:
         def __init__(self):
-            self.auditTimeoutInBlocks = lambda: AuditDataContractStub.Function(25)
-            self.maxAssignedRequests = lambda: AuditDataContractStub.Function(5)
+            self.getAuditTimeoutInBlocks = lambda: AuditContractStub.Function(25)
+            self.getMaxAssignedRequests = lambda: AuditContractStub.Function(5)
 
     def __init__(self):
-        self.functions = AuditDataContractStub.Functions()
+        self.functions = AuditContractStub.Functions()
 
 
 class ConfigStubForCheckSettings:
@@ -77,14 +77,14 @@ class ConfigStubForCheckSettings:
         if not gas_price_strategy:
             gas_price_strategy = "dynamic"
         self.gas_price_strategy = gas_price_strategy
-        self.audit_data_contract = AuditDataContractStub()
+        self.audit_contract = AuditContractStub()
         self.analyzers = []
 
 
 class TestConfigUtil(QSPTest):
 
     def setUp(self):
-        dummy_node_version = '1.0.0'
+        dummy_node_version = '2.0.0'
         self.config_utils = ConfigUtils(dummy_node_version)
 
     def test_create_report_uploader_provider_ok(self):
