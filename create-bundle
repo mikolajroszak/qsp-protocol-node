@@ -1,7 +1,8 @@
 #!/bin/bash
 
 set -e
-readonly ZIP_FILENAME=qsp-protocol-v1.zip
+VERSION=`PYTHONPATH=:./qsp_protocol_node python -c "from config import Config; c = Config(); print(c.node_version)"`
+readonly ZIP_FILENAME=qsp-protocol-v$VERSION.zip
 
 make clean test
 docker save -o deployment/local/app.tar qsp-protocol-node:latest
