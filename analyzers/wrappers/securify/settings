@@ -11,7 +11,7 @@
 
 source "$WRAPPER_HOME"/../common/settings
 
-readonly ANALYZER_DOCKER_IMAGE="qspprotocol/securify-usolc-0.5.3@sha256:a1fb59473db3e15c7b6deb756d2f1c09d57074db75105ca6eff41a3f28c6eb4e"
+readonly ANALYZER_DOCKER_IMAGE="qspprotocol/securify-0.4.25@sha256:16e13ac1bfc7935ca16422b9949d9a9567231fe01c09576275f6caa46d9cf8b4"
 readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
 readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -fs /shared/$CONTRACT_FILE_NAME"
 
