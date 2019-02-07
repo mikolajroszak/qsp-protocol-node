@@ -210,14 +210,9 @@ class QSPAuditNode:
         """
         Gets the minimum staking (in QSP) required to perform an audit.
         """
-        min_stake = 0
-        try:
-            min_stake = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.getMinAuditStake())
-
-        except Exception as err:
-            raise err
+        min_stake = mk_read_only_call(
+            self.config,
+            self.config.audit_contract.functions.getMinAuditStake())
 
         # Puts the result (wei-QSP) back to QSP
         return min_stake / (10 ** 18)

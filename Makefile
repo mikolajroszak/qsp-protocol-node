@@ -59,7 +59,7 @@ interactive: build
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		-e QSP_ETH_AUTH_TOKEN=$(QSP_ETH_AUTH_TOKEN) \
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
-		-e QSP_ENV="$(QSP_ENV)" \
+		-e QSP_ENV="dev" \
         -e QSP_CONFIG="$(QSP_CONFIG)" \
         qsp-protocol-node sh
 

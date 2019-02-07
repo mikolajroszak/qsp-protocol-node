@@ -19,7 +19,7 @@ from config import ConfigFactory
 
 class TestWrapper(QSPTest):
     __MYTHRIL_METADATA = {'name': 'mythril',
-                          'version': 'e7ef40718273b6d400d45669500dd63a7017215aa8c5748fb3ff91faac73ad95',
+                          'version': '06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3',
                           'vulnerabilities_checked': {'Call data forwarded with delegatecall()': {
                               'type': 'delegate_call_to_untrusted_contract'},
                               'Dependence on predictable environment variable': {
@@ -48,10 +48,10 @@ class TestWrapper(QSPTest):
                               'Unchecked CALL return value': {
                                   'type': 'unchecked_call_return_value'},
                               'Unknown': {'type': 'other'}},
-                          'command': 'docker run --rm -v /tmp/.mythril/25:/shared/ -i qspprotocol/mythril-usolc-0.5.3@sha256:e7ef40718273b6d400d45669500dd63a7017215aa8c5748fb3ff91faac73ad95  -o json -x /shared/x'}
+                          'command': 'docker run --rm -v /tmp/.mythril/25:/shared/ -i qspprotocol/mythril-usolc-0.5.3@sha256:06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3  -o json -x /shared/x'}
 
     __SECURIFY_METADATA = {'name': 'securify',
-                           'version': 'a1fb59473db3e15c7b6deb756d2f1c09d57074db75105ca6eff41a3f28c6eb4e',
+                           'version': '59cd6b0b9f258fd7b493f63cecc304c4365dd98a46b0accaab5e8248fc87d010',
                            'vulnerabilities_checked': {
                                'MissingInputValidation': {'type': 'missing_input_validation'},
                                'LockedEther': {'type': 'locked_ether'},
@@ -81,7 +81,7 @@ class TestWrapper(QSPTest):
                                    'type': 'transaction_order_dependency_true_positive'},
                                'SecurifyBug': {'type': 'securify_bug'},
                                'Unknown': {'type': 'other'}},
-                           'command': 'docker run --rm -v /tmp/.securify/37:/shared/ -i qspprotocol/securify-usolc-0.5.3@sha256:a1fb59473db3e15c7b6deb756d2f1c09d57074db75105ca6eff41a3f28c6eb4e  -fs /shared/x'}
+                           'command': 'docker run --rm -v /tmp/.securify/37:/shared/ -i qspprotocol/securify-usolc-0.5.3@sha256:59cd6b0b9f258fd7b493f63cecc304c4365dd98a46b0accaab5e8248fc87d010  -fs /shared/x'}
 
     @classmethod
     def fetch_config(cls):

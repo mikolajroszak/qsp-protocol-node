@@ -48,7 +48,7 @@
       ],
       "analyzer": {
         "name": "mythril",
-        "version": "e7ef40718273b6d400d45669500dd63a7017215aa8c5748fb3ff91faac73ad95",
+        "version": "06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {
             "type": "delegate_call_to_untrusted_contract"
@@ -96,7 +96,7 @@
             "type": "other"
           }
         },
-        "command": "docker run --rm -v /tmp/.mythril/149:/shared/ -i qspprotocol/mythril-usolc-0.5.3@sha256:e7ef40718273b6d400d45669500dd63a7017215aa8c5748fb3ff91faac73ad95  -o json -x /shared/DAOBug.sol"
+        "command": "docker run --rm -v /tmp/.mythril/149:/shared/ -i qspprotocol/mythril-usolc-0.5.3@sha256:06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3  -o json -x /shared/DAOBug.sol"
       },
       "start_time": 1543602167,
       "end_time": 1543602182
@@ -112,7 +112,7 @@
       ],
       "analyzer": {
         "name": "dockerhub_fail",
-        "version": "9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316",
+        "version": "06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {
             "type": "delegate_call_to_untrusted_contract"
@@ -160,7 +160,7 @@
             "type": "other"
           }
         },
-        "command": "docker run --rm -v /tmp/161:/shared/ -i qspprotocol/does-not-exist-0.4.25@sha256:9a5c1ad864df66e8cfb6ac1c283bab6f8fb25ebef0bf98405daaa04616e44316  -o json -x /shared/DAOBug.sol"
+        "command": "docker run --rm -v /tmp/161:/shared/ -i qspprotocol/does-not-exist-0.4.25@sha256:06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3  -o json -x /shared/DAOBug.sol"
       },
       "start_time": 1543602167,
       "end_time": 1543602182
