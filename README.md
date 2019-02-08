@@ -143,7 +143,7 @@ this is restricted to AWS services. The configuration steps are as follows:
 1. Specify AWS credentials as environment variables, namely `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. 
 Make sure that the AWS role has [correct permissions](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html) to access the bucket. 
 
-1. Update the following paramters under `report_uploader` in `config.yaml`:
+1. Update the following parameters under `upload_provider` in `config.yaml`:
     1. `bucket_name`
     1. `contract_bucket_name`
 

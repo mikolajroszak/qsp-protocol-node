@@ -30,9 +30,9 @@ testnet:
         args: "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/securify"
         timeout_sec: !!int 276
-  report_uploader:
+  upload_provider:
       is_enabled: !!bool False
-      provider: !!str "S3Provider"
+      name: !!str "S3Provider"
       args:
         bucket_name: !!str "qsp-protocol-reports-dev"
         contract_bucket_name: !!str "qsp-protocol-reports-dev"
@@ -83,7 +83,7 @@ mainnet:
         args: "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/securify"
         timeout_sec: !!int 276
-  report_uploader:
+  upload_provider:
       is_enabled: !!bool False
   keystore_file: !!str "./keystore/default.json"
   gas_limit: !!int 500000

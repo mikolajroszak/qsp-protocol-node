@@ -982,7 +982,7 @@ class QSPAuditNode:
         audit_report_str = json.dumps(audit_report, indent=2)
         audit_hash = digest(audit_report_str)
 
-        upload_result = self.__config.report_uploader.upload_report(audit_report_str,
+        upload_result = self.__config.upload_provider.upload_report(audit_report_str,
                                                                     audit_report_hash=audit_hash)
 
         self.__logger.info(
@@ -996,7 +996,7 @@ class QSPAuditNode:
         parse_uri = urllib.parse.urlparse(uri)
         original_file_name = os.path.basename(parse_uri.path)
         contract_body = read_file(target_contract)
-        contract_upload_result = self.__config.report_uploader.upload_contract(request_id,
+        contract_upload_result = self.__config.upload_provider.upload_contract(request_id,
                                                                                contract_body,
                                                                                original_file_name)
         if contract_upload_result['success']:

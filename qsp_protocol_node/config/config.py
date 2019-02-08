@@ -102,9 +102,9 @@ class Config:
         self.__gas_price_wei = self.__default_gas_price_wei
         self.__max_gas_price_wei = config_value(cfg, '/gas_price/max_gas_price_wei', -1)
 
-        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', "")
-        self.__report_uploader_is_enabled = config_value(cfg, '/report_uploader/is_enabled', False)
-        self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
+        self.__upload_provider_name = config_value(cfg, '/upload_provider/name', "")
+        self.__upload_provider_is_enabled = config_value(cfg, '/upload_provider/is_enabled', False)
+        self.__upload_provider_args = config_value(cfg, '/upload_provider/args', {})
         self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled',
                                                            False)
         self.__metric_collection_destination_endpoint = config_value(cfg, '/metric_collection/destination_endpoint',
@@ -128,14 +128,14 @@ class Config:
         return config_utils.create_eth_provider(self.eth_provider_name,
                                                 self.eth_provider_args)
 
-    def __create_report_uploader_provider(self, config_utils):
+    def __create_upload_provider(self, config_utils):
         """
-        Creates a report uploader provider.
+        Creates a report upload provider.
         """
-        return config_utils.create_report_uploader_provider(self.account,
-                                                            self.report_uploader_provider_name,
-                                                            self.report_uploader_provider_args,
-                                                            self.report_uploader_is_enabled)
+        return config_utils.create_upload_provider(self.account,
+                                                   self.upload_provider_name,
+                                                   self.upload_provider_args,
+                                                   self.upload_provider_is_enabled)
 
     def __create_web3_client(self, config_utils):
         """
@@ -183,7 +183,7 @@ class Config:
         self.__analyzers = self.__create_analyzers(config_utils)
         self.__event_pool_manager = EventPoolManager(self.evt_db_path)
         self.__report_encoder = ReportEncoder()
-        self.__report_uploader = self.__create_report_uploader_provider(config_utils)
+        self.__upload_provider = self.__create_upload_provider(config_utils)
 
     def load_dictionary(self, config_dictionary, config_utils, env, account_passwd="", auth_token="",
                         validate_contract_settings=True):
@@ -234,10 +234,10 @@ class Config:
         self.__metric_collection_interval_seconds = 30
         self.__report_encoder = None
         self.__metric_collection_destination_endpoint = None
-        self.__report_uploader = None
-        self.__report_uploader_is_enabled = False
-        self.__report_uploader_provider_name = None
-        self.__report_uploader_provider_args = None
+        self.__upload_provider = None
+        self.__upload_provider_is_enabled = False
+        self.__upload_provider_name = None
+        self.__upload_provider_args = None
         self.__start_n_blocks_in_the_past = 0
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
@@ -317,11 +317,11 @@ class Config:
         return self.__report_encoder
 
     @property
-    def report_uploader(self):
+    def upload_provider(self):
         """
-        Returns report uploader.
+        Returns report upload provider.
         """
-        return self.__report_uploader
+        return self.__upload_provider
 
     @property
     def account(self):
@@ -506,16 +506,16 @@ class Config:
         return self.__metric_collection_interval_seconds
 
     @property
-    def report_uploader_is_enabled(self):
-        return self.__report_uploader_is_enabled
+    def upload_provider_is_enabled(self):
+        return self.__upload_provider_is_enabled
 
     @property
-    def report_uploader_provider_name(self):
-        return self.__report_uploader_provider_name
+    def upload_provider_name(self):
+        return self.__upload_provider_name
 
     @property
-    def report_uploader_provider_args(self):
-        return self.__report_uploader_provider_args
+    def upload_provider_args(self):
+        return self.__upload_provider_args
 
     @property
     def analyzers_config(self):

@@ -83,41 +83,38 @@ class TestConfigUtil(QSPTest):
         dummy_node_version = '2.0.0'
         self.config_utils = ConfigUtils(dummy_node_version)
 
-    def test_create_report_uploader_provider_ok(self):
+    def test_create_upload_provider_ok(self):
         """
         Tests that the S3Provider can be created and is properly returend.
         """
-        report_uploader_provider_name = "S3Provider"
-        report_uploader_provider_args = {"bucket_name": "test-bucket",
-                                         "contract_bucket_name": "contract_test-bucket"}
+        upload_provider_name = "S3Provider"
+        upload_provider_args = {"bucket_name": "test-bucket",
+                                "contract_bucket_name": "contract_test-bucket"}
         account = "account"
-        result = self.config_utils.create_report_uploader_provider(account,
-                                                                   report_uploader_provider_name,
-                                                                   report_uploader_provider_args,
-                                                                   True)
+        result = self.config_utils.create_upload_provider(account,
+                                                          upload_provider_name,
+                                                          upload_provider_args,
+                                                          True)
         self.assertTrue(isinstance(result, S3Provider), "The created provider is not an S3Provider")
 
-    def test_create_report_uploader_provider_not_ok(self):
+    def test_create_upload_provider_not_ok(self):
         """
         Tests that wrong upload provider specification causes an exception being thrown.
         """
-        report_uploader_provider_name = "nonsense"
-        report_uploader_provider_args = {}
+        upload_provider_name = "nonsense"
+        upload_provider_args = {}
         account = "account"
         try:
-            self.config_utils.create_report_uploader_provider(account,
-                                                              report_uploader_provider_name,
-                                                              report_uploader_provider_args,
+            self.config_utils.create_upload_provider(account,
+                                                              upload_provider_name,
+                                                              upload_provider_args,
                                                               True)
             self.fail("Succeeded to create upload provider without proper provider name.")
         except ConfigurationException:
             # expected
             pass
         try:
-            self.config_utils.create_report_uploader_provider(None,
-                                                              report_uploader_provider_name,
-                                                              report_uploader_provider_args,
-                                                              True)
+            self.config_utils.create_upload_provider(None, upload_provider_name, upload_provider_args, True)
             self.fail("Succeeded to create upload provider without account.")
         except ConfigurationException:
             # expected

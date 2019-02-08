@@ -55,10 +55,10 @@ class ConfigUtils:
         self.__logger = get_logger(self.__class__.__qualname__)
         self.__node_version = node_version
 
-    def create_report_uploader_provider(self, account, report_uploader_provider_name,
-                                        report_uploader_provider_args, is_enabled):
+    def create_upload_provider(self, account, upload_provider_name,
+        upload_provider_args, is_enabled):
         """
-        Creates a report uploader provider.
+        Creates a report upload provider.
         """
         # Supported providers:
         #
@@ -67,13 +67,13 @@ class ConfigUtils:
         if not is_enabled:
             return DummyProvider()
 
-        if report_uploader_provider_name == "S3Provider":
+        if upload_provider_name == "S3Provider":
             if account is None:
                 raise ConfigurationException("account is None, the upload will not be possible")
-            return S3Provider(account, **report_uploader_provider_args)
+            return S3Provider(account, **upload_provider_args)
 
         raise ConfigurationException(
-            "Unknown/Unsupported provider: {0}".format(report_uploader_provider_name))
+            "Unknown/Unsupported provider: {0}".format(upload_provider_name))
 
     def create_eth_provider(self, provider, args):
         if provider == "HTTPProvider":
