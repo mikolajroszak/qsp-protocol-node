@@ -67,16 +67,6 @@ class Config:
         self.__audit_contract_abi_uri = config_utils.resolve_version(
             config_value(cfg, '/audit_contract_abi/uri'))
 
-        audit_data_contract_metadata = self.__fetch_contract_metadata(cfg, config_utils,
-                                                                      'audit_data_contract_abi')
-        self.__audit_data_contract_name = config_value(audit_data_contract_metadata,
-                                                       '/contractName')
-        self.__audit_data_contract_address = config_value(audit_data_contract_metadata,
-                                                          '/contractAddress')
-        self.__audit_data_contract = None
-        self.__audit_data_contract_abi_uri = config_utils.resolve_version(
-            config_value(cfg, '/audit_data_contract_abi/uri'))
-
         self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
@@ -89,7 +79,7 @@ class Config:
             self.__eth_provider_args['endpoint_uri'] = endpoint.replace("${token}", self.auth_token)
 
         self.__block_discard_on_restart = config_value(cfg, '/block_discard_on_restart', 0)
-        self.__min_price_in_qsp = config_value(cfg, '/min_price_in_qsp', accept_none=False, )
+        self.__min_price_in_qsp = config_value(cfg, '/min_price_in_qsp', accept_none=False)
         self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests',
                                                     accept_none=False)
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
@@ -164,14 +154,6 @@ class Config:
         return config_utils.create_contract(self.web3_client, self.audit_contract_abi_uri,
                                             self.audit_contract_address)
 
-    def __create_audit_data_contract(self, config_utils):
-        """
-        Creates the audit contract either from its ABI or from its source code (whichever is
-        available).
-        """
-        return config_utils.create_contract(self.web3_client, self.audit_data_contract_abi_uri,
-                                            self.audit_data_contract_address)
-
     def __create_analyzers(self, config_utils):
         """
         Creates an instance of the each target analyzer that should be verifying a given contract.
@@ -194,9 +176,6 @@ class Config:
 
         if self.has_audit_contract_abi:
             self.__audit_contract = self.__create_audit_contract(config_utils)
-
-        if self.has_audit_data_contract_abi:
-            self.__audit_data_contract = self.__create_audit_data_contract(config_utils)
 
         if validate_contract_settings:
             config_utils.check_configuration_settings(self)
@@ -232,10 +211,6 @@ class Config:
         self.__audit_contract_address = None
         self.__audit_contract_abi_uri = None
         self.__audit_contract = None
-        self.__audit_data_contract_name = None
-        self.__audit_data_contract_address = None
-        self.__audit_data_contract_abi_uri = None
-        self.__audit_data_contract = None
         self.__account = None
         self.__account_keystore_file = None
         self.__account_private_key = None
@@ -305,13 +280,6 @@ class Config:
         Returns the audit QSP contract address.
         """
         return self.__audit_contract_address
-
-    @property
-    def audit_data_contract_address(self):
-        """
-        Returns the audit data QSP contract address.
-        """
-        return self.__audit_data_contract_address
 
     @property
     def min_price_in_qsp(self):
@@ -405,20 +373,6 @@ class Config:
         return bool(self.__audit_contract_abi_uri)
 
     @property
-    def audit_data_contract_abi_uri(self):
-        """
-        Returns the audit contract ABI URI.
-        """
-        return self.__audit_data_contract_abi_uri
-
-    @property
-    def has_audit_data_contract_abi(self):
-        """
-        Returns whether the audit contract ABI has been made available.
-        """
-        return bool(self.__audit_data_contract_abi_uri)
-
-    @property
     def web3_client(self):
         """
         Returns the Web3 client object built from the given YAML configuration file.
@@ -438,13 +392,6 @@ class Config:
         Returns the name of the audit contract.
         """
         return self.__audit_contract_name
-
-    @property
-    def audit_data_contract(self):
-        """
-        Returns the audit contract object built from the given YAML configuration file.
-        """
-        return self.__audit_data_contract
 
     @property
     def analyzers(self):

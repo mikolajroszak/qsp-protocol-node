@@ -25,14 +25,10 @@ class ConfigStub:
     """
     TODO(mderka): Replace this with real config class when it become available in later PRs
     """
-
-    def __init__(self, abi, abi_uri, contract_address, data_abi, data_uri, data_contract_address):
+    def __init__(self, abi, abi_uri, contract_address):
         self.has_audit_contract_abi = abi
         self.audit_contract_abi_uri = abi_uri
         self.audit_contract_address = contract_address
-        self.has_audit_data_contract_abi = data_abi
-        self.audit_data_contract_abi_uri = data_uri
-        self.audit_data_contract_address = data_contract_address
 
 
 class AuditContractStub:
@@ -145,51 +141,26 @@ class TestConfigUtil(QSPTest):
         exactly one of the two but not both.
         """
         # Test ABI
-        abi = ConfigStub(True, True, True, True, True, True)
+        abi = ConfigStub(True, True, True)
         self.config_utils.check_audit_contract_settings(abi)
-        abi_faulty = ConfigStub(True, False, True, True, True, True)
+
+        abi_faulty = ConfigStub(True, False, True)
         try:
             self.config_utils.check_audit_contract_settings(abi_faulty)
             self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        abi_faulty = ConfigStub(True, False, True, True, True, True)
+
+        abi_faulty = ConfigStub(True, True, False)
         try:
             self.config_utils.check_audit_contract_settings(abi_faulty)
             self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        abi_faulty = ConfigStub(True, True, False, True, True, True)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        abi_faulty = ConfigStub(True, True, True, False, True, True)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        abi_faulty = ConfigStub(True, True, True, True, False, True)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        abi_faulty = ConfigStub(True, True, True, True, True, False)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        none = ConfigStub(False, False, False, False, False, False)
+
+        none = ConfigStub(False, False, False)
         try:
             self.config_utils.check_audit_contract_settings(none)
             self.fail("Neither ABI is not present but no exception was thrown")

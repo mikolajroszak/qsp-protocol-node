@@ -197,18 +197,9 @@ class ConfigUtils:
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
 
-        if config.has_audit_data_contract_abi:
-            has_uri = bool(config.audit_data_contract_abi_uri)
-            has_addr = bool(config.audit_data_contract_address)
-            ConfigUtils.raise_err(not (has_uri and has_addr),
-                                  "Missing audit data contract ABI URI and address",
-                                  )
-        else:
-            ConfigUtils.raise_err(msg="Missing the audit data contract ABI")
-
     def create_contract(self, web3_client, contract_abi_uri, contract_address):
         """
-        Creates either the audit or audit_data contract from ABI.
+        Creates the audit contract from ABI.
         """
         abi_file = io_utils.fetch_file(contract_abi_uri)
         abi_json = io_utils.load_json(abi_file)
