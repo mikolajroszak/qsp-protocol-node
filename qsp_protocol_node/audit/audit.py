@@ -24,6 +24,7 @@ import jsonschema
 from time import sleep
 from web3.utils.threads import Timeout
 
+from utils.eth.tx import TransactionNotConfirmedException
 from .exceptions import NotEnoughStake
 from evt import is_audit
 from evt import is_police_check
@@ -410,6 +411,9 @@ class QSPAuditNode:
             self.__logger.debug(
                 "Error when attempting to perform an audit request: {0}".format(str(error))
             )
+        except TransactionNotConfirmedException as error:
+            error_msg = "A transaction occurred, but was then uncled and never recovered. {0}"
+            self.__logger.debug(error_msg.format(str(error)))
         except Exception as error:
             self.__logger.exception(str(error))
 
@@ -511,6 +515,12 @@ class QSPAuditNode:
                 str(transaction),
                 str(e)))
             raise e
+        except TransactionNotConfirmedException as e:
+            error_msg = "A transaction occurred, but was then uncled and never recovered. {0}, {1}"
+            self.__logger.debug(error_msg.format(
+                str(transaction),
+                str(e)))
+            raise e
         except Exception as e:
             error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
             self.__logger.exception(error_msg.format(
@@ -581,6 +591,12 @@ class QSPAuditNode:
             error_msg = "A transaction already exists for claiming rewards," \
                         + " but has not yet been mined. " + msg \
                         + " This may take several iterations. {0}, {1}."
+            self.__logger.debug(error_msg.format(
+                str(transaction),
+                str(e)))
+            raise e
+        except TransactionNotConfirmedException as e:
+            error_msg = "A transaction occurred, but was then uncled and never recovered. {0}, {1}"
             self.__logger.debug(error_msg.format(
                 str(transaction),
                 str(e)))
@@ -795,6 +811,9 @@ class QSPAuditNode:
                 self.__logger.debug(
                     "Error when submiting report {0}".format(str(error))
                 )
+            except TransactionNotConfirmedException as error:
+                error_msg = "A transaction occurred, but was then uncled and never recovered. {0}"
+                self.__logger.debug(error_msg.format(str(error)))
             except KeyError as error:
                 self.__logger.exception(
                     "KeyError when processing submission event: {0}".format(str(error))

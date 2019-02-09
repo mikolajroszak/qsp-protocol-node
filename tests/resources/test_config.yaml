@@ -42,6 +42,7 @@ dev:
   #account: No provided account hex (use the first one by default)
   evt_db_path: !!str "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
+  n_blocks_confirmation: !!int 10
   metric_collection:
     is_enabled: !!bool False
     interval_seconds: !!int 30
@@ -84,6 +85,7 @@ staging:
   #account: No provided account hex (use the first one by default)
   evt_db_path: !!str "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
+  n_blocks_confirmation: !!int 10
   metric_collection:
     is_enabled: !!bool False
     interval_seconds: !!int 30

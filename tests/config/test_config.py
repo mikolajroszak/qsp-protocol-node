@@ -322,6 +322,7 @@ class TestConfig(QSPTest):
         self.assertIsNone(config.upload_provider_args)
         self.assertEqual(0, len(config.analyzers_config))
         self.assertEqual(0, config.start_n_blocks_in_the_past)
+        self.assertEqual(6, config.n_blocks_confirmation)
         self.assertEqual(0, config.block_discard_on_restart)
         self.assertTrue(config.heartbeat_allowed)
 

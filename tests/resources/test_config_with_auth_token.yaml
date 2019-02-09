@@ -41,3 +41,4 @@ dev:
             contract_bucket_name: !!str "qsp-protocol-reports-dev"
     evt_db_path: !!str "/tmp/evts.test"
     start_n_blocks_in_the_past: !!int 25
+    n_blocks_confirmation: !!int 8

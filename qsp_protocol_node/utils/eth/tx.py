@@ -6,6 +6,7 @@
 # Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
 #                                                                                                  #
 ####################################################################################################
+from time import sleep
 
 from log_streaming import get_logger
 from .singleton_lock import SingletonLock
@@ -72,6 +73,37 @@ def send_signed_transaction(config, transaction, attempts=10, wait_for_transacti
             )
 
 
+def __wait_for_confirmed_transaction_receipt(config, tx_hash):
+    """
+    Ensures that a transaction still exists in the blockchain after n blocks.
+    Needed to avoid issues with uncle chains.
+    Raises a Timeout exception if the transaction has disappeared or was never mined.
+    """
+    logger.debug("Waiting for an {}-blocks confirmation on the transaction".format(
+        config.n_blocks_confirmation
+    ))
+
+    __MAX_BLOCKS_FOR_CONFIRMATION = config.n_blocks_confirmation * 3
+    start_block = config.web3_client.eth.blockNumber
+    current_block = config.web3_client.eth.blockNumber
+
+    while current_block - start_block <= __MAX_BLOCKS_FOR_CONFIRMATION:
+        current_block = config.web3_client.eth.blockNumber
+        current_receipt = config.web3_client.eth.getTransactionReceipt(tx_hash)
+        if current_receipt:
+            tx_block_number = current_receipt["blockNumber"]
+            if current_block - tx_block_number >= config.n_blocks_confirmation:
+                logger.debug("Transaction has an {}-blocks confirmation.".format(
+                    config.n_blocks_confirmation
+                ))
+                return
+        sleep(config.block_mined_polling)
+
+    logger.debug("Transaction could not be confirmed within {} blocks. Raising exception.".format(
+        __MAX_BLOCKS_FOR_CONFIRMATION))
+    raise TransactionNotConfirmedException()
+
+
 def __send_signed_transaction(config, transaction, attempts=10, wait_for_transaction_receipt=False):
     args = mk_args(config)
     if config.account_private_key is None:  # no local signing (in case of tests)
@@ -89,7 +121,9 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
 
                 if wait_for_transaction_receipt:
                     config.web3_client.eth.waitForTransactionReceipt(tx_hash, 120)
-
+                    logger.debug("Transaction receipt found.")
+                    if config.n_blocks_confirmation > 0:
+                        __wait_for_confirmed_transaction_receipt(config, tx_hash)
                 return tx_hash
             except ValueError as e:
                 if i == attempts - 1:
@@ -119,7 +153,14 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                 # throw the exception to the calling thread.
                 # This is to avoid waiting indefinitely for an underpriced transaction.
                 raise e
+            except TransactionNotConfirmedException as e:
+                # The transaction was found but then later uncled, and could not be confirmed.
+                raise e
 
 
 class DeduplicationException(Exception):
+    pass
+
+
+class TransactionNotConfirmedException(Exception):
     pass

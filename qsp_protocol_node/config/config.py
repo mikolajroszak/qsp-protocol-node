@@ -97,6 +97,7 @@ class Config:
                                                               '/submission_timeout_limit_blocks',
                                                               10)
         self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0)
+        self.__n_blocks_confirmation = config_value(cfg, '/n_blocks_confirmation', 6)
         self.__gas_price_strategy = config_value(cfg, '/gas_price/strategy', accept_none=False)
         self.__default_gas_price_wei = config_value(cfg, '/gas_price/default_gas_price_wei', 0)
         self.__gas_price_wei = self.__default_gas_price_wei
@@ -239,6 +240,7 @@ class Config:
         self.__upload_provider_name = None
         self.__upload_provider_args = None
         self.__start_n_blocks_in_the_past = 0
+        self.__n_blocks_confirmation = 6
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
         self.__block_discard_on_restart = 0
@@ -476,6 +478,13 @@ class Config:
         Returns how many blocks in the past should be considered if an empty database
         """
         return self.__start_n_blocks_in_the_past
+
+    @property
+    def n_blocks_confirmation(self):
+        """
+        Returns how many blocks the node should wait before declaring a transaction successful
+        """
+        return self.__n_blocks_confirmation
 
     @property
     def event_pool_manager(self):

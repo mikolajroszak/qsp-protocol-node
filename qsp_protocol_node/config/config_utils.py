@@ -42,6 +42,11 @@ class ConfigUtils:
     """
     __APPROXIMATE_BLOCK_LENGTH_IN_SECONDS = 12
 
+    # Must be in sync with
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop
+    #       /contracts/QuantstampAuditData.sol#L43
+    __AUDIT_TIMEOUT_IN_BLOCKS = 50
+
     @classmethod
     def load_config(cls, config_file_uri, environment):
         """
@@ -181,6 +186,12 @@ class ConfigUtils:
 
         # the gas price strategy can be either dynamic or static
         ConfigUtils.raise_err(config.gas_price_strategy not in ['dynamic', 'static'])
+
+        # the n-blocks confirmation amount should never exceed the audit timeout in blocks
+        ConfigUtils.raise_err(config.n_blocks_confirmation > ConfigUtils.__AUDIT_TIMEOUT_IN_BLOCKS)
+
+        # the n-blocks confirmation amount should not be negative
+        ConfigUtils.raise_err(config.n_blocks_confirmation < 0)
 
     def check_audit_contract_settings(self, config):
         """
