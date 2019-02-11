@@ -15,15 +15,13 @@ testnet:
   audit_contract_abi:
     uri: !!str "./contracts/dev/QuantstampAudit-v-{major-version}-abi.json"
     metadata: !!str "./contracts/dev/QuantstampAudit-v-{major-version}-meta.json"
-  audit_data_contract_abi:
-    uri: !!str "./contracts/dev/QuantstampAuditData-v-{major-version}-abi.json"
-    metadata: !!str "./contracts/dev/QuantstampAuditData-v-{major-version}-meta.json"
   min_price_in_qsp: !!int 10
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 1
   block_discard_on_restart: !!int 1
   start_n_blocks_in_the_past: !!int 10
+  n_blocks_confirmation: !!int 6
   analyzers:
     - mythril:
         args: !!str "" # No args provided; rely on defaults for now
@@ -33,9 +31,9 @@ testnet:
         args: "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/securify"
         timeout_sec: !!int 276
-  report_uploader:
+  upload_provider:
       is_enabled: !!bool False
-      provider: !!str "S3Provider"
+      name: !!str "S3Provider"
       args:
         bucket_name: !!str "qsp-protocol-reports-dev"
         contract_bucket_name: !!str "qsp-protocol-reports-dev"
@@ -72,14 +70,12 @@ mainnet:
   audit_contract_abi:
     uri: !!str "./contracts/prod/QuantstampAudit-v-{major-version}-abi.json" #note that v1 production ABI is not available
     metadata: !!str "./contracts/prod/QuantstampAudit-v-{major-version}-meta.json" #note that v1 production ABI is not available
-  audit_data_contract_abi:
-    uri: !!str "./contracts/prod/QuantstampAuditData-v-{major-version}-abi.json" #note that v1 production ABI is not available
-    metadata: !!str "./contracts/prod/QuantstampAuditData-v-{major-version}-meta.json" #note that v1 production ABI is not available
   min_price_in_qsp: !!int 1000
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 1
   block_discard_on_restart: !!int 1
+  n_blocks_confirmation: !!int 6
   analyzers:
     - mythril:
         args: "" # No args provided; rely on defaults for now
@@ -89,7 +85,7 @@ mainnet:
         args: "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/securify"
         timeout_sec: !!int 276
-  report_uploader:
+  upload_provider:
       is_enabled: !!bool False
   keystore_file: !!str "./keystore/default.json"
   gas_limit: !!int 500000

@@ -33,11 +33,12 @@ dev:
             args: "" # No args provided; rely on defaults for now
             storage_dir: !!str "/tmp/.securify"
             timeout_sec: !!int 300
-    report_uploader:
+    upload_provider:
         is_enabled: !!bool True
-        provider: !!str "S3Provider"
+        name: !!str "S3Provider"
         args:
             bucket_name: !!str "qsp-protocol-reports-dev"
             contract_bucket_name: !!str "qsp-protocol-reports-dev"
     evt_db_path: !!str "/tmp/evts.test"
     start_n_blocks_in_the_past: !!int 25
+    n_blocks_confirmation: !!int 8

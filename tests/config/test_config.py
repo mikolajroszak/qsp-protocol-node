@@ -28,8 +28,8 @@ class ConfigUtilsDummy:
     def __init__(self, return_values):
         self.return_values = return_values
 
-    def create_report_uploader_provider(self, account, report_uploader_provider_name, report_uploader_provider_args, is_enabled):
-        return self.return_values.get('create_report_uploader_provider', None)
+    def create_upload_provider(self, account, upload_provider_name, upload_provider_args, is_enabled):
+        return self.return_values.get('create_upload_provider', None)
 
     def create_eth_provider(self, provider, args):
         return self.return_values.get('create_eth_provider', None)
@@ -58,14 +58,14 @@ class ConfigUtilsMock(SimpleMock):
     A mock class used as stub for the internals of the Web3 provider.
     """
 
-    def create_report_uploader_provider(self, account, report_uploader_provider_name,
-                                        report_uploader_provider_args, is_enabled):
+    def create_upload_provider(self, account, upload_provider_name,
+                               upload_provider_args, upload_provider_is_enabled):
         """
-        A stub for the report_uploader_provider method.
+        A stub for the upload_provider method.
         """
-        arguments_to_check = ['account', 'report_uploader_provider_name',
-                              'report_uploader_provider_args', 'is_enabled']
-        return self.call('create_report_uploader_provider', arguments_to_check, locals())
+        arguments_to_check = ['account', 'upload_provider_name',
+                              'upload_provider_args', 'upload_provider_is_enabled']
+        return self.call('create_upload_provider', arguments_to_check, locals())
 
     def create_eth_provider(self, provider, args):
         """
@@ -215,25 +215,25 @@ class TestConfig(QSPTest):
         target_file.write(dump)
         target_file.flush()
 
-    def test_create_report_uploader_provider(self):
+    def test_create_upload_provider(self):
         account = "account"
-        report_uploader_provider_name = "provider name"
-        report_uploader_provider_args = "arguments"
-        report_uploader = "value"
+        upload_provider_name = "provider name"
+        upload_provider_args = "arguments"
+        upload_provider = "value"
         config = ConfigFactory.create_empty_config()
         config._Config__account = account
-        config._Config__report_uploader_provider_name = report_uploader_provider_name
-        config._Config__report_uploader_is_enabled = True
-        config._Config__report_uploader_provider_args = report_uploader_provider_args
+        config._Config__upload_provider_name = upload_provider_name
+        config._Config__upload_provider_is_enabled = True
+        config._Config__upload_provider_args = upload_provider_args
         utils = ConfigUtilsMock()
-        utils.expect('create_report_uploader_provider',
+        utils.expect('create_upload_provider',
                      {'account': account,
-                      'report_uploader_provider_name': report_uploader_provider_name,
-                      'report_uploader_provider_args': report_uploader_provider_args,
-                      'is_enabled': True},
-                     report_uploader)
-        result = config._Config__create_report_uploader_provider(utils)
-        self.assertEqual(report_uploader, result)
+                      'upload_provider_name': upload_provider_name,
+                      'upload_provider_args': upload_provider_args,
+                      'upload_provider_is_enabled': True},
+                     upload_provider)
+        result = config._Config__create_upload_provider(utils)
+        self.assertEqual(upload_provider, result)
         utils.verify()
 
     def test_create_eth_provider(self):
@@ -295,7 +295,7 @@ class TestConfig(QSPTest):
         self.assertIsNone(config.audit_contract_address)
         self.assertEqual(0, config.min_price_in_qsp)
         self.assertEqual(0, config.evt_polling)
-        self.assertIsNone(config.report_uploader)
+        self.assertIsNone(config.upload_provider)
         self.assertIsNone(config.account)
         self.assertIsNone(config.account_passwd)
         self.assertIsNone(config.account_keystore_file)
@@ -318,10 +318,11 @@ class TestConfig(QSPTest):
         self.assertTrue(config.metric_collection_is_enabled)
         self.assertEquals(30, config.metric_collection_interval_seconds)
         self.assertIsNone(config.metric_collection_destination_endpoint)
-        self.assertIsNone(config.report_uploader_provider_name)
-        self.assertIsNone(config.report_uploader_provider_args)
+        self.assertIsNone(config.upload_provider_name)
+        self.assertIsNone(config.upload_provider_args)
         self.assertEqual(0, len(config.analyzers_config))
         self.assertEqual(0, config.start_n_blocks_in_the_past)
+        self.assertEqual(6, config.n_blocks_confirmation)
         self.assertEqual(0, config.block_discard_on_restart)
         self.assertTrue(config.heartbeat_allowed)
 
@@ -336,9 +337,9 @@ class TestConfig(QSPTest):
         account = "0x12345"
         analyzers_config = "config list"
         created_analyzers = "analyzers"
-        report_uploader_provider_name = "uploader provider name"
-        report_uploader_provider_args = "uploadervarguments"
-        report_uploader = "created report uploader"
+        upload_provider_name = "upload provider name"
+        upload_provider_args = "upload provider arguments"
+        upload_provider = "created upload provier"
         audit_contract_abi_uri = "some uri"
         audit_contract_address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         created_audit_contract = "contract"
@@ -351,9 +352,9 @@ class TestConfig(QSPTest):
         config._Config__account_keystore_file = account_keystore_file
         config._Config__analyzers_config = analyzers_config
         config._Config__evt_db_path = "/tmp/evts.test"
-        config._Config__report_uploader_provider_name = report_uploader_provider_name
-        config._Config__report_uploader_provider_args = report_uploader_provider_args
-        config._Config__report_uploader_is_enabled = True
+        config._Config__upload_provider_name = upload_provider_name
+        config._Config__upload_provider_args = upload_provider_args
+        config._Config__upload_provider_is_enabled = True
         config._Config__audit_contract_abi_uri = audit_contract_abi_uri
         config._Config__audit_contract_address = audit_contract_address
         utils = ConfigUtilsMock()
@@ -377,18 +378,18 @@ class TestConfig(QSPTest):
         utils.expect('create_analyzers',
                      {'analyzers_config': analyzers_config},
                      created_analyzers)
-        utils.expect('create_report_uploader_provider',
+        utils.expect('create_upload_provider',
                      {'account': new_account,
-                      'report_uploader_provider_name': report_uploader_provider_name,
-                      'report_uploader_provider_args': report_uploader_provider_args,
-                      'is_enabled': True},
-                     report_uploader)
+                      'upload_provider_name': upload_provider_name,
+                      'upload_provider_args': upload_provider_args,
+                      'upload_provider_is_enabled': True},
+                     upload_provider)
         config._Config__create_components(utils)
         self.assertEqual(created_eth_provider, config.eth_provider)
         self.assertEqual(created_web3_client, config.web3_client)
         self.assertEqual(new_account, config.account)
         self.assertEqual(created_analyzers, config.analyzers)
-        self.assertEqual(report_uploader, config.report_uploader)
+        self.assertEqual(upload_provider, config.upload_provider)
         self.assertEqual(created_audit_contract, config.audit_contract)
         utils.verify()
 
@@ -399,7 +400,7 @@ class TestConfig(QSPTest):
         self.assertIsNotNone(config.web3_client)
         self.assertIsNotNone(config.account)
         self.assertIsNotNone(config.analyzers)
-        self.assertIsNotNone(config.report_uploader)
+        self.assertIsNotNone(config.upload_provider)
         self.assertIsNotNone(config.metric_collection_destination_endpoint)
         self.assertEqual(0, config.min_price_in_qsp)
         self.assertEqual(0, config.gas_price_wei)

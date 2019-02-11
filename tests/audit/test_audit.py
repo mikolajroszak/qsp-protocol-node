@@ -449,9 +449,9 @@ class TestQSPAuditNode(QSPTest):
         """
         # rewires the config
         self.__audit_node._QSPAuditNode__config._Config__report_upload_is_enabled = False
-        self.__audit_node._QSPAuditNode__config._Config__report_uploader_provider_name = ""
-        self.__audit_node._QSPAuditNode__config._Config__report_uploader_provider_args = {}
-        self.__audit_node._QSPAuditNode__config._Config__report_uploader = DummyProvider()
+        self.__audit_node._QSPAuditNode__config._Config__upload_provider_name = ""
+        self.__audit_node._QSPAuditNode__config._Config__upload_provider_args = {}
+        self.__audit_node._QSPAuditNode__config._Config__upload_provider = DummyProvider()
 
         # since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")

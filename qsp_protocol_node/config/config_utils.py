@@ -42,6 +42,11 @@ class ConfigUtils:
     """
     __APPROXIMATE_BLOCK_LENGTH_IN_SECONDS = 12
 
+    # Must be in sync with
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop
+    #       /contracts/QuantstampAuditData.sol#L43
+    __AUDIT_TIMEOUT_IN_BLOCKS = 50
+
     @classmethod
     def load_config(cls, config_file_uri, environment):
         """
@@ -55,10 +60,10 @@ class ConfigUtils:
         self.__logger = get_logger(self.__class__.__qualname__)
         self.__node_version = node_version
 
-    def create_report_uploader_provider(self, account, report_uploader_provider_name,
-                                        report_uploader_provider_args, is_enabled):
+    def create_upload_provider(self, account, upload_provider_name,
+        upload_provider_args, is_enabled):
         """
-        Creates a report uploader provider.
+        Creates a report upload provider.
         """
         # Supported providers:
         #
@@ -67,13 +72,13 @@ class ConfigUtils:
         if not is_enabled:
             return DummyProvider()
 
-        if report_uploader_provider_name == "S3Provider":
+        if upload_provider_name == "S3Provider":
             if account is None:
                 raise ConfigurationException("account is None, the upload will not be possible")
-            return S3Provider(account, **report_uploader_provider_args)
+            return S3Provider(account, **upload_provider_args)
 
         raise ConfigurationException(
-            "Unknown/Unsupported provider: {0}".format(report_uploader_provider_name))
+            "Unknown/Unsupported provider: {0}".format(upload_provider_name))
 
     def create_eth_provider(self, provider, args):
         if provider == "HTTPProvider":
@@ -182,6 +187,12 @@ class ConfigUtils:
         # the gas price strategy can be either dynamic or static
         ConfigUtils.raise_err(config.gas_price_strategy not in ['dynamic', 'static'])
 
+        # the n-blocks confirmation amount should never exceed the audit timeout in blocks
+        ConfigUtils.raise_err(config.n_blocks_confirmation > ConfigUtils.__AUDIT_TIMEOUT_IN_BLOCKS)
+
+        # the n-blocks confirmation amount should not be negative
+        ConfigUtils.raise_err(config.n_blocks_confirmation < 0)
+
     def check_audit_contract_settings(self, config):
         """
         Checks the configuration values provided in the YAML configuration file.
@@ -197,18 +208,9 @@ class ConfigUtils:
         else:
             ConfigUtils.raise_err(msg="Missing the audit contract ABI")
 
-        if config.has_audit_data_contract_abi:
-            has_uri = bool(config.audit_data_contract_abi_uri)
-            has_addr = bool(config.audit_data_contract_address)
-            ConfigUtils.raise_err(not (has_uri and has_addr),
-                                  "Missing audit data contract ABI URI and address",
-                                  )
-        else:
-            ConfigUtils.raise_err(msg="Missing the audit data contract ABI")
-
     def create_contract(self, web3_client, contract_abi_uri, contract_address):
         """
-        Creates either the audit or audit_data contract from ABI.
+        Creates the audit contract from ABI.
         """
         abi_file = io_utils.fetch_file(contract_abi_uri)
         abi_json = io_utils.load_json(abi_file)

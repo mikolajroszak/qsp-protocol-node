@@ -33,15 +33,16 @@ dev:
         args: "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/.securify"
         timeout_sec: !!int 300
-  report_uploader:
+  upload_provider:
       is_enabled: !!bool True
-      provider: !!str "S3Provider"
+      name: !!str "S3Provider"
       args:
         bucket_name: !!str "qsp-protocol-reports-dev"
         contract_bucket_name: !!str "qsp-protocol-reports-dev"
   #account: No provided account hex (use the first one by default)
   evt_db_path: !!str "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
+  n_blocks_confirmation: !!int 10
   metric_collection:
     is_enabled: !!bool False
     interval_seconds: !!int 30
@@ -75,15 +76,16 @@ staging:
         args: "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/.securify"
         timeout_sec: !!int 300
-  report_uploader:
+  upload_provider:
       is_enabled: !!bool True
-      provider: !!str "S3Provider"
+      name: !!str "S3Provider"
       args:
         bucket_name: !!str "qsp-protocol-reports-staging"
         contract_bucket_name: !!str "qsp-protocol-reports-staging"
   #account: No provided account hex (use the first one by default)
   evt_db_path: !!str "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
+  n_blocks_confirmation: !!int 10
   metric_collection:
     is_enabled: !!bool False
     interval_seconds: !!int 30

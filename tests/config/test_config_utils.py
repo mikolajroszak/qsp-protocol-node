@@ -25,14 +25,10 @@ class ConfigStub:
     """
     TODO(mderka): Replace this with real config class when it become available in later PRs
     """
-
-    def __init__(self, abi, abi_uri, contract_address, data_abi, data_uri, data_contract_address):
+    def __init__(self, abi, abi_uri, contract_address):
         self.has_audit_contract_abi = abi
         self.audit_contract_abi_uri = abi_uri
         self.audit_contract_address = contract_address
-        self.has_audit_data_contract_abi = data_abi
-        self.audit_data_contract_abi_uri = data_uri
-        self.audit_data_contract_address = data_contract_address
 
 
 class AuditContractStub:
@@ -61,6 +57,7 @@ class ConfigStubForCheckSettings:
 
     def __init__(self,
                  start_n_blocks=1,
+                 n_blocks_confirmation=1,
                  submission_timeout=1,
                  audit_timeout=5,
                  max_requests=1,
@@ -69,6 +66,7 @@ class ConfigStubForCheckSettings:
                  gas_price_strategy=None):
         self.account = "0x0"
         self.start_n_blocks_in_the_past = start_n_blocks
+        self.n_blocks_confirmation = n_blocks_confirmation
         self.submission_timeout_limit_blocks = submission_timeout
         self.contract_audit_timeout_in_blocks = audit_timeout
         self.max_assigned_requests = max_requests
@@ -87,41 +85,38 @@ class TestConfigUtil(QSPTest):
         dummy_node_version = '2.0.0'
         self.config_utils = ConfigUtils(dummy_node_version)
 
-    def test_create_report_uploader_provider_ok(self):
+    def test_create_upload_provider_ok(self):
         """
         Tests that the S3Provider can be created and is properly returend.
         """
-        report_uploader_provider_name = "S3Provider"
-        report_uploader_provider_args = {"bucket_name": "test-bucket",
-                                         "contract_bucket_name": "contract_test-bucket"}
+        upload_provider_name = "S3Provider"
+        upload_provider_args = {"bucket_name": "test-bucket",
+                                "contract_bucket_name": "contract_test-bucket"}
         account = "account"
-        result = self.config_utils.create_report_uploader_provider(account,
-                                                                   report_uploader_provider_name,
-                                                                   report_uploader_provider_args,
-                                                                   True)
+        result = self.config_utils.create_upload_provider(account,
+                                                          upload_provider_name,
+                                                          upload_provider_args,
+                                                          True)
         self.assertTrue(isinstance(result, S3Provider), "The created provider is not an S3Provider")
 
-    def test_create_report_uploader_provider_not_ok(self):
+    def test_create_upload_provider_not_ok(self):
         """
         Tests that wrong upload provider specification causes an exception being thrown.
         """
-        report_uploader_provider_name = "nonsense"
-        report_uploader_provider_args = {}
+        upload_provider_name = "nonsense"
+        upload_provider_args = {}
         account = "account"
         try:
-            self.config_utils.create_report_uploader_provider(account,
-                                                              report_uploader_provider_name,
-                                                              report_uploader_provider_args,
+            self.config_utils.create_upload_provider(account,
+                                                              upload_provider_name,
+                                                              upload_provider_args,
                                                               True)
             self.fail("Succeeded to create upload provider without proper provider name.")
         except ConfigurationException:
             # expected
             pass
         try:
-            self.config_utils.create_report_uploader_provider(None,
-                                                              report_uploader_provider_name,
-                                                              report_uploader_provider_args,
-                                                              True)
+            self.config_utils.create_upload_provider(None, upload_provider_name, upload_provider_args, True)
             self.fail("Succeeded to create upload provider without account.")
         except ConfigurationException:
             # expected
@@ -145,51 +140,26 @@ class TestConfigUtil(QSPTest):
         exactly one of the two but not both.
         """
         # Test ABI
-        abi = ConfigStub(True, True, True, True, True, True)
+        abi = ConfigStub(True, True, True)
         self.config_utils.check_audit_contract_settings(abi)
-        abi_faulty = ConfigStub(True, False, True, True, True, True)
+
+        abi_faulty = ConfigStub(True, False, True)
         try:
             self.config_utils.check_audit_contract_settings(abi_faulty)
             self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        abi_faulty = ConfigStub(True, False, True, True, True, True)
+
+        abi_faulty = ConfigStub(True, True, False)
         try:
             self.config_utils.check_audit_contract_settings(abi_faulty)
             self.fail("ABI is missing configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        abi_faulty = ConfigStub(True, True, False, True, True, True)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        abi_faulty = ConfigStub(True, True, True, False, True, True)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        abi_faulty = ConfigStub(True, True, True, True, False, True)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        abi_faulty = ConfigStub(True, True, True, True, True, False)
-        try:
-            self.config_utils.check_audit_contract_settings(abi_faulty)
-            self.fail("ABI is missing configuration but no exception was thrown")
-        except ConfigurationException:
-            # Expected
-            pass
-        none = ConfigStub(False, False, False, False, False, False)
+
+        none = ConfigStub(False, False, False)
         try:
             self.config_utils.check_audit_contract_settings(none)
             self.fail("Neither ABI is not present but no exception was thrown")
@@ -238,6 +208,20 @@ class TestConfigUtil(QSPTest):
             # Expected
             pass
         abi_faulty = ConfigStubForCheckSettings(gas_price_strategy="invalid_strategy")
+        try:
+            self.config_utils.check_configuration_settings(abi_faulty)
+            self.fail("ABI has faulty configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStubForCheckSettings(n_blocks_confirmation=10000)
+        try:
+            self.config_utils.check_configuration_settings(abi_faulty)
+            self.fail("ABI has faulty configuration but no exception was thrown")
+        except ConfigurationException:
+            # Expected
+            pass
+        abi_faulty = ConfigStubForCheckSettings(n_blocks_confirmation=-1)
         try:
             self.config_utils.check_configuration_settings(abi_faulty)
             self.fail("ABI has faulty configuration but no exception was thrown")

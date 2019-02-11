@@ -67,16 +67,6 @@ class Config:
         self.__audit_contract_abi_uri = config_utils.resolve_version(
             config_value(cfg, '/audit_contract_abi/uri'))
 
-        audit_data_contract_metadata = self.__fetch_contract_metadata(cfg, config_utils,
-                                                                      'audit_data_contract_abi')
-        self.__audit_data_contract_name = config_value(audit_data_contract_metadata,
-                                                       '/contractName')
-        self.__audit_data_contract_address = config_value(audit_data_contract_metadata,
-                                                          '/contractAddress')
-        self.__audit_data_contract = None
-        self.__audit_data_contract_abi_uri = config_utils.resolve_version(
-            config_value(cfg, '/audit_data_contract_abi/uri'))
-
         self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
@@ -89,7 +79,7 @@ class Config:
             self.__eth_provider_args['endpoint_uri'] = endpoint.replace("${token}", self.auth_token)
 
         self.__block_discard_on_restart = config_value(cfg, '/block_discard_on_restart', 0)
-        self.__min_price_in_qsp = config_value(cfg, '/min_price_in_qsp', accept_none=False, )
+        self.__min_price_in_qsp = config_value(cfg, '/min_price_in_qsp', accept_none=False)
         self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests',
                                                     accept_none=False)
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
@@ -107,14 +97,15 @@ class Config:
                                                               '/submission_timeout_limit_blocks',
                                                               10)
         self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0)
+        self.__n_blocks_confirmation = config_value(cfg, '/n_blocks_confirmation', 6)
         self.__gas_price_strategy = config_value(cfg, '/gas_price/strategy', accept_none=False)
         self.__default_gas_price_wei = config_value(cfg, '/gas_price/default_gas_price_wei', 0)
         self.__gas_price_wei = self.__default_gas_price_wei
         self.__max_gas_price_wei = config_value(cfg, '/gas_price/max_gas_price_wei', -1)
 
-        self.__report_uploader_provider_name = config_value(cfg, '/report_uploader/provider', "")
-        self.__report_uploader_is_enabled = config_value(cfg, '/report_uploader/is_enabled', False)
-        self.__report_uploader_provider_args = config_value(cfg, '/report_uploader/args', {})
+        self.__upload_provider_name = config_value(cfg, '/upload_provider/name', "")
+        self.__upload_provider_is_enabled = config_value(cfg, '/upload_provider/is_enabled', False)
+        self.__upload_provider_args = config_value(cfg, '/upload_provider/args', {})
         self.__metric_collection_is_enabled = config_value(cfg, '/metric_collection/is_enabled',
                                                            False)
         self.__metric_collection_destination_endpoint = config_value(cfg, '/metric_collection/destination_endpoint',
@@ -138,14 +129,14 @@ class Config:
         return config_utils.create_eth_provider(self.eth_provider_name,
                                                 self.eth_provider_args)
 
-    def __create_report_uploader_provider(self, config_utils):
+    def __create_upload_provider(self, config_utils):
         """
-        Creates a report uploader provider.
+        Creates a report upload provider.
         """
-        return config_utils.create_report_uploader_provider(self.account,
-                                                            self.report_uploader_provider_name,
-                                                            self.report_uploader_provider_args,
-                                                            self.report_uploader_is_enabled)
+        return config_utils.create_upload_provider(self.account,
+                                                   self.upload_provider_name,
+                                                   self.upload_provider_args,
+                                                   self.upload_provider_is_enabled)
 
     def __create_web3_client(self, config_utils):
         """
@@ -163,14 +154,6 @@ class Config:
         """
         return config_utils.create_contract(self.web3_client, self.audit_contract_abi_uri,
                                             self.audit_contract_address)
-
-    def __create_audit_data_contract(self, config_utils):
-        """
-        Creates the audit contract either from its ABI or from its source code (whichever is
-        available).
-        """
-        return config_utils.create_contract(self.web3_client, self.audit_data_contract_abi_uri,
-                                            self.audit_data_contract_address)
 
     def __create_analyzers(self, config_utils):
         """
@@ -195,16 +178,13 @@ class Config:
         if self.has_audit_contract_abi:
             self.__audit_contract = self.__create_audit_contract(config_utils)
 
-        if self.has_audit_data_contract_abi:
-            self.__audit_data_contract = self.__create_audit_data_contract(config_utils)
-
         if validate_contract_settings:
             config_utils.check_configuration_settings(self)
 
         self.__analyzers = self.__create_analyzers(config_utils)
         self.__event_pool_manager = EventPoolManager(self.evt_db_path)
         self.__report_encoder = ReportEncoder()
-        self.__report_uploader = self.__create_report_uploader_provider(config_utils)
+        self.__upload_provider = self.__create_upload_provider(config_utils)
 
     def load_dictionary(self, config_dictionary, config_utils, env, account_passwd="", auth_token="",
                         validate_contract_settings=True):
@@ -232,10 +212,6 @@ class Config:
         self.__audit_contract_address = None
         self.__audit_contract_abi_uri = None
         self.__audit_contract = None
-        self.__audit_data_contract_name = None
-        self.__audit_data_contract_address = None
-        self.__audit_data_contract_abi_uri = None
-        self.__audit_data_contract = None
         self.__account = None
         self.__account_keystore_file = None
         self.__account_private_key = None
@@ -259,11 +235,12 @@ class Config:
         self.__metric_collection_interval_seconds = 30
         self.__report_encoder = None
         self.__metric_collection_destination_endpoint = None
-        self.__report_uploader = None
-        self.__report_uploader_is_enabled = False
-        self.__report_uploader_provider_name = None
-        self.__report_uploader_provider_args = None
+        self.__upload_provider = None
+        self.__upload_provider_is_enabled = False
+        self.__upload_provider_name = None
+        self.__upload_provider_args = None
         self.__start_n_blocks_in_the_past = 0
+        self.__n_blocks_confirmation = 6
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
         self.__block_discard_on_restart = 0
@@ -307,13 +284,6 @@ class Config:
         return self.__audit_contract_address
 
     @property
-    def audit_data_contract_address(self):
-        """
-        Returns the audit data QSP contract address.
-        """
-        return self.__audit_data_contract_address
-
-    @property
     def min_price_in_qsp(self):
         """
         Returns the minimum QSP price for accepting an audit.
@@ -349,11 +319,11 @@ class Config:
         return self.__report_encoder
 
     @property
-    def report_uploader(self):
+    def upload_provider(self):
         """
-        Returns report uploader.
+        Returns report upload provider.
         """
-        return self.__report_uploader
+        return self.__upload_provider
 
     @property
     def account(self):
@@ -405,20 +375,6 @@ class Config:
         return bool(self.__audit_contract_abi_uri)
 
     @property
-    def audit_data_contract_abi_uri(self):
-        """
-        Returns the audit contract ABI URI.
-        """
-        return self.__audit_data_contract_abi_uri
-
-    @property
-    def has_audit_data_contract_abi(self):
-        """
-        Returns whether the audit contract ABI has been made available.
-        """
-        return bool(self.__audit_data_contract_abi_uri)
-
-    @property
     def web3_client(self):
         """
         Returns the Web3 client object built from the given YAML configuration file.
@@ -438,13 +394,6 @@ class Config:
         Returns the name of the audit contract.
         """
         return self.__audit_contract_name
-
-    @property
-    def audit_data_contract(self):
-        """
-        Returns the audit contract object built from the given YAML configuration file.
-        """
-        return self.__audit_data_contract
 
     @property
     def analyzers(self):
@@ -531,6 +480,13 @@ class Config:
         return self.__start_n_blocks_in_the_past
 
     @property
+    def n_blocks_confirmation(self):
+        """
+        Returns how many blocks the node should wait before declaring a transaction successful
+        """
+        return self.__n_blocks_confirmation
+
+    @property
     def event_pool_manager(self):
         """
         Returns the event pool manager.
@@ -559,16 +515,16 @@ class Config:
         return self.__metric_collection_interval_seconds
 
     @property
-    def report_uploader_is_enabled(self):
-        return self.__report_uploader_is_enabled
+    def upload_provider_is_enabled(self):
+        return self.__upload_provider_is_enabled
 
     @property
-    def report_uploader_provider_name(self):
-        return self.__report_uploader_provider_name
+    def upload_provider_name(self):
+        return self.__upload_provider_name
 
     @property
-    def report_uploader_provider_args(self):
-        return self.__report_uploader_provider_args
+    def upload_provider_args(self):
+        return self.__upload_provider_args
 
     @property
     def analyzers_config(self):
