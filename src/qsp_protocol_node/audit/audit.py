@@ -946,7 +946,7 @@ class QSPAuditNode:
         """
         try:
             file_path = os.path.realpath(__file__)
-            schema_file = '{0}/../../analyzers/schema/analyzer_integration.json'.format(
+            schema_file = '{0}/../../../plugins/analyzers/schema/analyzer_integration.json'.format(
                 os.path.dirname(file_path))
             with open(schema_file) as schema_data:
                 schema = json.load(schema_data)

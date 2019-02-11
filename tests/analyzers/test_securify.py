@@ -30,7 +30,7 @@ class TestAnalyzerSecurify(QSPTest):
     @staticmethod
     def __new_analyzer(timeout_sec=600):
         securify_wrapper = Wrapper(
-            wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
+            wrappers_dir="{0}/plugins/analyzers/wrappers".format(project_root()),
             analyzer_name="securify",
             args="",
             storage_dir="/tmp/{}{}".format(time(), random()),

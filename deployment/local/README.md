@@ -34,7 +34,7 @@ To force the new group assignment to take effect, restart you session (e.g., by 
 
 Record for next steps:
 - The passphrase (or *wallet password*) for your key
-- Location of your keystore (JSON) file, e.g., `./keystore/default.json`. The location is
+- Location of your keystore (JSON) file, e.g., `./resources/keystore/default.json`. The location is
 relative to this README's folder.
 
 ### Configure
@@ -58,7 +58,7 @@ Otherwise, launching the audit node will fail.
    your own endpoint, modify `eth_node/args/endpoint_uri` in `config.yaml` to
    the endpoint of your choice.
 
-1. If the location of your keystore file is different from the default one, in `config.yaml`, edit the line `keystore_file: !!str "./keystore/default.json"`
+1. If the location of your keystore file is different from the default one, in `config.yaml`, edit the line `keystore_file: !!str "./resources/keystore/default.json"`
 
 1. Configure other settings as necessary, e.g., `gas_price`.
 
@@ -69,11 +69,11 @@ is up and running (`ps -A | egrep docker`). If not running, please start it.
 
 ### Run
 
-`./run.sh`
+`./start-node`
 
 You can use nohup to run the script in detached mode:
 
-`nohup ./run.sh &`
+`nohup ./start-node &`
 
 ### View Logs
 
@@ -81,6 +81,6 @@ Logs are written to `qsp-protocol-node.log` file in current directory.
 
 ### Stop
 
-`./stop.sh`
+`./stop-node`
 
 Will stop and remove the docker containers.

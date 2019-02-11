@@ -35,14 +35,18 @@ RUN wget https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-sta
   mv solc-static-linux /usr/local/bin/solc
 
 RUN mkdir ./app
-WORKDIR ./app
+WORKDIR ./app/
 RUN mkdir ./audit-db
 COPY requirements.txt ./
 RUN pip3 install -r requirements.txt
 
-COPY . .
-RUN chmod +x ./qsp-protocol-node
-RUN chmod +x ./codec
+COPY .coveragerc .
+COPY ./bin ./bin
+COPY ./tests/ ./tests/
+COPY ./src/ ./src/
+COPY ./plugins/ ./plugins/
+RUN chmod +x ./bin/qsp-protocol-node
+RUN chmod +x ./bin/codec
 RUN mkdir -p /var/log/qsp-protocol/
-RUN find "./analyzers/wrappers" -type f -exec chmod +x {} \;
-CMD [ "./qsp-protocol-node" ]
+RUN find "./plugins/analyzers/wrappers" -type f -exec chmod +x {} \;
+CMD [ "./bin/qsp-protocol-node" ]

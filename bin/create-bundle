@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+VERSION=`PYTHONPATH=:./src/qsp_protocol_node python -c "from config import Config; c = Config(); print(c.node_version)"`
+
+readonly ZIP_FILENAME=qsp-protocol-v$VERSION.zip
+readonly BIN_DIR=`dirname $(realpath "$0")`
+
+QSPROOT="$(dirname "$BIN_DIR")"
+cd `echo $QSPROOT`
+make clean build
+readonly TMPDIR=./deployment/local/tmp
+readonly CONFIG_FILE=${QSPROOT}/resources/config.yaml
+readonly CONTRACTS_DIR=${QSPROOT}/resources/contracts
+readonly START_SCRIPT=${BIN_DIR}/start-node
+readonly APP_TAR=${TMPDIR}/resources/app.tar
+
+mkdir -p $TMPDIR/resources $TMPDIR/bin
+docker save -o $APP_TAR qsp-protocol-node:latest
+
+echo "Switched to: `pwd`"
+if [ ! -f $CONFIG_FILE ] && [ ! -f $BIN_DIR/start-node ] && [ ! -f $APP_TAR ]; then
+        echo "Require both config.yaml and start-node"
+        exit 1
+fi
+
+sed -n -i.org '/mainnet/,$p' $CONFIG_FILE 
+sed -i.org 's/testnet/mainnet/g' $START_SCRIPT
+
+cp LICENSE $TMPDIR
+cp $CONFIG_FILE $TMPDIR/resources
+cp $BIN_DIR/start-node $BIN_DIR/stop-node $BIN_DIR/common $TMPDIR/bin 
+cp -a $CONTRACTS_DIR/. $TMPDIR/resources/contracts
+mkdir -p $TMPDIR/resources/keystore
+echo "Add a valid key here" > $TMPDIR/resources/keystore/default.json
+
+cd $TMPDIR
+zip -r $ZIP_FILENAME *
+cd -
+mv $CONFIG_FILE.org $CONFIG_FILE
+mv $START_SCRIPT.org $START_SCRIPT

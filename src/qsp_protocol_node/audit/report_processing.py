@@ -89,7 +89,7 @@ class ReportEncoder:
         vulnerability_types = {}
         vulnerability_types_inverted = {}
         script_path = os.path.realpath(__file__)
-        json_fstr = "{0}/../../analyzers/vulnerability_types.json"
+        json_fstr = "{0}/../../../plugins/analyzers/vulnerability_types.json"
         types_file = json_fstr.format(os.path.dirname(script_path))
         with open(types_file) as json_data:
             types_json = json.load(json_data)

@@ -9,7 +9,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-source common.sh
+source common
 
 # Check if the script is running in background
 case $(ps -o stat= -p $$) in
@@ -17,7 +17,12 @@ case $(ps -o stat= -p $$) in
   *) IN_BACKGROUND="true" ;;
 esac
 
-bash ./stop.sh
+bash ./stop-node
+
+set -e
+readonly BIN_DIR=`dirname $(realpath "$0")`
+readonly RESOURCE_DIR="$(dirname "$BIN_DIR")/resources"
+cd $RESOURCE_DIR
 
 if [[ "x$QSP_ETH_PASSPHRASE" == "x" ]] ; then
   echo "Environment variable QSP_ETH_PASSPHRASE is not set" &> /dev/null
@@ -43,15 +48,16 @@ docker load --input app.tar && \
 docker run -d \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v /tmp:/tmp:Z \
-	-v $PWD/keystore:/app/keystore:Z \
-	-v $PWD/config.yaml:/app/config.yaml:Z \
+	-v $PWD/keystore:/app/resources/keystore:Z \
+	-v $PWD/contracts:/app/resources/contracts:Z \
+	-v $PWD/config.yaml:/app/resources/config.yaml:Z \
 	-v $PWD/event_database.db:/root/.audit_node.db:Z \
 	-e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
 	-e AWS_DEFAULT_REGION="us-east-1" \
 	-e QSP_ETH_PASSPHRASE="$QSP_ETH_PASSPHRASE" \
 	-e QSP_ETH_AUTH_TOKEN="$QSP_ETH_AUTH_TOKEN" \
-	qsp-protocol-node sh -c "./qsp-protocol-node -a $QSP_ENV $QSP_CONFIG"
+	qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $QSP_ENV $QSP_CONFIG"
 
 # Redirect log for the docker to a log file in current directory 
 docker logs --follow $(docker ps -a -q --latest --filter "status=running" --filter ancestor=qsp-protocol-node) > $LOG_PATH &

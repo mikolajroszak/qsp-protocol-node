@@ -13,8 +13,8 @@ testnet:
     args:
       endpoint_uri: !!str "https://ropsten.infura.io/v3/${token}"
   audit_contract_abi:
-    uri: !!str "./contracts/dev/QuantstampAudit-v-{major-version}-abi.json"
-    metadata: !!str "./contracts/dev/QuantstampAudit-v-{major-version}-meta.json"
+    uri: !!str "./resources/contracts/dev/QuantstampAudit-v-{major-version}-abi.json"
+    metadata: !!str "./resources/contracts/dev/QuantstampAudit-v-{major-version}-meta.json"
   min_price_in_qsp: !!int 10
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
@@ -37,7 +37,7 @@ testnet:
       args:
         bucket_name: !!str "qsp-protocol-reports-dev"
         contract_bucket_name: !!str "qsp-protocol-reports-dev"
-  keystore_file: !!str "./keystore/default.json"
+  keystore_file: !!str "./resources/keystore/default.json"
   gas_limit: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
@@ -68,8 +68,8 @@ mainnet:
     args:
       endpoint_uri: !!str "https://mainnet.infura.io/v3/${token}"
   audit_contract_abi:
-    uri: !!str "./contracts/prod/QuantstampAudit-v-{major-version}-abi.json" #note that v1 production ABI is not available
-    metadata: !!str "./contracts/prod/QuantstampAudit-v-{major-version}-meta.json" #note that v1 production ABI is not available
+    uri: !!str "./resources/contracts/prod/QuantstampAudit-v-{major-version}-abi.json" #note that v1 production ABI is not available
+    metadata: !!str "./resources/contracts/prod/QuantstampAudit-v-{major-version}-meta.json" #note that v1 production ABI is not available
   min_price_in_qsp: !!int 1000
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
@@ -87,7 +87,7 @@ mainnet:
         timeout_sec: !!int 276
   upload_provider:
       is_enabled: !!bool False
-  keystore_file: !!str "./keystore/default.json"
+  keystore_file: !!str "./resources/keystore/default.json"
   gas_limit: !!int 500000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)

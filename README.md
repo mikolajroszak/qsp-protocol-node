@@ -76,7 +76,7 @@ make test
 1. To encode an existing json report to a compressed hexstring, create a new container and mount the json report
 
 ```
-docker run -v <file-to-mount>:<mount-location> -it <qsp-protocol-node-image> ./codec -e <mount-location>
+docker run -v <file-to-mount>:<mount-location> -it <qsp-protocol-node-image> ./bin/codec -e <mount-location>
 ```
 
 2. To decode a compressed hexstring, do (for example)
@@ -84,7 +84,7 @@ docker run -v <file-to-mount>:<mount-location> -it <qsp-protocol-node-image> ./c
 ```
 make interactive
 ...
-/app # ./codec -d 2003b7f55bc69671c5f4fb295fd5acf1375eb7f1363093176f4bec190c39f95c235b0c00190d001905001d0300190700191a0019150010120018120014
+/app # ./bin/codec -d 2003b7f55bc69671c5f4fb295fd5acf1375eb7f1363093176f4bec190c39f95c235b0c00190d001905001d0300190700191a0019150010120018120014
 2019-01-30 15:57.56 Decoding report 0
 {'audit_state': 4,
  'contract_hash': 'B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B',

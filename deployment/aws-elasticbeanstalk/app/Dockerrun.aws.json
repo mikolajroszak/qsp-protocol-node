@@ -36,7 +36,7 @@
     {
       "name": "audit",
       "image": "{{image}}",
-      "command": ["./qsp-protocol-node", "dev", "/app/node-config/config.yaml"],
+      "command": ["./bin/qsp-protocol-node", "dev", "/app/node-config/config.yaml"],
       "essential": true,
       "memory": 2048,
       "mountPoints": [

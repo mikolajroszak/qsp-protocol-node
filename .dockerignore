@@ -4,3 +4,4 @@ deployment/aws-elasticbeanstalk
 keystore/
 app.tar
 *.zip
+*/*/tmp/
