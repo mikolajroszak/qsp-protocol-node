@@ -102,7 +102,7 @@ class TestReportProcessing(QSPTest):
         """
         try:
             file_path = os.path.realpath(__file__)
-            schema_file = '{0}/../../analyzers/schema/analyzer_integration.json'.format(
+            schema_file = '{0}/../../plugins/analyzers/schema/analyzer_integration.json'.format(
                 os.path.dirname(file_path))
             with open(schema_file) as schema_data:
                 schema = json.load(schema_data)
@@ -479,12 +479,12 @@ class TestReportProcessing(QSPTest):
         Ensures that the vulnerability list matches vulnerabilities from all analyzers
         """
         script_path = os.path.realpath(__file__)
-        json_fstr = "{0}/../../analyzers/vulnerability_types.json"
+        json_fstr = "{0}/../../plugins/analyzers/vulnerability_types.json"
         file_name = json_fstr.format(os.path.dirname(script_path))
 
         types_list = TestReportProcessing.__get_json(file_name, "vulnerabilities")
 
-        wrappers_dir = "{0}/../../analyzers/wrappers/".format(os.path.dirname(script_path))
+        wrappers_dir = "{0}/../../plugins/analyzers/wrappers/".format(os.path.dirname(script_path))
         wrappers = [os.path.join(wrappers_dir, w) for w in os.listdir(wrappers_dir)
                     if os.path.isdir(os.path.join(wrappers_dir, w)) and "common" not in w]
 

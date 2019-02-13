@@ -8,7 +8,7 @@
 # Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.                                                    #
 #                                                                                                  #
 ####################################################################################################
-source common.sh
+source common
 isrunning () {
 	return `ps -A -o pid | grep -q $1`
  }

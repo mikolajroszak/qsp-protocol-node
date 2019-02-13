@@ -9,10 +9,10 @@
 
 MAKEFLAGS += --silent
 
-QSP_ENV="testnet"
-QSP_CONFIG=deployment/local/config.yaml
-QSP_ETH_PASSPHRASE=abc123ropsten
-QSP_ETH_AUTH_TOKEN="PLEASE-SET-THE-TOKEN"
+QSP_ENV ?= "testnet"
+QSP_CONFIG ?= "./resources/config.yaml"
+QSP_ETH_PASSPHRASE ?= "abc123ropsten"
+QSP_ETH_AUTH_TOKEN ?= "PLEASE-SET-THE-TOKEN"
 QSP_IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
 QSP_LOG_DIR ?= $(HOME)/qsp-protocol
 
@@ -24,15 +24,16 @@ run: build
 	docker run -it \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
-		-v $(PWD)/deployment/local/keystore:/app/keystore:Z \
-		-v $(PWD)/deployment/local/contracts:/app/contracts:Z \
+		-v $(PWD)/resources/keystore:/app/resources/keystore:Z \
+		-v $(PWD)/resources/contracts:/app/resources/contracts:Z \
+		-v $(PWD)/resources/config.yaml:/app/resources/config.yaml:Z \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		-e QSP_ETH_AUTH_TOKEN=$(QSP_ETH_AUTH_TOKEN) \
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
-		qsp-protocol-node sh -c "./qsp-protocol-node -a $(QSP_ENV) $(QSP_CONFIG)"
+		qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $(QSP_ENV) $(QSP_CONFIG)"
 
 build:
 		docker build -t qsp-protocol-node .
@@ -45,14 +46,15 @@ test: build
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
-		qsp-protocol-node sh -c "./qsp-protocol-node -t"
+		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t"
 
 interactive: build
 	docker run -it \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
-		-v $(PWD)/deployment/local/keystore:/app/keystore:Z \
-		-v $(PWD)/deployment/local/contracts:/app/contracts:Z \
+		-v $(PWD)/resources/keystore:/app/resources/keystore:Z \
+		-v $(PWD)/resources/contracts:/app/resources/contracts:Z \
+		-v $(PWD)/resources/config.yaml:/app/resources/config.yaml:Z \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
@@ -74,10 +76,21 @@ test-ci:
 		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
 		-e AWS_SESSION_TOKEN="$(AWS_SESSION_TOKEN)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
-		qsp-protocol-node sh -c "./qsp-protocol-node -t"
+		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t"
+
+test-travis-ci: build
+	docker run -t \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v /tmp:/tmp \
+		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
+		-v $(PWD)/tests/coverage:/app/tests/coverage \
+		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
+		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
+		-e AWS_DEFAULT_REGION="us-east-1" \
+		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t"
 
 bundle:	
-	./create-bundle
+	./bin/create-bundle
 
 stylecheck:
 	echo "Running Stylecheck"

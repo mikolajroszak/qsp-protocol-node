@@ -248,7 +248,7 @@ class ConfigUtils:
             analyzer_name = list(analyzer_config_dict.keys())[0]
             analyzer_config = analyzers_config[i][analyzer_name]
             script_path = os.path.realpath(__file__)
-            wrappers_dir = '{0}/../../analyzers/wrappers'.format(os.path.dirname(script_path))
+            wrappers_dir = '{0}/../../../plugins/analyzers/wrappers'.format(os.path.dirname(script_path))
 
             wrapper = Wrapper(
                 wrappers_dir=wrappers_dir,

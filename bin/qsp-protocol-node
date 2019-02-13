@@ -17,7 +17,7 @@ function usage() {
 ################################################
 
 if [[ "$#" == "1" && "$1" == "-t" ]]; then
-    PYTHONPATH=./tests:./qsp_protocol_node pytest --cov=qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
+    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
     exit $?
 fi
 
@@ -85,7 +85,7 @@ while true ; do
     echo `date`
     
     # Runs the audit node
-    python -W ignore::DeprecationWarning -m qsp_protocol_node
+    PYTHONPATH=./src/ python -W ignore::DeprecationWarning -m qsp_protocol_node
 
     # Fetches the return code of the node
     RETURN_CODE=$?

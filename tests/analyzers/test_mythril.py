@@ -30,7 +30,7 @@ class TestAnalyzerMythril(QSPTest):
     @staticmethod
     def __new_analyzer(timeout_sec=600):
         mythril_wrapper = Wrapper(
-            wrappers_dir="{0}/analyzers/wrappers".format(project_root()),
+            wrappers_dir="{0}/plugins/analyzers/wrappers".format(project_root()),
             analyzer_name="mythril",
             args="",
             storage_dir="/tmp/{}{}".format(time(), random()),

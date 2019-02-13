@@ -9,4 +9,6 @@ tests/coverage/htmlcov
 .terraform
 .idea/
 app.tar
-deployment/local/event_database.db
+**/event_database.db
+tmp/
+keystore/
