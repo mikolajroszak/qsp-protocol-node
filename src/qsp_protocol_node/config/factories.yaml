@@ -1,0 +1,30 @@
+log_stream_provider:
+  factory:
+    module: # TODO
+    class: # TODO
+
+eth_provider:
+  factory:
+    module: # TODO
+    class: # TODO
+
+qsp_contract:
+  factory:
+    module: # TODO
+    class: # TODO
+
+analyzers:
+  factory:
+    module: # TODO
+    class: # TODO
+
+upload_provider:
+  factory:
+    module: "upload.factories.upload_provider_factory"
+    class: "UploadProviderFactory"
+
+gas_price_provider:
+  factory:
+    module: # TODO
+    class: # TODO
+

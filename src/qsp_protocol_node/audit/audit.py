@@ -164,6 +164,7 @@ class QSPAuditNode:
     def config(self):
         return self.__config
 
+    # TODO Put this in its own module -- GasPriceProvider
     def __compute_gas_price(self):
         """
         Queries recent blocks to set a baseline gas price, or uses a default static gas price

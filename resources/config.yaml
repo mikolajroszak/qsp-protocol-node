@@ -8,10 +8,13 @@
 ####################################################################################################
 
 testnet:
+  # TODO Rename this to eth_provider
   eth_node:
     provider: !!str "HTTPProvider"
     args:
       endpoint_uri: !!str "https://ropsten.infura.io/v3/${token}"
+    
+  # TODO Rename this to qsp_contract
   audit_contract_abi:
     uri: !!str "./resources/contracts/dev/QuantstampAudit-v-{major-version}-abi.json"
     metadata: !!str "./resources/contracts/dev/QuantstampAudit-v-{major-version}-meta.json"
@@ -39,6 +42,8 @@ testnet:
         contract_bucket_name: !!str "qsp-protocol-reports-dev"
   keystore_file: !!str "./resources/keystore/default.json"
   gas_limit: !!int 500000
+
+  # TODO Put this in a provider-style as with other components
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
     strategy: !!str "dynamic"
@@ -48,6 +53,7 @@ testnet:
     # Useful in case the network gets "gas attacked".
     # Only used if strategy is set to "dynamic"
     max_gas_price_wei: !!int 50000000000 # 50 Gwei
+
   logging:
     streaming:
       is_enabled: !!bool False
@@ -56,6 +62,9 @@ testnet:
         log_group: !!str "qsp-protocol-nodes-dev"
         log_stream: !!str "node-{id}"
         send_interval_seconds: !!int 30
+
+  # TODO Rename this to metrics_collection_provider
+  # and add provider name
   metric_collection:
     is_enabled: !!bool True
     interval_seconds: !!int 30
