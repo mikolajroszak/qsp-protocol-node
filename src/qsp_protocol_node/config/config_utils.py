@@ -29,7 +29,7 @@ from web3 import (
     EthereumTesterProvider,
 )
 
-
+# TODO Retire this code altogether in favor of module-specific factories
 class ConfigurationException(Exception):
     """
     A specialized exception for throwing from this class.

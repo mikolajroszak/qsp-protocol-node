@@ -12,7 +12,7 @@ import watchtower
 from boto3.session import Session
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
-
+# TODO Rename this to LogStreamingProvider
 class CloudWatchProvider:
 
     def __init__(self, account, log_group, log_stream, send_interval_seconds):

@@ -10,7 +10,7 @@
 from .config import Config
 from .config_utils import ConfigUtils
 
-
+# TODO Retire this code altogether in favor of module-specific factories
 class ConfigFactory:
 
     @staticmethod

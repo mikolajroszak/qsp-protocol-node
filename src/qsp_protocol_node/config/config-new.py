@@ -26,8 +26,7 @@ from utils.eth import mk_checksum_address
 # into smaller subconfigs. See QSP-414.
 # https://quantstamp.atlassian.net/browse/QSP-414
 
-# TODO Retire this code altogether in favor of a simple (delegate factory style)
-# config; see config-new.py
+
 def config_value(cfg, path, default=None, accept_none=True):
     """
     Extracts a configuration entry from a given configuration dictionary.

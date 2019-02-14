@@ -6,6 +6,7 @@
 # Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
 #                                                                                                  #
 ####################################################################################################
+# TODO Rename log_streaming module to logging
 
 import structlog
 
@@ -14,6 +15,7 @@ __config = None
 __stream_loggers = {}
 
 
+# TODO Rename config to logging_config
 def initialize(account, config=None, force=False):
     """
     Initializes the logging.

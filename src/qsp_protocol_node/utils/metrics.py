@@ -7,6 +7,8 @@
 #                                                                                                  #
 ####################################################################################################
 
+# TODO Move this class to its own module /qsp_protocol_node/metrics/collectory.py
+
 import json
 import os
 import psutil
