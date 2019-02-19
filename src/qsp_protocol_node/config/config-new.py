@@ -26,7 +26,7 @@ class Config:
         return config_dictionary
 
     def __init__(self, config_path, eth_passphrase, eth_auth_token, environment):
-        # Initially puths the passphrase, token, and environment as
+        # Initially puts the passphrase, token, and environment as
         # properties of this object
         self.__properties = {
             'eth_passphrase': eth_passphrase,
@@ -73,3 +73,4 @@ class Config:
                 raise AttributeError("can't set attribute")
 
             super(self.__class__, self).__setattr__(name, value)
+    
