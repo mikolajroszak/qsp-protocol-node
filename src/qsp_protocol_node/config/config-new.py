@@ -57,7 +57,8 @@ class Config:
             factory_class = getattr(factory_module, factory_def['class'])
             
             factory = factory_class()
-            component = factory.create_component(config_dict.get(component_name), self)
+            component_config = factory.config_handler().parse(config_dict.get(component_name))
+            component = factory.create_component(component_config, context=self)
             
             # Sets the newly created component as a property in the config object
             self.__properties[component_name] = component

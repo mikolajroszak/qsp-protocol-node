@@ -1,11 +1,7 @@
 from utils.dictionary.path import get
 
 class UploadProviderConfigHandler:
-    @classmethod
-    def entry_name(self):
-        return 'upload_provider'
 
-    @classmethod
     def default_config(self):
         return {
             'name': "", 
@@ -13,15 +9,18 @@ class UploadProviderConfigHandler:
             'args': {}
         }
 
+    def parse(self, config):
+        if config == None:
+            return default_config
+
+        return config
+
 class UploadProviderFactory(ComponentFactory):
     
     __config_handler = UploadProviderConfigHandler()
 
-    def __init__(self):
-        pass
-
     @property
-    def config_handler():
+    def config_handler(self):
         return __config_handler
     
     def create_component(upload_provider_config, context=None):
@@ -39,7 +38,7 @@ class UploadProviderFactory(ComponentFactory):
             return DummyProvider()
 
         # Provider is enabled and should therefore have a name
-        name = get(,upload_provider_config,
+        name = get(upload_provider_config,
             '/name', accept_none=False)
 
         if upload_provider_name == "S3Provider":
