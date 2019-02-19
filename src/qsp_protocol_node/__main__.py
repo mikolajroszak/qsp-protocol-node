@@ -10,8 +10,6 @@
 import logging
 import logging.config
 import os
-from pprint import pprint
-
 import structlog
 import sys
 import traceback
@@ -19,6 +17,7 @@ import yaml
 
 from dpath.util import get
 from json import load
+from pprint import pprint
 from web3 import Web3
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -159,11 +158,13 @@ class Program:
         else:
             logger.info("Running QSP node (performs audits only)")
 
-        # if a sol file is given, produce the audit report for that file and exit
+        # If a sol file is given, produce the audit report for that file and exit
         if sol_file:
-            STUB_REQUESTOR_ADDR = "0x1234567890123456789012345678901234567890"
-            STUB_REQUEST_ID = 1
-            _, audit_report = audit_node.get_full_report(STUB_REQUESTOR_ADDR, sol_file, STUB_REQUEST_ID)
+            _, audit_report = audit_node.get_full_report(
+                requestor=cfg.account,
+                uri=sol_file,
+                request_id=1
+            )
             pprint(audit_report)
         # Runs the QSP audit node in a busy loop fashion
         else:
@@ -178,7 +179,7 @@ if __name__ == "__main__":
             os.environ['QSP_CONFIG'],
             os.environ['QSP_LOGGING_LEVEL']
         )
-        sol_file = os.environ.get('SOL_FILE', None)
+        sol_file = os.environ.get('SOL_FILE')
 
         from log_streaming import get_logger
         logger = get_logger(__name__)
