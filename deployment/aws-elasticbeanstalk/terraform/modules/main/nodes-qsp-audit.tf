@@ -87,12 +87,6 @@ resource "aws_elastic_beanstalk_environment" "audit" {
 
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name = "QSP_ETH_AUTH_TOKEN"
-    value = "${var.QSP_ETH_AUTH_TOKEN}"
-  }
-  
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
     name      = "QSP_NODE_TYPE"
     value     = "audit"
   }

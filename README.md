@@ -23,11 +23,8 @@ steps on how to perform common development tasks.
    to the node's target account (default is `0x60463b7ee0c3d33def3a05313597b1300f6de62b`).
 
 1. Configure Ethereum node's authentication token. To use Infura as a provider (default),
-   sign up on https://infura.io/register, create a new project, and then check the associated endpoint, e.g., `https://mainnet.infura.io/v3/abcdefg`.
-   The last part of the URL (`abcdefg`) is the authentication token. Set the environment variable `QSP_ETH_AUTH_TOKEN` to the token:
-
-   `export QSP_ETH_AUTH_TOKEN=abcdefg`
-
+   sign up on https://infura.io/register, create a new project, and then check the associated endpoint, e.g., `https://mainnet.infura.io/v3/<auht-token>`.
+   Replace the last part of the URL with your authentication token. 
    To use a different provider, modify `eth_node/args/endpoint_uri` in `config.yaml` accordingly.
 
 ## Running the node
@@ -36,14 +33,8 @@ steps on how to perform common development tasks.
 make run
 ```
 
-This runs the node against `testnet`. It relies on default values for
-`QSP_ETH_AUTH_TOKEN` and `QSP_ETH_PASSPHRASE`, two mandatory environment
-variables used by the node. Specifically:
-
-* `QSP_ETH_AUTH_TOKEN`: Ethereum node's
-   authentication token (e.g., one obtained for Infura, a proxy node, etc).
-   
-* `QSP_ETH_PASSPHRASE`: passphrase of the target Ethereum account. 
+This runs the node against `testnet`. It relies on a default value for `QSP_ETH_PASSPHRASE`, a mandatory environment
+variable used by the node. `QSP_ETH_PASSPHRASE` is the passphrase of the target Ethereum account. 
 The password must **NOT** contain
 quotes (double or single). The safest approach to verify whether your password matches what you have set is to check
 the value of `QSP_ETH_PASSPHRASE` in a terminal:

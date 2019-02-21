@@ -7,11 +7,12 @@
 #                                                                                                  #
 ####################################################################################################
 
+import log_streaming
+from config import Config
+
 import logging
 import logging.config
 import os
-from pprint import pprint
-
 import structlog
 import sys
 import traceback
@@ -19,6 +20,7 @@ import yaml
 
 from dpath.util import get
 from json import load
+from pprint import pprint
 from web3 import Web3
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -89,36 +91,21 @@ class Program:
         }
         logging.config.dictConfig(dict_config)
 
-    @classmethod
-    def __setup_log_streaming(cls):
-        # Load keystore
-        keystore_file = get(Program.__yaml_config[Program.__env], "/keystore_file")
-        with open(keystore_file) as k:
-            keystore = load(k)
-
-        # Get account
-        account = Web3.toChecksumAddress('0x' + keystore['address'])
-
-        # Get log streaming config (if any)
-        log_streaming_config = None
-        try:
-            log_streaming_config = get(Program.__yaml_config[Program.__env], "/logging/streaming")
-        except KeyError:
-            pass
-
-        # Initialize the log streaming module (should be done once)
-        import log_streaming
-        log_streaming.initialize(account, log_streaming_config)
+       
 
     @classmethod
-    def setup(cls, env, yaml_file_name, log_level):
+    def setup(cls, yaml_config_file, environment, log_level):
         Program.__setup_basic_logging(log_level)
-        Program.__env = env
+        Program.__config = Config(yaml_config_file, environment)
 
-        with open(yaml_file_name) as y:
-            Program.__yaml_config = yaml.load(y)
+        # Registers the yet not initialized config within the logging
+        # module
+        log_streaming.setup_once(get_log_stream_provider=lambda: Program.__config.log_stream_provider)
 
-        Program.__setup_log_streaming()
+        # Fully initializes the components in the config object (logging included)
+        config.create_components()
+
+        Program.__logger = get_logger(cls.__qualname__)
 
     @classmethod
     def run(cls, eth_passphrase, eth_auth_token, sol_file):
@@ -130,15 +117,10 @@ class Program:
         # performed at this point
 
         from audit import QSPAuditNode
-        from config import ConfigFactory
         from utils.stop import Stop
 
-        cfg = ConfigFactory.create_from_dictionary(
-            Program.__yaml_config,
-            Program.__env,
-            account_passwd=eth_passphrase,
-            auth_token=eth_auth_token,
-        )
+        cfg = Program.__config
+        logger = Program.__logger
 
         logger.info("Initializing QSP Audit Node")
         logger.debug("account: {0}".format(cfg.account))
@@ -174,16 +156,11 @@ if __name__ == "__main__":
     logger = None
     try:
         Program.setup(
-            os.environ['QSP_ENV'],
-            os.environ['QSP_CONFIG'],
-            os.environ['QSP_LOGGING_LEVEL']
+            environment=os.environ['QSP_ENV'],
+            yaml_config_file=os.environ['QSP_CONFIG'],
+            log_level=os.environ['QSP_LOGGING_LEVEL']
         )
-        sol_file = os.environ.get('SOL_FILE', None)
-
-        from log_streaming import get_logger
-        logger = get_logger(__name__)
-
-        Program.run(os.environ['QSP_ETH_PASSPHRASE'], os.environ['QSP_ETH_AUTH_TOKEN'], sol_file)
+        Program.run(os.environ['QSP_ETH_PASSPHRASE'], os.environ['QSP_ETH_AUTH_TOKEN'], os.environ.get('SOL_FILE'))
 
     except Exception as error:
         if logger is not None:

@@ -9,22 +9,29 @@
 
 import watchtower
 
+from utils.dictionary.path import get
+
 from boto3.session import Session
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
 # TODO Rename this to LogStreamingProvider
 class CloudWatchProvider:
 
-    def __init__(self, account, log_group, log_stream, send_interval_seconds):
-        self.__stream_name = log_stream.replace('{id}', account)
-        self.__log_group = log_group
-        self.__send_interval = send_interval_seconds
+    def __init__(self, account, config)
+        self.__stream_name = get(
+            config, '/args/log_stream', accept_none=False
+        ).replace('{id}', account)
+
+        self.__log_group = get(config, '/args/log_group', accept_none=False)
+        self.__send_interval_seconds = get(config, '/args/send_interval_seconds', 
+            accept_none=False
+        )
 
     def get_handler(self):
         handler = watchtower.CloudWatchLogHandler(
             log_group=self.__log_group,
             stream_name=self.__stream_name,
-            send_interval=self.__send_interval,
+            send_interval=self.__send_interval_seconds,
             boto3_session=Session(),
             create_log_group=False,
         )

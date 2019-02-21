@@ -84,12 +84,6 @@ resource "aws_elastic_beanstalk_environment" "police" {
     name = "QSP_ETH_PASSPHRASE"
     value = "${var.QSP_ETH_POLICE_PASSPHRASE}"
   }
-
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name = "QSP_ETH_AUTH_TOKEN"
-    value = "${var.QSP_ETH_POLICE_AUTH_TOKEN}"
-  }
   
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"

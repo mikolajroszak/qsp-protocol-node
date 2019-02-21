@@ -53,10 +53,10 @@ Otherwise, launching the audit node will fail.
    https://infura.io/register, create a project, and then check the associated
    endpoint
    (something like `https://mainnet.infura.io/v3/abcdefg`). The last part of the
-   URL (in our example  `abcdefg`) is the authentication token. Copy it and assign it to
-   the environment variable `QSP_ETH_AUTH_TOKEN`. If you'd like to use
-   your own endpoint, modify `eth_node/args/endpoint_uri` in `config.yaml` to
-   the endpoint of your choice.
+   URL (in our example  `abcdefg`) is the authentication token. Copy the URL and
+   set `eth_node/args/endpoint_uri` in `config.yaml`. If you wish to use an
+   enpoint provided not provided by Infura, just set
+   `eth_node/args/endpoint_uri` to an URL of your choice.
 
 1. If the location of your keystore file is different from the default one, in `config.yaml`, edit the line `keystore_file: !!str "./resources/keystore/default.json"`
 

@@ -23,10 +23,8 @@ terraform {
 }
 
 variable "QSP_ETH_PASSPHRASE" {}
-variable "QSP_ETH_AUTH_TOKEN" {}
 
 variable "QSP_ETH_POLICE_PASSPHRASE" {}
-variable "QSP_ETH_POLICE_AUTH_TOKEN" {}
 
 module "main" {
   source = "../../modules/main"
@@ -37,9 +35,7 @@ module "main" {
   node_instance_type_police = "r5.large"
   node_instance_type_audit = "r5.large"
   QSP_ETH_PASSPHRASE = "${var.QSP_ETH_PASSPHRASE}"
-  QSP_ETH_AUTH_TOKEN = "${var.QSP_ETH_AUTH_TOKEN}"
   QSP_ETH_POLICE_PASSPHRASE = "${var.QSP_ETH_POLICE_PASSPHRASE}"
-  QSP_ETH_POLICE_AUTH_TOKEN = "${var.QSP_ETH_POLICE_AUTH_TOKEN}"
 }
 
 

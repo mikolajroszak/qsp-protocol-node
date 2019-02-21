@@ -1002,34 +1002,37 @@ class QSPAuditNode:
         audit_report_str = json.dumps(audit_report, indent=2)
         audit_hash = digest(audit_report_str)
 
-        upload_result = self.__config.upload_provider.upload_report(audit_report_str,
-                                                                    audit_report_hash=audit_hash)
+        upload_provider = self.__config.upload_provider
+        
+        if upload_provider is not None and upload_provider.config['is_enabled']:
+            upload_result = self.__config.upload_provider.upload_report(audit_report_str,
+                                                                        audit_report_hash=audit_hash)
 
-        self.__logger.info(
-            "Report upload result: {0}".format(upload_result),
-            requestId=request_id,
-        )
-
-        if not upload_result['success']:
-            raise Exception("Error uploading {0} report: {1}".format(report_type, json.dumps(upload_result)))
-
-        parse_uri = urllib.parse.urlparse(uri)
-        original_file_name = os.path.basename(parse_uri.path)
-        contract_body = read_file(target_contract)
-        contract_upload_result = self.__config.upload_provider.upload_contract(request_id,
-                                                                               contract_body,
-                                                                               original_file_name)
-        if contract_upload_result['success']:
             self.__logger.info(
-                "Contract upload result: {0}".format(contract_upload_result),
+                "Report upload result: {0}".format(upload_result),
                 requestId=request_id,
             )
-        else:
-            # We just log on error, not raise an exception
-            self.__logger.error(
-                "Contract upload result: {0}".format(contract_upload_result),
-                requestId=request_id,
-            )
+
+            if not upload_result['success']:
+                raise Exception("Error uploading {0} report: {1}".format(report_type, json.dumps(upload_result)))
+
+            parse_uri = urllib.parse.urlparse(uri)
+            original_file_name = os.path.basename(parse_uri.path)
+            contract_body = read_file(target_contract)
+            contract_upload_result = self.__config.upload_provider.upload_contract(request_id,
+                                                                                contract_body,
+                                                                                original_file_name)
+            if contract_upload_result['success']:
+                self.__logger.info(
+                    "Contract upload result: {0}".format(contract_upload_result),
+                    requestId=request_id,
+                )
+            else:
+                # We just log on error, not raise an exception
+                self.__logger.error(
+                    "Contract upload result: {0}".format(contract_upload_result),
+                    requestId=request_id,
+                )
 
         return {
             'audit_state': audit_report['audit_state'],

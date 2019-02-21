@@ -12,7 +12,7 @@ testnet:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://ropsten.infura.io/v3/${token}"
+      endpoint_uri: !!str "https://ropsten.infura.io/v3/<PLEASE-SET-THE-TOKEN>"
     
   # TODO Rename this to qsp_contract
   audit_contract_abi:
@@ -54,14 +54,13 @@ testnet:
     # Only used if strategy is set to "dynamic"
     max_gas_price_wei: !!int 50000000000 # 50 Gwei
 
-  logging:
-    streaming:
-      is_enabled: !!bool False
-      provider: !!str "CloudWatchProvider"
-      args:
-        log_group: !!str "qsp-protocol-nodes-dev"
-        log_stream: !!str "node-{id}"
-        send_interval_seconds: !!int 30
+  log_stream_provider:
+    is_enabled: !!bool False
+    name: !!str "CloudWatchProvider"
+    args:
+      log_group: !!str "qsp-protocol-nodes-dev"
+      log_stream: !!str "node-{id}"
+      send_interval_seconds: !!int 30
 
   # TODO Rename this to metrics_collection_provider
   # and add provider name
@@ -110,11 +109,12 @@ mainnet:
   logging:
     streaming:
       is_enabled: !!bool False
-      provider: !!str "CloudWatchProvider"
-      args:
-        log_group: !!str "qsp-protocol-nodes-prod"
-        log_stream:  !!str "node-{id}"
-        send_interval_seconds: !!int 30
+      provider:
+        name: !!str "CloudWatchProvider"
+        args:
+          log_group: !!str "qsp-protocol-nodes-prod"
+          log_stream:  !!str "node-{id}"
+          send_interval_seconds: !!int 30
   metric_collection:
     is_enabled: True
     interval_seconds: !!int 30

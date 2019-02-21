@@ -23,7 +23,6 @@ terraform {
 }
 
 variable "QSP_ETH_PASSPHRASE" {}
-variable "QSP_ETH_AUTH_TOKEN" {}
 
 module "main" {
   source = "../../modules/main"
@@ -35,5 +34,4 @@ module "main" {
   volume_size = 8
 
   QSP_ETH_PASSPHRASE = "${var.QSP_ETH_PASSPHRASE}"
- QSP_ETH_AUTH_TOKEN = "${var.QSP_ETH_AUTH_TOKEN}"
 }

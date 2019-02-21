@@ -1,30 +1,36 @@
 log_stream_provider:
   factory:
-    module: # TODO
-    class: # TODO
+    module: "streaming.factories.log_stream_factory"
+    class: "LogStreamProviderFactory"
+  init_order: 1
 
 eth_provider:
   factory:
     module: # TODO
     class: # TODO
+  init_order: 2
 
 qsp_contract:
   factory:
     module: # TODO
     class: # TODO
+  init_order: 3
 
 analyzers:
   factory:
     module: # TODO
     class: # TODO
+  init_order: 4
 
 upload_provider:
   factory:
     module: "upload.factories.upload_provider_factory"
     class: "UploadProviderFactory"
+  init_order: 5
 
 gas_price_provider:
   factory:
     module: # TODO
     class: # TODO
+  init_order: 6
 
