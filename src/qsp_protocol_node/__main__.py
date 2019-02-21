@@ -98,14 +98,13 @@ class Program:
         Program.__setup_basic_logging(log_level)
         Program.__config = Config(yaml_config_file, environment)
 
-        # Registers the yet not initialized config within the logging
-        # module
-        log_streaming.setup_once(get_log_stream_provider=lambda: Program.__config.log_stream_provider)
+        # Registers the yet to be initialized log_stream_provider
+        log_streaming.configure_once(get_log_stream_provider=lambda: Program.__config.log_stream_provider)
 
-        # Fully initializes the components in the config object (logging included)
+        # Fully initializes the components in the config object (log_stream_provider included)
         config.create_components()
 
-        Program.__logger = get_logger(cls.__qualname__)
+        Program.__logger = log_streaming.get_logger(cls.__qualname__)
 
     @classmethod
     def run(cls, eth_passphrase, eth_auth_token, sol_file):

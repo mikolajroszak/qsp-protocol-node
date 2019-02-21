@@ -33,18 +33,19 @@ class Config:
 
 
     def __init__(self, yaml_config_file, eth_passphrase, environment):
-        # Initially puts the passphrase, token, and environment as
-        # properties of this object
         self.__properties = {
             'config_file': yaml_config_file,
             'eth_passphrase': eth_passphrase,
             'eth_auth_token': eth_auth_token,
-            'environment': environment
+            'environment': environment,
+            'node_version': '2.0.0'
         }
 
+    def create_components(self):
+
         # Loads the config.yaml file as a dictionary
-        config_dictionary = Config.__load_yaml(config_path, environment)
-        config_dictionary = config_dictionary[environment]
+        config_dictionary = Config.__load_yaml(self.config_file, self.environment)
+        config_dictionary = config_dictionary[self.environment]
 
         # Loads the factories setting as a dictionary
         factories_path = "{}/factories.yaml".format(
@@ -64,7 +65,7 @@ class Config:
             factory_module = importlib.import_module(factory_def['module'])
             factory_class = getattr(factory_module, factory_def['class'])
             
-            factory = factory_class()
+            factory = factory_class(component_name)
             component_config = factory.config_handler.parse(config_dict.get(component_name), context=self)
             component = factory.create_component(component_config, context=self)
             
@@ -83,5 +84,5 @@ class Config:
             if name in self.__properties:
                 raise AttributeError("can't set attribute")
 
-            super(self.__class__, self).__setattr__(name, value)
+            super().__setattr__(name, value)
     

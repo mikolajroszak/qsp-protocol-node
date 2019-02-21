@@ -1,31 +1,22 @@
 from utils.dictionary.path import get
 
-class UploadProviderConfigHandler:
-
-    __default_config = {
-        'is_enabled': False,
-        'args': {}
-    }
-
-    @property
-    def default_config(self):
-        return self.__default_config
-
+class UploadProviderConfigHandler(BaseConfigHandler):
+    def __init__(self, component_name):
+        super().__init__(component_name)
+        
     def parse(self, config, context=None):
         if config == None:
-            return self.__default_config
+            return {'name': "",  'is_enabled': False, 'args': {}}
 
-        return {**self.__default_config, **config}
+        # Forces users to specify `is_enabled`: False in their config.yaml
+        return {'is_enabled': True, **config}
 
-class UploadProviderFactory:
+class UploadProviderFactory(BaseComponentFactory):
     
-    __config_handler = UploadProviderConfigHandler()
-
-    @property
-    def config_handler(self):
-        return __config_handler
+    def __init__(self, component_name):
+        super().__init__(UploadProviderConfigHandler(component_name))
     
-    def create_component(config, context=None):
+    def create_component(self, config, context=None):
         """
         Creates a report upload provider.
         """

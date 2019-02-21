@@ -10,29 +10,27 @@
 
 import structlog
 
-__get_log_stream_provider = lambda: None
+__get_log_stream_provider = None
 __stream_loggers = {}
 
-def setup_once(get_log_streamer, force=False):
+def configure_once(get_log_stream_provider, force=False):
     """
     Initializes the logging.
 
     :param logger_config: a function providing the logging configuration
     """
-    global __logger_config_wrapper
-    global __logger_provider_wrapper
+    global __get_log_stream_provider
     global __stream_loggers
 
-    if __logger_config_wrapper is not None and not force:
+    if __get_log_stream_provider is not None and not force:
         raise Exception("__logger_config_wrapper can only be set once")
 
-    __logger_registry = logger_registry
-    __logger_provider_wrapper =
+    __get_log_stream_provider = get_log_stream_provider
     __stream_loggers = {}
 
 
 def get_logger(logger_name):
-    global __logger_config
+    global get_log_streamer
     global __stream_loggers    
 
     log_stream_provider = __get_log_stream_provider()

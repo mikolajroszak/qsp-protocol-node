@@ -1,13 +1,13 @@
 log_stream_provider:
   factory:
-    module: "streaming.factories.log_stream_factory"
+    module: "streaming.factory.log_stream_factory"
     class: "LogStreamProviderFactory"
   init_order: 1
 
 eth_provider:
   factory:
-    module: # TODO
-    class: # TODO
+    module: "eth.factory.eth_provider_factory"
+    class:  "EthProviderFactory"
   init_order: 2
 
 qsp_contract:
@@ -24,7 +24,7 @@ analyzers:
 
 upload_provider:
   factory:
-    module: "upload.factories.upload_provider_factory"
+    module: "upload.factory.upload_provider_factory"
     class: "UploadProviderFactory"
   init_order: 5
 

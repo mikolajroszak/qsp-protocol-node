@@ -8,9 +8,8 @@
 ####################################################################################################
 
 testnet:
-  # TODO Rename this to eth_provider
-  eth_node:
-    provider: !!str "HTTPProvider"
+  eth_provider:
+    name: !!str "HTTPProvider"
     args:
       endpoint_uri: !!str "https://ropsten.infura.io/v3/<PLEASE-SET-THE-TOKEN>"
     

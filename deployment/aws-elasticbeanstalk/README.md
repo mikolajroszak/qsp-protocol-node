@@ -22,13 +22,12 @@ Deploying the audit node using AWS Elastic Beanstalk multi-container Docker.
 7. Run `terraform apply` and confirm the changes
 
     *Note*: you will be prompted to provide values for certain sensitive variables,
-    such as, `QSP_ETH_PASSPHRASE` and `QSP_ETH_AUTH_TOKEN` for every `plan` or `apply` command.
+    such as `QSP_ETH_PASSPHRASE`, for every `plan` or `apply` command.
     An alternative is to create a file `terraform.tfvars` in the current stage folder
     and specify the values here (**DO NOT** commit this to the source control):
 
     ```
     QSP_ETH_PASSPHRASE=<password>
-    QSP_ETH_AUTH_TOKEN=<authentication token>
     ```
 
     If values aren't yet known, you may also choose to provide arbitrary values and change them later, after the environment is setup.
