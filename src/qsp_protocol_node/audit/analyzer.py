@@ -20,11 +20,16 @@ class Analyzer:
 
     def __init__(self, wrapper):
         """
-        Builds an Analyzer object from a given arguments string.
+        Builds an Analyzer object from a given wrapper
         """
         self.__wrapper = wrapper
         self.__logger = get_logger(self.__class__.__qualname__)
 
+    # TODO
+    # What is this used for?? Bad choice of design (why one would set a null
+    # wrapper)
+    # Also, instead of printing the name directly from the analyzers, expose
+    # a name property which returns wrapper.analyzer_name
     def __repr__(self):
         """
         Represents the analyzer using the name of the wrapped analyzer
