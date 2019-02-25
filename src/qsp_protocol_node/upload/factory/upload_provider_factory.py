@@ -4,7 +4,9 @@ class UploadProviderConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
         super().__init__(component_name)
         
-    def parse(self, config, context=None):
+    def parse(self, config, config_type, context=None):
+        super().parse(config, config_type, context)
+
         if config == None:
             return {'name': "",  'is_enabled': False, 'args': {}}
 

@@ -43,7 +43,7 @@ def get_logger(logger_name):
     if logger is not None:
         return logger
 
-    # Otherwise, a need logger must be created, configured,
+    # Otherwise, a new logger must be created, configured,
     # registered, and returned back
     
     module_logger = structlog.get_logger(logger_name)

@@ -3,10 +3,6 @@ class EthConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
         super().__init__(component_name)
 
-    def parse(self, config, context=None):
-        if config == None:
-            raise ConfigurationException(f"Could not find '{self.component_name}' in configuration'")
-
 
 class EthProviderFactory(BaseComponentFactory):
     def __init__(self, component_name):

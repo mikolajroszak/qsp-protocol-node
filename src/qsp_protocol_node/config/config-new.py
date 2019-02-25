@@ -32,9 +32,10 @@ class Config:
         return  [name for (name, _) in factories_list]
 
 
-    def __init__(self, yaml_config_file, eth_passphrase, environment):
+    def __init__(self, yaml_config_file, account, eth_passphrase, environment):
         self.__properties = {
             'config_file': yaml_config_file,
+            'account': account,
             'eth_passphrase': eth_passphrase,
             'eth_auth_token': eth_auth_token,
             'environment': environment,
@@ -60,13 +61,17 @@ class Config:
         # Creates all components following the self-declared order attributes in
         # the factories.yaml file, registering each component as a property in this object
         for component_name in Config.__get_init_order(factories_dictionary):
-            factory_def = factories_dictionary['component_name']['factory']
+            factory_def = factories_dictionary[component_name]['factory']
 
             factory_module = importlib.import_module(factory_def['module'])
             factory_class = getattr(factory_module, factory_def['class'])
             
             factory = factory_class(component_name)
-            component_config = factory.config_handler.parse(config_dict.get(component_name), context=self)
+            component_config = factory.config_handler.parse(
+                config_dict.get(component_name),
+                ConfigType(factories_dictionary[component_name]['type']),
+                context=self
+            )
             component = factory.create_component(component_config, context=self)
             
             # Sets the newly created component as a property in the config object

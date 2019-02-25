@@ -1,6 +1,10 @@
-class GasPriceCalculatorConfigHandler(BaseConfigHandler):
+class Web3(BaseConfigHandler):
     def __init__(self, component_name):
         super().__init__(component_name)
+
+    def parse(self, config, context=None):
+        if config is not None:
+
 
 class GasPriceCalculatorFactory(BaseConfigFactory):
     def __init__(self, component_name):
@@ -10,6 +14,3 @@ class GasPriceCalculatorFactory(BaseConfigFactory):
         """
         Creates a GasPriceCalculator component
         """
-
-        
-

@@ -2,35 +2,54 @@ log_stream_provider:
   factory:
     module: "streaming.factory.log_stream_factory"
     class: "LogStreamProviderFactory"
+  type: "mandatory"
   init_order: 1
+
+private_key:
+  factory:
+    module: ""eth.factory.pk_factory""
+    class: "PrivateKeyFactory"
+  type: "internal"
+  init_order: 2
 
 eth_provider:
   factory:
     module: "eth.factory.eth_provider_factory"
     class:  "EthProviderFactory"
-  init_order: 2
+  type: "mandatory"
+  init_order: 3
+
+web3_client:
+  factory:
+    module: "eth.factory.web3_factory"
+    class: "Web3Factory"
+  type: internal
+  init_order: 4
 
 qsp_contract:
   factory:
     module: # TODO
     class: # TODO
-  init_order: 3
+  type: mandatory
+  init_order: 5
 
 analyzers:
   factory:
     module: # TODO
     class: # TODO
-  init_order: 4
+  type: mandatory
+  init_order: 6
 
 upload_provider:
   factory:
     module: "upload.factory.upload_provider_factory"
     class: "UploadProviderFactory"
-  init_order: 5
+  type: optional
+  init_order: 7
 
 gas_price_provider:
   factory:
     module: # TODO
     class: # TODO
-  init_order: 6
-
+  type: mandatory
+  init_order: 8

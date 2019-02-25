@@ -5,8 +5,10 @@ class LogStreamerConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
         super().__init__(component_name)
 
-    def parse(self, config, context=None):
-        if config == None:
+    def parse(self, config, optional=True, context=None):
+        super().parse(config, config_type, context)
+
+        if config is None:
             return {'name': "",  'is_enabled': False, 'args': {}}
 
         # Forces users to specify `is_enabled`: False in their config.yaml
