@@ -36,10 +36,10 @@ class AnalyzersConfigHandler(AnalyzersConfigHandler):
                 str(Path.home()),
                 analyzer_name,
             )
-            DEFAULT_TIMEOUT_SEC = 60
             storage_dir = os.path.realpath(analyzer_config.get('storage_dir', DEFAULT_STORAGE_DIR))
             AnalyzersConfigHandler.raise_err(not dir_exists(storage_dir), "Cannot find storage directory: {0}")
             
+            DEFAULT_TIMEOUT_SEC = 60
             timeout_sec = analyzer_config.get('timeout_sec', DEFAULT_TIMEOUT_SEC)
             AnalyzersConfigHandler.raise_err(timeout_sec >= 0, "timeout_sec must be a non-negative number")
 
