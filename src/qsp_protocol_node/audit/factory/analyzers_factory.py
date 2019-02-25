@@ -1,8 +1,14 @@
+class AnalyzersConfigHandler(BaseConfigHandler):
+    def __init__(self, component_name):
+        super().__init__(component_name)
+
+    
+
 
 class AnalyzersConfigHandler(AnalyzersConfigHandler):
 
     def __init__(self):
-        super().__init__(component_name)
+        super().__init__(AnalyzersConfigHandler(component_name))
 
     @classmethod
     def wrapper_dir(cls, analyzer_name):
