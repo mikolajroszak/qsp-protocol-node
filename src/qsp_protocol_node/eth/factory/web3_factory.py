@@ -3,7 +3,8 @@ class Web3(BaseConfigHandler):
         super().__init__(component_name)
 
     def parse(self, config, context=None):
-        if config is not None:
+        # TODO
+        pass
 
 
 class GasPriceCalculatorFactory(BaseConfigFactory):
