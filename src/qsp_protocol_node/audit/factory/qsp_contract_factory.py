@@ -30,7 +30,18 @@ class QSPContractConfigHandler(BaseConfigHandler):
             "Invalid URI: {0}".format(config['metadata']))
         )
 
-        return config
+        major_version = self.__node_version[0:self.__node_version.index('.')]
+
+        return {
+            'uri': config['uri'].replace(
+                '${major-version}', 
+                major_version
+            )
+            'metadata': config['metadata'].replace(
+                '${major-version}',
+                major_version
+            )
+        }
 
 class QSPContractFactory(BaseComponentFactory):
     def __init__(self, component_name):

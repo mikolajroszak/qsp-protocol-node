@@ -32,15 +32,14 @@ class Config:
         return  [name for (name, _) in factories_list]
 
 
-    def __init__(self, yaml_config_file, account, eth_passphrase, environment):
+    def __init__(self, config_file, environment, keystore_file, eth_passphrase, config_vars):
         self.__properties = {
-            'config_file': yaml_config_file,
-            'account': account,
-            'eth_passphrase': eth_passphrase,
-            'eth_auth_token': eth_auth_token,
+            'config_file': config_file,
             'environment': environment,
-            'node_version': '2.0.0'
+            'eth_passphrase': eth_passphrase,
+            'config_vars': config_vars
         }
+        # Load keystore
 
     def create_components(self):
 

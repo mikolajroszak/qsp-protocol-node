@@ -30,6 +30,7 @@ class Program:
 
     __yaml_config = None
     __env = None
+    __version = '2.0.0'
 
     @classmethod
     def __setup_basic_logging(cls, level):
@@ -91,12 +92,32 @@ class Program:
         }
         logging.config.dictConfig(dict_config)
 
-       
 
     @classmethod
-    def setup(cls, yaml_config_file, environment, log_level):
+    def setup(cls):
+        # Mandatory entries
+        yaml_config_file = os.environ['QSP_CONFIG']
+        environment = os.environ['QSP_ENV']
+        keystore = os.environ['QSP_KEYSTORE']
+        passwd = os.environ['QSP_ETH_PASSPHRASE']
+        log_level = os.environ['QSP_LOGGING_LEVEL']
+        node_version = Program.__node_version
+
+        # Inject variables to be used in variable-based strings
+        # in the configuration file
+        config_vars = {
+            'auth-token': os.environ.get('QSP_ETH_AUTH_TOKEN', ''),
+            'major-version': node_version[0:node_version.index('.')]
+        }
+
         Program.__setup_basic_logging(log_level)
-        Program.__config = Config(yaml_config_file, environment)
+        Program.__config = Config(
+            yaml_config_file,
+            environment,
+            keystore_file,
+            passwd,
+            config_vars
+        )
 
         # Registers the yet to be initialized log_stream_provider
         log_streaming.configure_once(get_log_stream_provider=lambda: Program.__config.log_stream_provider)
@@ -154,13 +175,8 @@ class Program:
 if __name__ == "__main__":
     logger = None
     try:
-        Program.setup(
-            environment=os.environ['QSP_ENV'],
-            yaml_config_file=os.environ['QSP_CONFIG'],
-            log_level=os.environ['QSP_LOGGING_LEVEL']
-        )
-        Program.run(os.environ['QSP_ETH_PASSPHRASE'], os.environ['QSP_ETH_AUTH_TOKEN'], os.environ.get('SOL_FILE'))
-
+        Program.setup()
+        Program.run()
     except Exception as error:
         if logger is not None:
             logger.exception("Error in running node: {0}".format(str(error)))
