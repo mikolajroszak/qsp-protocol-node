@@ -28,8 +28,8 @@ web3_client:
 
 qsp_contract:
   factory:
-    module: # TODO
-    class: # TODO
+    module: "audit.factory.qsp_protocol_factory"
+    class: "QSPContractFactort"
   type: mandatory
   init_order: 5
 
@@ -49,7 +49,7 @@ upload_provider:
 
 gas_price_provider:
   factory:
-    module: # TODO
-    class: # TODO
+    module: "eth.factory.eth_provider_factory"
+    class: "GasPriceCalculator"
   type: mandatory
   init_order: 8
