@@ -7,8 +7,11 @@
 readonly SUCCESS="0"
 
 function usage() {
-    echo "usage: qsp-audit-node [-t | [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]]" &> /dev/stderr
-    echo "                      environment config-yaml]"                         &> /dev/stderr
+    echo "usage: qsp-audit-node [-t | [-d LEVEL] [-f SOL_FILE] [-a]"                &> /dev/stderr
+    echo "                      <environment> <config-yaml> <keystore-file> | -h]"  &> /dev/stderr
+    echo ""
+    echo "        where LEVEL:     CRITICAL | ERROR | WARNING | INFO | DEBUG | NOTSET"
+    echo "              SOL_FILE:  target Solidity file to run against (exclusive to -a)"
     exit 1
 }
 
@@ -65,8 +68,8 @@ done
 
 shift $(($OPTIND-1))
 
-if [[ "$#" != "2" ]] ; then
-   echo "environment and config-yaml are mandatory parameters, but not provided" &> /dev/stderr
+if [[ "$#" != "3" ]] ; then
+   echo "environment, config-yaml, and keystore are mandatory parameters, but not provided" &> /dev/stderr
    usage
 fi
 
@@ -80,6 +83,7 @@ fi
 
 export QSP_ENV="$1"
 export QSP_CONFIG="$2"
+export QSP_KEYSTORE="$3"
 
 while true ; do
     echo `date`

@@ -11,39 +11,49 @@ testnet:
   eth_provider:
     name: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://ropsten.infura.io/v3/<PLEASE-SET-THE-TOKEN>"
-    
-  # TODO Rename this to qsp_contract
-  audit_contract_abi:
-    uri: !!str "./resources/contracts/dev/QuantstampAudit-v-{major-version}-abi.json"
-    metadata: !!str "./resources/contracts/dev/QuantstampAudit-v-{major-version}-meta.json"
+      endpoint_uri: !!str "https://ropsten.infura.io/v3/${auth-token}"
+  
+  qsp_contract:
+    uri: !!str "./resources/contracts/dev/QuantstampAudit-v-${major-version}-abi.json"
+    metadata: !!str "./resources/contracts/dev/QuantstampAudit-v-${major-version}-meta.json"
+  
   min_price_in_qsp: !!int 10
+  
   max_assigned_requests: !!int 5
+  
   evt_polling_sec: !!int 5
+  
   block_mined_polling_interval_sec: !!int 1
+  
   block_discard_on_restart: !!int 1
+  
   start_n_blocks_in_the_past: !!int 10
+
   n_blocks_confirmation: !!int 6
+  
   analyzers:
     - mythril:
         args: !!str "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/mythril"
         timeout_sec: !!int 276
+  
     - securify:
         args: "" # No args provided; rely on defaults for now
         storage_dir: !!str "/tmp/securify"
         timeout_sec: !!int 276
+  
   upload_provider:
       is_enabled: !!bool False
       name: !!str "S3Provider"
       args:
         bucket_name: !!str "qsp-protocol-reports-dev"
         contract_bucket_name: !!str "qsp-protocol-reports-dev"
+  
   keystore_file: !!str "./resources/keystore/default.json"
+
   gas_limit: !!int 500000
 
-  # TODO Put this in a provider-style as with other components
-  gas_price:
+  gas_price_calculator:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
     strategy: !!str "dynamic"
     # Only used if strategy is set to "static"
@@ -67,6 +77,7 @@ testnet:
     is_enabled: !!bool True
     interval_seconds: !!int 30
     destination_endpoint: !!str "https://dev-qsp-dashboard.quantstamp.com/node-metrics"
+  
   heartbeat_allowed: !!bool False
 
 mainnet:
