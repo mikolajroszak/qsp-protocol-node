@@ -12,8 +12,6 @@ class AnalyzersConfigHandler(AnalyzersConfigHandler):
         )
 
     def parse(self, config, config_type, context=None):
-        # Makes sure all
-
         parsed_config = OrderedDict()
 
         AnalyzersConfigHandler.raise(length(config) > 0, "There has to be at least one analyzer to use")
