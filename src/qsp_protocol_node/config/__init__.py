@@ -12,4 +12,4 @@ from .config_utils import ConfigUtils
 from .config_utils import ConfigurationException
 from .config_factory import ConfigFactory
 
-__all__ = ['Config', 'config_value', 'ConfigUtils', 'ConfigurationException', 'ConfigFactory', ]
+__all__ = ['Config', 'ConfigurationException',]

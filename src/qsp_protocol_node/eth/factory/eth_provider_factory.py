@@ -10,7 +10,7 @@ class EthConfigHandler(BaseConfigHandler):
     
     endpoint_uri = config.get("args", {}).get("metadata", "").replace(
         "${auth-token}",
-        context.auth_token
+        context.config_vars.get('auth-token', '')
     )
 
     return {{"args": {"endpoint_uri": endpoint_uri}}, **config}
