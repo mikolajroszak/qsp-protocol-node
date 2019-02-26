@@ -1,8 +1,8 @@
 from enum import Enum
 class ConfigType(Enum):
-    INTERNAL = 0
-    OPTIONAL = 1
-    MANDATORY = 2
+    INTERNAL = 'internal'
+    OPTIONAL = 'optional'
+    MANDATORY = 'mandatory'
 
 class BaseConfigHandler:
     def __init__(self, component_name):
@@ -13,7 +13,7 @@ class BaseConfigHandler:
         return self.__component_name
 
     def parse(self, config, config_type, context=None):
-        if config_type in ConfigType.INTERNAL and config is not None:
+        if config_type is ConfigType.INTERNAL and config is not None:
             raise ConfigurationException(f"Internal components cannot be configured externally")
 
         if config_type is ConfigType.MANDATORY and config is None:
@@ -31,12 +31,12 @@ class BaseConfigHandler:
 
 
 class BaseComponentFactory:
-    def __init__(self, config_handler)
+    def __init__(self, config_handler):
         self.__config_handler = config_handler
 
     @property
     def config_handler(self):
         return self.__config_handler
 
-    def create_component(self, config, context=None)
+    def create_component(self, config, context=None):
         raise Exception("Unimplemented method create_component")

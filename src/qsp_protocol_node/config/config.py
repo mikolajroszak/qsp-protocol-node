@@ -12,14 +12,22 @@ Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file
 """
 import importlib
+import os
 import yaml
+
+from .config_validator import ConfigValidator
+
+from component import ConfigType
+from utils.io import load_json
 
 class ConfigurationException(Exception):
     """
     A specialized exception for signaling configuration errors.
     """
 
-class Config:
+class Config(dict):
+
+    __PROPERTIES = '__properties'
 
     @classmethod
     def __load_yaml(cls, config_path):
@@ -35,21 +43,28 @@ class Config:
         factories_list.sort(key=lambda name_order_pair: name_order_pair[1])
         return  [name for (name, _) in factories_list]
 
+    @classmethod
+    def __add_property(cls, config_obj, property_name, value):
+        properties = Config.__get_properties(config_obj)
+        properties[property_name] = value
 
-    def __init__(self, config_file, environment, keystore_file, eth_passphrase, config_vars):
-        self.__properties = {
-            'config_file': config_file,
-            'environment': environment,
-            'eth_passphrase': eth_passphrase,
-            'config_vars': config_vars
-        }
-        # Load keystore
+    @classmethod
+    def __get_adress_from_keystore(cls, keystore_file):
+        keystore = load_json(keystore_file)
 
-    def create_components(self):
+    @classmethod
+    def __get_properties(cls, config_obj):
+        return dict.__getitem__(config_obj, Config.__PROPERTIES)
 
+    @classmethod 
+    def __new_properties(cls, config_obj):
+        dict.__setitem__(config_obj, Config.__PROPERTIES, {})
+
+    @classmethod
+    def __create_components(cls, config_obj, validator):
         # Loads the config.yaml file as a dictionary
-        config_dictionary = Config.__load_yaml(self.config_file, self.environment)
-        config_dictionary = config_dictionary[self.environment]
+        config_dictionary = Config.__load_yaml(config_obj.config_file)
+        config_dictionary = config_dictionary[config_obj.environment]
 
         # Loads the factories setting as a dictionary
         factories_path = "{}/factories.yaml".format(
@@ -58,39 +73,57 @@ class Config:
         factories_dictionary = Config.__load_yaml(factories_path)
         
         # Makes all attributes (non-components) as properties of this object
-        for attr in set(config_dictionary.keys()) - set(factories_dictionary.keys()):
-            self.__properties[attr] = config_dictionary[attr]
+        for property_name in set(config_dictionary.keys()) - set(factories_dictionary.keys()):
+            property_value = config_dictionary[property_name]
+            Config.__add_property(config_obj, property_name, property_value)
 
         # Creates all components following the self-declared order attributes in
         # the factories.yaml file, registering each component as a property in this object
         for component_name in Config.__get_init_order(factories_dictionary):
+            print("===> creating " + component_name)
             factory_def = factories_dictionary[component_name]['factory']
 
             factory_module = importlib.import_module(factory_def['module'])
             factory_class = getattr(factory_module, factory_def['class'])
+
+            print("===> class is {0}.{1}".format(
+                factory_module,
+                factory_class
+            ))
             
             factory = factory_class(component_name)
             component_config = factory.config_handler.parse(
-                config_dict.get(component_name),
+                config_dictionary.get(component_name),
                 ConfigType(factories_dictionary[component_name]['type']),
-                context=self
+                context=config_obj
             )
-            component = factory.create_component(component_config, context=self)
+            component = factory.create_component(component_config, context=config_obj)
             
             # Sets the newly created component as a property in the config object
-            self.__properties[component_name] = component
+            Config.__add_property(config_obj, component_name, component)
+        
+        validator.check(self)
 
-        ConfigValidator.check(self)
+    def __init__(self, config_file, environment, keystore_file, eth_passphrase, config_vars, validator=ConfigValidator()):
+        # Dynamically creates some basic properties
+        Config.__new_properties(self)
+        Config.__add_property(self, 'config_file', config_file)
+        Config.__add_property(self, 'environment', environment)
+        Config.__add_property(self, 'eth_passphrase', eth_passphrase)
+        Config.__add_property(self, 'config_vars', config_vars)
+        Config.__add_property(self, 'account_address', Config.__get_adress_from_keystore(keystore_file))
+        Config.__add_property(self, 'create_components', lambda: Config.__create_components(self, validator))
 
-        def __getattr__(self, name):
-            if name in self.__properties:
-                return self.__properties[name]
+    def __getattribute__(self, property_name):
+        try:
+            properties = Config.__get_properties(self)
+            return properties[property_name]
+        except KeyError:
+            raise AttributeError(property_name)
+        
+    def __setattr__(self, attr,  value):
+        # To the outside world, nothing can be set
+        raise AttributeError("can't set attribute")
 
-            raise AttributeError(f"'{self.__class__.__qualname__}' object has no attribute '{name}'")
-            
-        def __setattr__(self, name,  value):
-            if name in self.__properties:
-                raise AttributeError("can't set attribute")
 
-            super().__setattr__(name, value)
     

@@ -14,7 +14,7 @@ QSP_CONFIG ?= "./resources/config.yaml"
 QSP_ETH_PASSPHRASE ?= "abc123ropsten"
 QSP_IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
 QSP_LOG_DIR ?= $(HOME)/qsp-protocol
-QSP_KEYSTORE ?= "./resources/keystore"
+QSP_KEYSTORE ?= "./resources/keystore/default.json"
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc|tests/coverage/htmlcov|tests/coverage/.coverage|app.tar)$$" | xargs rm -rf

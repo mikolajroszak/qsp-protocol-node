@@ -6,7 +6,3 @@
 # Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
 #                                                                                                  #
 ####################################################################################################
-
-from .cloudwatch import CloudWatchProvider
-
-__all__ = ['CloudWatchProvider']

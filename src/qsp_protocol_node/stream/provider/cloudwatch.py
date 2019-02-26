@@ -17,7 +17,8 @@ from pythonjsonlogger.jsonlogger import JsonFormatter
 # TODO Rename this to LogStreamingProvider
 class CloudWatchProvider:
 
-    def __init__(self, account, config)
+    def __init__(self, account, config):
+        print("===> CloudWatchProvider config " + str(config))
         self.__stream_name = get(
             config, '/args/log_stream', accept_none=False
         ).replace('{id}', account)

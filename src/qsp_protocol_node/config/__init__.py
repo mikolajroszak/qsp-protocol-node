@@ -9,4 +9,4 @@
 
 from .config import Config, ConfigurationException
 
-__all__ = ['Config', 'ConfigurationException',]
+__all__ = ['Config', 'ConfigurationException']

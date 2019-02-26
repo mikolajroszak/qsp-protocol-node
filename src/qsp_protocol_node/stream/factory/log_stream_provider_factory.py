@@ -1,13 +1,15 @@
-from utils.dictionary.path import get
+from component import BaseConfigHandler
+from component import BaseComponentFactory
+
 
 # TODO: refactor this to avoid dup with upload_provider_factory.py
 class LogStreamerConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
         super().__init__(component_name)
 
-    def parse(self, config, optional=True, context=None):
+    def parse(self, config, config_type, context=None):
         super().parse(config, config_type, context)
-
+ 
         if config is None:
             return {'name': "",  'is_enabled': False, 'args': {}}
 
@@ -15,7 +17,7 @@ class LogStreamerConfigHandler(BaseConfigHandler):
         return {'is_enabled': True, **config}
 
 
-class LogStreamProviderFactory:
+class LogStreamProviderFactory(BaseComponentFactory):
 
     def __init__(self, component_name):
         super().__init__(LogStreamerConfigHandler(component_name))
@@ -25,14 +27,14 @@ class LogStreamProviderFactory:
         if not is_enabled:
             return None
 
-        provider_name = get('/name', accept_none=False)
+        provider_name = config['name']
 
         # Currently we only support a single provider
         if provider_name not in ["CloudWatchProvider"]:
             raise Exception(
                 "Unknown/Unsupported streaming provider: {0}".format(provider_name))
 
-        from streaming import CloudWatchProvider
+        from stream import CloudWatchProvider
         return CloudWatchProvider(context.account, config)
         
 

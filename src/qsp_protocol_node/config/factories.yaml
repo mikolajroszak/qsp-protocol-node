@@ -1,13 +1,13 @@
 log_stream_provider:
   factory:
-    module: "streaming.factory.log_stream_factory"
+    module: "stream.factory.log_stream_provider_factory"
     class: "LogStreamProviderFactory"
   type: "mandatory"
   init_order: 1
 
 private_key:
   factory:
-    module: ""eth.factory.pk_factory""
+    module: "eth.factory.pk_factory"
     class: "PrivateKeyFactory"
   type: "internal"
   init_order: 2

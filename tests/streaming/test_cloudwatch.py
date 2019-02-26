@@ -7,7 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-from streaming import CloudWatchProvider
+from stream import CloudWatchProvider
 from helpers.qsp_test import QSPTest
 
 

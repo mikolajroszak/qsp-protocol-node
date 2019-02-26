@@ -1,3 +1,6 @@
+from component import BaseConfigHandler
+from component import BaseComponentFactory
+
 class EthConfigHandler(BaseConfigHandler):
 
     def __init__(self, component_name):
@@ -6,14 +9,14 @@ class EthConfigHandler(BaseConfigHandler):
     def parse(self, config, config_type, context=None):
         super().parse(config, config_type, context)
 
-    BaseConfigHandler.raise_err(config.get("name") is not None, "Missing provider name")
-    
-    endpoint_uri = config.get("args", {}).get("metadata", "").replace(
-        "${auth-token}",
-        context.config_vars.get('auth-token', '')
-    )
+        BaseConfigHandler.raise_err(config.get("name") is not None, "Missing provider name")
+        
+        endpoint_uri = config.get("args", {}).get("metadata", "").replace(
+            "${auth-token}",
+            context.config_vars.get('auth-token', '')
+        )
 
-    return {{"args": {"endpoint_uri": endpoint_uri}}, **config}
+        return {"args": {"endpoint_uri": endpoint_uri}, **config}
 
 
 class EthProviderFactory(BaseComponentFactory):
@@ -32,6 +35,9 @@ class EthProviderFactory(BaseComponentFactory):
             return IPCProvider(**args)
 
         if provider == "EthereumTesterProvider":
+            if context.keystore is not None:
+                raise ConfigurationException("EthereumTesterProvider does not use a keystore")
+                
             return EthereumTesterProvider()
 
         raise ConfigurationException("Unknown/Unsupported provider: {0}".format(provider))
