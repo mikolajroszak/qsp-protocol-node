@@ -25,10 +25,10 @@ if [[ "$#" == "1" && "$1" == "-t" ]]; then
 fi
 
 # Set auto restart to off by default
-AUTO_RESTART="0"
+QSP_AUTO_RESTART="0"
 
 # Set the solidity file to "" in order to run the node in normal operating mode
-export SOL_FILE=""
+export QSP_SOL_FILE=""
 
 # Default logging level: debug node
 export QSP_LOGGING_LEVEL="DEBUG"
@@ -52,11 +52,11 @@ while getopts "d:f:ah" FLAG; do
 
         # Enables auto restart
         a)
-            export AUTO_RESTART="1"
+            export QSP_AUTO_RESTART="1"
         ;;
 
         f)
-            export SOL_FILE="$OPTARG"
+            export QSP_SOL_FILE="$OPTARG"
         ;;
 
         # Incorrect usage
@@ -73,7 +73,7 @@ if [[ "$#" != "3" ]] ; then
    usage
 fi
 
-if [[ "$SOL_FILE" != "" ]] && [[ "$AUTO_RESTART" != "0" ]] ; then
+if [[ "$QSP_SOL_FILE" != "" ]] && [[ "$QSP_AUTO_RESTART" != "0" ]] ; then
     echo "sol_file [-f] is mutually exclusive to auto_restart [-a]" &> /dev/stderr
     usage
 fi
@@ -99,7 +99,7 @@ while true ; do
     fi
 
     # If auto restart is not set, then quit.
-    if [[ "$AUTO_RESTART" == "0" ]] ; then
+    if [[ "$QSP_AUTO_RESTART" == "0" ]] ; then
         exit "$RETURN_CODE"
     fi
 

@@ -128,7 +128,7 @@ class Program:
         Program.__logger = stream_logger.get_logger(cls.__qualname__)
 
     @classmethod
-    def run(cls, eth_passphrase, eth_auth_token, sol_file):
+    def run(cls):
         """
         Runs the backend
         """
@@ -162,6 +162,7 @@ class Program:
             logger.info("Running QSP node (performs audits only)")
 
         # If a sol file is given, produce the audit report for that file and exit
+        sol_file = os.environ.get('QSP_SOL_FILE')
         if sol_file:
             _, audit_report = audit_node.get_full_report(
                 requestor=cfg.account,
@@ -169,6 +170,7 @@ class Program:
                 request_id=1
             )
             pprint(audit_report)
+            
         # Runs the QSP audit node in a busy loop fashion
         else:
             audit_node.run()
