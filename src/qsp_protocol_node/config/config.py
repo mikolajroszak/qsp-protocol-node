@@ -14,6 +14,10 @@ as loaded from an input YAML file
 import importlib
 import yaml
 
+class ConfigurationException(Exception):
+    """
+    A specialized exception for signaling configuration errors.
+    """
 
 class Config:
 

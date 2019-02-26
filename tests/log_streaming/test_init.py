@@ -7,7 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-import log_streaming
+import logger
 
 from config import ConfigFactory, config_value
 from helpers.resource import resource_uri

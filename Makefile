@@ -14,6 +14,7 @@ QSP_CONFIG ?= "./resources/config.yaml"
 QSP_ETH_PASSPHRASE ?= "abc123ropsten"
 QSP_IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
 QSP_LOG_DIR ?= $(HOME)/qsp-protocol
+QSP_KEYSTORE ?= "./resources/keystore"
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc|tests/coverage/htmlcov|tests/coverage/.coverage|app.tar)$$" | xargs rm -rf
@@ -31,7 +32,7 @@ run: build
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
-		qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $(QSP_ENV) $(QSP_CONFIG)"
+		qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $(QSP_ENV) $(QSP_CONFIG) $(QSP_KEYSTORE)"
 
 build:
 		docker build -t qsp-protocol-node .

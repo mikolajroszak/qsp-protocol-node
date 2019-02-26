@@ -6,7 +6,6 @@
 # Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
 #                                                                                                  #
 ####################################################################################################
-# TODO Rename log_streaming module to logging
 
 import structlog
 

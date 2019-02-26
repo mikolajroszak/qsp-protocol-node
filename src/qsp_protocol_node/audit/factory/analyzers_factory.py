@@ -14,7 +14,7 @@ class AnalyzersConfigHandler(AnalyzersConfigHandler):
     def parse(self, config, config_type, context=None):
         parsed_config = OrderedDict()
 
-        AnalyzersConfigHandler.raise(length(config) > 0, "There has to be at least one analyzer to use")
+        AnalyzersConfigHandler.raise(length(config) > 0, "There has to be at least one configured analyzer to use")
 
         for i, analyzer_config_dict in enumerate(config):
             # Each analyzer config is a dictionary of a single entry

@@ -7,14 +7,16 @@
 #                                                                                                  #
 ####################################################################################################
 
-import log_streaming
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
+import stream_logger
 from config import Config
 
 import logging
 import logging.config
-import os
 import structlog
-import sys
 import traceback
 import yaml
 
@@ -22,8 +24,6 @@ from dpath.util import get
 from json import load
 from pprint import pprint
 from web3 import Web3
-
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 
 class Program:
@@ -98,10 +98,10 @@ class Program:
         # Mandatory entries
         yaml_config_file = os.environ['QSP_CONFIG']
         environment = os.environ['QSP_ENV']
-        keystore = os.environ['QSP_KEYSTORE']
+        keystore_file = os.environ['QSP_KEYSTORE']
         passwd = os.environ['QSP_ETH_PASSPHRASE']
         log_level = os.environ['QSP_LOGGING_LEVEL']
-        node_version = Program.__node_version
+        node_version = Program.__version
 
         # Inject variables to be used in variable-based strings
         # in the configuration file
@@ -120,12 +120,12 @@ class Program:
         )
 
         # Registers the yet to be initialized log_stream_provider
-        log_streaming.configure_once(get_log_stream_provider=lambda: Program.__config.log_stream_provider)
+        stream_logger.configure_once(get_log_stream_provider=lambda: Program.__config.log_stream_provider)
 
         # Fully initializes the components in the config object (log_stream_provider included)
-        config.create_components()
+        Program.__config .create_components()
 
-        Program.__logger = log_streaming.get_logger(cls.__qualname__)
+        Program.__logger = stream_logger.get_logger(cls.__qualname__)
 
     @classmethod
     def run(cls, eth_passphrase, eth_auth_token, sol_file):

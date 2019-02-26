@@ -7,9 +7,6 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .config import Config, config_value
-from .config_utils import ConfigUtils
-from .config_utils import ConfigurationException
-from .config_factory import ConfigFactory
+from .config import Config, ConfigurationException
 
 __all__ = ['Config', 'ConfigurationException',]
