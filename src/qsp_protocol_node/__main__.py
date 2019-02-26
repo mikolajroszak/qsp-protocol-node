@@ -161,11 +161,13 @@ class Program:
         else:
             logger.info("Running QSP node (performs audits only)")
 
-        # if a sol file is given, produce the audit report for that file and exit
+        # If a sol file is given, produce the audit report for that file and exit
         if sol_file:
-            STUB_REQUESTOR_ADDR = "0x1234567890123456789012345678901234567890"
-            STUB_REQUEST_ID = 1
-            _, audit_report = audit_node.get_full_report(STUB_REQUESTOR_ADDR, sol_file, STUB_REQUEST_ID)
+            _, audit_report = audit_node.get_full_report(
+                requestor=cfg.account,
+                uri=sol_file,
+                request_id=1
+            )
             pprint(audit_report)
         # Runs the QSP audit node in a busy loop fashion
         else:
