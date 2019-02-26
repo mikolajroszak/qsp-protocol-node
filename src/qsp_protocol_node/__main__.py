@@ -123,7 +123,7 @@ class Program:
         stream_logger.configure_once(get_log_stream_provider=lambda: Program.__config.log_stream_provider)
 
         # Fully initializes the components in the config object (log_stream_provider included)
-        Program.__config .create_components()
+        Program.__config.create_components()
 
         Program.__logger = stream_logger.get_logger(cls.__qualname__)
 
