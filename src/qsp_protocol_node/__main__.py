@@ -97,23 +97,21 @@ class Program:
 
     @classmethod
     def setup(cls):
-        # Mandatory entries
-        yaml_config_file = os.environ['QSP_CONFIG']
-        environment = os.environ['QSP_ENV']
-        keystore_file = os.environ['QSP_KEYSTORE']
-        passwd = os.environ['QSP_ETH_PASSPHRASE']
-        log_level = os.environ['QSP_LOGGING_LEVEL']
         node_version = Program.__version
 
         # Inject variables to be used in variable-based strings
         # in the configuration file
         config_vars = {
+            'account_passwd': os.environ['QSP_ETH_PASSPHRASE']
             'auth-token': os.environ.get('QSP_ETH_AUTH_TOKEN', ''),
+            'config_file': os.environ['QSP_CONFIG'],
+            'environment': os.environ['QSP_ENV'],
+            'keystore_file': os.environ['QSP_KEYSTORE'],
             'major-version': node_version[0:node_version.index('.')]
         }
 
-        Program.__setup_basic_logging(log_level)
-        Program.__config = Config(
+        Program.__setup_basic_logging(os.environ['QSP_LOGGING_LEVEL'])
+        Program.__config = Config(config_vars)
             yaml_config_file,
             environment,
             keystore_file,

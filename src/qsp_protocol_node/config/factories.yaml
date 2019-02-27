@@ -14,13 +14,6 @@ log_stream_provider:
   type: "mandatory"
   init_order: 1
 
-private_key:
-  factory:
-    module: "eth_infra.factory"
-    class: "PrivateKeyFactory"
-  type: "internal"
-  init_order: 2
-
 eth_provider:
   factory:
     module: "eth_infra.factory"
@@ -34,6 +27,13 @@ web3_client:
     class: "Web3ClientFactory"
   type: internal
   init_order: 4
+
+account:
+  factory:
+    module: "eth_infra.factory"
+    class: "Account"
+  type: internal
+  init_order: 5
 
 qsp_contract:
   factory:

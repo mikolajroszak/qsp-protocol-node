@@ -35,15 +35,15 @@ class QSPContractConfigHandler(BaseConfigHandler):
             "Invalid URI: {0}".format(config['metadata'])
         )
 
-        major_version = context.config_vars.get('major-version', 0)
+        major_version = context.config_vars.get('major_version', 0)
 
         return {
             'uri': config['uri'].replace(
-                '${major-version}', 
+                '${major_version}', 
                 major_version
             ),
             'metadata': config['metadata'].replace(
-                '${major-version}',
+                '${major_version}',
                 major_version
             )
         }

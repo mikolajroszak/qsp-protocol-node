@@ -58,8 +58,8 @@ class Config(dict):
     @classmethod
     def __create_components(cls, config_obj, validator):
         # Loads the config.yaml file as a dictionary
-        config_dictionary = Config.__load_yaml(config_obj.config_file)
-        config_dictionary = config_dictionary[config_obj.environment]
+        config_dictionary = Config.__load_yaml(config_obj.config_vars['config_file'])
+        config_dictionary = config_dictionary[config_obj.config_vars['environment'])
 
         # Loads the factories setting as a dictionary
         factories_path = "{}/factories.yaml".format(
@@ -94,14 +94,16 @@ class Config(dict):
         importlib.invalidate_caches()
         validator.check(config_obj)
 
-    def __init__(self, config_file, environment, keystore_file, eth_passphrase, config_vars, validator=ConfigValidator()):
-        # Dynamically creates some basic properties
+    def __init__(self, config_vars, validator=ConfigValidator()):
         Config.__new_properties(self)
-        Config.__add_property(self, 'config_file', config_file)
-        Config.__add_property(self, 'environment', environment)
-        Config.__add_property(self, 'eth_passphrase', eth_passphrase)
+
+        # Injects account_address to be used deep down in the component
+        # tree creation (see create_components)
         Config.__add_property(self, 'config_vars', config_vars)
-        Config.__add_property(self, 'account', Config.__get_adress_from_keystore(keystore_file))
+        self.config_vars['account_address'] = Config.__get_adress_from_keystore(
+            self.config_vars['keystore_file']
+        )
+
         Config.__add_property(self, 'create_components', lambda: Config.__create_components(self, validator))
 
     def __getattribute__(self, property_name):

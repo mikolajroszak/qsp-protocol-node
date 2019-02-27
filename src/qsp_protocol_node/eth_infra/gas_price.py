@@ -1,0 +1,3 @@
+class GasPrice:
+    # TODO
+    pass

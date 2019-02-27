@@ -11,11 +11,11 @@ testnet:
   eth_provider:
     name: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://ropsten.infura.io/v3/${auth-token}"
+      endpoint_uri: !!str "https://ropsten.infura.io/v3/${auth_token}"
   
   qsp_contract:
-    uri: !!str "./resources/contracts/dev/QuantstampAudit-v-${major-version}-abi.json"
-    metadata: !!str "./resources/contracts/dev/QuantstampAudit-v-${major-version}-meta.json"
+    uri: !!str "./resources/contracts/dev/QuantstampAudit-v-${major_version}-abi.json"
+    metadata: !!str "./resources/contracts/dev/QuantstampAudit-v-${major_version}-meta.json"
   
   min_price_in_qsp: !!int 10
   
@@ -84,10 +84,10 @@ mainnet:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://mainnet.infura.io/v3/${token}"
+      endpoint_uri: !!str "https://mainnet.infura.io/v3/${auth_token}"
   audit_contract_abi:
-    uri: !!str "./resources/contracts/prod/QuantstampAudit-v-{major-version}-abi.json" #note that v1 production ABI is not available
-    metadata: !!str "./resources/contracts/prod/QuantstampAudit-v-{major-version}-meta.json" #note that v1 production ABI is not available
+    uri: !!str "./resources/contracts/prod/QuantstampAudit-v-${major_version}-abi.json" #note that v1 production ABI is not available
+    metadata: !!str "./resources/contracts/prod/QuantstampAudit-v-${major_version}-meta.json" #note that v1 production ABI is not available
   min_price_in_qsp: !!int 1000
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
