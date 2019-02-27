@@ -7,8 +7,3 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .s3_provider import S3Provider
-from .dummy_provider import DummyProvider
-from .provider import UploadProvider
-
-__all__ = ['S3Provider', 'DummyProvider', 'UploadProvider']

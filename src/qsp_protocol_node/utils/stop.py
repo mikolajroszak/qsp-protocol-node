@@ -10,7 +10,7 @@
 import signal
 import sys
 
-from log_streaming import get_logger
+from stream_logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -11,6 +11,8 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
+print("===> sys.path is " + str(sys.path))
+
 import stream_logger
 from config import Config
 

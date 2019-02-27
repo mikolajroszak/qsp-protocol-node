@@ -9,12 +9,13 @@
 
 import boto3
 
-from .provider import UploadProvider
+from .base_upload_provider import UploadProvider
+
 from utils.dictionary.path import get
 from utils.io import digest
 
 
-class S3Provider(UploadProvider):
+class S3Provider(BaseUploadProvider):
     def __init__(self, account, config):
         self.__client = boto3.client('s3')
         self.__bucket_name = get(config, 

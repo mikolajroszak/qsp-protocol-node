@@ -6,9 +6,10 @@
 # Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
 #                                                                                                  #
 ####################################################################################################
+
 from time import sleep
 
-from log_streaming import get_logger
+from stream_logger import get_logger
 from .singleton_lock import SingletonLock
 
 from web3.utils.threads import Timeout

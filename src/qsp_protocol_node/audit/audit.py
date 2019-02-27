@@ -30,7 +30,7 @@ from evt import is_audit
 from evt import is_police_check
 from evt import set_evt_as_audit
 from evt import set_evt_as_police_check
-from log_streaming import get_logger
+from stream_logger import get_logger
 from utils.io import (
     fetch_file,
     digest,

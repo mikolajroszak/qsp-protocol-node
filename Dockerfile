@@ -27,7 +27,7 @@ RUN apk add --no-cache linux-headers
 RUN apk add --no-cache vim
 
 # Install aws-cli
-RUN pip3 install -U awscli
+RUN pip3 install -U awscli==1.14.43
 
 # Install solc
 RUN wget https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-static-linux && \

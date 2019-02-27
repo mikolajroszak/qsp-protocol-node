@@ -7,6 +7,6 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .config import Config, ConfigurationException
+from .config import Config
 
-__all__ = ['Config', 'ConfigurationException']
+__all__ = ['Config']

@@ -36,7 +36,7 @@ import json
 import math
 import os
 
-from log_streaming import get_logger
+from stream_logger import get_logger
 
 from collections import OrderedDict
 from pprint import pprint

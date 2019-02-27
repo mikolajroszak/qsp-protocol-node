@@ -20,11 +20,6 @@ from .config_validator import ConfigValidator
 from component import ConfigType
 from utils.io import load_json
 
-class ConfigurationException(Exception):
-    """
-    A specialized exception for signaling configuration errors.
-    """
-
 class Config(dict):
 
     __PROPERTIES = '__properties'
@@ -80,16 +75,10 @@ class Config(dict):
         # Creates all components following the self-declared order attributes in
         # the factories.yaml file, registering each component as a property in this object
         for component_name in Config.__get_init_order(factories_dictionary):
-            print("===> creating " + component_name)
             factory_def = factories_dictionary[component_name]['factory']
 
             factory_module = importlib.import_module(factory_def['module'])
             factory_class = getattr(factory_module, factory_def['class'])
-
-            print("===> class is {0}.{1}".format(
-                factory_module,
-                factory_class
-            ))
             
             factory = factory_class(component_name)
             component_config = factory.config_handler.parse(
@@ -102,7 +91,8 @@ class Config(dict):
             # Sets the newly created component as a property in the config object
             Config.__add_property(config_obj, component_name, component)
         
-        validator.check(self)
+        importlib.invalidate_caches()
+        validator.check(config_obj)
 
     def __init__(self, config_file, environment, keystore_file, eth_passphrase, config_vars, validator=ConfigValidator()):
         # Dynamically creates some basic properties
@@ -111,7 +101,7 @@ class Config(dict):
         Config.__add_property(self, 'environment', environment)
         Config.__add_property(self, 'eth_passphrase', eth_passphrase)
         Config.__add_property(self, 'config_vars', config_vars)
-        Config.__add_property(self, 'account_address', Config.__get_adress_from_keystore(keystore_file))
+        Config.__add_property(self, 'account', Config.__get_adress_from_keystore(keystore_file))
         Config.__add_property(self, 'create_components', lambda: Config.__create_components(self, validator))
 
     def __getattribute__(self, property_name):

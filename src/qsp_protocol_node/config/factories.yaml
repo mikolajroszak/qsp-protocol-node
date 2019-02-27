@@ -1,55 +1,64 @@
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
 log_stream_provider:
   factory:
-    module: "stream.factory.log_stream_provider_factory"
+    module: "stream.factory"
     class: "LogStreamProviderFactory"
   type: "mandatory"
   init_order: 1
 
 private_key:
   factory:
-    module: "eth.factory.pk_factory"
+    module: "eth_infra.factory"
     class: "PrivateKeyFactory"
   type: "internal"
   init_order: 2
 
 eth_provider:
   factory:
-    module: "eth.factory.eth_provider_factory"
+    module: "eth_infra.factory"
     class:  "EthProviderFactory"
   type: "mandatory"
   init_order: 3
 
 web3_client:
   factory:
-    module: "eth.factory.web3_factory"
-    class: "Web3Factory"
+    module: "eth_infra.factory"
+    class: "Web3ClientFactory"
   type: internal
   init_order: 4
 
 qsp_contract:
   factory:
-    module: "audit.factory.qsp_protocol_factory"
-    class: "QSPContractFactort"
+    module: "audit.factory"
+    class: "QSPContractFactory"
   type: mandatory
   init_order: 5
 
 analyzers:
   factory:
-    module: # TODO
-    class: # TODO
+    module: "audit.factory"
+    class: "AnalyzersFactory"
   type: mandatory
   init_order: 6
 
 upload_provider:
   factory:
-    module: "upload.factory.upload_provider_factory"
+    module: "upload.factory"
     class: "UploadProviderFactory"
   type: optional
   init_order: 7
 
-gas_price_provider:
+gas_price_calculator:
   factory:
-    module: "eth.factory.eth_provider_factory"
-    class: "GasPriceCalculator"
+    module: "eth_infra.factory"
+    class: "GasPriceCalculatorFactory"
   type: mandatory
   init_order: 8

@@ -1,4 +1,15 @@
-from utils.dictionary.path import get
+####################################################################################################
+#                                                                                                  #
+# (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
+# modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
+# Quantstamp for credentialed users. This content and its use are governed by the Quantstamp       #
+# Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
+#                                                                                                  #
+####################################################################################################
+
+from component import BaseConfigHandler
+from component import BaseComponentFactory
+from component import ConfigurationException
 
 class UploadProviderConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
@@ -11,7 +22,7 @@ class UploadProviderConfigHandler(BaseConfigHandler):
             return {'name': "",  'is_enabled': False, 'args': {}}
 
         # Forces users to specify `is_enabled`: False in their config.yaml
-        return {'is_enabled': True, **config}
+        return dict({'is_enabled': True}, **config)
 
 class UploadProviderFactory(BaseComponentFactory):
     
@@ -28,10 +39,10 @@ class UploadProviderFactory(BaseComponentFactory):
 
         is_enabled = config['is_enabled']
         if not is_enabled:
-            return DummyProvider(config)
+            return None
 
         # Provider is enabled and should therefore have a name
-        name = get(config, '/name', accept_none=False)
+        name = config['name']
         if name == "S3Provider":
             return S3Provider(context.account, config)
 

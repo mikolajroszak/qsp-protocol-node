@@ -13,7 +13,7 @@ Provides an interface for invoking the analyzer software.
 
 import json
 
-from log_streaming import get_logger
+from stream_logger import get_logger
 
 
 class Analyzer:
@@ -59,9 +59,9 @@ class Analyzer:
         version of Solidity, writing the result in a json report.
         """
         self.__logger.debug("Running {0}'s wrapper. About to check {1}".format(
-            self.wrapper.analyzer_name,
-            contract_path,
-        ),
+                self.wrapper.analyzer_name,
+                contract_path,
+            ),
             requestId=request_id,
         )
 

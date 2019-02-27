@@ -1,3 +1,8 @@
+import utils.io as utils_io
+
+from component import BaseConfigHandler
+from component import BaseComponentFactory
+
 from validator_collection import checkers
 
 class QSPContractConfigHandler(BaseConfigHandler):
@@ -8,7 +13,7 @@ class QSPContractConfigHandler(BaseConfigHandler):
     def parse(self, config, config_type, context=None):
         super().parse(config, config_type, context)
 
-        expected = set("uri", "metadata")
+        expected = set({"uri", "metadata"})
         found = set(config.keys())
 
         BaseConfigHandler.raise_err(
@@ -22,12 +27,12 @@ class QSPContractConfigHandler(BaseConfigHandler):
 
         BaseConfigHandler.raise_err(
             checkers.is_url(config['uri']),
-            "Invalid URI: {0}".format(config['uri']))
+            "Invalid URI: {0}".format(config['uri'])
         )
 
         BaseConfigHandler.raise_err(
             checkers.is_url(config['uri']),
-            "Invalid URI: {0}".format(config['metadata']))
+            "Invalid URI: {0}".format(config['metadata'])
         )
 
         major_version = context.config_vars.get('major-version', 0)
@@ -36,7 +41,7 @@ class QSPContractConfigHandler(BaseConfigHandler):
             'uri': config['uri'].replace(
                 '${major-version}', 
                 major_version
-            )
+            ),
             'metadata': config['metadata'].replace(
                 '${major-version}',
                 major_version
@@ -51,13 +56,12 @@ class QSPContractFactory(BaseComponentFactory):
         """
         Creates the audit contract from ABI.
         """
-        abi_file = io_utils.fetch_file(config['uri'])
-        abi_json = io_utils.load_json(abi_file)
+        abi_file = utils_io.fetch_file(config['uri'])
+        abi_json = utils_io.load_json(abi_file)
 
-        metadata_file = io_utils.fetch_file(config['metadata'])
-        metadata_json = io_utils.load_json(abi_file)
-
-        contract_address = get(metadata_json, '/contractAddress')
+        metadata_file = utils_io.fetch_file(config['metadata'])
+        metadata_json = utils_io.load_json(metadata_file)
+        contract_address = metadata_json['contractAddress']
 
         return context.web3_client.eth.contract(
             address=contract_address,
