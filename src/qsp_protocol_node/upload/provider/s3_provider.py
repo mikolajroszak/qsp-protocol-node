@@ -16,7 +16,7 @@ from utils.io import digest
 
 
 class S3Provider(BaseUploadProvider):
-    def __init__(self, account, config):
+    def __init__(self, account, config, is_enabled):
         self.__client = boto3.client('s3')
         self.__bucket_name = get(config, 
             '/bucket_name', accept_none=False)
@@ -24,11 +24,16 @@ class S3Provider(BaseUploadProvider):
             '/contract_bucket_name', accept_none=False)
         self.__account = account
         self.__config = config
+        self.__is_enabled = is_enabled
 
     def config(self):
         return self.__config
 
-    def upload_report(self, report_as_string, audit_report_hash=None):
+    @property
+    def is_enabled(self):
+        return self.__is_enabled
+
+    def upload_report(self, report_as_string, audit_report_hash=None):        
         report_hash = audit_report_hash
         if audit_report_hash is None:
             report_hash = digest(report_as_string)

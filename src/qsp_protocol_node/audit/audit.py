@@ -1004,7 +1004,7 @@ class QSPAuditNode:
 
         upload_provider = self.__config.upload_provider
         
-        if upload_provider is not None and upload_provider.config['is_enabled']:
+        if upload_provider is not None and upload_provider.is_enabled:
             upload_result = self.__config.upload_provider.upload_report(audit_report_str,
                                                                         audit_report_hash=audit_hash)
 

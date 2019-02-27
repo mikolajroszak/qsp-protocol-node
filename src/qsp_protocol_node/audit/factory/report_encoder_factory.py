@@ -1,0 +1,3 @@
+class ReportEncoderFactory:
+    pass
+    # TODO

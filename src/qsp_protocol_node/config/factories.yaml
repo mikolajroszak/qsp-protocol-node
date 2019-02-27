@@ -62,3 +62,10 @@ gas_price_calculator:
     class: "GasPriceCalculatorFactory"
   type: mandatory
   init_order: 8
+
+  report_encoder:
+    factory:
+      module: "audit.factory"
+      class: "ReportEncoderFactory"
+    type: internal
+    init_order:  9
