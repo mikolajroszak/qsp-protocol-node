@@ -21,7 +21,7 @@ import traceback
 import urllib.parse
 import jsonschema
 
-from .threads import UpdateMinPrice, ComputeGasPriceThread, QSPThread
+from .threads import UpdateMinPrice, CollectMetricsThread, ComputeGasPriceThread, QSPThread
 from web3.utils.threads import Timeout
 
 from utils.eth.tx import TransactionNotConfirmedException
@@ -43,7 +43,6 @@ from utils.eth import DeduplicationException
 from .vulnerabilities_set import VulnerabilitiesSet
 
 from threading import Thread
-from utils.metrics import MetricCollector
 from solc import compile_standard
 from solc.exceptions import ContractsNotFound, SolcError
 from subprocess import TimeoutExpired
@@ -91,7 +90,6 @@ class QSPAuditNode:
         """
         self.__logger = get_logger(self.__class__.__qualname__)
         self.__config = config
-        self.__metric_collector = None
         self.__exec = False
         self.__internal_thread_handles = []
         self.__internal_thread_definitions = []
@@ -229,6 +227,21 @@ class QSPAuditNode:
             # Updates min price only if it differs
             min_price_thread.check_and_update_min_price()
 
+    def __start_metric_collection_thread(self):
+        """
+        Creates and starts the metric collection thread. Appends the handle to the internal threads.
+        """
+        if self.__config.metric_collection_is_enabled:
+            metric_collection_thread = CollectMetricsThread(self.config)
+            self.__internal_thread_definitions.append(metric_collection_thread)
+
+            # Collect initial metrics
+            metric_collection_thread.collect_and_send()
+
+            # Starts the thread and keeps the handle
+            handle = metric_collection_thread.start()
+            self.__internal_thread_handles.append(handle)
+
     def run(self):
         """
         Starts all the threads processing different stages of a given event.
@@ -244,10 +257,7 @@ class QSPAuditNode:
         claim_rewards_thread = self.__run_claim_rewards_thread()
         self.__internal_thread_handles.append(claim_rewards_thread)
 
-        if self.__config.metric_collection_is_enabled:
-            self.__metric_collector = MetricCollector(self.__config)
-            self.__metric_collector.collect_and_send()
-            self.__internal_thread_handles.append(self.__run_metrics_thread())
+        self.__start_metric_collection_thread()
 
         # Upon restart, before processing, set all events that timed out to err
         self.__timeout_stale_requests()
@@ -814,17 +824,6 @@ class QSPAuditNode:
         monitor_thread.start()
 
         return monitor_thread
-
-    def __run_metrics_thread(self):
-        def exec():
-            self.__run_with_interval(self.__metric_collector.collect_and_send,
-                                     self.__config.metric_collection_interval_seconds)
-
-        metrics_thread = Thread(target=exec, name="metrics thread")
-        self.__internal_thread_handles.append(metrics_thread)
-        metrics_thread.start()
-
-        return metrics_thread
 
     def stop(self):
         """

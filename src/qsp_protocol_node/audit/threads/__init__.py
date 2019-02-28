@@ -9,6 +9,7 @@
 
 from .update_min_price import UpdateMinPrice
 from .compute_gas_price_thread import ComputeGasPriceThread
+from .collect_metrics_thread import CollectMetricsThread
 from .qsp_thread import QSPThread
 
-__all__ = ['QSPThread', 'UpdateMinPrice', 'ComputeGasPriceThread']
+__all__ = ['QSPThread', 'UpdateMinPrice', 'ComputeGasPriceThread', 'CollectMetricsThread']
