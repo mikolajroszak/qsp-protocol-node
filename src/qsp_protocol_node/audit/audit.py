@@ -21,7 +21,7 @@ import traceback
 import urllib.parse
 import jsonschema
 
-from time import sleep
+from .threads import UpdateMinPrice, QSPThread
 from web3.utils.threads import Timeout
 
 from utils.eth.tx import TransactionNotConfirmedException
@@ -73,9 +73,6 @@ class QSPAuditNode:
     __AUDIT_STATUS_ERROR = "error"
     __AUDIT_STATUS_SUCCESS = "success"
 
-    # Determines how long threads will sleep between waking up to react to events
-    __THREAD_SLEEP_TIME = 0.1
-
     # The frequency of updating min price. This is not configurable as dashboard logic depends
     # on this frequency
     __MIN_PRICE_BEAT_SEC = 24 * 60 * 60
@@ -97,7 +94,8 @@ class QSPAuditNode:
         self.__config = config
         self.__metric_collector = None
         self.__exec = False
-        self.__internal_threads = []
+        self.__internal_thread_handles = []
+        self.__internal_thread_definitions = []
         self.__is_initialized = False
 
         # There are some important invariants that are to be respected at all
@@ -123,42 +121,26 @@ class QSPAuditNode:
         #    thread to complete execution and eventually dying
 
     def __run_with_interval(self, body_function, polling_interval, start_with_call=True):
-        last_called = 0
-        if not start_with_call:
-            last_called = time.time()
-        while self.__exec:
-            now = time.time()
-            if now - last_called > polling_interval:
-                body_function()
-                last_called = now
-            sleep(QSPAuditNode.__THREAD_SLEEP_TIME)
+        # todo(mderka): QSP-1023
+        # todo(mderka): This method was moved to QSPThread. For now, we only delegate the call.
+        # todo(mderka): Remove this method completely from here when the refactoring is complete
+        # todo(mderka): and it is no longer necessary.
+        wrapper = QSPThread(self.config)
+        self.__internal_thread_definitions.append(wrapper)
+        return wrapper.run_with_interval(body_function, polling_interval,
+                                         start_with_call=start_with_call)
 
     def __run_block_mined_thread(self, handler_name, handler):
         """
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
-        def exec():
-            current_block = 0
-            last_called = 0
-            while self.__exec:
-                now = time.time()
-                if now - last_called > self.__config.block_mined_polling:
-                    last_called = now
-                    if current_block < self.__config.web3_client.eth.blockNumber:
-                        current_block = self.__config.web3_client.eth.blockNumber
-                        self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
-                        try:
-                            handler()
-                        except Exception as e:
-                            self.__logger.exception(
-                                "Error in block mined thread handler: {0}".format(str(e)))
-                            raise e
-                sleep(QSPAuditNode.__THREAD_SLEEP_TIME)
-
-        new_block_monitor_thread = Thread(target=exec, name="{0} thread".format(handler_name))
-        new_block_monitor_thread.start()
-
-        return new_block_monitor_thread
+        # todo(mderka): QSP-1023
+        # todo(mderka): This method was moved to QSPThread. For now, we only delegate the call.
+        # todo(mderka): Remove this method completely from here when the refactoring is complete
+        # todo(mderka): and it is no longer necessary.
+        wrapper = QSPThread(self.config)
+        self.__internal_thread_definitions.append(wrapper)
+        return wrapper.run_block_mined_thread(handler_name, handler)
 
     @property
     def config(self):
@@ -233,6 +215,23 @@ class QSPAuditNode:
 
         return is_police
 
+    def __start_min_price_thread(self):
+        """
+        Creates and starts the min price thread. Appends the handle to the internal threads.
+        """
+        min_price_thread = UpdateMinPrice(self.config)
+        self.__internal_thread_definitions.append(min_price_thread)
+        if self.config.heartbeat_allowed:
+            # Updates min price and starts a thread that will be doing so every 24 hours
+            min_price_thread.update_min_price()
+            # Starts the thread and keeps the handle
+            handle = min_price_thread.start()
+            self.__internal_thread_handles.append(handle)
+
+        else:
+            # Updates min price only if it differs
+            min_price_thread.check_and_update_min_price()
+
     def run(self):
         """
         Starts all the threads processing different stages of a given event.
@@ -245,24 +244,16 @@ class QSPAuditNode:
         # Initialize the gas price
         self.__compute_gas_price()
 
-        if self.config.heartbeat_allowed:
-            # Updates min price and starts a thread that will be doing so every 24 hours
-            self.__update_min_price()
-            min_price_thread = self.__run_update_min_price_thread()
-            self.__internal_threads.append(min_price_thread)
-
-        else:
-            # Updates min price only if it differs
-            self.__check_and_update_min_price()
+        self.__start_min_price_thread()
 
         # Collect any unclaimed rewards every 24 hours
         claim_rewards_thread = self.__run_claim_rewards_thread()
-        self.__internal_threads.append(claim_rewards_thread)
+        self.__internal_thread_handles.append(claim_rewards_thread)
 
         if self.__config.metric_collection_is_enabled:
             self.__metric_collector = MetricCollector(self.__config)
             self.__metric_collector.collect_and_send()
-            self.__internal_threads.append(self.__run_metrics_thread())
+            self.__internal_thread_handles.append(self.__run_metrics_thread())
 
         # Upon restart, before processing, set all events that timed out to err
         self.__timeout_stale_requests()
@@ -278,21 +269,21 @@ class QSPAuditNode:
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
-        self.__internal_threads.append(self.__run_block_mined_thread(
+        self.__internal_thread_handles.append(self.__run_block_mined_thread(
             "poll_requests",
             self.__poll_requests
         ))
 
-        self.__internal_threads.append(self.__run_block_mined_thread(
+        self.__internal_thread_handles.append(self.__run_block_mined_thread(
             "compute_gas_price",
             self.__compute_gas_price
         ))
 
         # Starts two additional threads for performing audits
         # and eventually submitting results
-        self.__internal_threads.append(self.__run_perform_audit_thread())
-        self.__internal_threads.append(self.__run_submission_thread())
-        self.__internal_threads.append(self.__run_monitor_submisson_thread())
+        self.__internal_thread_handles.append(self.__run_perform_audit_thread())
+        self.__internal_thread_handles.append(self.__run_submission_thread())
+        self.__internal_thread_handles.append(self.__run_monitor_submisson_thread())
 
         # Monitors the state of each thread. Upon error, terminate the
         # audit node. Checking whether a thread is alive or not does
@@ -304,7 +295,7 @@ class QSPAuditNode:
         def check_all_threads():
             thread_lost = False
             # Checking if all threads are still alive
-            for thread in self.__internal_threads:
+            for thread in self.__internal_thread_handles:
                 if not thread.is_alive():
                     thread_lost = True
                     break
@@ -451,83 +442,6 @@ class QSPAuditNode:
         except Exception as error:
             self.__logger.exception("Error polling police requests: {0}".format(str(error)))
 
-    def __check_and_update_min_price(self):
-        """
-        Checks that the minimum price in the audit node's configuration matches the smart contract
-        and updates it if it differs.
-        """
-        contract_price = mk_read_only_call(
-            self.__config,
-            self.__config.audit_contract.functions.getMinAuditPrice(self.__config.account)
-        )
-        min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
-        if min_price_in_mini_qsp != contract_price:
-            self.__update_min_price()
-
-    def __run_update_min_price_thread(self):
-        """
-        Updates min price every 24 hours.
-        """
-        def exec():
-            self.__run_with_interval(self.__update_min_price, QSPAuditNode.__MIN_PRICE_BEAT_SEC,
-                                     start_with_call=False)
-
-        min_price_thread = Thread(target=exec, name="update min price thread")
-        min_price_thread.start()
-
-        return min_price_thread
-
-    def __update_min_price(self):
-        """
-        Updates smart contract with the minimum price in the audit node's configuration.
-        """
-        msg = "Make sure the account has enough Ether, " \
-              + "the Ethereum node is connected and synced, " \
-              + "and restart your node to try again."
-
-        min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
-        self.__logger.info(
-            "Updating min_price in the smart contract for address {0}.".format(
-                self.__config.account
-            ))
-        transaction = self.__config.audit_contract.functions.setAuditNodePrice(
-            min_price_in_mini_qsp)
-        try:
-            tx_hash = send_signed_transaction(self.__config,
-                                              transaction,
-                                              wait_for_transaction_receipt=True)
-            # If the tx_hash is None, the transaction did not actually complete. Exit
-            if not tx_hash:
-                raise Exception("The min price transaction did not complete")
-            self.__logger.debug("Successfully updated min price to {0}.".format(
-                self.__config.min_price_in_qsp))
-        except Timeout as e:
-            error_msg = "Update min price timed out. " + msg + " {0}, {1}."
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except DeduplicationException as e:
-            error_msg = "A transaction already exists for updating min price," \
-                        + " but has not yet been mined. " + msg \
-                        + " This may take several iterations. {0}, {1}."
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except TransactionNotConfirmedException as e:
-            error_msg = "A transaction occurred, but was then uncled and never recovered. {0}, {1}"
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except Exception as e:
-            error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
-            self.__logger.exception(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-
     def __run_claim_rewards_thread(self):
         """
         Collects any unclaimed audit rewards every 24 hours.
@@ -610,6 +524,7 @@ class QSPAuditNode:
         return tx_hash
 
     def __add_evt_to_db(self, request_id, requestor, uri, price, block_nbr, is_audit=True):
+        evt = {}
         try:
             evt = {
                 'request_id': str(request_id),
@@ -636,14 +551,13 @@ class QSPAuditNode:
     def __run_perform_audit_thread(self):
         def process_audit_request(evt):
             request_id = None
+            report_type = "police" if is_police_check(evt) else "audit"
             try:
                 requestor = evt['requestor']
                 request_id = evt['request_id']
                 contract_uri = evt['contract_uri']
 
-                report_type = "police" if is_police_check(evt) else "audit"
                 audit_result = self.audit(requestor, contract_uri, request_id, report_type)
-
                 if audit_result is None:
                     error = "Could not generate {0} report".format(report_type)
                     evt['status_info'] = error
@@ -685,7 +599,7 @@ class QSPAuditNode:
             self.__run_with_interval(process_incoming, self.__config.evt_polling)
 
         audit_thread = Thread(target=exec, name="audit thread")
-        self.__internal_threads.append(audit_thread)
+        self.__internal_thread_handles.append(audit_thread)
         audit_thread.start()
 
         return audit_thread
@@ -838,7 +752,7 @@ class QSPAuditNode:
             self.__run_with_interval(process_to_be_submitted, self.__config.evt_polling)
 
         submission_thread = Thread(target=exec, name="submission thread")
-        self.__internal_threads.append(submission_thread)
+        self.__internal_thread_handles.append(submission_thread)
         submission_thread.start()
 
         return submission_thread
@@ -907,7 +821,7 @@ class QSPAuditNode:
                 self.__logger.exception("Error in the monitor thread: {0}".format(str(error)))
 
         monitor_thread = Thread(target=exec, name="monitor thread")
-        self.__internal_threads.append(monitor_thread)
+        self.__internal_thread_handles.append(monitor_thread)
         monitor_thread.start()
 
         return monitor_thread
@@ -918,7 +832,7 @@ class QSPAuditNode:
                                      self.__config.metric_collection_interval_seconds)
 
         metrics_thread = Thread(target=exec, name="metrics thread")
-        self.__internal_threads.append(metrics_thread)
+        self.__internal_thread_handles.append(metrics_thread)
         metrics_thread.start()
 
         return metrics_thread
@@ -931,11 +845,17 @@ class QSPAuditNode:
         self.__logger.info("Stopping QSP Audit Node")
         self.__exec = False
 
-        for internal_thread in self.__internal_threads:
+        # indicate to every thread that it should stop its execution
+        for internal_thread in self.__internal_thread_definitions:
+            self.__logger.debug("Thread {0} is signled to stop.".format(internal_thread.thread_name))
+            internal_thread.stop()
+
+        # join every thread
+        for internal_thread in self.__internal_thread_handles:
             internal_thread.join()
             self.__logger.debug("Thread {0} is stopped.".format(internal_thread.name))
 
-        self.__internal_threads = []
+        self.__internal_thread_handles = []
 
         # Close resources
         self.__config.event_pool_manager.close()

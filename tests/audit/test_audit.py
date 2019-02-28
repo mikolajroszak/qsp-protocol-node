@@ -39,8 +39,6 @@ from time import time
 from timeout_decorator import timeout
 from threading import Thread
 from utils.eth import DeduplicationException
-from unittest import mock
-from web3.utils.threads import Timeout
 
 
 class TestQSPAuditNode(QSPTest):
@@ -225,57 +223,6 @@ class TestQSPAuditNode(QSPTest):
         self.__audit_node._QSPAuditNode__poll_audit_request()
         self.__set_any_request_available(0)
         self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
-        self.__assert_event_table_contains([])
-
-    @timeout(10, timeout_exception=StopIteration)
-    def test_check_and_update_min_price_call(self):
-        value = self.__config.min_price_in_qsp + 1
-        with mock.patch('audit.audit.mk_read_only_call', return_value=value), \
-                mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
-            self.__audit_node._QSPAuditNode__check_and_update_min_price()
-            mocked_sign.assert_called()
-        self.__assert_event_table_contains([])
-
-    @timeout(10, timeout_exception=StopIteration)
-    def test_update_min_price_timeout_exception(self):
-        # The following causes an exception in the auditing node, but it should be caught and
-        # should not propagate
-        with mock.patch('audit.audit.mk_read_only_call', return_value=-1), \
-                mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
-            try:
-                mocked_sign.side_effect = Timeout()
-                self.__audit_node._QSPAuditNode__update_min_price()
-                self.fail("An exception should have been thrown")
-            except Timeout:
-                pass
-        self.__assert_event_table_contains([])
-
-    @timeout(10, timeout_exception=StopIteration)
-    def test_update_min_price_deduplication_exception(self):
-        # The following causes an exception in the auditing node, but it should be caught and
-        # should not propagate
-        with mock.patch('audit.audit.mk_read_only_call', return_value=-1), \
-                mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
-            try:
-                mocked_sign.side_effect = DeduplicationException()
-                self.__audit_node._QSPAuditNode__update_min_price()
-                self.fail("An exception should have been thrown")
-            except DeduplicationException:
-                pass
-        self.__assert_event_table_contains([])
-
-    @timeout(10, timeout_exception=StopIteration)
-    def test_update_min_price_other_exception(self):
-        # The following causes an exception in the auditing node, but it should be caught and
-        # should not propagate
-        with mock.patch('audit.audit.mk_read_only_call', return_value=-1), \
-                mock.patch('audit.audit.send_signed_transaction') as mocked_sign:
-            try:
-                mocked_sign.side_effect = ValueError()
-                self.__audit_node._QSPAuditNode__update_min_price()
-                self.fail("An exception should have been thrown")
-            except ValueError:
-                pass
         self.__assert_event_table_contains([])
 
     @timeout(300, timeout_exception=StopIteration)
@@ -726,7 +673,6 @@ class TestQSPAuditNode(QSPTest):
             mocked__get_next_audit_request_called[0] = True
 
         self.assertEqual(int(self.__config.max_assigned_requests), 1)
-
         # Make sure there anyAvailableRequest returns ready state
         self.__set_any_request_available(1)
 
@@ -738,18 +684,13 @@ class TestQSPAuditNode(QSPTest):
 
         # Node should not ask for further request
         self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
-
         # Make sure there is enough time for mining poll to call QSPAuditNode.__check_then_bid_audit
         # request
         sleep(self.__config.block_mined_polling + 1)
-
         self.__evt_wait_loop(self.__submitReport_filter)
-
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__set_assigned_request_count(0))
-
         self.__send_done_message(self.__REQUEST_ID)
-
         # Restore QSPAuditNode.__get_next_audit_request actual implementation
         self.__audit_node._QSPAuditNode__get_next_audit_request = original__get_next_audit_request
 
@@ -757,11 +698,10 @@ class TestQSPAuditNode(QSPTest):
         # again
         self.__evt_wait_loop(self.__getNextAuditRequest_filter)
         self.__set_any_request_available(0)
-
         # an extra call to get_next_audit is no accepted
         self.assertFalse(mocked__get_next_audit_request_called[0])
 
-    @timeout(30, timeout_exception=StopIteration)
+    @timeout(45, timeout_exception=StopIteration)
     def test_timeout_on_complex_file(self):
         """
         Tests if the analyzer throttles the execution and generates error message
@@ -821,25 +761,6 @@ class TestQSPAuditNode(QSPTest):
                         }
         self.__assert_event_table_contains([expected_row],
                                             ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
-
-    @timeout(30, timeout_exception=StopIteration)
-    def test_change_min_price(self):
-        """
-        Tests that the node updates the min_price on the blockchain if the config value changes
-        """
-        self.__audit_node._QSPAuditNode__config._Config__min_price_in_qsp = 1
-        # this makes an one-off call
-        self.__audit_node._QSPAuditNode__update_min_price()
-        success = False
-        while not success:
-            events = self.__evt_wait_loop(self.__setAuditNodePrice_filter)
-            for event in events:
-                self.assertEqual(event['event'], 'setAuditNodePrice_called')
-                if event['args']['price'] == 10 ** 18:
-                    success = True
-                    break
-            if not success:
-                sleep(TestQSPAuditNode.__SLEEP_INTERVAL)
 
     @timeout(30, timeout_exception=StopIteration)
     def test_gas_price_computation_static(self):
