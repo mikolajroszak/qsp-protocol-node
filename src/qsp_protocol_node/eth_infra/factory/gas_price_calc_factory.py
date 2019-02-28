@@ -15,6 +15,11 @@ class GasPriceCalculatorConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
         super().__init__(component_name)
 
+    def parse(self, config, config_type, context=None):
+        # TODO
+        super().parse(config, config_type, context)
+        return None
+
 class GasPriceCalculatorFactory(BaseComponentFactory):
     def __init__(self, component_name):
         super().__init__(GasPriceCalculatorConfigHandler(component_name))

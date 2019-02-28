@@ -23,6 +23,8 @@ class AnalyzersConfigHandler(BaseConfigHandler):
         )
 
     def parse(self, config, config_type, context=None):
+        super().parse(config, config_type, context)
+
         parsed_config = OrderedDict()
 
         AnalyzersConfigHandler.raise_err(
