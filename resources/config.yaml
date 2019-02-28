@@ -73,7 +73,7 @@ testnet:
 
   # TODO Rename this to metrics_collection_provider
   # and add provider name
-  metric_collection:
+  metric_collector:
     is_enabled: !!bool True
     interval_seconds: !!int 30
     destination_endpoint: !!str "https://dev-qsp-dashboard.quantstamp.com/node-metrics"
