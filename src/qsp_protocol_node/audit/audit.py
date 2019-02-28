@@ -21,7 +21,7 @@ import traceback
 import urllib.parse
 import jsonschema
 
-from .threads import UpdateMinPrice, QSPThread
+from .threads import UpdateMinPrice, ComputeGasPriceThread, QSPThread
 from web3.utils.threads import Timeout
 
 from utils.eth.tx import TransactionNotConfirmedException
@@ -40,7 +40,6 @@ from utils.io import (
 from utils.eth import send_signed_transaction
 from utils.eth import mk_read_only_call
 from utils.eth import DeduplicationException
-from utils.eth import get_gas_price
 from .vulnerabilities_set import VulnerabilitiesSet
 
 from threading import Thread
@@ -146,21 +145,6 @@ class QSPAuditNode:
     def config(self):
         return self.__config
 
-    def __compute_gas_price(self):
-        """
-        Queries recent blocks to set a baseline gas price, or uses a default static gas price
-        """
-        gas_price = None
-        # if we're not using the dynamic gas price strategy, just return the default
-        if self.__config.gas_price_strategy == "static":
-            gas_price = self.__config.default_gas_price_wei
-        else:
-            gas_price = get_gas_price(self.__config)
-        gas_price = int(min(gas_price, self.__config.max_gas_price_wei))
-        # set the gas_price in config
-        self.__config.gas_price_wei = gas_price
-        self.__logger.debug("Current gas price: {0}".format(str(gas_price)))
-
     def __has_enough_stake(self):
         """
         Verifies whether the node has enough stake to perform audits.
@@ -215,6 +199,19 @@ class QSPAuditNode:
 
         return is_police
 
+    def __start_gas_price_thread(self):
+        """
+        Creates and starts the gas price thread. Appends the handle to the internal threads.
+        """
+        gas_price_thread = ComputeGasPriceThread(self.config)
+        self.__internal_thread_definitions.append(gas_price_thread)
+
+        # Immediately compute gas price once upon startup
+        gas_price_thread.compute_gas_price()
+
+        handle = gas_price_thread.start()
+        self.__internal_thread_handles.append(handle)
+
     def __start_min_price_thread(self):
         """
         Creates and starts the min price thread. Appends the handle to the internal threads.
@@ -240,10 +237,7 @@ class QSPAuditNode:
             raise Exception("Cannot run audit node thread due to another audit node thread instance")
 
         self.__exec = True
-
-        # Initialize the gas price
-        self.__compute_gas_price()
-
+        self.__start_gas_price_thread()
         self.__start_min_price_thread()
 
         # Collect any unclaimed rewards every 24 hours
@@ -272,11 +266,6 @@ class QSPAuditNode:
         self.__internal_thread_handles.append(self.__run_block_mined_thread(
             "poll_requests",
             self.__poll_requests
-        ))
-
-        self.__internal_thread_handles.append(self.__run_block_mined_thread(
-            "compute_gas_price",
-            self.__compute_gas_price
         ))
 
         # Starts two additional threads for performing audits

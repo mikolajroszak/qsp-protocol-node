@@ -763,23 +763,6 @@ class TestQSPAuditNode(QSPTest):
                                             ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(30, timeout_exception=StopIteration)
-    def test_gas_price_computation_static(self):
-        num_blocks = 5
-        # fill the blockchain with some transactions
-        for i in range(num_blocks):
-            self.__config.web3_client.eth.waitForTransactionReceipt(
-                self.__set_assigned_request_count(0, i * 1000))
-        self.__config._Config__default_gas_price_wei = 12345
-        self.__config._Config__gas_price_strategy = "static"
-        self.__audit_node._QSPAuditNode__compute_gas_price()
-        self.assertEqual(self.__config.gas_price_wei, 12345)
-
-    @timeout(30, timeout_exception=StopIteration)
-    def test_gas_price_computation_empty_blockchain(self):
-        # tests for errors when there are too few blocks in the blockchain history
-        self.__audit_node._QSPAuditNode__compute_gas_price()
-
-    @timeout(30, timeout_exception=StopIteration)
     def test_configuration_checks(self):
         """
         Tests configuration sanity checks.
