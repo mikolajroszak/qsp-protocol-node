@@ -9,7 +9,7 @@
 
 from component import BaseConfigHandler
 from component import BaseConfigHandler
-from component import BaseComponentFactory
+from component import BaseConfigComponentFactory
 
 class GasPriceCalculatorConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
@@ -20,7 +20,7 @@ class GasPriceCalculatorConfigHandler(BaseConfigHandler):
         super().parse(config, config_type, context)
         return None
 
-class GasPriceCalculatorFactory(BaseComponentFactory):
+class GasPriceCalculatorFactory(BaseConfigComponentFactory):
     def __init__(self, component_name):
         super().__init__(GasPriceCalculatorConfigHandler(component_name))
 

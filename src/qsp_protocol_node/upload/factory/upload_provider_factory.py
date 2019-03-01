@@ -8,7 +8,7 @@
 ####################################################################################################
 
 from component import BaseConfigHandler
-from component import BaseComponentFactory
+from component import BaseConfigComponentFactory
 from component import ConfigurationException
 
 class UploadProviderConfigHandler(BaseConfigHandler):
@@ -24,7 +24,7 @@ class UploadProviderConfigHandler(BaseConfigHandler):
         # Forces users to specify `is_enabled`: False in their config.yaml
         return dict({'is_enabled': True}, **config)
 
-class UploadProviderFactory(BaseComponentFactory):
+class UploadProviderFactory(BaseConfigComponentFactory):
     
     def __init__(self, component_name):
         super().__init__(UploadProviderConfigHandler(component_name))

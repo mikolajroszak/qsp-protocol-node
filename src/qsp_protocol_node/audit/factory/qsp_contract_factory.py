@@ -1,7 +1,7 @@
 import utils.io as utils_io
 
 from component import BaseConfigHandler
-from component import BaseComponentFactory
+from component import BaseConfigComponentFactory
 
 from validator_collection import checkers
 
@@ -48,7 +48,7 @@ class QSPContractConfigHandler(BaseConfigHandler):
             )
         }
 
-class QSPContractFactory(BaseComponentFactory):
+class QSPContractFactory(BaseConfigComponentFactory):
     def __init__(self, component_name):
         super().__init__(QSPContractConfigHandler(component_name))
 

@@ -6,3 +6,7 @@
 # Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.      #
 #                                                                                                  #
 ####################################################################################################
+
+from .log_stream_provider import LogStreamProvider
+
+__all__ = ['LogStreamProvider']

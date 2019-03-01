@@ -31,7 +31,7 @@ web3_client:
 account:
   factory:
     module: "eth_infra.factory"
-    class: "Account"
+    class: "AccountFactory"
   type: "internal"
   init_order: 5
 
@@ -70,9 +70,9 @@ gas_price_calculator:
     type: "internal"
     init_order:  9
 
-  metric_collector:
+  metrics_collector:
     factory:
-      module: "metric_collector.factory"
-      class: "MetricCollectorFactory"
+      module: "metrics.factory"
+      class: "MetricsCollectorFactory"
     type: "optional"
     init_order: 10

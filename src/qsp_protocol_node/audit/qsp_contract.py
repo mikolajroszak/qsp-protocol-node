@@ -1,6 +1,6 @@
 from utils.eth import mk_read_only_call
 
-class QSPContract:
+class QSPContract(BaseConfigComponent):
 
     # Must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAuditData.sol#L14

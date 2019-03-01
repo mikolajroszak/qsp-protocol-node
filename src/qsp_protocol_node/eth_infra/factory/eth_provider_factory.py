@@ -1,5 +1,5 @@
 from component import BaseConfigHandler
-from component import BaseComponentFactory
+from component import BaseConfigComponentFactory
 from component import ConfigurationException
 
 from web3 import HTTPProvider
@@ -33,7 +33,7 @@ class EthConfigHandler(BaseConfigHandler):
         return dict({"args": {"endpoint_uri": endpoint_uri}}, **config)
 
 
-class EthProviderFactory(BaseComponentFactory):
+class EthProviderFactory(BaseConfigComponentFactory):
     def __init__(self, component_name):
         super().__init__(EthConfigHandler(component_name))
 

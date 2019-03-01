@@ -102,28 +102,24 @@ class Program:
         # Inject variables to be used in variable-based strings
         # in the configuration file
         config_vars = {
-            'account_passwd': os.environ['QSP_ETH_PASSPHRASE']
-            'auth-token': os.environ.get('QSP_ETH_AUTH_TOKEN', ''),
+            'account_passwd': os.environ['QSP_ETH_PASSPHRASE'],
+            'auth_token': os.environ.get('QSP_ETH_AUTH_TOKEN', ''),
             'config_file': os.environ['QSP_CONFIG'],
             'environment': os.environ['QSP_ENV'],
             'keystore_file': os.environ['QSP_KEYSTORE'],
-            'major-version': node_version[0:node_version.index('.')]
+            'major_version': node_version[0:node_version.index('.')]
         }
 
         Program.__setup_basic_logging(os.environ['QSP_LOGGING_LEVEL'])
         Program.__config = Config(config_vars)
-            yaml_config_file,
-            environment,
-            keystore_file,
-            passwd,
-            config_vars
-        )
 
         # Registers the yet to be initialized log_stream_provider
         stream_logger.configure_once(get_log_stream_provider=lambda: Program.__config.log_stream_provider)
 
         # Fully initializes the components in the config object (log_stream_provider included)
         Program.__config.create_components()
+
+        print("===> config is {0}".format(Program.__config))
 
         Program.__logger = stream_logger.get_logger(cls.__qualname__)
 

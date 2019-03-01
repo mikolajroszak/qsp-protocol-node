@@ -10,29 +10,50 @@
 import watchtower
 
 from utils.dictionary.path import get
+from stream import LogStreamProvider
 
 from boto3.session import Session
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
-# TODO Rename this to LogStreamingProvider
-class CloudWatchProvider:
+class CloudWatchProvider(LogStreamProvider):
 
     def __init__(self, account, config):
-        print("===> CloudWatchProvider config " + str(config))
-        self.__stream_name = get(
-            config, '/args/log_stream', accept_none=False
-        ).replace('{id}', account)
+        self.__config = config
 
-        self.__log_group = get(config, '/args/log_group', accept_none=False)
-        self.__send_interval_seconds = get(config, '/args/send_interval_seconds', 
-            accept_none=False
-        )
+        # Makes sure stream name is set and parameter is
+        # pre-processed
+        stream_name = get(
+            config, '/args/stream_name', accept_none=False
+        ).replace("${id}", account)
+        config['args']['stream_name'] = stream_name
+
+        # Makes sure group is set
+        get(config, '/args/group', accept_none=False)
+
+        # Makes sure send_interval_seconds is set
+        get(config, '/args/send_interval_seconds', accept_none=False)
+
+    @property
+    def group(self):
+        return self.args['group']
+
+    @property
+    def stream_name(self):
+        return self.args['stream_name']
+
+    @property
+    def send_interval_seconds(self):
+        return self.args['send_interval_seconds']
+
+    @property
+    def is_enabled(self):
+        return self.config['is_enabled']
 
     def get_handler(self):
         handler = watchtower.CloudWatchLogHandler(
-            log_group=self.__log_group,
-            stream_name=self.__stream_name,
-            send_interval=self.__send_interval_seconds,
+            log_group=self.log_group,
+            stream_name=self.stream_name,
+            send_interval=self.send_interval_seconds,
             boto3_session=Session(),
             create_log_group=False,
         )

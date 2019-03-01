@@ -1,9 +1,8 @@
 from component import BaseConfigHandler
-from component import BaseComponentFactory
+from component import BaseConfigComponentFactory
 from stream.provider import CloudWatchProvider
 
 
-# TODO: refactor this to avoid dup with upload_provider_factory.py
 class LogStreamerConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
         super().__init__(component_name)
@@ -18,7 +17,7 @@ class LogStreamerConfigHandler(BaseConfigHandler):
         return dict({'is_enabled': True}, **config)
 
 
-class LogStreamProviderFactory(BaseComponentFactory):
+class LogStreamProviderFactory(BaseConfigComponentFactory):
 
     def __init__(self, component_name):
         super().__init__(LogStreamerConfigHandler(component_name))
@@ -35,7 +34,7 @@ class LogStreamProviderFactory(BaseComponentFactory):
             raise Exception(
                 "Unknown/Unsupported streaming provider: {0}".format(provider_name))
 
-        return CloudWatchProvider(context.account, config)
+        return CloudWatchProvider(context.config_vars['account'], config)
         
 
 

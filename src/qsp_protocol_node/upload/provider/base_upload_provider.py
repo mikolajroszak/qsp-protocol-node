@@ -7,9 +7,12 @@
 #                                                                                                  #
 ####################################################################################################
 
-class BaseUploadProvider:
+class BaseUploadProvider(BaseConfigComponent):
+    def __init__(self, config):
+        super().__init__(config)
+
     def upload_report(self, report_as_string, audit_report_hash=None):
-        raise Exception("Unimplemented method")
+        raise NotImplementedError("upload_report")
 
     def upload_contract(self, request_id, contract_body, file_name):
-        raise Exception("Unimplemented method")
+        raise NotImplementedError("upload_contract")

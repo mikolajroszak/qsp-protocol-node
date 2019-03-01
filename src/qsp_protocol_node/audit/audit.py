@@ -44,7 +44,7 @@ from utils.eth import get_gas_price
 from .vulnerabilities_set import VulnerabilitiesSet
 
 from threading import Thread
-from utils.metrics import MetricCollector
+from metrics import MetricsCollector
 from solc import compile_standard
 from solc.exceptions import ContractsNotFound, SolcError
 from subprocess import TimeoutExpired
@@ -1003,7 +1003,6 @@ class QSPAuditNode:
         audit_hash = digest(audit_report_str)
 
         upload_provider = self.__config.upload_provider
-        
         if upload_provider is not None and upload_provider.is_enabled:
             upload_result = self.__config.upload_provider.upload_report(audit_report_str,
                                                                         audit_report_hash=audit_hash)

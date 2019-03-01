@@ -1,7 +1,7 @@
 from component import BaseConfigHandler
-from component import BaseComponentFactory
+from component import BaseConfigComponentFactory
 
-class ReportEncoderFactory(BaseComponentFactory):
+class ReportEncoderFactory(BaseConfigComponentFactory):
     def __init__(self, component_name):
         super().__init__(ReportEncoderConfigHander(component_name))
 

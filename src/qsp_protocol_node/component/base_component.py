@@ -19,7 +19,7 @@ class ConfigurationException(Exception):
     A specialized exception for signaling configuration errors.
     """
 
-class BaseConfigHandler:
+class BaseConfigHandler(object):
     def __init__(self, component_name):
         self.__component_name = component_name
 
@@ -34,6 +34,7 @@ class BaseConfigHandler:
         if config_type is ConfigType.MANDATORY and config is None:
             raise ConfigurationException(f"Could not find '{self.component_name}' in configuration'")
 
+        # Else, it an optional component (may or not have an associated config)
         return config
 
     @classmethod
@@ -45,7 +46,7 @@ class BaseConfigHandler:
             raise ConfigurationException("Cannot initialize QSP node. {0}".format(msg))
 
 
-class BaseComponentFactory:
+class BaseConfigComponentFactory:
     def __init__(self, config_handler):
         self.__config_handler = config_handler
 
@@ -55,3 +56,18 @@ class BaseComponentFactory:
 
     def create_component(self, config, context=None):
         raise Exception("Unimplemented method create_component")
+
+class BaseConfigComponent(dict):
+
+    def __init__(self, config={}):
+        super().__init__()
+        for key in config:
+            dict.__setitem__(self, key, config[key])
+
+    def __getattr__(self, attr):
+        try:
+            return dict.__getitem__(self, attr)
+        except KeyError:
+            raise AttributeError(attr)
+
+       

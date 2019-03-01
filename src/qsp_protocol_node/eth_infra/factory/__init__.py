@@ -7,10 +7,10 @@
 #                                                                                                  #
 ####################################################################################################
 
+from .account_factory import AccountFactory
 from .eth_provider_factory import EthProviderFactory
 from .gas_price_calc_factory import GasPriceCalculatorFactory
-from .pk_factory import PrivateKeyFactory
 from .web3_client_factory import Web3ClientFactory
 
 
-__all__ = ['EthProviderFactory', 'GasPriceCalculatorFactory', 'PrivateKeyFactory', 'Web3ClientFactory']
+__all__ = ['AccountFactory', 'EthProviderFactory', 'GasPriceCalculatorFactory', 'Web3ClientFactory']

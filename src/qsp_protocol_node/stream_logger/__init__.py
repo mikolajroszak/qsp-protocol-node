@@ -33,7 +33,7 @@ def get_logger(logger_name):
     global __stream_loggers    
 
     log_stream_provider = __get_log_stream_provider()
-    if log_stream_provider is None or not log_stream_provider.config['is_enabled']:
+    if log_stream_provider is None or not log_stream_provider.is_enabled:
         return structlog.get_logger(logger_name)
 
     # Checks if the requested logger has already been configured.

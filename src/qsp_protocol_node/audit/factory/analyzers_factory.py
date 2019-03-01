@@ -4,7 +4,7 @@ from audit import Analyzer
 from audit import Wrapper
 from utils.io import dir_exists
 from component import BaseConfigHandler
-from component import BaseComponentFactory
+from component import BaseConfigComponentFactory
 
 from collections import OrderedDict
 from pathlib import Path
@@ -68,7 +68,7 @@ class AnalyzersConfigHandler(BaseConfigHandler):
         return parsed_config
 
 
-class AnalyzersFactory(BaseComponentFactory):
+class AnalyzersFactory(BaseConfigComponentFactory):
     def __init__(self, component_name):
         super().__init__(AnalyzersConfigHandler(component_name))
 
