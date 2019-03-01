@@ -9,7 +9,7 @@
 
 from unittest import mock
 
-from audit import UpdateMinPrice
+from audit import UpdateMinPriceThread
 from helpers.qsp_test import QSPTest
 from helpers.resource import fetch_config
 from time import sleep
@@ -19,62 +19,62 @@ from utils.eth.tx import DeduplicationException
 from web3.utils.threads import Timeout
 
 
-class TestUpdateMinPrice(QSPTest):
+class TestUpdateMinPriceThread(QSPTest):
     __SLEEP_INTERVAL = 1
 
     def __evt_wait_loop(self, current_filter):
         events = current_filter.get_new_entries()
         while not bool(events):
-            sleep(TestUpdateMinPrice.__SLEEP_INTERVAL)
+            sleep(TestUpdateMinPriceThread.__SLEEP_INTERVAL)
             events = current_filter.get_new_entries()
         return events
 
     def test_init(self):
         config = fetch_config()
-        thread = UpdateMinPrice(config)
+        thread = UpdateMinPriceThread(config)
         self.assertEqual(config, thread.config)
 
     def test_update_min_price_success(self):
         config = fetch_config()
-        thread = UpdateMinPrice(config)
-        with mock.patch('audit.threads.update_min_price.send_signed_transaction',
+        thread = UpdateMinPriceThread(config)
+        with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"):
-            thread._UpdateMinPrice__update_min_price()
+            thread._UpdateMinPriceThread__update_min_price()
 
     def test_update_min_price_exceptions(self):
         config = fetch_config()
-        thread = UpdateMinPrice(config)
-        with mock.patch('audit.threads.update_min_price.send_signed_transaction',
+        thread = UpdateMinPriceThread(config)
+        with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=Exception):
             try:
-                thread._UpdateMinPrice__update_min_price()
+                thread._UpdateMinPriceThread__update_min_price()
                 self.fail("Exception was not propagated")
             except Exception:
                 # expected
                 pass
 
-        with mock.patch('audit.threads.update_min_price.send_signed_transaction',
+        with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=TransactionNotConfirmedException):
             try:
-                thread._UpdateMinPrice__update_min_price()
+                thread._UpdateMinPriceThread__update_min_price()
                 self.fail("Exception was not propagated")
             except TransactionNotConfirmedException:
                 # expected
                 pass
 
-        with mock.patch('audit.threads.update_min_price.send_signed_transaction',
+        with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=Timeout):
             try:
-                thread._UpdateMinPrice__update_min_price()
+                thread._UpdateMinPriceThread__update_min_price()
                 self.fail("Exception was not propagated")
             except Timeout:
                 # expected
                 pass
 
-        with mock.patch('audit.threads.update_min_price.send_signed_transaction',
+        with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=DeduplicationException):
             try:
-                thread._UpdateMinPrice__update_min_price()
+                thread._UpdateMinPriceThread__update_min_price()
                 self.fail("Exception was not propagated")
             except DeduplicationException:
                 # expected
@@ -82,16 +82,16 @@ class TestUpdateMinPrice(QSPTest):
 
     def test_check_and_update_min_price(self):
         config = fetch_config()
-        thread = UpdateMinPrice(config)
-        with mock.patch('audit.threads.update_min_price.send_signed_transaction',
+        thread = UpdateMinPriceThread(config)
+        with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"), \
-             mock.patch('audit.threads.update_min_price.mk_read_only_call',
+             mock.patch('audit.threads.update_min_price_thread.mk_read_only_call',
                         return_value=config.min_price_in_qsp + 5):
             thread.check_and_update_min_price()
 
     def test_stop(self):
         config = fetch_config()
-        thread = UpdateMinPrice(config)
+        thread = UpdateMinPriceThread(config)
         thread.stop()
         self.assertFalse(thread.exec)
 
@@ -108,8 +108,8 @@ class TestUpdateMinPrice(QSPTest):
 
         # this make a one-off call
         config._Config__min_price_in_qsp = 1
-        thread = UpdateMinPrice(config)
-        thread._UpdateMinPrice__update_min_price()
+        thread = UpdateMinPriceThread(config)
+        thread._UpdateMinPriceThread__update_min_price()
 
         success = False
         while not success:
@@ -120,14 +120,14 @@ class TestUpdateMinPrice(QSPTest):
                     success = True
                     break
             if not success:
-                sleep(TestUpdateMinPrice.__SLEEP_INTERVAL)
+                sleep(TestUpdateMinPriceThread.__SLEEP_INTERVAL)
 
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
         config = fetch_config()
-        thread = UpdateMinPrice(config)
-        with mock.patch('audit.threads.update_min_price.send_signed_transaction',
+        thread = UpdateMinPriceThread(config)
+        with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"):
             handle = thread.start()
             self.assertTrue(thread.exec)

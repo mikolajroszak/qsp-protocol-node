@@ -21,7 +21,7 @@ from utils.eth.tx import TransactionNotConfirmedException
 from web3.utils.threads import Timeout
 
 
-class UpdateMinPrice(QSPThread):
+class UpdateMinPriceThread(QSPThread):
     # The frequency of updating min price. This is not configurable as dashboard logic depends
     # on this frequency
     __MIN_PRICE_BEAT_SEC = 24 * 60 * 60
@@ -45,7 +45,7 @@ class UpdateMinPrice(QSPThread):
         """
         Defines the function to be executed and how often.
         """
-        self.run_with_interval(self.__update_min_price, UpdateMinPrice.__MIN_PRICE_BEAT_SEC,
+        self.run_with_interval(self.__update_min_price, UpdateMinPriceThread.__MIN_PRICE_BEAT_SEC,
                                start_with_call=False)
 
     def __update_min_price(self):
