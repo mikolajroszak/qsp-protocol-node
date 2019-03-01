@@ -10,7 +10,6 @@
 """
 Tests the flow of receiving audit requests and their flow within the QSP audit node
 """
-import ntpath
 import unittest
 
 
@@ -31,8 +30,6 @@ from upload import DummyProvider
 from utils.io import fetch_file, digest_file, load_json
 from utils.db import get_first
 
-from deepdiff import DeepDiff
-from pprint import pprint
 from random import random
 from time import sleep
 from time import time
@@ -628,21 +625,6 @@ class TestQSPAuditNode(QSPTest):
         self.__assert_event_table_contains([expected_row],
                                             ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
-    @timeout(300, timeout_exception=StopIteration)
-    def test_analyzer_produces_metadata_for_errors(self):
-        """
-        Tests that analyzers produce their metadata even when failure occurs
-        """
-        buggy_contract = resource_uri("BasicToken.sol")
-        buggy_contract_file = fetch_file(buggy_contract)
-        # directly calling this function to avoid compilation checks;
-        # this will cause error states for the analyzers
-        report = self.__audit_node.get_audit_report_from_analyzers(buggy_contract_file,
-                                                                   "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                                                                   buggy_contract,
-                                                                   1)
-        self.__compare_json(report, "reports/BasicTokenErrorWithMetadata.json", json_loaded=True)
-
     def test_run_repeated_start_expecting_fail(self):
         """
         Tests that a second instance of the node cannot be started
@@ -846,7 +828,7 @@ class TestQSPAuditNode(QSPTest):
         if report_file_path is not None:
             audit_file = fetch_file(audit['audit_uri'])
             self.assertEqual(digest_file(audit_file), audit['audit_hash'])
-            self.__compare_json(audit_file, report_file_path, ignore_id=ignore_id)
+            self.compare_json(audit_file, report_file_path, ignore_id=ignore_id)
 
     def __assert_all_analyzers(self, request_id):
         """
@@ -867,50 +849,6 @@ class TestQSPAuditNode(QSPTest):
         Closes the event manager. This has to be done before asserting the final database state.
         """
         self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
-
-    def __compare_json(self, audit_file, report_file_path, json_loaded=False, ignore_id=False):
-        if not json_loaded:
-            actual_json = load_json(audit_file)
-        else:
-            actual_json = audit_file
-        expected_json = load_json(fetch_file(resource_uri(report_file_path)))
-        if ignore_id:
-            expected_json['request_id'] = actual_json['request_id']
-
-        diff = DeepDiff(
-            actual_json,
-            expected_json,
-            exclude_paths={
-                "root['contract_uri']",
-                # There is no keystore used for testing. Accounts
-                # are dynamic and therefore cannot be compared
-                "root['auditor']",
-                "root['requestor']",
-                # Path is different depending on whether running inside Docker
-                "root['timestamp']",
-                "root['start_time']",
-                "root['end_time']",
-                "root['analyzers_reports'][0]['analyzer']['command']",
-                "root['analyzers_reports'][0]['coverages'][0]['file']",
-                "root['analyzers_reports'][0]['potential_vulnerabilities'][0]['file']",
-                "root['analyzers_reports'][0]['start_time']",
-                "root['analyzers_reports'][0]['end_time']",
-                "root['analyzers_reports'][1]['analyzer']['command']",
-                "root['analyzers_reports'][1]['coverages'][0]['file']",
-                "root['analyzers_reports'][1]['potential_vulnerabilities'][0]['file']",
-                "root['analyzers_reports'][1]['start_time']",
-                "root['analyzers_reports'][1]['end_time']",
-                "root['analyzers_reports'][2]['analyzer']['command']",
-                "root['analyzers_reports'][2]['coverages'][0]['file']",
-                "root['analyzers_reports'][2]['potential_vulnerabilities'][0]['file']",
-                "root['analyzers_reports'][2]['start_time']",
-                "root['analyzers_reports'][2]['end_time']",
-            }
-        )
-        pprint(diff)
-        self.assertEqual(diff, {})
-        self.assertEqual(ntpath.basename(actual_json['contract_uri']),
-                         ntpath.basename(expected_json['contract_uri']))
 
     def __evt_wait_loop(self, current_filter):
         events = current_filter.get_new_entries()

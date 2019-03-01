@@ -10,8 +10,9 @@
 from .update_min_price_thread import UpdateMinPriceThread
 from .compute_gas_price_thread import ComputeGasPriceThread
 from .collect_metrics_thread import CollectMetricsThread
+from .perform_audit_thread import PerformAuditThread
 from .qsp_thread import QSPThread
 from .submit_report_thread import SubmitReportThread
 
 __all__ = ['QSPThread', 'UpdateMinPriceThread', 'ComputeGasPriceThread', 'CollectMetricsThread',
-           'SubmitReportThread']
+           'SubmitReportThread', 'PerformAuditThread']

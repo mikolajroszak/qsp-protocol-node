@@ -10,52 +10,26 @@
 """
 Provides the QSP Audit node implementation.
 """
-import calendar
-import copy
-import json
-import os
-import threading
-import time
-import traceback
-import urllib.parse
-from subprocess import TimeoutExpired
-from threading import Thread
 
-import jsonschema
-from evt import is_police_check
 from evt import set_evt_as_audit
 from evt import set_evt_as_police_check
 from log_streaming import get_logger
-from solc import compile_standard
-from solc.exceptions import ContractsNotFound, SolcError
-from utils.eth import DeduplicationException
-from utils.eth import mk_read_only_call
-from utils.eth import send_signed_transaction
 from utils.eth.tx import TransactionNotConfirmedException
-from utils.io import (
-    fetch_file,
-    digest,
-    digest_file,
-    read_file
-)
 from web3.utils.threads import Timeout
 
 from .exceptions import NotEnoughStake
 from .threads import CollectMetricsThread, ComputeGasPriceThread
-from .threads import UpdateMinPriceThread, QSPThread, SubmitReportThread
+from .threads import UpdateMinPriceThread, QSPThread, SubmitReportThread, PerformAuditThread
+from utils.eth import send_signed_transaction
+from utils.eth import mk_read_only_call
+from utils.eth import DeduplicationException
+
+from threading import Thread
 
 
 class QSPAuditNode:
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
-
-    # Must be in sync with
-    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAuditData.sol#L14
-    __AUDIT_STATE_SUCCESS = 4
-
-    # Must be in sync with
-    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAuditData.sol#L15
-    __AUDIT_STATE_ERROR = 5
 
     # Must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L106
@@ -64,9 +38,6 @@ class QSPAuditNode:
     # Must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L110
     __AVAILABLE_AUDIT_UNDERSTAKED = 5
-
-    __AUDIT_STATUS_ERROR = "error"
-    __AUDIT_STATUS_SUCCESS = "success"
 
     # The frequency of updating min price. This is not configurable as dashboard logic depends
     # on this frequency
@@ -244,6 +215,17 @@ class QSPAuditNode:
             handle = metric_collection_thread.start()
             self.__internal_thread_handles.append(handle)
 
+    def __start_perform_audit_thread(self):
+        """
+        Creates and starts the min price thread. Appends the handle to the internal threads.
+        """
+        audit_thread = PerformAuditThread(self.config)
+        self.__internal_thread_definitions.append(audit_thread)
+
+        # Starts the thread and keeps the handle
+        handle = audit_thread.start()
+        self.__internal_thread_handles.append(handle)
+
     def run(self):
         """
         Starts all the threads processing different stages of a given event.
@@ -282,8 +264,8 @@ class QSPAuditNode:
 
         # Starts two additional threads for performing audits
         # and eventually submitting results
-        self.__internal_thread_handles.append(self.__run_perform_audit_thread())
         self.__internal_thread_handles.append(self.__start_submission_thread())
+        self.__start_perform_audit_thread()
         self.__internal_thread_handles.append(self.__run_monitor_submisson_thread())
 
         # Monitors the state of each thread. Upon error, terminate the
@@ -554,62 +536,6 @@ class QSPAuditNode:
             )
             self.__config.event_pool_manager.set_evt_status_to_error(evt)
 
-    def __run_perform_audit_thread(self):
-        def process_audit_request(evt):
-            request_id = None
-            report_type = "police" if is_police_check(evt) else "audit"
-            try:
-                requestor = evt['requestor']
-                request_id = evt['request_id']
-                contract_uri = evt['contract_uri']
-
-                audit_result = self.audit(requestor, contract_uri, request_id, report_type)
-                if audit_result is None:
-                    error = "Could not generate {0} report".format(report_type)
-                    evt['status_info'] = error
-                    evt['compressed_report'] = QSPAuditNode.__EMPTY_COMPRESSED_REPORT
-                    self.__logger.exception(error, requestId=request_id)
-                    self.__config.event_pool_manager.set_evt_to_error(evt)
-                else:
-                    evt['audit_uri'] = audit_result['audit_uri']
-                    evt['audit_hash'] = audit_result['audit_hash']
-                    evt['audit_state'] = audit_result['audit_state']
-                    evt['full_report'] = audit_result['full_report']
-                    evt['compressed_report'] = audit_result['compressed_report']
-                    evt['status_info'] = "Successfully generated report"
-                    msg = "Generated report URI is {0}. Saving it in the internal database " \
-                          "(if not previously saved)"
-                    self.__logger.debug(
-                        msg.format(str(evt['audit_uri'])), requestId=request_id, evt=evt
-                    )
-                    self.__config.event_pool_manager.set_evt_status_to_be_submitted(evt)
-            except KeyError as error:
-                self.__logger.exception(
-                    "KeyError when trying to produce {0} report from request event {1}: {2}".format(report_type, evt, error),
-                    requestId=request_id
-                )
-            except Exception as error:
-                self.__logger.exception(
-                    "Error when trying to produce {0} report from request event {1}: {2}".format(report_type, evt, error),
-                    requestId=request_id,
-                )
-                evt['status_info'] = traceback.format_exc()
-                self.__config.event_pool_manager.set_evt_status_to_error(evt)
-
-        def process_incoming():
-            self.__config.event_pool_manager.process_incoming_events(
-                process_audit_request
-            )
-
-        def exec():
-            self.__run_with_interval(process_incoming, self.__config.evt_polling)
-
-        audit_thread = Thread(target=exec, name="audit thread")
-        self.__internal_thread_handles.append(audit_thread)
-        audit_thread.start()
-
-        return audit_thread
-
     def __get_next_police_assignment(self):
         """
         Gets the next police assignment tuple.
@@ -668,7 +594,7 @@ class QSPAuditNode:
 
         # indicate to every thread that it should stop its execution
         for internal_thread in self.__internal_thread_definitions:
-            self.__logger.debug("Thread {0} is signled to stop.".format(internal_thread.thread_name))
+            self.__logger.debug("Thread {0} is signaled to stop.".format(internal_thread.thread_name))
             internal_thread.stop()
 
         # join every thread
@@ -680,257 +606,6 @@ class QSPAuditNode:
 
         # Close resources
         self.__config.event_pool_manager.close()
-
-    def __validate_json(self, report, request_id):
-        """
-        Validate that the report conforms to the schema.
-        """
-        try:
-            file_path = os.path.realpath(__file__)
-            schema_file = '{0}/../../../plugins/analyzers/schema/analyzer_integration.json'.format(
-                os.path.dirname(file_path))
-            with open(schema_file) as schema_data:
-                schema = json.load(schema_data)
-            jsonschema.validate(report, schema)
-            return report
-        except jsonschema.ValidationError as e:
-            self.__logger.exception(
-                "Error: JSON could not be validated: {0}.".format(str(e)),
-                requestId=request_id,
-            )
-            raise Exception("JSON could not be validated") from e
-
-    def get_full_report(self, requestor, uri, request_id):
-        """
-        Produces the full report for a smart contract.
-        """
-        target_contract = fetch_file(uri)
-
-        warnings, errors = self.check_compilation(target_contract, request_id, uri)
-        audit_report = {}
-        if len(errors) != 0:
-            audit_report = self.__create_err_result(errors, warnings, request_id, requestor, uri,
-                                                    target_contract)
-        else:
-            audit_report = self.get_audit_report_from_analyzers(target_contract, requestor, uri,
-                                                                request_id)
-            if len(warnings) != 0:
-                audit_report['compilation_warnings'] = warnings
-
-        self.__logger.info(
-            "Analyzer report contents",
-            requestId=request_id,
-            contents=audit_report,
-        )
-        return target_contract, audit_report
-
-    def audit(self, requestor, uri, request_id, report_type):
-        """
-        Audits a target contract.
-        """
-        self.__logger.info(
-            "Executing {0} check on contract at {1}".format(report_type, uri),
-            requestId=request_id,
-        )
-        target_contract, audit_report = self.get_full_report(requestor, uri, request_id)
-
-        self.__validate_json(audit_report, request_id)
-
-        compressed_report = self.__config.report_encoder.compress_report(audit_report,
-                                                                         request_id)
-
-        audit_report_str = json.dumps(audit_report, indent=2)
-        audit_hash = digest(audit_report_str)
-
-        upload_result = self.__config.upload_provider.upload_report(audit_report_str,
-                                                                    audit_report_hash=audit_hash)
-
-        self.__logger.info(
-            "Report upload result: {0}".format(upload_result),
-            requestId=request_id,
-        )
-
-        if not upload_result['success']:
-            raise Exception("Error uploading {0} report: {1}".format(report_type, json.dumps(upload_result)))
-
-        parse_uri = urllib.parse.urlparse(uri)
-        original_file_name = os.path.basename(parse_uri.path)
-        contract_body = read_file(target_contract)
-        contract_upload_result = self.__config.upload_provider.upload_contract(request_id,
-                                                                               contract_body,
-                                                                               original_file_name)
-        if contract_upload_result['success']:
-            self.__logger.info(
-                "Contract upload result: {0}".format(contract_upload_result),
-                requestId=request_id,
-            )
-        else:
-            # We just log on error, not raise an exception
-            self.__logger.error(
-                "Contract upload result: {0}".format(contract_upload_result),
-                requestId=request_id,
-            )
-
-        return {
-            'audit_state': audit_report['audit_state'],
-            'audit_uri': upload_result['url'],
-            'audit_hash': audit_hash,
-            'full_report': json.dumps(audit_report),
-            'compressed_report': compressed_report,
-        }
-
-    def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
-        number_of_analyzers = len(self.__config.analyzers)
-
-        parse_uri = urllib.parse.urlparse(uri)
-        original_file_name = os.path.basename(parse_uri.path)
-
-        # Arrays to track different data from each analyzer,
-        # each identified by a single position (analyzer_id)
-        shared_reports = []
-        local_reports = []
-        report_locks = []
-        wrappers = []
-        timed_out_flags = []
-        analyzer_threads = []
-        start_times = []
-
-        def check_contract(analyzer_id):
-            report = {}
-            has_timed_out = False
-
-            try:
-                report = self.__config.analyzers[analyzer_id].check(
-                    target_contract,
-                    request_id,
-                    original_file_name
-                )
-            except Exception as error:
-                # Defer saving timeout errors for now as there is another
-                # check later on (report timeouts only once)
-                if isinstance(error, TimeoutExpired):
-                    has_timed_out = True
-
-                # Otherwise, save the error
-                else:
-                    errors = report.get('errors', [])
-                    errors.append(str(error))
-
-                report['status'] = 'error'
-
-            # Make sure no race-condition between the wrappers and the current thread
-            try:
-                report_locks[analyzer_id].acquire()
-                shared_reports[analyzer_id] = report
-                timed_out_flags[analyzer_id] = has_timed_out
-            finally:
-                report_locks[analyzer_id].release()
-
-        # Starts each analyzer thread
-        for i, analyzer in enumerate(self.__config.analyzers):
-            shared_reports.append({})
-            local_reports.append({})
-            report_locks.append(threading.RLock())
-            wrappers.append(self.__config.analyzers[i].wrapper)
-            timed_out_flags.append(False)
-
-            thread_name = "{0}-analyzer-thread".format(wrappers[i].analyzer_name)
-            analyzer_thread = Thread(target=check_contract, args=[i], name=thread_name)
-            analyzer_threads.append(analyzer_thread)
-
-            start_time = calendar.timegm(time.gmtime())
-            start_times.append(start_time)
-
-            analyzer_thread.start()
-
-        for i in range(0, number_of_analyzers):
-            analyzer_threads[i].join(wrappers[i].timeout_sec)
-
-            # Make sure there is no race condition between the current thread
-            # and the wrapper/analyzer thread when writing reports
-            try:
-                report_locks[i].acquire()
-                local_reports[i] = copy.deepcopy(shared_reports[i])
-
-                if analyzer_threads[i].is_alive():
-                    timed_out_flags[i] = True
-            finally:
-                report_locks[i].release()
-
-            local_reports[i]['analyzer'] = wrappers[i].get_metadata(
-                target_contract,
-                request_id,
-                original_file_name
-            )
-
-            # NOTE
-            # Due to timeout issues, one has to account for start/end
-            # times at this point, rather than at the wrapper itself
-            local_reports[i]['start_time'] = start_times[i]
-
-            # If analyzer has timed out, report the error
-            if timed_out_flags[i]:
-                errors = local_reports[i].get('errors', [])
-                errors.append(
-                    "Time out occurred. Could not finish {0} within {1} seconds".format(
-                        wrappers[i].analyzer_name,
-                        wrappers[i].timeout_sec,
-                    )
-                )
-                local_reports[i]['errors'] = errors
-                local_reports[i]['status'] = 'error'
-
-            # A timeout has not occurred. Register the end time
-            end_time = calendar.timegm(time.gmtime())
-            local_reports[i]['end_time'] = end_time
-
-        audit_report = {
-            'timestamp': calendar.timegm(time.gmtime()),
-            'contract_uri': uri,
-            'contract_hash': digest_file(target_contract),
-            'requestor': requestor,
-            'auditor': self.__config.account,
-            'request_id': request_id,
-            'version': self.__config.node_version,
-        }
-
-        # FIXME
-        # This is currently a very simple mechanism to claim an audit as
-        # successful or not. Either it is fully successful (all analyzers
-        # produce a successful result), or fails otherwise.
-        audit_state = QSPAuditNode.__AUDIT_STATE_SUCCESS
-        audit_status = QSPAuditNode.__AUDIT_STATUS_SUCCESS
-
-        for i, analyzer_report in enumerate(local_reports):
-
-            # The next two fail safe checks should never kick in...
-
-            # This is a fail safe mechanism (defensive programming)
-            if 'analyzer' not in analyzer_report:
-                analyzer_report['analyzer'] = {
-                    'name': wrappers[i].analyzer_name
-                }
-
-            # Another fail safe mechanism (defensive programming)
-            if 'status' not in analyzer_report:
-                analyzer_report['status'] = 'error'
-                errors = analyzer_report.get('errors', [])
-                errors.append('Unknown error: cannot produce report')
-                analyzer_report['errors'] = errors
-
-            # Invariant: no analyzer report can ever be empty!
-
-            if analyzer_report['status'] == 'error':
-                audit_state = QSPAuditNode.__AUDIT_STATE_ERROR
-                audit_status = QSPAuditNode.__AUDIT_STATUS_ERROR
-
-        audit_report['audit_state'] = audit_state
-        audit_report['status'] = audit_status
-
-        if len(local_reports) > 0:
-            audit_report['analyzers_reports'] = local_reports
-
-        return audit_report
 
     def __get_next_audit_request(self):
         """
@@ -952,74 +627,6 @@ class QSPAuditNode:
                 str(transaction),
                 e))
         return tx_hash
-
-    def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
-        result = {
-            'timestamp': calendar.timegm(time.gmtime()),
-            'contract_uri': uri,
-            'contract_hash': digest_file(target_contract),
-            'requestor': requestor,
-            'auditor': self.__config.account,
-            'request_id': request_id,
-            'version': self.__config.node_version,
-            'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR,
-            'status': QSPAuditNode.__AUDIT_STATUS_ERROR,
-        }
-        if errors is not None and len(errors) != 0:
-            result['compilation_errors'] = errors
-        if warnings is not None and len(warnings) != 0:
-            result['compilation_warnings'] = warnings
-
-        return result
-
-    def check_compilation(self, contract, request_id, uri):
-        self.__logger.debug("Running compilation check. About to check {0}".format(contract),
-                            requestId=request_id)
-        parse_uri = urllib.parse.urlparse(uri)
-        original_file_name = os.path.basename(parse_uri.path)
-        temp_file_name = os.path.basename(contract)
-        data = ""
-        with open(contract, 'r') as myfile:
-            data = myfile.read()
-        warnings = []
-        errors = []
-        try:
-            # Attempts to compile the target contract. If it fails, a ContractsNotFound
-            # exception is thrown
-            file_name = contract[contract.rfind('/') + 1:]
-            output = compile_standard({'language': 'Solidity',
-                                       'sources': {
-                                           file_name: {'content': data}}}
-                                      )
-            for err in output.get('errors', []):
-                if err["severity"] == "warning":
-                    warnings += [err['formattedMessage'].replace(temp_file_name, original_file_name)]
-                else:
-                    errors += [err['formattedMessage'].replace(temp_file_name, original_file_name)]
-
-        except ContractsNotFound as error:
-            self.__logger.debug(
-                "ContractsNotFound before calling analyzers: {0}".format(str(error)),
-                requestId=request_id)
-            errors += [str(error)]
-        except SolcError as error:
-            self.__logger.debug(
-                "SolcError before calling analyzers: {0}".format(str(error)),
-                requestId=request_id)
-            errors += [str(error)]
-        except KeyError as error:
-            self.__logger.error(
-                "KeyError when calling analyzers: {0}".format(str(error)),
-                requestId=request_id)
-            # This is thrown because a bug in our own code. We only log, but do not record the error
-            # so that the analyzers are still executed.
-        except Exception as error:
-            self.__logger.error(
-                "Error before calling analyzers: {0}".format(str(error)),
-                requestId=request_id)
-            errors += [str(error)]
-
-        return warnings, errors
 
     @property
     def is_initialized(self):

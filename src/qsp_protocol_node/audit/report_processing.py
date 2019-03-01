@@ -33,6 +33,7 @@ This could be a top-level package/executable, similar to the analyzers.
 
 import argparse
 import json
+import jsonschema
 import math
 import os
 
@@ -355,6 +356,25 @@ class ReportEncoder:
                 b_vulnerabilities = b_vulnerabilities[consumed_bits:]
             vulnerabilities.append((vulnerability_type, start_line, end_line))
         return vulnerabilities
+
+    def validate_json(self, report, request_id):
+        """
+        Validate that a JSON report conforms to the schema.
+        """
+        try:
+            file_path = os.path.realpath(__file__)
+            schema_file = '{0}/../../../plugins/analyzers/schema/analyzer_integration.json'.format(
+                os.path.dirname(file_path))
+            with open(schema_file) as schema_data:
+                schema = json.load(schema_data)
+            jsonschema.validate(report, schema)
+            return report
+        except jsonschema.ValidationError as e:
+            self.__logger.exception(
+                "Error: JSON could not be validated: {0}.".format(str(e)),
+                requestId=request_id,
+            )
+            raise Exception("JSON could not be validated") from e
 
     def compress_report(self, report, request_id):
         """

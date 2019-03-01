@@ -15,9 +15,9 @@ from .exceptions import AnalyzerRunException
 from .exceptions import NotEnoughStake
 from .vulnerabilities_set import VulnerabilitiesSet
 from .threads import QSPThread, UpdateMinPriceThread, ComputeGasPriceThread, CollectMetricsThread, \
-    SubmitReportThread
+    SubmitReportThread, PerformAuditThread
 
 __all__ = ['QSPAuditNode', 'Wrapper', 'Analyzer', 'ExecutionException',
            'AnalyzerRunException', 'NotEnoughStake',
            'VulnerabilitiesSet', 'QSPThread', 'UpdateMinPriceThread', 'ComputeGasPriceThread',
-           'CollectMetricsThread', 'SubmitReportThread']
+           'CollectMetricsThread', 'SubmitReportThread', 'PerformAuditThread']
