@@ -292,6 +292,9 @@ class QSPAuditNode:
         health_check_interval_sec = 2
 
         def check_all_threads():
+            if not self.__exec:
+                return
+
             thread_lost = False
             # Checking if all threads are still alive
             for thread in self.__internal_thread_handles:

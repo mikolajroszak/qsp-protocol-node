@@ -11,8 +11,6 @@
 Provides the thread updating the min price for the QSP Audit node implementation.
 """
 
-from threading import Thread
-
 from .qsp_thread import QSPThread
 from utils.eth import get_gas_price
 
@@ -29,15 +27,13 @@ class ComputeGasPriceThread(QSPThread):
         """
         Updates min price every 24 hours.
         """
-        gas_price_thread = Thread(target=self.__execute, name="compute gas price thread")
-        gas_price_thread.start()
-        return gas_price_thread
+        return self.__execute()
 
     def __execute(self):
         """
         Defines the function to be executed and how often.
         """
-        self.run_block_mined_thread("compute_gas_price", self.compute_gas_price)
+        return self.run_block_mined_thread("compute_gas_price", self.compute_gas_price)
 
     def compute_gas_price(self):
         """
