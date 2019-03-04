@@ -8,78 +8,93 @@
 ####################################################################################################
 
 """
-Provides the thread updating the min price for the QSP Audit node implementation.
+Provides the thread that claims rewards in the QSP Audit node implementation.
 """
 
 from threading import Thread
-
-from .qsp_thread import QSPThread
 from utils.eth import DeduplicationException
 from utils.eth import mk_read_only_call
 from utils.eth import send_signed_transaction
 from utils.eth.tx import TransactionNotConfirmedException
 from web3.utils.threads import Timeout
 
+from .qsp_thread import QSPThread
 
-class UpdateMinPriceThread(QSPThread):
-    # The frequency of updating min price. This is not configurable as dashboard logic depends
-    # on this frequency
-    __MIN_PRICE_BEAT_SEC = 24 * 60 * 60
+
+class ClaimRewardsThread(QSPThread):
+    # The frequency of checking for claims. Currently, not configurable
+    __CLAIM_REWARDS_BEAT_SEC = 24 * 60 * 60
 
     def __init__(self, config):
         """
-        Builds a QSPAuditNode object from the given input parameters.
+        Builds the thread object from the given input parameters.
         """
         QSPThread.__init__(self, config)
 
     def start(self):
         """
-        Updates min price every 24 hours.
+        Starts the process that claims rewards when available.
         """
-
-        min_price_thread = Thread(target=self.__execute, name="update min price thread")
-        min_price_thread.start()
-        return min_price_thread
+        rewards_thread = Thread(target=self.__execute, name="claim rewards thread")
+        rewards_thread.start()
+        return rewards_thread
 
     def __execute(self):
         """
         Defines the function to be executed and how often.
         """
-        self.run_with_interval(self.update_min_price, UpdateMinPriceThread.__MIN_PRICE_BEAT_SEC,
-                               start_with_call=False)
+        self.run_with_interval(self.__claim_rewards_if_available,
+                               ClaimRewardsThread.__CLAIM_REWARDS_BEAT_SEC,
+                               start_with_call=True)
 
-    def update_min_price(self):
+    def __claim_rewards_if_available(self):
         """
-        Updates smart contract with the minimum price in the audit node's configuration.
+        Claims any unclaimed rewards, if available.
+        """
+        self.logger.info(
+            "Checking for any available rewards for address {0}.".format(
+                self.config.account
+            ))
+
+        available_rewards = self.__has_available_rewards()
+        if available_rewards:
+            try:
+                self.__claim_rewards()
+            except Exception as error:
+                self.logger.warning("Could not claim rewards: {0}".format(error))
+        else:
+            self.logger.info(
+                "There are no available rewards for address {0}.".format(
+                    self.config.account
+                ))
+
+    def __claim_rewards(self):
+        """
+        Invokes the claimRewards function in the smart contract.
         """
         msg = "Make sure the account has enough Ether, " \
               + "the Ethereum node is connected and synced, " \
               + "and restart your node to try again."
 
-        min_price_in_mini_qsp = self.config.min_price_in_qsp * (10 ** 18)
-        self.logger.info(
-            "Updating min_price in the smart contract for address {0}.".format(
-                self.config.account
-            ))
-        transaction = self.config.audit_contract.functions.setAuditNodePrice(
-            min_price_in_mini_qsp)
+        transaction = self.config.audit_contract.functions.claimRewards()
+        tx_hash = None
         try:
             tx_hash = send_signed_transaction(self.config,
                                               transaction,
                                               wait_for_transaction_receipt=True)
             # If the tx_hash is None, the transaction did not actually complete. Exit
             if not tx_hash:
-                raise Exception("The min price transaction did not complete")
-            self.logger.debug("Successfully updated min price to {0}.".format(
-                self.config.min_price_in_qsp))
+                raise Exception("The claim rewards transaction did not complete")
+            self.logger.debug("Successfully claimed rewards for address {0}.".format(
+                self.config.account))
         except Timeout as e:
-            error_msg = "Update min price timed out. " + msg + " {0}, {1}."
+            error_msg = "Claim rewards timed out. " + msg + " {0}, {1}."
             self.logger.debug(error_msg.format(
                 str(transaction),
                 str(e)))
             raise e
         except DeduplicationException as e:
-            error_msg = "A transaction already exists for updating min price," \
+            error_msg = "A transaction already exists for claiming rewards," \
                         + " but has not yet been mined. " + msg \
                         + " This may take several iterations. {0}, {1}."
             self.logger.debug(error_msg.format(
@@ -93,21 +108,23 @@ class UpdateMinPriceThread(QSPThread):
                 str(e)))
             raise e
         except Exception as e:
-            error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
+            error_msg = "Error occurred claiming rewards. " + msg + " {0}, {1}."
             self.logger.exception(error_msg.format(
                 str(transaction),
                 str(e)))
             raise e
+        return tx_hash
 
-    def check_and_update_min_price(self):
+    def __has_available_rewards(self):
         """
-        Checks that the minimum price in the audit node's configuration matches the smart contract
-        and updates it if it differs. This is a blocking function.
+        Checks if any unclaimed rewards are available for the node.
         """
-        contract_price = mk_read_only_call(
-            self.config,
-            self.config.audit_contract.functions.getMinAuditPrice(self.config.account)
-        )
-        min_price_in_mini_qsp = self.config.min_price_in_qsp * (10 ** 18)
-        if min_price_in_mini_qsp != contract_price:
-            self.update_min_price()
+        available_rewards = False
+        try:
+            available_rewards = mk_read_only_call(
+                self.config,
+                self.config.audit_contract.functions.hasAvailableRewards())
+        except Exception as err:
+            raise err
+
+        return available_rewards

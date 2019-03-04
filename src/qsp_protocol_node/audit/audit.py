@@ -18,6 +18,7 @@ from utils.eth.tx import TransactionNotConfirmedException
 from web3.utils.threads import Timeout
 
 from .exceptions import NotEnoughStake
+from .threads import ClaimRewardsThread
 from .threads import CollectMetricsThread, ComputeGasPriceThread
 from .threads import UpdateMinPriceThread, QSPThread, SubmitReportThread, PerformAuditThread
 from utils.eth import send_signed_transaction
@@ -42,9 +43,6 @@ class QSPAuditNode:
     # The frequency of updating min price. This is not configurable as dashboard logic depends
     # on this frequency
     __MIN_PRICE_BEAT_SEC = 24 * 60 * 60
-
-    # The frequency of checking for claims. Currently, not configurable
-    __CLAIM_REWARDS_BEAT_SEC = 24 * 60 * 60
 
     # Empty report for certain error cases
     __EMPTY_COMPRESSED_REPORT = ""
@@ -124,20 +122,6 @@ class QSPAuditNode:
             raise err
 
         return enough_stake
-
-    def __has_available_rewards(self):
-        """
-        Checks if any unclaimed rewards are available for the node.
-        """
-        available_rewards = False
-        try:
-            available_rewards = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.hasAvailableRewards())
-        except Exception as err:
-            raise err
-
-        return available_rewards
 
     def __get_min_stake_qsp(self):
         """
@@ -236,10 +220,8 @@ class QSPAuditNode:
         self.__exec = True
         self.__start_gas_price_thread()
         self.__start_min_price_thread()
-
         # Collect any unclaimed rewards every 24 hours
-        claim_rewards_thread = self.__run_claim_rewards_thread()
-        self.__internal_thread_handles.append(claim_rewards_thread)
+        self.__start_claim_rewards_thread()
 
         self.__start_metric_collection_thread()
 
@@ -430,86 +412,15 @@ class QSPAuditNode:
         except Exception as error:
             self.__logger.exception("Error polling police requests: {0}".format(str(error)))
 
-    def __run_claim_rewards_thread(self):
+    def __start_claim_rewards_thread(self):
         """
         Collects any unclaimed audit rewards every 24 hours.
         """
-        def exec():
-            self.__run_with_interval(self.__claim_rewards_if_available, QSPAuditNode.__CLAIM_REWARDS_BEAT_SEC,
-                                     start_with_call=True)
-
-        claim_rewards_thread = Thread(target=exec, name="claim rewards thread")
-        claim_rewards_thread.start()
-
-        return claim_rewards_thread
-
-    def __claim_rewards_if_available(self):
-        """
-        Claims any unclaimed rewards, if available.
-        """
-        self.__logger.info(
-            "Checking for any available rewards for address {0}.".format(
-                self.__config.account
-            ))
-
-        available_rewards = self.__has_available_rewards()
-        if not available_rewards:
-            self.__logger.info(
-                "There are no available rewards for address {0}.".format(
-                    self.__config.account
-                ))
-        else:
-            try:
-                self.__claim_rewards()
-            except Exception as error:
-                self.__logger.warning("Could not claim rewards: {0}".format(error))
-
-    def __claim_rewards(self):
-        """
-        Invokes the claimRewards function in the smart contract.
-        """
-        msg = "Make sure the account has enough Ether, " \
-            + "the Ethereum node is connected and synced, " \
-            + "and restart your node to try again."
-
-        transaction = self.__config.audit_contract.functions.claimRewards()
-        tx_hash = None
-        try:
-            tx_hash = send_signed_transaction(self.__config,
-                                              transaction,
-                                              wait_for_transaction_receipt=True)
-            # If the tx_hash is None, the transaction did not actually complete. Exit
-            if not tx_hash:
-                raise Exception("The claim rewards transaction did not complete")
-            self.__logger.debug("Successfully claimed rewards for address {0}.".format(
-                self.__config.account))
-        except Timeout as e:
-            error_msg = "Claim rewards timed out. " + msg + " {0}, {1}."
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except DeduplicationException as e:
-            error_msg = "A transaction already exists for claiming rewards," \
-                        + " but has not yet been mined. " + msg \
-                        + " This may take several iterations. {0}, {1}."
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except TransactionNotConfirmedException as e:
-            error_msg = "A transaction occurred, but was then uncled and never recovered. {0}, {1}"
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except Exception as e:
-            error_msg = "Error occurred claiming rewards. " + msg + " {0}, {1}."
-            self.__logger.exception(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        return tx_hash
+        claim_rewards_thread = ClaimRewardsThread(self.config)
+        self.__internal_thread_definitions.append(claim_rewards_thread)
+        handle = claim_rewards_thread.start()
+        self.__internal_thread_handles.append(handle)
+        return handle
 
     def __add_evt_to_db(self, request_id, requestor, uri, price, block_nbr, is_audit=True):
         evt = {}

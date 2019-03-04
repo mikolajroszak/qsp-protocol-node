@@ -39,7 +39,7 @@ class TestUpdateMinPriceThread(QSPTest):
         thread = UpdateMinPriceThread(config)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"):
-            thread._UpdateMinPriceThread__update_min_price()
+            thread.update_min_price()
 
     def test_update_min_price_exceptions(self):
         config = fetch_config()
@@ -47,7 +47,7 @@ class TestUpdateMinPriceThread(QSPTest):
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=Exception):
             try:
-                thread._UpdateMinPriceThread__update_min_price()
+                thread.update_min_price()
                 self.fail("Exception was not propagated")
             except Exception:
                 # expected
@@ -56,7 +56,7 @@ class TestUpdateMinPriceThread(QSPTest):
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=TransactionNotConfirmedException):
             try:
-                thread._UpdateMinPriceThread__update_min_price()
+                thread.update_min_price()
                 self.fail("Exception was not propagated")
             except TransactionNotConfirmedException:
                 # expected
@@ -65,7 +65,7 @@ class TestUpdateMinPriceThread(QSPTest):
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=Timeout):
             try:
-                thread._UpdateMinPriceThread__update_min_price()
+                thread.update_min_price()
                 self.fail("Exception was not propagated")
             except Timeout:
                 # expected
@@ -74,7 +74,7 @@ class TestUpdateMinPriceThread(QSPTest):
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=DeduplicationException):
             try:
-                thread._UpdateMinPriceThread__update_min_price()
+                thread.update_min_price()
                 self.fail("Exception was not propagated")
             except DeduplicationException:
                 # expected
@@ -109,7 +109,7 @@ class TestUpdateMinPriceThread(QSPTest):
         # this make a one-off call
         config._Config__min_price_in_qsp = 1
         thread = UpdateMinPriceThread(config)
-        thread._UpdateMinPriceThread__update_min_price()
+        thread.update_min_price()
 
         success = False
         while not success:
