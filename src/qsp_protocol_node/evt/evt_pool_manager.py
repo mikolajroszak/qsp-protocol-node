@@ -10,7 +10,7 @@
 import apsw
 import os
 
-from stream_logger import get_logger
+from node_logging import get_logger
 
 from pathlib import Path
 from utils.db import Sqlite3Worker

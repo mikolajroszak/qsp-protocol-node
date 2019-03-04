@@ -25,7 +25,7 @@ def get_account():
 
 
 def get_loggers():
-    return log_streaming.__stream_loggers
+    return log_streaming.__node_loggings
 
 
 class TestLoggingInit(QSPTest):

@@ -106,7 +106,7 @@ class TestFile(QSPTest):
     @staticmethod
     def get_config_mock(gas_price_wei,
                         gas_limit,
-                        n_blocks_confirmation=6,
+                        transaction_confirmation_n_blocks=6,
                         private_key=None,
                         repeat=False,
                         receipt_generator=None,
@@ -114,7 +114,7 @@ class TestFile(QSPTest):
         mock = Mock()
         mock.gas_limit = gas_limit
         mock.gas_price_wei = gas_price_wei
-        mock.n_blocks_confirmation = n_blocks_confirmation
+        mock.transaction_confirmation_n_blocks = transaction_confirmation_n_blocks
         mock.account = "account"
         mock.account_private_key = private_key
         mock.web3_client.eth = EthMock(repeat=repeat,

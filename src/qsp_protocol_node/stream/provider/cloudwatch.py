@@ -18,7 +18,7 @@ from pythonjsonlogger.jsonlogger import JsonFormatter
 class CloudWatchProvider(LogStreamProvider):
 
     def __init__(self, account, config):
-        self.__config = config
+        super().__init__(config)
 
         # Makes sure stream name is set and parameter is
         # pre-processed

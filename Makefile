@@ -31,6 +31,7 @@ run: build
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
+		-e QSP_ETH_AUTH_TOKEN="$(QSP_ETH_AUTH_TOKEN)" \
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $(QSP_ENV) $(QSP_CONFIG) $(QSP_KEYSTORE)"
 

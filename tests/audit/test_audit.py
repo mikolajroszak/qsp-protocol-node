@@ -551,7 +551,7 @@ class TestQSPAuditNode(QSPTest):
     #     original_interval = self.__config.block_mined_polling
     #     original_analyzers = self.__config.analyzers
     #     original_analyzers_config = self.__config.analyzers_config
-    #     self.__config._Config__block_mined_polling_interval_sec = polling_interval
+    #     self.__config._Config__block_mined_polling_sec = polling_interval
     #     self.__config._Config__analyzers = original_analyzers[1:2]
     #     self.__config._Config__analyzers_config = original_analyzers_config[1:2]
     #
@@ -595,7 +595,7 @@ class TestQSPAuditNode(QSPTest):
     #                                     ignore_id=True)
     #         self.__assert_all_analyzers(id)
     #
-    #     self.__config._Config__block_mined_polling_interval_sec = original_interval
+    #     self.__config._Config__block_mined_polling_sec = original_interval
     #     self.__config._Config__analyzers = original_analyzers
     #     self.__config._Config__analyzers_config = original_analyzers_config
 

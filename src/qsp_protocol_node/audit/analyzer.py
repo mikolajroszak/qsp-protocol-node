@@ -13,7 +13,7 @@ Provides an interface for invoking the analyzer software.
 
 import json
 
-from stream_logger import get_logger
+from node_logging import get_logger
 
 
 class Analyzer:

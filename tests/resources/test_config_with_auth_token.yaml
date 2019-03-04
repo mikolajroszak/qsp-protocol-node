@@ -23,7 +23,7 @@ dev:
       max_gas_price_wei: !!int 20000000000
     max_assigned_requests: !!int 1
     evt_polling_sec: !!int 5
-    block_mined_polling_interval_sec: !!int 5
+    block_mined_polling_sec: !!int 5
     analyzers:
         - mythril:
             args: !!str "" # No args provided; rely on defaults for now
@@ -41,4 +41,4 @@ dev:
             contract_bucket_name: !!str "qsp-protocol-reports-dev"
     evt_db_path: !!str "/tmp/evts.test"
     start_n_blocks_in_the_past: !!int 25
-    n_blocks_confirmation: !!int 8
+    transaction_confirmation_n_blocks: !!int 8

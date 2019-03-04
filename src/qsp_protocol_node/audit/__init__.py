@@ -13,10 +13,10 @@ from .analyzer import Analyzer
 from .exceptions import ExecutionException
 from .exceptions import AnalyzerRunException
 from .exceptions import NotEnoughStake
-from .report_encoder import ReportEncoder
+from .qsp_contract import QSPContract
 from .report_encoder import ReportFormattingException
 from .vulnerabilities_set import VulnerabilitiesSet
 
 __all__ = ['QSPAuditNode', 'Wrapper', 'Analyzer', 'ExecutionException',
             'NonWhitelistedNodeException', 'AnalyzerRunException', 'NotEnoughStake',
-            'ReportEncoder', 'ReportFormattingException' ,'VulnerabilitiesSet', ]
+            'QSPContract', 'ReportEncoder', 'ReportFormattingException' ,'VulnerabilitiesSet']

@@ -7,6 +7,8 @@
 #                                                                                                  #
 ####################################################################################################
 
+from component import BaseConfigComponent
+
 class BaseUploadProvider(BaseConfigComponent):
     def __init__(self, config):
         super().__init__(config)

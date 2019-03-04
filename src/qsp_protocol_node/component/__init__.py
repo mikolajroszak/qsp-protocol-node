@@ -7,11 +7,11 @@
 #                                                                                                  #
 ####################################################################################################
 
-from .base_component import BaseConfigComponent
-from .base_component import BaseConfigHandler
-from .base_component import BaseConfigComponentFactory
-from .base_component import ConfigType
-from .base_component import ConfigurationException
+from .base import BaseConfigComponent
+from .base import BaseConfigHandler
+from .base import BaseConfigComponentFactory
+from .base import ConfigType
+from .base import ConfigurationException
 
 
 __all__ = ['BaseConfigComponent', 'BaseConfigHandler', 'BaseConfigComponentFactory', 'ConfigType', 'ConfigurationException']

@@ -57,7 +57,7 @@ class ConfigStubForCheckSettings:
 
     def __init__(self,
                  start_n_blocks=1,
-                 n_blocks_confirmation=1,
+                 transaction_confirmation_n_blocks=1,
                  submission_timeout=1,
                  audit_timeout=5,
                  max_requests=1,
@@ -66,7 +66,7 @@ class ConfigStubForCheckSettings:
                  gas_price_strategy=None):
         self.account = "0x0"
         self.start_n_blocks_in_the_past = start_n_blocks
-        self.n_blocks_confirmation = n_blocks_confirmation
+        self.transaction_confirmation_n_blocks = transaction_confirmation_n_blocks
         self.submission_timeout_limit_blocks = submission_timeout
         self.contract_audit_timeout_in_blocks = audit_timeout
         self.max_assigned_requests = max_requests
@@ -214,14 +214,14 @@ class TestConfigUtil(QSPTest):
         except ConfigurationException:
             # Expected
             pass
-        abi_faulty = ConfigStubForCheckSettings(n_blocks_confirmation=10000)
+        abi_faulty = ConfigStubForCheckSettings(transaction_confirmation_n_blocks=10000)
         try:
             self.config_utils.check_configuration_settings(abi_faulty)
             self.fail("ABI has faulty configuration but no exception was thrown")
         except ConfigurationException:
             # Expected
             pass
-        abi_faulty = ConfigStubForCheckSettings(n_blocks_confirmation=-1)
+        abi_faulty = ConfigStubForCheckSettings(transaction_confirmation_n_blocks=-1)
         try:
             self.config_utils.check_configuration_settings(abi_faulty)
             self.fail("ABI has faulty configuration but no exception was thrown")

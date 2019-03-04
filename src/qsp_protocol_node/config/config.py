@@ -19,7 +19,6 @@ from .config_validator import ConfigValidator
 
 from component import BaseConfigComponent
 from component import ConfigType
-from utils.io import load_json
 
 class Config(BaseConfigComponent):
 
@@ -38,62 +37,53 @@ class Config(BaseConfigComponent):
         return  [name for (name, _) in factories_list]
 
     @classmethod
-    def __get_adress_from_keystore(cls, keystore_file):
-        keystore = load_json(keystore_file)
+    def create_components(cls, config_obj, tmp_vars, validator=ConfigValidator()):
+        try:
+            dict.__setitem__(config_obj, 'tmp_vars', tmp_vars)
+            print("===> create components. config is {0}".format(config_obj))
 
-    @classmethod
-    def __create_components(cls, config_obj, validator):
+            # Loads the config.yaml file as a dictionary
+            config_dictionary = Config.__load_yaml(config_obj.tmp_vars['config_file'])
+            config_dictionary = config_dictionary[config_obj.tmp_vars['environment']]
 
-        print("===> create components")
-
-        # Loads the config.yaml file as a dictionary
-        config_dictionary = Config.__load_yaml(config_obj.config_vars['config_file'])
-        config_dictionary = config_dictionary[config_obj.config_vars['environment']]
-
-        # Loads the factories setting as a dictionary
-        factories_path = "{}/factories.yaml".format(
-            os.path.dirname(os.path.realpath(__file__))
-        )
-        factories_dictionary = Config.__load_yaml(factories_path)
-        
-        # Makes all attributes (non-components) as properties of this object
-        for property_name in set(config_dictionary.keys()) - set(factories_dictionary.keys()):
-            property_value = config_dictionary[property_name]
-            dict.__setitem__(config_obj, property_name, property_value)
-
-        # Creates all components following the self-declared order attributes in
-        # the factories.yaml file, registering each component as a property in this object
-        for component_name in Config.__get_init_order(factories_dictionary):
-            factory_def = factories_dictionary[component_name]['factory']
-
-            factory_module = importlib.import_module(factory_def['module'])
-            factory_class = getattr(factory_module, factory_def['class'])
-            
-            factory = factory_class(component_name)
-            component_config = factory.config_handler.parse(
-                config_dictionary.get(component_name),
-                ConfigType(factories_dictionary[component_name]['type']),
-                context=config_obj
+            # Loads the factories setting as a dictionary
+            factories_path = "{}/factories.yaml".format(
+                os.path.dirname(os.path.realpath(__file__))
             )
-            component = factory.create_component(component_config, context=config_obj)
+            factories_dictionary = Config.__load_yaml(factories_path)
             
-            # Sets the newly created component as a property in the config
-            # object
-            dict.__setitem__(config_obj, component_name, component)
-        
-        importlib.invalidate_caches()
-        validator.check(config_obj)
+            ignore_for_now = set(factories_dictionary.keys()).union(config_obj.tmp_vars.keys())
+            
+            # Makes all attributes (non-components) as properties of this object
+            for property_name in set(config_dictionary.keys()) - ignore_for_now:
+                property_value = config_dictionary[property_name]
+                dict.__setitem__(config_obj, property_name, property_value)
 
-    def __init__(self, config_vars, validator=ConfigValidator()):
-        super().__init__()
+            # Creates all components following the self-declared order attributes in
+            # the factories.yaml file, registering each component as a property in this object
+            for component_name in Config.__get_init_order(factories_dictionary):
+                factory_def = factories_dictionary[component_name]['factory']
 
-        # Injects account_address to be used deep down in the component
-        # tree creation (see create_components)
-        dict.__setitem__(self, 'config_vars', config_vars)
-        self.config_vars['account_address'] = Config.__get_adress_from_keystore(
-            self.config_vars['keystore_file']
-        )
-        dict.__setitem__(self, 'create_components', lambda: Config.__create_components(self, validator))
+                factory_module = importlib.import_module(factory_def['module'])
+                factory_class = getattr(factory_module, factory_def['class'])
+                
+                factory = factory_class(component_name)
+                component_config = factory.config_handler.parse(
+                    config_dictionary.get(component_name),
+                    ConfigType(factories_dictionary[component_name]['type']),
+                    context=config_obj
+                )
+                component = factory.create_component(component_config, context=config_obj)
+                print(f"===> Component creation: {component_name} is {component}")
+                
+                # Sets the newly created component as a property in the config
+                # object
+                dict.__setitem__(config_obj, component_name, component)
+            
+            importlib.invalidate_caches()
+            validator.check(config_obj)
+        finally:
+            dict.__delitem__(config_obj, 'tmp_vars')
         
     def __setattr__(self, attr,  value):
         # To the outside world, nothing can be set

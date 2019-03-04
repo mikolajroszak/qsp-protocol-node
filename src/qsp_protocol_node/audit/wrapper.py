@@ -16,7 +16,7 @@ from utils.io import (
     file_exists,
     is_executable,
 )
-from stream_logger import get_logger
+from node_logging import get_logger
 
 
 class Wrapper:

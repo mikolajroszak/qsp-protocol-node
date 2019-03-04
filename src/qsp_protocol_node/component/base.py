@@ -8,6 +8,7 @@
 ####################################################################################################
 
 from enum import Enum
+from node_logging import get_logger
 
 class ConfigType(Enum):
     INTERNAL = 'internal'
@@ -22,6 +23,9 @@ class ConfigurationException(Exception):
 class BaseConfigHandler(object):
     def __init__(self, component_name):
         self.__component_name = component_name
+
+    def get_logger(self):
+        return get_logger(self.__class__.__qualname__)
 
     @property
     def component_name(self):
@@ -50,6 +54,9 @@ class BaseConfigComponentFactory:
     def __init__(self, config_handler):
         self.__config_handler = config_handler
 
+    def get_logger(self):
+        return get_logger(self.__class__.__qualname__)
+
     @property
     def config_handler(self):
         return self.__config_handler
@@ -63,6 +70,9 @@ class BaseConfigComponent(dict):
         super().__init__()
         for key in config:
             dict.__setitem__(self, key, config[key])
+
+    def get_logger(self):
+        return get_logger(self.__class__.__qualname__)
 
     def __getattr__(self, attr):
         try:

@@ -8,6 +8,7 @@
 ####################################################################################################
 
 from .account import Account
-from .gas_price import GasPrice
+from .eth_wrapper import EthWrapper
+from .gas_price_calculator import GasPriceCalculator
 
-__all__ = ['Account', 'GasPrice']
+__all__ = ['Account', 'EthWrapper', 'GasPriceCalculator']

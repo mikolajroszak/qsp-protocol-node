@@ -9,19 +9,22 @@
 
 import boto3
 
-from .base_upload_provider import UploadProvider
-
+from .base_upload_provider import BaseUploadProvider
 from utils.dictionary.path import get
 from utils.io import digest
 
 
 class S3Provider(BaseUploadProvider):
     def __init__(self, account, config):
+        super().__init__(config)
+
+        print("===> S3 provider config is {0}".format(config))
+
         self.__client = boto3.client('s3')
         
         # Makes sure required parameters are in place
-        get(config, '/bucket_name', accept_none=False)
-        get(config, '/contract_bucket_name', accept_none=False)
+        _ = get(config, '/args/report_bucket_name', accept_none=False)
+        _ = get(config, '/args/contract_bucket_name', accept_none=False)
 
         self.__account = account
         self.__config = config

@@ -8,28 +8,22 @@
 ####################################################################################################
 
 from component import BaseConfigHandler
-from component import BaseConfigHandler
 from component import BaseConfigComponentFactory
+from eth_infra import EthWrapper
 
-class MetricCollectorConfigHandler(BaseConfigHandler):
+class EthWrapperFactory(BaseConfigComponentFactory):
     def __init__(self, component_name):
-        super().__init__(component_name)
-
-    def parse(self, config, config_type, context=None):
-        # TODO
-        super().parse(config, config_type, context)
-        return None
-
-class MetricCollectorComponentFactory(BaseConfigComponentFactory):
-    def __init__(self, component_name):
-        super().__init__(MetricCollectorConfigHandler(component_name))
+        super().__init__(BaseConfigHandler(component_name))
 
     def create_component(self, config, context=None):
         """
-        Creates a GasPriceCalculator component
+        Creates an EthWrapper component
         """
-        # TODO
-        pass
-
-
-
+        return EthWrapper(
+            context.account,
+            context.gas_price_calculator,
+            context.web3_client,
+            context.block_mined_polling_sec,
+            context.transaction_confirmation_n_blocks
+        )
+        

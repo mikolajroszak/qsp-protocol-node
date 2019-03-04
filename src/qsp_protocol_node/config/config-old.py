@@ -84,8 +84,8 @@ class Config:
         self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests',
                                                     accept_none=False)
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
-        self.__block_mined_polling_interval_sec = config_value(cfg,
-                                                               '/block_mined_polling_interval_sec',
+        self.__block_mined_polling_sec = config_value(cfg,
+                                                               '/block_mined_polling_sec',
                                                                accept_none=False)
         self.__analyzers = []
         self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False)
@@ -98,7 +98,7 @@ class Config:
                                                               '/submission_timeout_limit_blocks',
                                                               10)
         self.__start_n_blocks_in_the_past = config_value(cfg, '/start_n_blocks_in_the_past', 0)
-        self.__n_blocks_confirmation = config_value(cfg, '/n_blocks_confirmation', 6)
+        self.__transaction_confirmation_n_blocks = config_value(cfg, '/transaction_confirmation_n_blocks', 6)
         self.__gas_price_strategy = config_value(cfg, '/gas_price/strategy', accept_none=False)
         self.__default_gas_price_wei = config_value(cfg, '/gas_price/default_gas_price_wei', 0)
         self.__gas_price_wei = self.__default_gas_price_wei
@@ -144,7 +144,7 @@ class Config:
         Creates a Web3 client from the already set Ethereum provider.
         """
         return config_utils.create_web3_client(self.eth_provider,
-                                               self.account_passwd,
+                                            self.account_passwd,
                                                self.account_keystore_file,
                                                )
 
@@ -241,7 +241,7 @@ class Config:
         self.__upload_provider_name = None
         self.__upload_provider_args = None
         self.__start_n_blocks_in_the_past = 0
-        self.__n_blocks_confirmation = 6
+        self.__transaction_confirmation_n_blocks = 6
         self.__submission_timeout_limit_blocks = 10
         self.__web3_client = None
         self.__block_discard_on_restart = 0
@@ -310,7 +310,7 @@ class Config:
         """
         Returns the polling for checking if a new block is mined (given in seconds).
         """
-        return self.__block_mined_polling_interval_sec
+        return self.__block_mined_polling_sec
 
     @property
     def report_encoder(self):
@@ -481,11 +481,11 @@ class Config:
         return self.__start_n_blocks_in_the_past
 
     @property
-    def n_blocks_confirmation(self):
+    def transaction_confirmation_n_blocks(self):
         """
         Returns how many blocks the node should wait before declaring a transaction successful
         """
-        return self.__n_blocks_confirmation
+        return self.__transaction_confirmation_n_blocks
 
     @property
     def event_pool_manager(self):

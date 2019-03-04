@@ -12,3 +12,7 @@ from component import BaseConfigComponent
 class LogStreamProvider(BaseConfigComponent):
     def __init__(self, config):
         super().__init__(config)
+
+    def get_handler(self):
+        raise NotImplementedError("upload_report")
+        

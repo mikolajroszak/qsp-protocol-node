@@ -2,6 +2,7 @@ import utils.io as utils_io
 
 from component import BaseConfigHandler
 from component import BaseConfigComponentFactory
+from audit import QSPContract
 
 from validator_collection import checkers
 
@@ -35,7 +36,7 @@ class QSPContractConfigHandler(BaseConfigHandler):
             "Invalid URI: {0}".format(config['metadata'])
         )
 
-        major_version = context.config_vars.get('major_version', 0)
+        major_version = context.tmp_vars.get('major_version', 0)
 
         return {
             'uri': config['uri'].replace(
@@ -63,8 +64,11 @@ class QSPContractFactory(BaseConfigComponentFactory):
         metadata_json = utils_io.load_json(metadata_file)
         contract_address = metadata_json['contractAddress']
 
-        return context.web3_client.eth.contract(
+        instance = context.web3_client.eth.contract(
             address=contract_address,
-            abi=abi_json,
+            abi=abi_json
         )
+
+        return QSPContract(instance, contract_address, context.eth_wrapper)
+            
 

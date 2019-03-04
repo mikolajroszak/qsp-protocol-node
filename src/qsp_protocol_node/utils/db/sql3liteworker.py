@@ -36,7 +36,7 @@ import threading
 import time
 import uuid
 
-from stream_logger import get_logger
+from node_logging import get_logger
 
 
 class Sqlite3Worker(threading.Thread):

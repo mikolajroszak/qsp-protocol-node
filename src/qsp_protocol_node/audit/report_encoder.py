@@ -36,8 +36,7 @@ import json
 import math
 import os
 
-from component import BaseConfigComponent
-from stream_logger import get_logger
+from node_logging import get_logger
 
 from collections import OrderedDict
 from pprint import pprint
@@ -46,7 +45,7 @@ from pprint import pprint
 class ReportFormattingException(Exception):
     pass
 
-class ReportEncoder(BaseConfigComponent):
+class ReportEncoder(object):
     # bitstring indices and sizes
     __HEADER_SIZE = 16
     # 14 bits to encode the version

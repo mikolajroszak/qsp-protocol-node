@@ -17,14 +17,12 @@ import socket
 import urllib
 
 from component import BaseConfigComponent
-from stream_logger import get_logger
 
 
 class MetricsCollector(BaseConfigComponent):
 
     def __init__(self, config):
-        self.__logger = get_logger(self.__class__.__qualname__)
-        self.__config = config
+        super().__init__(config)
         self.__process_identifier = "{0}-{1}".format(socket.gethostname(), os.getpid())
 
     def __get_auth_header(self, content):
@@ -59,7 +57,7 @@ class MetricsCollector(BaseConfigComponent):
         try:
             with urllib.request.urlopen(req) as responseObject:
                 response = responseObject.read()
-                self.__logger.debug("Metrics sent successfully to '{0}'".format(
+                self.get_logger().debug("Metrics sent successfully to '{0}'".format(
                         self.__config.metric_collection_destination_endpoint
                     ),
                     metrics_json=metrics_json,
@@ -67,17 +65,17 @@ class MetricsCollector(BaseConfigComponent):
                     response=response
                 )
         except urllib.error.HTTPError as e:
-            self.__logger.debug("HTTPError occurred when sending metrics",
+            self.get_logger().debug("HTTPError occurred when sending metrics",
                 code=e.code,
                 endpoint=self.__config.metric_collection_destination_endpoint
             )
         except urllib.error.URLError as e:
-            self.__logger.debug("URLError occurred when sending metrics",
+            self.get_logger().debug("URLError occurred when sending metrics",
                 reason=e.reason,
                 endpoint=self.__config.metric_collection_destination_endpoint
             )
         except Exception as e:
-            self.__logger.debug('Unhandled exception occurred when sending metrics',
+            self.get_logger().debug('Unhandled exception occurred when sending metrics',
                 message=str(e),
                 endpoint=self.__config.metric_collection_destination_endpoint
             )
@@ -101,17 +99,10 @@ class MetricsCollector(BaseConfigComponent):
                 'account': self.__config.account
             }
 
-            self.__logger.info("Metrics", metrics_json=metrics_json)
+            self.get_logger().info("Metrics", metrics_json=metrics_json)
             if self.__config.metric_collection_destination_endpoint is not None:
                 self.send_to_dashboard(metrics_json)
 
         except Exception as e:
-            self.__logger.error("Could not collect metrics due to the error: \"" + str(e) + "\"")
+            self.get_logger().error("Could not collect metrics due to the error: \"" + str(e) + "\"")
 
-    @property
-    def config(self):
-        return self.__config
-
-    @property
-    def is_enabled(self):
-        return self.config['is_enabled']

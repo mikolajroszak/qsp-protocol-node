@@ -1,3 +1,3 @@
-from .metric_collector_factory import MetricCollectorFactory
+from .metrics_collector_factory import MetricsCollectorFactory
 
 __all__ = ['MetricCollectorFactory']

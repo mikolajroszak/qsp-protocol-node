@@ -9,8 +9,8 @@
 
 from time import sleep
 
-from stream_logger import get_logger
-from .singleton_lock import SingletonLock
+from node_logging import get_logger
+from utils.thread import SingletonLock
 
 from web3.utils.threads import Timeout
 
@@ -81,10 +81,10 @@ def __wait_for_confirmed_transaction_receipt(config, tx_hash):
     Raises a Timeout exception if the transaction has disappeared or was never mined.
     """
     logger.debug("Waiting for an {}-blocks confirmation on the transaction".format(
-        config.n_blocks_confirmation
+        config.transaction_confirmation_n_blocks
     ))
 
-    __MAX_BLOCKS_FOR_CONFIRMATION = config.n_blocks_confirmation * 3
+    __MAX_BLOCKS_FOR_CONFIRMATION = config.transaction_confirmation_n_blocks * 3
     start_block = config.web3_client.eth.blockNumber
     current_block = config.web3_client.eth.blockNumber
 
@@ -93,9 +93,9 @@ def __wait_for_confirmed_transaction_receipt(config, tx_hash):
         current_receipt = config.web3_client.eth.getTransactionReceipt(tx_hash)
         if current_receipt:
             tx_block_number = current_receipt["blockNumber"]
-            if current_block - tx_block_number >= config.n_blocks_confirmation:
+            if current_block - tx_block_number >= config.transaction_confirmation_n_blocks:
                 logger.debug("Transaction has an {}-blocks confirmation.".format(
-                    config.n_blocks_confirmation
+                    config.transaction_confirmation_n_blocks
                 ))
                 return
         sleep(config.block_mined_polling)
@@ -123,7 +123,7 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                 if wait_for_transaction_receipt:
                     config.web3_client.eth.waitForTransactionReceipt(tx_hash, 120)
                     logger.debug("Transaction receipt found.")
-                    if config.n_blocks_confirmation > 0:
+                    if config.transaction_confirmation_n_blocks > 0:
                         __wait_for_confirmed_transaction_receipt(config, tx_hash)
                 return tx_hash
             except ValueError as e:

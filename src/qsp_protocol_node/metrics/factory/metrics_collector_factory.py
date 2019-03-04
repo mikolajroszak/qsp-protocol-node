@@ -10,26 +10,18 @@
 from component import BaseConfigHandler
 from component import BaseConfigHandler
 from component import BaseConfigComponentFactory
+from metrics import MetricsCollector
 
-class GasPriceCalculatorConfigHandler(BaseConfigHandler):
+
+class MetricsCollectorFactory(BaseConfigComponentFactory):
     def __init__(self, component_name):
-        super().__init__(component_name)
-
-    def parse(self, config, config_type, context=None):
-        # TODO
-        super().parse(config, config_type, context)
-        return None
-
-class GasPriceCalculatorFactory(BaseConfigComponentFactory):
-    def __init__(self, component_name):
-        super().__init__(GasPriceCalculatorConfigHandler(component_name))
+        super().__init__(BaseConfigHandler(component_name))
 
     def create_component(self, config, context=None):
         """
-        Creates a GasPriceCalculator component
+        Creates a MetricsCollector component
         """
-        # TODO
-        pass
+        return MetricsCollector(config)
 
 
 

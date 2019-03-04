@@ -22,7 +22,7 @@ dev:
     max_gas_price_wei: !!int 20000000000
   max_assigned_requests: !!int 1
   evt_polling_sec: !!int 5
-  block_mined_polling_interval_sec: !!int 5
+  block_mined_polling_sec: !!int 5
   block_discard_on_restart: !!int 1
   analyzers:
     - mythril:
@@ -42,7 +42,7 @@ dev:
   #account: No provided account hex (use the first one by default)
   evt_db_path: !!str "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
-  n_blocks_confirmation: !!int 10
+  transaction_confirmation_n_blocks: !!int 10
   metric_collection:
     is_enabled: !!bool False
     interval_seconds: !!int 30
@@ -65,7 +65,7 @@ staging:
     max_gas_price_wei: !!int 20000000000
   max_assigned_requests: !!int 1
   evt_polling_sec: !!int 5
-  block_mined_polling_interval_sec: !!int 5
+  block_mined_polling_sec: !!int 5
   block_discard_on_restart: !!int 1
   analyzers:
     - mythril:
@@ -85,7 +85,7 @@ staging:
   #account: No provided account hex (use the first one by default)
   evt_db_path: !!str "/tmp/evts.test"
   start_n_blocks_in_the_past: !!int 5
-  n_blocks_confirmation: !!int 10
+  transaction_confirmation_n_blocks: !!int 10
   metric_collection:
     is_enabled: !!bool False
     interval_seconds: !!int 30

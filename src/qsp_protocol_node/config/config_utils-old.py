@@ -1,4 +1,4 @@
-####################################################################################################
+    ####################################################################################################
 #                                                                                                  #
 # (c) 2018 Quantstamp, Inc. All rights reserved.  This content shall not be used, copied,          #
 # modified, redistributed, or otherwise disseminated except to the extent expressly authorized by  #
@@ -15,7 +15,7 @@ from audit import (
     Analyzer,
     Wrapper
 )
-from stream_logger import get_logger
+from node_logging import get_logger
 
 from pathlib import Path
 from tempfile import gettempdir
@@ -156,10 +156,10 @@ class ConfigUtils:
         ConfigUtils.raise_err(config.gas_price_strategy not in ['dynamic', 'static'])
 
         # the n-blocks confirmation amount should never exceed the audit timeout in blocks
-        ConfigUtils.raise_err(config.n_blocks_confirmation > ConfigUtils.__AUDIT_TIMEOUT_IN_BLOCKS)
+        ConfigUtils.raise_err(config.transaction_confirmation_n_blocks > ConfigUtils.__AUDIT_TIMEOUT_IN_BLOCKS)
 
         # the n-blocks confirmation amount should not be negative
-        ConfigUtils.raise_err(config.n_blocks_confirmation < 0)
+        ConfigUtils.raise_err(config.transaction_confirmation_n_blocks < 0)
 
     def check_audit_contract_settings(self, config):
         """

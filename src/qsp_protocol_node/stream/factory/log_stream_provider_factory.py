@@ -34,7 +34,7 @@ class LogStreamProviderFactory(BaseConfigComponentFactory):
             raise Exception(
                 "Unknown/Unsupported streaming provider: {0}".format(provider_name))
 
-        return CloudWatchProvider(context.config_vars['account'], config)
+        return CloudWatchProvider(context.tmp_vars['keystore']['address'], config)
         
 
 

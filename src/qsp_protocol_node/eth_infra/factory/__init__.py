@@ -9,8 +9,9 @@
 
 from .account_factory import AccountFactory
 from .eth_provider_factory import EthProviderFactory
-from .gas_price_calc_factory import GasPriceCalculatorFactory
+from .eth_wrapper_factory import EthWrapperFactory
+from .gas_price_calculator_factory import GasPriceCalculatorFactory
 from .web3_client_factory import Web3ClientFactory
 
 
-__all__ = ['AccountFactory', 'EthProviderFactory', 'GasPriceCalculatorFactory', 'Web3ClientFactory']
+__all__ = ['AccountFactory', 'EthProviderFactory', 'EthWrapperFactory', 'GasPriceCalculatorFactory', 'Web3ClientFactory']

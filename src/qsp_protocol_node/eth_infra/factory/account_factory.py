@@ -9,6 +9,10 @@
 
 from component import BaseConfigHandler
 from component import BaseConfigComponentFactory
+from component import ConfigurationException
+from eth_infra.account import Account
+
+from json import dumps
 
 class AccountFactoryConfigHandler(BaseConfigHandler):
     def __init__(self, component_name):
@@ -23,21 +27,20 @@ class AccountFactory(BaseConfigComponentFactory):
         """
         Creates an Account component
         """
-        try:
-            address = context.config_vars['account_address']
-            passwd = context.config_vars['account_passwd']
+        address = context.tmp_vars['keystore']['address']
+        passwd = context.tmp_vars['account_passwd']
+        encrypted_key = dumps(context.tmp_vars['keystore'])
 
-            with open(context.config_vars['keystore_file']) as keyfile:
-                encrypted_key = keyfile.read()
-                private_key = web3_client.eth.account.decrypt(
-                    encrypted_key,
-                    passwd
-                )
+        try:
+            private_key = context.web3_client.eth.account.decrypt(
+                encrypted_key,
+                passwd
+            )
             return Account(address, passwd, private_key)
         except Exception as exception:
             raise ConfigurationException(
-                "Error reading or decrypting the keystore file '{0}': {1}".format(
-                    keystore_file,
+                "Error decrypting key '{0}': {1}".format(
+                    encrypted_key,
                     exception
                 )
             )

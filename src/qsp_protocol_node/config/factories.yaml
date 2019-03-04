@@ -19,60 +19,61 @@ eth_provider:
     module: "eth_infra.factory"
     class:  "EthProviderFactory"
   type: "mandatory"
-  init_order: 3
+  init_order: 2
 
 web3_client:
   factory:
     module: "eth_infra.factory"
     class: "Web3ClientFactory"
   type: "internal"
-  init_order: 4
+  init_order: 3
 
 account:
   factory:
     module: "eth_infra.factory"
     class: "AccountFactory"
   type: "internal"
-  init_order: 5
-
-qsp_contract:
-  factory:
-    module: "audit.factory"
-    class: "QSPContractFactory"
-  type: "mandatory"
-  init_order: 5
-
-analyzers:
-  factory:
-    module: "audit.factory"
-    class: "AnalyzersFactory"
-  type: "mandatory"
-  init_order: 6
-
-upload_provider:
-  factory:
-    module: "upload.factory"
-    class: "UploadProviderFactory"
-  type: "optional"
-  init_order: 7
+  init_order: 4
 
 gas_price_calculator:
   factory:
     module: "eth_infra.factory"
     class: "GasPriceCalculatorFactory"
   type: "mandatory"
+  init_order: 5
+
+eth_wrapper:
+  factory:
+    module: "eth_infra.factory"
+    class: "EthWrapperFactory"
+  type: "internal"
+  init_order: 6
+
+qsp_contract:
+  factory:
+    module: "audit.factory"
+    class: "QSPContractFactory"
+  type: "mandatory"
+  init_order: 7
+
+analyzers:
+  factory:
+    module: "audit.factory"
+    class: "AnalyzersFactory"
+  type: "mandatory"
   init_order: 8
 
-  report_encoder:
-    factory:
-      module: "audit.factory"
-      class: "ReportEncoderFactory"
-    type: "internal"
-    init_order:  9
+upload_provider:
+  factory:
+    module: "upload.factory"
+    class: "UploadProviderFactory"
+  type: "optional"
+  init_order: 9
 
-  metrics_collector:
-    factory:
-      module: "metrics.factory"
-      class: "MetricsCollectorFactory"
-    type: "optional"
-    init_order: 10
+metrics_collector:
+  factory:
+    module: "metrics.factory"
+    class: "MetricsCollectorFactory"
+  type: "optional"
+  init_order: 10
+

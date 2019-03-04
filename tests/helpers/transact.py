@@ -1,4 +1,4 @@
-from utils.eth.singleton_lock import SingletonLock
+from utils.thread import SingletonLock
 
 
 def safe_transact(contract_entity, tx_args):

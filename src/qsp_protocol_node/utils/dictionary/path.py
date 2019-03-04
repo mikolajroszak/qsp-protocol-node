@@ -7,7 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-from dpath.util import get
+import dpath.util
 
 def get(dictionary, path, default=None, accept_none=True):
     """

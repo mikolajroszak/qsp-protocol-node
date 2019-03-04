@@ -22,15 +22,20 @@ class EthConfigHandler(BaseConfigHandler):
 
     def parse(self, config, config_type, context=None):
         super().parse(config, config_type, context)
+        print("===> parse config is {0}".format(config))
 
         BaseConfigHandler.raise_err(config.get("name") is None, "Missing provider name")
         
-        endpoint_uri = config.get("args", {}).get("metadata", "").replace(
-            "${auth_token}",
-            context.config_vars.get('auth_token', '')
-        )
+        args = config.get('args')
+        if args:
+            endpoint_uri = args.get("endpoint_uri", "").replace(
+                "${auth_token}",
+                context.tmp_vars.get('auth_token', '')
+            )
+            print("===> endpoint_uri is " + endpoint_uri)
+            config['args']['endpoint_uri'] = endpoint_uri
 
-        return dict({"args": {"endpoint_uri": endpoint_uri}}, **config)
+        return config
 
 
 class EthProviderFactory(BaseConfigComponentFactory):
@@ -38,6 +43,8 @@ class EthProviderFactory(BaseConfigComponentFactory):
         super().__init__(EthConfigHandler(component_name))
 
     def create_component(self, config, context=None):
+        print("===> EthProviderFactory config is {0}".format(config))
+
         provider = config["name"]
 
         if provider == "HTTPProvider":

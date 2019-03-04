@@ -24,13 +24,15 @@ import jsonschema
 from time import sleep
 from web3.utils.threads import Timeout
 
+from component import BaseConfigComponent
+from evt import EventPoolManager
 from utils.eth.tx import TransactionNotConfirmedException
 from .exceptions import NotEnoughStake
 from evt import is_audit
 from evt import is_police_check
 from evt import set_evt_as_audit
 from evt import set_evt_as_police_check
-from stream_logger import get_logger
+from node_logging import get_logger
 from utils.io import (
     fetch_file,
     digest,
@@ -40,7 +42,7 @@ from utils.io import (
 from utils.eth import send_signed_transaction
 from utils.eth import mk_read_only_call
 from utils.eth import DeduplicationException
-from utils.eth import get_gas_price
+from .report_encoder import ReportEncoder
 from .vulnerabilities_set import VulnerabilitiesSet
 
 from threading import Thread
@@ -50,7 +52,7 @@ from solc.exceptions import ContractsNotFound, SolcError
 from subprocess import TimeoutExpired
 
 
-class QSPAuditNode:
+class QSPAuditNode(BaseConfigComponent):
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
     __EVT_REPORT_SUBMITTED = "LogAuditFinished"
 
@@ -93,12 +95,13 @@ class QSPAuditNode:
         """
         Builds a QSPAuditNode object from the given input parameters.
         """
-        self.__logger = get_logger(self.__class__.__qualname__)
-        self.__config = config
-        self.__metric_collector = None
+        super().__init__({'config': config})
+
         self.__exec = False
         self.__internal_threads = []
         self.__is_initialized = False
+        self.__evt_pool_manager = EventPoolManager(config.evt_db_path)
+        self.__report_encoder = ReportEncoder()
 
         # There are some important invariants that are to be respected at all
         # times when the audit node (re-)processes events (see associated queries):
@@ -142,10 +145,10 @@ class QSPAuditNode:
             last_called = 0
             while self.__exec:
                 now = time.time()
-                if now - last_called > self.__config.block_mined_polling:
+                if now - last_called > self.config.block_mined_polling_sec:
                     last_called = now
-                    if current_block < self.__config.web3_client.eth.blockNumber:
-                        current_block = self.__config.web3_client.eth.blockNumber
+                    if current_block < self.config.web3_client.eth.blockNumber:
+                        current_block = self.config.web3_client.eth.blockNumber
                         self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
                         try:
                             handler()
@@ -160,79 +163,6 @@ class QSPAuditNode:
 
         return new_block_monitor_thread
 
-    @property
-    def config(self):
-        return self.__config
-
-    # TODO Put this in its own module -- GasPriceProvider
-    def __compute_gas_price(self):
-        """
-        Queries recent blocks to set a baseline gas price, or uses a default static gas price
-        """
-        gas_price = None
-        # if we're not using the dynamic gas price strategy, just return the default
-        if self.__config.gas_price_strategy == "static":
-            gas_price = self.__config.default_gas_price_wei
-        else:
-            gas_price = get_gas_price(self.__config)
-        gas_price = int(min(gas_price, self.__config.max_gas_price_wei))
-        # set the gas_price in config
-        self.__config.gas_price_wei = gas_price
-        self.__logger.debug("Current gas price: {0}".format(str(gas_price)))
-
-    def __has_enough_stake(self):
-        """
-        Verifies whether the node has enough stake to perform audits.
-        """
-        enough_stake = False
-        try:
-            enough_stake = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.hasEnoughStake(self.config.account))
-        except Exception as err:
-            raise err
-
-        return enough_stake
-
-    def __has_available_rewards(self):
-        """
-        Checks if any unclaimed rewards are available for the node.
-        """
-        available_rewards = False
-        try:
-            available_rewards = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.hasAvailableRewards())
-        except Exception as err:
-            raise err
-
-        return available_rewards
-
-    def __get_min_stake_qsp(self):
-        """
-        Gets the minimum staking (in QSP) required to perform an audit.
-        """
-        min_stake = mk_read_only_call(
-            self.config,
-            self.config.audit_contract.functions.getMinAuditStake())
-
-        # Puts the result (wei-QSP) back to QSP
-        return min_stake / (10 ** 18)
-
-    def is_police_officer(self):
-        """
-        Verifies whether the node is a police node.
-        """
-        is_police = False
-        try:
-            is_police = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.isPoliceNode(self.config.account))
-        except Exception as err:
-            self.__logger.debug("Failed to check if node is a police officer: {0}".format(err))
-            self.__logger.debug("Assuming the node is not a police officer.")
-
-        return is_police
 
     def run(self):
         """
@@ -243,8 +173,6 @@ class QSPAuditNode:
 
         self.__exec = True
 
-        # Initialize the gas price
-        self.__compute_gas_price()
 
         if self.config.heartbeat_allowed:
             # Updates min price and starts a thread that will be doing so every 24 hours
@@ -260,21 +188,21 @@ class QSPAuditNode:
         claim_rewards_thread = self.__run_claim_rewards_thread()
         self.__internal_threads.append(claim_rewards_thread)
 
-        if self.__config.metric_collection_is_enabled:
-            self.__metric_collector = MetricCollector(self.__config)
-            self.__metric_collector.collect_and_send()
-            self.__internal_threads.append(self.__run_metrics_thread())
+        if self.config.metric_collection_is_enabled:
+            self.config.metric_collector = MetricCollector(self.config)
+            self.config.metric_collector.collect_and_send()
+            self.config.internal_threads.append(self.__run_metrics_thread())
 
         # Upon restart, before processing, set all events that timed out to err
         self.__timeout_stale_requests()
 
         # If no block has currently been processed, start from the current block
         # Note: this default behavior will prevent the node from finding existing audit transactions
-        start_block = self.__config.event_pool_manager.get_latest_block_number()
+        start_block = self.config.event_pool_manager.get_latest_block_number()
         if start_block < 0:
             # the database is empty
-            current_block_number = self.__config.web3_client.eth.blockNumber
-            n_blocks_in_the_past = self.__config.start_n_blocks_in_the_past
+            current_block_number = self.config.web3_client.eth.blockNumber
+            n_blocks_in_the_past = self.config.start_n_blocks_in_the_past
             start_block = max(0, current_block_number - n_blocks_in_the_past)
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
@@ -282,11 +210,6 @@ class QSPAuditNode:
         self.__internal_threads.append(self.__run_block_mined_thread(
             "poll_requests",
             self.__poll_requests
-        ))
-
-        self.__internal_threads.append(self.__run_block_mined_thread(
-            "compute_gas_price",
-            self.__compute_gas_price
         ))
 
         # Starts two additional threads for performing audits
@@ -317,15 +240,15 @@ class QSPAuditNode:
         self.__run_with_interval(check_all_threads, health_check_interval_sec)
 
     def __timeout_stale_requests(self):
-        first_valid_block = self.__config.web3_client.eth.blockNumber - \
-                            self.__config.submission_timeout_limit_blocks + \
-                            self.__config.block_discard_on_restart
+        first_valid_block = self.config.web3_client.eth.blockNumber - \
+                            self.config.submission_timeout_n_blocks + \
+                            self.config.block_discard_on_restart
 
         def timeout_event(evt):
             try:
                 if first_valid_block >= evt['block_nbr']:
                     evt['status_info'] = "Submission timeout"
-                    self.__config.event_pool_manager.set_evt_status_to_error(evt)
+                    self.config.event_pool_manager.set_evt_status_to_error(evt)
             except KeyError as error:
                 self.__logger.exception(
                     "KeyError when handling timeout on restart: {0}".format(str(error))
@@ -334,8 +257,8 @@ class QSPAuditNode:
                 self.__logger.exception(
                     "Unexpected error when handling timeout on restart: {0}".format(error))
 
-        self.__config.event_pool_manager.process_incoming_events(timeout_event)
-        self.__config.event_pool_manager.process_events_to_be_submitted(timeout_event)
+        self.__event_pool_manager.process_incoming_events(timeout_event)
+        self.__event_pool_manager.process_events_to_be_submitted(timeout_event)
 
     def __poll_requests(self):
         """
@@ -352,7 +275,7 @@ class QSPAuditNode:
         try:
             most_recent_audit = mk_read_only_call(
                 self.config,
-                self.__config.audit_contract.functions.myMostRecentAssignedAudit()
+                self.config.audit_contract.functions.myMostRecentAssignedAudit()
             )
             request_id = most_recent_audit[0]
 
@@ -360,7 +283,7 @@ class QSPAuditNode:
             # database for processing by other threads and continues bidding
             # upon an available request
 
-            new_assigned_request = (request_id != 0) and not self.__config.event_pool_manager.is_request_processed(
+            new_assigned_request = (request_id != 0) and not self.config.event_pool_manager.is_request_processed(
                 request_id=request_id
             )
 
@@ -378,9 +301,9 @@ class QSPAuditNode:
 
             pending_requests_count = mk_read_only_call(
                 self.config,
-                self.config.audit_contract.functions.assignedRequestCount(self.__config.account))
+                self.config.audit_contract.functions.assignedRequestCount(self.config.account))
 
-            if pending_requests_count >= self.__config.max_assigned_requests:
+            if pending_requests_count >= self.config.max_assigned_requests:
                 self.__logger.debug(
                     "Skip bidding as node is currently processing {0} requests".format(
                         str(pending_requests_count)))
@@ -425,14 +348,14 @@ class QSPAuditNode:
         the database to move it along the audit pipeline.
         """
 
-        if not self.is_police_officer():
+        if not self.config.qsp_contract.is_police_officer():
             return
 
         try:
             probe = self.__get_next_police_assignment()
             has_assignment = probe[0]
 
-            already_processed = self.__config.event_pool_manager.is_request_processed(
+            already_processed = self.config.event_pool_manager.is_request_processed(
                 request_id=probe[1]
             )
 
@@ -457,11 +380,8 @@ class QSPAuditNode:
         Checks that the minimum price in the audit node's configuration matches the smart contract
         and updates it if it differs.
         """
-        contract_price = mk_read_only_call(
-            self.__config,
-            self.__config.audit_contract.functions.getMinAuditPrice(self.__config.account)
-        )
-        min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
+        contract_price = self.config.qsp_contract.get_min_audit_price()
+        min_price_in_mini_qsp = self.config.min_audit_price_qsp * (10 ** 18)
         if min_price_in_mini_qsp != contract_price:
             self.__update_min_price()
 
@@ -486,22 +406,22 @@ class QSPAuditNode:
               + "the Ethereum node is connected and synced, " \
               + "and restart your node to try again."
 
-        min_price_in_mini_qsp = self.__config.min_price_in_qsp * (10 ** 18)
+        min_price_in_mini_qsp = self.config.min_audit_price_qsp * (10 ** 18)
         self.__logger.info(
             "Updating min_price in the smart contract for address {0}.".format(
-                self.__config.account
+                self.config.account
             ))
-        transaction = self.__config.audit_contract.functions.setAuditNodePrice(
+        transaction = self.config.audit_contract.functions.setAuditNodePrice(
             min_price_in_mini_qsp)
         try:
-            tx_hash = send_signed_transaction(self.__config,
+            tx_hash = send_signed_transaction(self.config,
                                               transaction,
                                               wait_for_transaction_receipt=True)
             # If the tx_hash is None, the transaction did not actually complete. Exit
             if not tx_hash:
                 raise Exception("The min price transaction did not complete")
             self.__logger.debug("Successfully updated min price to {0}.".format(
-                self.__config.min_price_in_qsp))
+                self.config.min_audit_price_qsp))
         except Timeout as e:
             error_msg = "Update min price timed out. " + msg + " {0}, {1}."
             self.__logger.debug(error_msg.format(
@@ -548,67 +468,20 @@ class QSPAuditNode:
         """
         self.__logger.info(
             "Checking for any available rewards for address {0}.".format(
-                self.__config.account
+                self.config.account
             ))
 
-        available_rewards = self.__has_available_rewards()
+        available_rewards = self.config.qsp_contract.has_available_rewards()
         if not available_rewards:
             self.__logger.info(
                 "There are no available rewards for address {0}.".format(
-                    self.__config.account
+                    self.config.account
                 ))
         else:
             try:
-                self.__claim_rewards()
+                self.config.qsp_contract.claim_rewards()
             except Exception as error:
                 self.__logger.warning("Could not claim rewards: {0}".format(error))
-
-    def __claim_rewards(self):
-        """
-        Invokes the claimRewards function in the smart contract.
-        """
-        msg = "Make sure the account has enough Ether, " \
-            + "the Ethereum node is connected and synced, " \
-            + "and restart your node to try again."
-
-        transaction = self.__config.audit_contract.functions.claimRewards()
-        tx_hash = None
-        try:
-            tx_hash = send_signed_transaction(self.__config,
-                                              transaction,
-                                              wait_for_transaction_receipt=True)
-            # If the tx_hash is None, the transaction did not actually complete. Exit
-            if not tx_hash:
-                raise Exception("The claim rewards transaction did not complete")
-            self.__logger.debug("Successfully claimed rewards for address {0}.".format(
-                self.__config.account))
-        except Timeout as e:
-            error_msg = "Claim rewards timed out. " + msg + " {0}, {1}."
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except DeduplicationException as e:
-            error_msg = "A transaction already exists for claiming rewards," \
-                        + " but has not yet been mined. " + msg \
-                        + " This may take several iterations. {0}, {1}."
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except TransactionNotConfirmedException as e:
-            error_msg = "A transaction occurred, but was then uncled and never recovered. {0}, {1}"
-            self.__logger.debug(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        except Exception as e:
-            error_msg = "Error occurred claiming rewards. " + msg + " {0}, {1}."
-            self.__logger.exception(error_msg.format(
-                str(transaction),
-                str(e)))
-            raise e
-        return tx_hash
 
     def __add_evt_to_db(self, request_id, requestor, uri, price, block_nbr, is_audit=True):
         try:
@@ -622,7 +495,7 @@ class QSPAuditNode:
                 'price': str(price),
             }
             evt = set_evt_as_audit(evt) if is_audit else set_evt_as_police_check(evt)
-            self.__config.event_pool_manager.add_evt_to_be_assigned(evt)
+            self.config.event_pool_manager.add_evt_to_be_assigned(evt)
         except KeyError as error:
             self.__logger.exception(
                 "KeyError when processing audit assigned event: {0}".format(str(error))
@@ -632,7 +505,7 @@ class QSPAuditNode:
                 "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
                 requestId=request_id,
             )
-            self.__config.event_pool_manager.set_evt_status_to_error(evt)
+            self.config.event_pool_manager.set_evt_status_to_error(evt)
 
     def __run_perform_audit_thread(self):
         def process_audit_request(evt):
@@ -650,7 +523,7 @@ class QSPAuditNode:
                     evt['status_info'] = error
                     evt['compressed_report'] = QSPAuditNode.__EMPTY_COMPRESSED_REPORT
                     self.__logger.exception(error, requestId=request_id)
-                    self.__config.event_pool_manager.set_evt_to_error(evt)
+                    self.config.event_pool_manager.set_evt_to_error(evt)
                 else:
                     evt['audit_uri'] = audit_result['audit_uri']
                     evt['audit_hash'] = audit_result['audit_hash']
@@ -663,7 +536,7 @@ class QSPAuditNode:
                     self.__logger.debug(
                         msg.format(str(evt['audit_uri'])), requestId=request_id, evt=evt
                     )
-                    self.__config.event_pool_manager.set_evt_status_to_be_submitted(evt)
+                    self.config.event_pool_manager.set_evt_status_to_be_submitted(evt)
             except KeyError as error:
                 self.__logger.exception(
                     "KeyError when trying to produce {0} report from request event {1}: {2}".format(report_type, evt, error),
@@ -675,15 +548,15 @@ class QSPAuditNode:
                     requestId=request_id,
                 )
                 evt['status_info'] = traceback.format_exc()
-                self.__config.event_pool_manager.set_evt_status_to_error(evt)
+                self.config.event_pool_manager.set_evt_status_to_error(evt)
 
         def process_incoming():
-            self.__config.event_pool_manager.process_incoming_events(
+            self.config.event_pool_manager.process_incoming_events(
                 process_audit_request
             )
 
         def exec():
-            self.__run_with_interval(process_incoming, self.__config.evt_polling)
+            self.__run_with_interval(process_incoming, self.config.evt_polling)
 
         audit_thread = Thread(target=exec, name="audit thread")
         self.__internal_threads.append(audit_thread)
@@ -691,27 +564,6 @@ class QSPAuditNode:
 
         return audit_thread
 
-    def __get_next_police_assignment(self):
-        """
-        Gets the next police assignment tuple.
-        """
-        return mk_read_only_call(
-            self.__config,
-            self.__config.audit_contract.functions.getNextPoliceAssignment()
-        )
-
-    def __get_report_in_blockchain(self, request_id):
-        """
-        Gets a compressed report already stored in the blockchain.
-        """
-        compressed_report_bytes = mk_read_only_call(
-            self.__config,
-            self.__config.audit_contract.functions.getReport(request_id)
-        )
-        if compressed_report_bytes is None or len(compressed_report_bytes) == 0:
-            return None
-
-        return compressed_report_bytes.hex()
 
     def __is_report_deemed_correct(self, request_id, full_police_report):
         """
@@ -732,7 +584,7 @@ class QSPAuditNode:
 
         # Decompress the audit report
         try:
-            decompressed_audit_report = self.__config.report_encoder.decode_report(
+            decompressed_audit_report = self.__report_encoder.decode_report(
                 compressed_audit_report,
                 request_id
             )
@@ -806,7 +658,7 @@ class QSPAuditNode:
 
                 evt['tx_hash'] = tx_hash.hex()
                 evt['status_info'] = 'Report submitted (waiting for confirmation)'
-                self.__config.event_pool_manager.set_evt_status_to_submitted(evt)
+                self.config.event_pool_manager.set_evt_status_to_submitted(evt)
                 self.__on_successful_submission(int(evt['request_id']))
             except DeduplicationException as error:
                 self.__logger.debug(
@@ -828,15 +680,15 @@ class QSPAuditNode:
                     requestId=evt['request_id'],
                 )
                 evt['status_info'] = traceback.format_exc()
-                self.__config.event_pool_manager.set_evt_status_to_error(evt)
+                self.config.event_pool_manager.set_evt_status_to_error(evt)
 
         def process_to_be_submitted():
-            self.__config.event_pool_manager.process_events_to_be_submitted(
+            self.config.event_pool_manager.process_events_to_be_submitted(
                 process_submission_request
             )
 
         def exec():
-            self.__run_with_interval(process_to_be_submitted, self.__config.evt_polling)
+            self.__run_with_interval(process_to_be_submitted, self.config.evt_polling)
 
         submission_thread = Thread(target=exec, name="submission thread")
         self.__internal_threads.append(submission_thread)
@@ -848,12 +700,12 @@ class QSPAuditNode:
         audit_evt = None
         try:
             is_finished = mk_read_only_call(
-                self.config, self.__config.audit_contract.functions.isAuditFinished(request_id)
+                self.config, self.config.audit_contract.functions.isAuditFinished(request_id)
             )
-            audit_evt = self.__config.event_pool_manager.get_event_by_request_id(request_id)
+            audit_evt = self.config.event_pool_manager.get_event_by_request_id(request_id)
             if is_finished and audit_evt != {}:
                 audit_evt['status_info'] = 'Report successfully submitted'
-                self.__config.event_pool_manager.set_evt_status_to_done(audit_evt)
+                self.config.event_pool_manager.set_evt_status_to_done(audit_evt)
                 self.__logger.debug(
                     "Report successfully submitted for event: {0}".format(
                         str(audit_evt)
@@ -875,13 +727,13 @@ class QSPAuditNode:
             )
 
     def __run_monitor_submisson_thread(self):
-        timeout_limit = self.__config.submission_timeout_limit_blocks
+        timeout_limit = self.config.submission_timeout_limit_blocks
 
         def monitor_submission_timeout(evt, current_block):
             try:
                 if (current_block - evt['block_nbr']) > timeout_limit:
                     evt['status_info'] = "Submission timeout"
-                    self.__config.event_pool_manager.set_evt_status_to_error(evt)
+                    self.config.event_pool_manager.set_evt_status_to_error(evt)
                     msg = "Submission timeout for audit {0}. Setting to error"
                     self.__logger.debug(msg.format(str(evt['request_id'])))
             except KeyError as error:
@@ -895,15 +747,15 @@ class QSPAuditNode:
 
         def process_submissions():
             # Checks for a potential timeouts
-            block = self.__config.web3_client.eth.blockNumber
-            self.__config.event_pool_manager.process_submission_events(
+            block = self.config.web3_client.eth.blockNumber
+            self.config.event_pool_manager.process_submission_events(
                 monitor_submission_timeout,
                 block,
             )
 
         def exec():
             try:
-                self.__run_with_interval(process_submissions, self.__config.evt_polling)
+                self.__run_with_interval(process_submissions, self.config.evt_polling)
             except Exception as error:
                 self.__logger.exception("Error in the monitor thread: {0}".format(str(error)))
 
@@ -916,7 +768,7 @@ class QSPAuditNode:
     def __run_metrics_thread(self):
         def exec():
             self.__run_with_interval(self.__metric_collector.collect_and_send,
-                                     self.__config.metric_collection_interval_seconds)
+                                     self.config.metric_collection_interval_seconds)
 
         metrics_thread = Thread(target=exec, name="metrics thread")
         self.__internal_threads.append(metrics_thread)
@@ -939,7 +791,7 @@ class QSPAuditNode:
         self.__internal_threads = []
 
         # Close resources
-        self.__config.event_pool_manager.close()
+        self.config.event_pool_manager.close()
 
     def __validate_json(self, report, request_id):
         """
@@ -996,15 +848,15 @@ class QSPAuditNode:
 
         self.__validate_json(audit_report, request_id)
 
-        compressed_report = self.__config.report_encoder.compress_report(audit_report,
+        compressed_report = self.__report_encoder.compress_report(audit_report,
                                                                          request_id)
 
         audit_report_str = json.dumps(audit_report, indent=2)
         audit_hash = digest(audit_report_str)
 
-        upload_provider = self.__config.upload_provider
+        upload_provider = self.config.upload_provider
         if upload_provider is not None and upload_provider.is_enabled:
-            upload_result = self.__config.upload_provider.upload_report(audit_report_str,
+            upload_result = self.config.upload_provider.upload_report(audit_report_str,
                                                                         audit_report_hash=audit_hash)
 
             self.__logger.info(
@@ -1018,7 +870,7 @@ class QSPAuditNode:
             parse_uri = urllib.parse.urlparse(uri)
             original_file_name = os.path.basename(parse_uri.path)
             contract_body = read_file(target_contract)
-            contract_upload_result = self.__config.upload_provider.upload_contract(request_id,
+            contract_upload_result = self.config.upload_provider.upload_contract(request_id,
                                                                                 contract_body,
                                                                                 original_file_name)
             if contract_upload_result['success']:
@@ -1042,7 +894,7 @@ class QSPAuditNode:
         }
 
     def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
-        number_of_analyzers = len(self.__config.analyzers)
+        number_of_analyzers = len(self.config.analyzers)
 
         parse_uri = urllib.parse.urlparse(uri)
         original_file_name = os.path.basename(parse_uri.path)
@@ -1062,7 +914,7 @@ class QSPAuditNode:
             has_timed_out = False
 
             try:
-                report = self.__config.analyzers[analyzer_id].check(
+                report = self.config.analyzers[analyzer_id].check(
                     target_contract,
                     request_id,
                     original_file_name
@@ -1089,11 +941,11 @@ class QSPAuditNode:
                 report_locks[analyzer_id].release()
 
         # Starts each analyzer thread
-        for i, analyzer in enumerate(self.__config.analyzers):
+        for i, analyzer in enumerate(self.config.analyzers):
             shared_reports.append({})
             local_reports.append({})
             report_locks.append(threading.RLock())
-            wrappers.append(self.__config.analyzers[i].wrapper)
+            wrappers.append(self.config.analyzers[i].wrapper)
             timed_out_flags.append(False)
 
             thread_name = "{0}-analyzer-thread".format(wrappers[i].analyzer_name)
@@ -1151,9 +1003,9 @@ class QSPAuditNode:
             'contract_uri': uri,
             'contract_hash': digest_file(target_contract),
             'requestor': requestor,
-            'auditor': self.__config.account,
+            'auditor': self.config.account,
             'request_id': request_id,
-            'version': self.__config.node_version,
+            'version': self.config.node_version,
         }
 
         # FIXME
@@ -1194,56 +1046,6 @@ class QSPAuditNode:
 
         return audit_report
 
-    def __get_next_audit_request(self):
-        """
-        Attempts to get a request from the audit request queue.
-        """
-        # NOTE
-        # The audit contract checks whether the node has enough stake before
-        # accepting a bid. No need to replicate that logic here.
-        transaction = self.__config.audit_contract.functions.getNextAuditRequest()
-        tx_hash = None
-        try:
-            tx_hash = send_signed_transaction(
-                self.__config,
-                transaction,
-                wait_for_transaction_receipt=True)
-            self.__logger.debug("A getNextAuditRequest transaction has been sent")
-        except Timeout as e:
-            self.__logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
-                str(transaction),
-                e))
-        return tx_hash
-
-    def __submit_audit_report(self, request_id, audit_state, compressed_report):
-        """
-        Submits the audit report to the entire QSP network.
-        """
-        # Convert from a bitstring to a bytes array
-        compressed_report_bytes = self.__config.web3_client.toBytes(hexstr=compressed_report)
-
-        tx_hash = send_signed_transaction(self.__config,
-                                          self.__config.audit_contract.functions.submitReport(
-                                            request_id,
-                                            audit_state,
-                                            compressed_report_bytes))
-        self.__logger.debug("Audit report submitted", requestId=request_id)
-        return tx_hash
-
-    def __submit_police_report(self, request_id, compressed_report, is_verified):
-        """
-        Submits the police report to the entire QSP network.
-        """
-        # Convert from a bitstring to a bytes array
-        compressed_report_bytes = self.__config.web3_client.toBytes(hexstr=compressed_report)
-
-        tx_hash = send_signed_transaction(self.__config,
-                                          self.__config.audit_contract.functions.submitPoliceReport(
-                                            request_id,
-                                            compressed_report_bytes,
-                                            is_verified))
-        self.__logger.debug("Police report submitted", requestId=request_id)
-        return tx_hash
 
     def __create_err_result(self, errors, warnings, request_id, requestor, uri, target_contract):
         result = {
@@ -1251,9 +1053,9 @@ class QSPAuditNode:
             'contract_uri': uri,
             'contract_hash': digest_file(target_contract),
             'requestor': requestor,
-            'auditor': self.__config.account,
+            'auditor': self.config.account,
             'request_id': request_id,
-            'version': self.__config.node_version,
+            'version': self.config.node_version,
             'audit_state': QSPAuditNode.__AUDIT_STATE_ERROR,
             'status': QSPAuditNode.__AUDIT_STATUS_ERROR,
         }
