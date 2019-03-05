@@ -153,7 +153,7 @@ class Program:
         audit_node = QSPAuditNode(cfg)
         Stop.register(audit_node)
 
-        if audit_node.is_police_officer():
+        if QSPAuditNode.is_police_officer(cfg):
             logger.info("Running QSP node (performs audits and police checks)")
         else:
             logger.info("Running QSP node (performs audits only)")

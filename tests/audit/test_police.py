@@ -11,6 +11,7 @@ import json
 
 from audit import QSPAuditNode
 from audit.threads import SubmitReportThread
+from audit.threads import PollRequestsThread
 from audit.report_processing import ReportEncoder
 from helpers.qsp_test import QSPTest
 from helpers.resource import fetch_config, remove, resource_uri
@@ -40,54 +41,10 @@ class TestPoliceFunctions(QSPTest):
         """
         exception = None
         try:
-            self.__audit_node.is_police_officer()
+            self.__audit_node.is_police_officer(self.__config)
         except Exception as e:
             exception = e
         self.assertIsNone(exception)
-
-    def test_call_to_get_next_police_assignment(self):
-        """
-        Tests whether calling the smart contract to get the next police
-        assigment works.
-        """
-        exception = None
-        try:
-            self.__audit_node._QSPAuditNode__get_next_police_assignment()
-        except Exception as e:
-            exception = e
-        self.assertIsNone(exception)
-
-    def test_non_police_cannot_poll_check_events(self):
-        self.__test_police_poll_event(
-            is_police=False,
-            is_new_assignment=False,
-            is_already_processed=False,
-            should_add_evt=False
-        )
-
-    def test_police_does_not_save_evt_upon_no_request(self):
-        self.__test_police_poll_event(
-            is_police=True,
-            is_new_assignment=False,
-            is_already_processed=False,
-            should_add_evt=False
-        )
-
-    def test_police_does_not_save_evt_upon_repeated_request(self):
-        self.__test_police_poll_event(
-            is_police=True,
-            is_new_assignment=True,
-            is_already_processed=True,
-            should_add_evt=False
-        )
-
-    def test_police_saves_evt_upon_new_request(self):
-        self.__test_police_poll_event(
-            is_police=True,
-            is_new_assignment=True,
-            is_already_processed=False,
-            should_add_evt=True
-        )
 
     def tearDown(self):
         if self.__audit_node._QSPAuditNode__exec:
@@ -104,33 +61,6 @@ class TestPoliceFunctions(QSPTest):
 
         encoder = ReportEncoder()
         return encoder.compress_report(full_report, request_id)
-
-    def __test_police_poll_event(self, is_police, is_new_assignment, is_already_processed,
-                                 should_add_evt):
-        # Configures the behaviour of is_police_officer
-        self.__audit_node.is_police_officer = MagicMock()
-        self.__audit_node.is_police_officer.return_value = is_police
-
-        # Configures the behaviour of __get_next_police_assignment
-        self.__audit_node._QSPAuditNode__get_next_police_assignment = MagicMock()
-        self.__audit_node._QSPAuditNode__get_next_police_assignment.return_value = \
-            [is_new_assignment, 1, 0, "some-url", 1, False]
-
-        # Configures the behaviour of __is_request_processed
-        self.__config.event_pool_manager.is_request_processed = MagicMock()
-        self.__config.event_pool_manager.is_request_processed.return_value = \
-            is_already_processed
-
-        # Configures the behaviour of __add_evt_to_db
-        self.__audit_node._QSPAuditNode__add_evt_to_db = MagicMock()
-
-        # Polls for police requests
-        self.__audit_node._QSPAuditNode__poll_police_request()
-
-        if should_add_evt:
-            self.__audit_node._QSPAuditNode__add_evt_to_db.assert_called()
-        else:
-            self.__audit_node._QSPAuditNode__add_evt_to_db.assert_not_called()
 
 
 class TestPoliceLogic(QSPTest):
@@ -159,7 +89,21 @@ class TestPoliceLogic(QSPTest):
         submit_report_instance._SubmitReportThread__get_report_in_blockchain.return_value = \
             compressed_report
 
-        with mock.patch('audit.audit.SubmitReportThread', return_value=submit_report_instance):
+        # Adds a police event to the database to trigger the flow of a police
+        # check. Since no other thread should be writing to the DB at this
+        # point, the write can be performed without a lock.
+        poll_requests_instance = PollRequestsThread(self.__config)
+        poll_requests_instance._PollRequestsThread__add_evt_to_db(
+            request_id=request_id,
+            requestor=self.__audit_node.config.audit_contract_address,
+            price=100,
+            uri=resource_uri("reports/DAOBug.json"),
+            block_nbr=100,
+            is_audit=False
+        )
+
+        with mock.patch('audit.audit.SubmitReportThread', return_value=submit_report_instance), \
+                mock.patch('audit.audit.PollRequestsThread', return_value=poll_requests_instance):
             # Sets the node as a police officer.
             self.__audit_node.is_police_officer = MagicMock()
             self.__audit_node.is_police_officer.return_value = True
@@ -173,18 +117,6 @@ class TestPoliceLogic(QSPTest):
                 'full_report': json.dumps(uncompressed_report),
                 'compressed_report': compressed_report
             }
-
-            # Adds a police event to the database to trigger the flow of a police
-            # check. Since no other thread should be writing to the DB at this
-            # point, the write can be performed without a lock.
-            self.__audit_node._QSPAuditNode__add_evt_to_db(
-                request_id=request_id,
-                requestor=self.__audit_node.config.audit_contract_address,
-                price=100,
-                uri=resource_uri("reports/DAOBug.json"),
-                block_nbr=100,
-                is_audit=False
-            )
 
             self.__run_audit_node()
 
@@ -234,7 +166,8 @@ class TestPoliceLogic(QSPTest):
             # Adds a police event to the database to trigger the flow of a police
             # check. Since no other thread should be writing to the DB at this
             # point, the write can be performed without a lock.
-            self.__audit_node._QSPAuditNode__add_evt_to_db(
+            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance._PollRequestsThread__add_evt_to_db(
                 request_id=request_id,
                 requestor=self.__audit_node.config.audit_contract_address,
                 price=100,

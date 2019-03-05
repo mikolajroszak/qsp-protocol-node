@@ -14,6 +14,7 @@ from .collect_metrics_thread import CollectMetricsThread
 from .perform_audit_thread import PerformAuditThread
 from .qsp_thread import QSPThread
 from .submit_report_thread import SubmitReportThread
+from .poll_requests_thread import PollRequestsThread
 
 __all__ = ['QSPThread',
            'UpdateMinPriceThread',
@@ -21,4 +22,5 @@ __all__ = ['QSPThread',
            'ComputeGasPriceThread',
            'CollectMetricsThread',
            'PerformAuditThread',
-           'SubmitReportThread']
+           'SubmitReportThread',
+           'PollRequestsThread']

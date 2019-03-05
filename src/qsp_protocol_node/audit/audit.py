@@ -11,34 +11,17 @@
 Provides the QSP Audit node implementation.
 """
 
-from evt import set_evt_as_audit
-from evt import set_evt_as_police_check
 from log_streaming import get_logger
-from utils.eth.tx import TransactionNotConfirmedException
-from web3.utils.threads import Timeout
 
-from .exceptions import NotEnoughStake
 from .threads import ClaimRewardsThread
-from .threads import CollectMetricsThread, ComputeGasPriceThread
+from .threads import CollectMetricsThread, ComputeGasPriceThread, PollRequestsThread
 from .threads import UpdateMinPriceThread, QSPThread, SubmitReportThread, PerformAuditThread
-from utils.eth import send_signed_transaction
 from utils.eth import mk_read_only_call
-from utils.eth import DeduplicationException
 
 from threading import Thread
 
 
 class QSPAuditNode:
-    __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
-    __EVT_REPORT_SUBMITTED = "LogAuditFinished"
-
-    # Must be in sync with
-    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L106
-    __AVAILABLE_AUDIT_STATE_READY = 1
-
-    # Must be in sync with
-    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L110
-    __AVAILABLE_AUDIT_UNDERSTAKED = 5
 
     # The frequency of updating min price. This is not configurable as dashboard logic depends
     # on this frequency
@@ -70,7 +53,7 @@ class QSPAuditNode:
         #    updated with a status lower in ranking
         #    The current ranking is given by:
         #
-        #    RQ (Requested) < AS (Assigned < TS (To be submitted) < SB (Submitted) < DN (Done)
+        #    RQ (Requested) < AS (Assigned) < TS (To be submitted) < SB (Submitted) < DN (Done)
         #
         # 3) Errors are currently not recoverable, i.e., if an audit event reaches
         #    an error state in the finite automata internally captured by the audit node,
@@ -109,43 +92,19 @@ class QSPAuditNode:
     def config(self):
         return self.__config
 
-    def __has_enough_stake(self):
-        """
-        Verifies whether the node has enough stake to perform audits.
-        """
-        enough_stake = False
-        try:
-            enough_stake = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.hasEnoughStake(self.config.account))
-        except Exception as err:
-            raise err
-
-        return enough_stake
-
-    def __get_min_stake_qsp(self):
-        """
-        Gets the minimum staking (in QSP) required to perform an audit.
-        """
-        min_stake = mk_read_only_call(
-            self.config,
-            self.config.audit_contract.functions.getMinAuditStake())
-
-        # Puts the result (wei-QSP) back to QSP
-        return min_stake / (10 ** 18)
-
-    def is_police_officer(self):
+    @staticmethod
+    def is_police_officer(config):
         """
         Verifies whether the node is a police node.
         """
         is_police = False
         try:
             is_police = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.isPoliceNode(self.config.account))
+                config,
+                config.audit_contract.functions.isPoliceNode(config.account))
         except Exception as err:
-            self.__logger.debug("Failed to check if node is a police officer: {0}".format(err))
-            self.__logger.debug("Assuming the node is not a police officer.")
+            config.logger.debug("Failed to check if node is a police officer: {0}".format(err))
+            config.logger.debug("Assuming the node is not a police officer.")
 
         return is_police
 
@@ -160,6 +119,15 @@ class QSPAuditNode:
         gas_price_thread.compute_gas_price()
 
         handle = gas_price_thread.start()
+        self.__internal_thread_handles.append(handle)
+
+    def __start_poll_requests_thread(self):
+        """
+        Creates and starts the poll requests thread. Appends the handle to the internal threads.
+        """
+        poll_requests_thread = PollRequestsThread(self.config)
+        self.__internal_thread_definitions.append(poll_requests_thread)
+        handle = poll_requests_thread.start()
         self.__internal_thread_handles.append(handle)
 
     def __start_submission_thread(self):
@@ -239,10 +207,7 @@ class QSPAuditNode:
 
         self.__logger.debug("Filtering events from block # {0}".format(str(start_block)))
 
-        self.__internal_thread_handles.append(self.__run_block_mined_thread(
-            "poll_requests",
-            self.__poll_requests
-        ))
+        self.__start_poll_requests_thread()
 
         # Starts two additional threads for performing audits
         # and eventually submitting results
@@ -297,121 +262,6 @@ class QSPAuditNode:
         self.__config.event_pool_manager.process_incoming_events(timeout_event)
         self.__config.event_pool_manager.process_events_to_be_submitted(timeout_event)
 
-    def __poll_requests(self):
-        """
-        Polls the audit contract for any possible requests.
-        """
-        self.__poll_audit_request()
-        self.__poll_police_request()
-
-    def __poll_audit_request(self):
-        """
-        Checks first an audit is assignable; then, bids to get an audit request.
-        If successful, save the event in the database to move it along the audit pipeline.
-        """
-        try:
-            most_recent_audit = mk_read_only_call(
-                self.config,
-                self.__config.audit_contract.functions.myMostRecentAssignedAudit()
-            )
-            request_id = most_recent_audit[0]
-
-            # Checks if a previous bid was won. If so, it saves the event to the
-            # database for processing by other threads and continues bidding
-            # upon an available request
-
-            new_assigned_request = (request_id != 0) and not self.__config.event_pool_manager.is_request_processed(
-                request_id=request_id
-            )
-
-            if new_assigned_request:
-                # New request id in (bid won). Persists the event in the database
-                self.__add_evt_to_db(
-                    request_id=request_id,
-                    requestor=most_recent_audit[1],
-                    uri=most_recent_audit[2],
-                    price=most_recent_audit[3],
-                    block_nbr=most_recent_audit[4]
-                )
-
-            # The node should attempt to bid. Before that, though, gotta perform some checks...
-
-            pending_requests_count = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.assignedRequestCount(self.__config.account))
-
-            if pending_requests_count >= self.__config.max_assigned_requests:
-                self.__logger.debug(
-                    "Skip bidding as node is currently processing {0} requests".format(
-                        str(pending_requests_count)))
-                return
-            any_request_available = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.anyRequestAvailable())
-
-            if any_request_available == self.__AVAILABLE_AUDIT_UNDERSTAKED:
-                raise NotEnoughStake("Missing funds. To audit contracts, nodes must stake at least {0} QSP".format(
-                    self.__get_min_stake_qsp()
-                ))
-
-            if any_request_available == self.__AVAILABLE_AUDIT_STATE_READY:
-                self.__logger.debug("There is request available to bid on.")
-
-                # At this point, the node is ready to bid. As such,
-                # it tries to get the next audit request
-                self.__get_next_audit_request()
-            else:
-                self.__logger.debug(
-                    "No request available as the contract returned {0}.".format(
-                            str(any_request_available)))
-
-        except NotEnoughStake as error:
-            self.__logger.warning("Cannot poll for audit request: {0}".format(str(error)))
-
-        except DeduplicationException as error:
-            self.__logger.debug(
-                "Error when attempting to perform an audit request: {0}".format(str(error))
-            )
-        except TransactionNotConfirmedException as error:
-            error_msg = "A transaction occurred, but was then uncled and never recovered. {0}"
-            self.__logger.debug(error_msg.format(str(error)))
-        except Exception as error:
-            self.__logger.exception(str(error))
-
-    def __poll_police_request(self):
-        """
-        Polls the audit contract for police requests (aka assignments). If the
-        node is not a police officer, do nothing. Otherwise, save the event in
-        the database to move it along the audit pipeline.
-        """
-
-        if not self.is_police_officer():
-            return
-
-        try:
-            probe = self.__get_next_police_assignment()
-            has_assignment = probe[0]
-
-            already_processed = self.__config.event_pool_manager.is_request_processed(
-                request_id=probe[1]
-            )
-
-            # If the police node does not have an assignment
-            # or has one that has been already processed, do nothing
-            if already_processed or not has_assignment:
-                return
-
-            # Otherwise, save to DB
-            self.__add_evt_to_db(
-                request_id=probe[1],
-                requestor=self.config.audit_contract_address,
-                price=probe[2],
-                uri=probe[3],
-                block_nbr=probe[4],
-                is_audit=False)
-        except Exception as error:
-            self.__logger.exception("Error polling police requests: {0}".format(str(error)))
-
     def __start_claim_rewards_thread(self):
         """
         Collects any unclaimed audit rewards every 24 hours.
@@ -421,40 +271,6 @@ class QSPAuditNode:
         handle = claim_rewards_thread.start()
         self.__internal_thread_handles.append(handle)
         return handle
-
-    def __add_evt_to_db(self, request_id, requestor, uri, price, block_nbr, is_audit=True):
-        evt = {}
-        try:
-            evt = {
-                'request_id': str(request_id),
-                'requestor': str(requestor),
-                'contract_uri': str(uri),
-                'evt_name': QSPAuditNode.__EVT_AUDIT_ASSIGNED,
-                'block_nbr': str(block_nbr),
-                'status_info': "Audit Assigned",
-                'price': str(price),
-            }
-            evt = set_evt_as_audit(evt) if is_audit else set_evt_as_police_check(evt)
-            self.__config.event_pool_manager.add_evt_to_be_assigned(evt)
-        except KeyError as error:
-            self.__logger.exception(
-                "KeyError when processing audit assigned event: {0}".format(str(error))
-            )
-        except Exception as error:
-            self.__logger.exception(
-                "Error when processing audit assigned event {0}: {1}".format(str(evt), str(error)),
-                requestId=request_id,
-            )
-            self.__config.event_pool_manager.set_evt_status_to_error(evt)
-
-    def __get_next_police_assignment(self):
-        """
-        Gets the next police assignment tuple.
-        """
-        return mk_read_only_call(
-            self.__config,
-            self.__config.audit_contract.functions.getNextPoliceAssignment()
-        )
 
     def __run_monitor_submisson_thread(self):
         timeout_limit = self.__config.submission_timeout_limit_blocks
@@ -517,27 +333,6 @@ class QSPAuditNode:
 
         # Close resources
         self.__config.event_pool_manager.close()
-
-    def __get_next_audit_request(self):
-        """
-        Attempts to get a request from the audit request queue.
-        """
-        # NOTE
-        # The audit contract checks whether the node has enough stake before
-        # accepting a bid. No need to replicate that logic here.
-        transaction = self.__config.audit_contract.functions.getNextAuditRequest()
-        tx_hash = None
-        try:
-            tx_hash = send_signed_transaction(
-                self.__config,
-                transaction,
-                wait_for_transaction_receipt=True)
-            self.__logger.debug("A getNextAuditRequest transaction has been sent")
-        except Timeout as e:
-            self.__logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
-                str(transaction),
-                e))
-        return tx_hash
 
     @property
     def is_initialized(self):

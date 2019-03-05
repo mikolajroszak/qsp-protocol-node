@@ -11,7 +11,7 @@
 Tests the flow of receiving audit requests and their flow within the QSP audit node
 """
 import unittest
-
+from unittest import mock
 
 from audit import QSPAuditNode
 from audit import Analyzer, Wrapper
@@ -35,7 +35,6 @@ from time import sleep
 from time import time
 from timeout_decorator import timeout
 from threading import Thread
-from utils.eth import DeduplicationException
 
 
 class TestQSPAuditNode(QSPTest):
@@ -190,38 +189,6 @@ class TestQSPAuditNode(QSPTest):
         self.assertEqual(snd['fk_status'], 'ER')
         self.assertEqual(thrd['fk_status'], 'AS')
 
-    @timeout(10, timeout_exception=StopIteration)
-    def test_poll_audit_request_exception(self):
-        # The following causes an exception in the auditing node, but it should be caught and
-        # should not propagate
-        get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
-
-        def mocked__get_next_audit_request():
-            raise Exception('mocked exception')
-
-        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
-        self.__set_any_request_available(1)
-        self.__audit_node._QSPAuditNode__poll_audit_request()
-        self.__set_any_request_available(0)
-        self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
-        self.__assert_event_table_contains([])
-
-    @timeout(10, timeout_exception=StopIteration)
-    def test_poll_audit_request_deduplication_exceptions(self):
-        # The following causes an exception in the auditing node, but it should be caught and
-        # should not propagate
-        get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
-
-        def mocked__get_next_audit_request():
-            raise DeduplicationException('mocked exception')
-
-        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
-        self.__set_any_request_available(1)
-        self.__audit_node._QSPAuditNode__poll_audit_request()
-        self.__set_any_request_available(0)
-        self.__audit_node._QSPAuditNode__get_next_audit_request = get_next_audit_request
-        self.__assert_event_table_contains([])
-
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_contract_audit_request(self):
         """
@@ -262,7 +229,7 @@ class TestQSPAuditNode(QSPTest):
                         "full_report": "IGNORE",
                         "compressed_report": compressed_report
                         }
-        self.__assert_event_table_contains([expected_row],
+        self.assert_event_table_contains(self.__config, [expected_row],
                                          ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
@@ -322,7 +289,7 @@ class TestQSPAuditNode(QSPTest):
                         "full_report": "IGNORE",
                         "compressed_report": compressed_report
                         }
-        self.__assert_event_table_contains([expected_row],
+        self.assert_event_table_contains(self.__config, [expected_row],
                                          ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
@@ -382,7 +349,7 @@ class TestQSPAuditNode(QSPTest):
                         "full_report": "IGNORE",
                         "compressed_report": compressed_report
                         }
-        self.__assert_event_table_contains([expected_row],
+        self.assert_event_table_contains(self.__config, [expected_row],
                                           ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
@@ -430,7 +397,7 @@ class TestQSPAuditNode(QSPTest):
                         "full_report": "IGNORE",
                         "compressed_report": compressed_report
                         }
-        self.__assert_event_table_contains([expected_row],
+        self.assert_event_table_contains(self.__config, [expected_row],
                                            ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
@@ -474,7 +441,7 @@ class TestQSPAuditNode(QSPTest):
                         "full_report": "IGNORE",
                         "compressed_report": compressed_report
                         }
-        self.__assert_event_table_contains([expected_row],
+        self.assert_event_table_contains(self.__config, [expected_row],
                                             ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     # TODO(mderka): Disabled flaky test, investigate with QSP-852
@@ -581,7 +548,7 @@ class TestQSPAuditNode(QSPTest):
                              "full_report": "IGNORE",
                              "compressed_report": compressed_report
                              }
-        self.__assert_event_table_contains([expected_row],
+        self.assert_event_table_contains(self.__config, [expected_row],
                                             ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(100, timeout_exception=StopIteration)
@@ -622,7 +589,7 @@ class TestQSPAuditNode(QSPTest):
                         "full_report": "IGNORE",
                         "compressed_report": compressed_report
                         }
-        self.__assert_event_table_contains([expected_row],
+        self.assert_event_table_contains(self.__config, [expected_row],
                                             ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     def test_run_repeated_start_expecting_fail(self):
@@ -646,12 +613,9 @@ class TestQSPAuditNode(QSPTest):
 
         mocked__get_next_audit_request_called = [False]
 
-        # Mocking the QSPAuditNode.__get_next_audit_request. This function is supposed to be called
-        # if the limit is not reached.
-        original__get_next_audit_request = self.__audit_node._QSPAuditNode__get_next_audit_request
-
         def mocked__get_next_audit_request():
             # this should be unreachable when the limit is reached
+            print("HIT THIS")
             mocked__get_next_audit_request_called[0] = True
 
         self.assertEqual(int(self.__config.max_assigned_requests), 1)
@@ -663,18 +627,17 @@ class TestQSPAuditNode(QSPTest):
 
         buggy_contract = resource_uri("DappBinWallet.sol")
         self.__request_assign_and_emit(self.__REQUEST_ID, buggy_contract, self.__PRICE, 100)
-
-        # Node should not ask for further request
-        self.__audit_node._QSPAuditNode__get_next_audit_request = mocked__get_next_audit_request
-        # Make sure there is enough time for mining poll to call QSPAuditNode.__check_then_bid_audit
-        # request
-        sleep(self.__config.block_mined_polling + 1)
-        self.__evt_wait_loop(self.__submitReport_filter)
-        self.__config.web3_client.eth.waitForTransactionReceipt(
-            self.__set_assigned_request_count(0))
-        self.__send_done_message(self.__REQUEST_ID)
-        # Restore QSPAuditNode.__get_next_audit_request actual implementation
-        self.__audit_node._QSPAuditNode__get_next_audit_request = original__get_next_audit_request
+        with mock.patch(
+                'audit.threads.poll_requests_thread.PollRequestsThread.'
+                '_PollRequestsThread__get_next_audit_request',
+                side_effect=mocked__get_next_audit_request):
+            # Make sure there is enough time for mining poll to call QSPAuditNode.__check_then_bid_audit
+            # request
+            sleep(self.__config.block_mined_polling + 1)
+            self.__evt_wait_loop(self.__submitReport_filter)
+            self.__config.web3_client.eth.waitForTransactionReceipt(
+                self.__set_assigned_request_count(0))
+            self.__send_done_message(self.__REQUEST_ID)
 
         # This is a critical line to be called as the node did all it audits and starts bidding
         # again
@@ -741,7 +704,7 @@ class TestQSPAuditNode(QSPTest):
                         "full_report": "IGNORE",
                         "compressed_report": compressed_report
                         }
-        self.__assert_event_table_contains([expected_row],
+        self.assert_event_table_contains(self.__config, [expected_row],
                                             ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(30, timeout_exception=StopIteration)
@@ -789,39 +752,9 @@ class TestQSPAuditNode(QSPTest):
         encoder = ReportEncoder()
         return encoder.compress_report(full_report, full_report['request_id'])
 
-    @staticmethod
-    def __find_difference(list1, list2):
-        """
-        Returns the difference between two lists of audit_evt records.
-        """
-        for x in [item for item in list1 if item not in list2]:
-            for y in [y for y in list2 if y['request_id'] == x["request_id"]]:
-                for key in x.keys():
-                    if x[key] != y[key]:
-                        msg = "Key: {}, Value 1:{} Values 2:{} \nList1: {}\nList2: {}"
-                        return msg.format(key, x[key], y[key], list1, list2)
-        return "No difference found"
-
     ##############################################
     # Helper methods (object level)
     ##############################################
-
-    def __assert_event_table_contains(self, data, ignore_keys=(), close=True):
-        """Checks that the table audit_evt contains all dictionaries that are in data"""
-
-        query = "select * from audit_evt"
-        content = self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker.execute(
-            query)
-        if close:
-            self.__close_evt_manager()
-        self.assertEqual(len(content), len(data), "{} is not {}".format(content, data))
-        for key in ignore_keys:
-            for row in content:
-                row[key] = "Ignored"
-            for row in data:
-                row[key] = "Ignored"
-        self.assertEqual(len([row for row in content if row in data]), len(data),
-                         TestQSPAuditNode.__find_difference(data, content))
 
     def __assert_audit_request_report(self, request_id, report_file_path=None, ignore_id=False):
         audit = self.__fetch_audit_from_db(request_id)
@@ -843,12 +776,6 @@ class TestQSPAuditNode(QSPTest):
         for analyzer in self.__config.analyzers_config:
             name, conf = list(analyzer.items())[0]
             self.assertTrue(name in executed_analyzers)
-
-    def __close_evt_manager(self):
-        """
-        Closes the event manager. This has to be done before asserting the final database state.
-        """
-        self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
 
     def __evt_wait_loop(self, current_filter):
         events = current_filter.get_new_entries()

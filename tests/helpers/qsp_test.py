@@ -27,6 +27,42 @@ class QSPTest(unittest.TestCase):
     def setUpClass(cls):
         setup_logging()
 
+    def __close_evt_manager(self, config):
+        """
+        Closes the event manager. This has to be done before asserting the final database state.
+        """
+        config.event_pool_manager.close()
+
+    @staticmethod
+    def __find_difference(list1, list2):
+        """
+        Returns the difference between two lists of audit_evt records.
+        """
+        for x in [item for item in list1 if item not in list2]:
+            for y in [y for y in list2 if y['request_id'] == x["request_id"]]:
+                for key in x.keys():
+                    if x[key] != y[key]:
+                        msg = "Key: {}, Value 1:{} Values 2:{} \nList1: {}\nList2: {}"
+                        return msg.format(key, x[key], y[key], list1, list2)
+        return "No difference found"
+
+    def assert_event_table_contains(self, config, data, ignore_keys=(), close=True):
+        """Checks that the table audit_evt contains all dictionaries that are in data"""
+
+        query = "select * from audit_evt"
+        content = config.event_pool_manager.sql3lite_worker.execute(
+            query)
+        if close:
+            self.__close_evt_manager(config)
+        self.assertEqual(len(content), len(data), "{} is not {}".format(content, data))
+        for key in ignore_keys:
+            for row in content:
+                row[key] = "Ignored"
+            for row in data:
+                row[key] = "Ignored"
+        self.assertEqual(len([row for row in content if row in data]), len(data),
+                         QSPTest.__find_difference(data, content))
+
     def compare_json(self, audit_file, report_file_path, json_loaded=False, ignore_id=False):
         if not json_loaded:
             actual_json = load_json(audit_file)
