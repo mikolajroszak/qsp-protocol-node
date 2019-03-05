@@ -12,7 +12,8 @@ from .wrapper import Wrapper
 from .analyzer import Analyzer
 from .vulnerabilities_set import VulnerabilitiesSet
 from .threads import QSPThread, UpdateMinPriceThread, ComputeGasPriceThread, CollectMetricsThread, \
-    SubmitReportThread, PerformAuditThread, ClaimRewardsThread, PollRequestsThread
+    SubmitReportThread, PerformAuditThread, ClaimRewardsThread, PollRequestsThread, \
+    MonitorSubmissionThread
 
 __all__ = ['QSPAuditNode',
            'Wrapper',
@@ -23,6 +24,7 @@ __all__ = ['QSPAuditNode',
            'ClaimRewardsThread',
            'ComputeGasPriceThread',
            'CollectMetricsThread',
+           'MonitorSubmissionThread',
            'PerformAuditThread',
            'SubmitReportThread',
            'PollRequestsThread']

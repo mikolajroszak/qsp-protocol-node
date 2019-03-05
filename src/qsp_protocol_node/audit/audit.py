@@ -16,9 +16,8 @@ from log_streaming import get_logger
 from .threads import ClaimRewardsThread
 from .threads import CollectMetricsThread, ComputeGasPriceThread, PollRequestsThread
 from .threads import UpdateMinPriceThread, QSPThread, SubmitReportThread, PerformAuditThread
+from .threads import MonitorSubmissionThread
 from utils.eth import mk_read_only_call
-
-from threading import Thread
 
 
 class QSPAuditNode:
@@ -213,7 +212,7 @@ class QSPAuditNode:
         # and eventually submitting results
         self.__internal_thread_handles.append(self.__start_submission_thread())
         self.__start_perform_audit_thread()
-        self.__internal_thread_handles.append(self.__run_monitor_submisson_thread())
+        self.__start_monitor_submisson_thread()
 
         # Monitors the state of each thread. Upon error, terminate the
         # audit node. Checking whether a thread is alive or not does
@@ -272,44 +271,11 @@ class QSPAuditNode:
         self.__internal_thread_handles.append(handle)
         return handle
 
-    def __run_monitor_submisson_thread(self):
-        timeout_limit = self.__config.submission_timeout_limit_blocks
-
-        def monitor_submission_timeout(evt, current_block):
-            try:
-                if (current_block - evt['block_nbr']) > timeout_limit:
-                    evt['status_info'] = "Submission timeout"
-                    self.__config.event_pool_manager.set_evt_status_to_error(evt)
-                    msg = "Submission timeout for audit {0}. Setting to error"
-                    self.__logger.debug(msg.format(str(evt['request_id'])))
-            except KeyError as error:
-                self.__logger.exception(
-                    "KeyError when monitoring timeout: {0}".format(str(error))
-                )
-            except Exception as error:
-                # TODO How to inform the network of a submission timeout?
-                self.__logger.exception(
-                    "Unexpected error when monitoring timeout: {0}".format(error))
-
-        def process_submissions():
-            # Checks for a potential timeouts
-            block = self.__config.web3_client.eth.blockNumber
-            self.__config.event_pool_manager.process_submission_events(
-                monitor_submission_timeout,
-                block,
-            )
-
-        def exec():
-            try:
-                self.__run_with_interval(process_submissions, self.__config.evt_polling)
-            except Exception as error:
-                self.__logger.exception("Error in the monitor thread: {0}".format(str(error)))
-
-        monitor_thread = Thread(target=exec, name="monitor thread")
-        self.__internal_thread_handles.append(monitor_thread)
-        monitor_thread.start()
-
-        return monitor_thread
+    def __start_monitor_submisson_thread(self):
+        monitor_thread = MonitorSubmissionThread(self.__config)
+        self.__internal_thread_definitions.append(monitor_thread)
+        handle = monitor_thread.start()
+        self.__internal_thread_handles.append(handle)
 
     def stop(self):
         """
