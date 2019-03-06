@@ -7,7 +7,63 @@
 #                                                                                                  #
 ####################################################################################################
 
+
 testnet:
+  eth_node:
+    provider: !!str "HTTPProvider"
+    args:
+      endpoint_uri: !!str "https://ropsten.infura.io/v3/${token}"
+  audit_contract_abi:
+    uri: !!str "./resources/contracts/testnet/QuantstampAudit-v-{major-version}-abi.json"
+    metadata: !!str "./resources/contracts/testnet/QuantstampAudit-v-{major-version}-meta.json"
+  min_price_in_qsp: !!int 10
+  max_assigned_requests: !!int 5
+  evt_polling_sec: !!int 5
+  block_mined_polling_interval_sec: !!int 1
+  block_discard_on_restart: !!int 1
+  start_n_blocks_in_the_past: !!int 10
+  n_blocks_confirmation: !!int 6
+  analyzers:
+    - mythril:
+        args: !!str "" # No args provided; rely on defaults for now
+        storage_dir: !!str "/tmp/mythril"
+        timeout_sec: !!int 276
+    - securify:
+        args: "" # No args provided; rely on defaults for now
+        storage_dir: !!str "/tmp/securify"
+        timeout_sec: !!int 276
+  upload_provider:
+      is_enabled: !!bool False
+      name: !!str "S3Provider"
+      args:
+        bucket_name: !!str "qsp-protocol-reports-testnet"
+        contract_bucket_name: !!str "qsp-protocol-reports-testnet"
+  keystore_file: !!str "./resources/keystore/default.json"
+  gas_limit: !!int 500000
+  gas_price:
+    # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
+    strategy: !!str "dynamic"
+    # Only used if strategy is set to "static"
+    default_gas_price_wei: !!int 8000000000 # 8 Gwei
+    # Sets an upper bound on gas_price which would override high values computed by the strategy.
+    # Useful in case the network gets "gas attacked".
+    # Only used if strategy is set to "dynamic"
+    max_gas_price_wei: !!int 50000000000 # 50 Gwei
+  logging:
+    streaming:
+      is_enabled: !!bool False
+      provider: !!str "CloudWatchProvider"
+      args:
+        log_group: !!str "qsp-protocol-nodes-testnet"
+        log_stream: !!str "node-{id}"
+        send_interval_seconds: !!int 30
+  metric_collection:
+    is_enabled: !!bool True
+    interval_seconds: !!int 30
+    destination_endpoint: !!str "https://dev-qsp-dashboard.quantstamp.com/node-metrics"
+  heartbeat_allowed: !!bool False
+
+dev:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
