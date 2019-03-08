@@ -104,6 +104,20 @@ def __wait_for_confirmed_transaction_receipt(config, tx_hash):
     raise TransactionNotConfirmedException()
 
 
+def __log_tx_failure(tx_receipt):
+    """
+    Makes a log record at error level when a transaction fails.
+    """
+    if tx_receipt is None:
+        logger.debug("Cannot check status of transaction with None receipt.")
+    else:
+        try:
+            if not bool(tx_receipt["status"]):
+                logger.error("Transaction failed: {0}".format(str(tx_receipt)))
+        except KeyError:
+            logger.error("Status is not available in receipt: {0}".format(str(tx_receipt)))
+
+
 def __send_signed_transaction(config, transaction, attempts=10, wait_for_transaction_receipt=False):
     args = mk_args(config)
     if config.account_private_key is None:  # no local signing (in case of tests)
@@ -120,10 +134,11 @@ def __send_signed_transaction(config, transaction, attempts=10, wait_for_transac
                 tx_hash = config.web3_client.eth.sendRawTransaction(signed_tx.rawTransaction)
 
                 if wait_for_transaction_receipt:
-                    config.web3_client.eth.waitForTransactionReceipt(tx_hash, 120)
+                    receipt = config.web3_client.eth.waitForTransactionReceipt(tx_hash, 120)
                     logger.debug("Transaction receipt found.")
                     if config.n_blocks_confirmation > 0:
                         __wait_for_confirmed_transaction_receipt(config, tx_hash)
+                    __log_tx_failure(receipt)
                 return tx_hash
             except ValueError as e:
                 if i == attempts - 1:
