@@ -203,7 +203,6 @@ class TestConfig(QSPTest):
         test_config = fetch_file(resource_uri('test_config.yaml'))
         with open(test_config) as yaml_file:
             cfg = yaml.load(yaml_file)
-
         tmp = NamedTemporaryFile(mode='w+t', delete=False)
         yaml.dump(cfg, tmp, default_flow_style=False)
 
@@ -409,6 +408,31 @@ class TestConfig(QSPTest):
         self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
         self.assertFalse(config.heartbeat_allowed)
+
+    def test_inherited_config(self):
+        config_file_uri = resource_uri("test_config.yaml")
+        config = ConfigFactory.create_from_file(config_file_uri,
+                                                "staging",
+                                                validate_contract_settings=False)
+        self.assertIsNotNone(config.eth_provider)
+        self.assertIsNotNone(config.web3_client)
+        self.assertIsNotNone(config.account)
+        self.assertIsNotNone(config.analyzers)
+        self.assertIsNotNone(config.upload_provider)
+        self.assertIsNotNone(config.metric_collection_destination_endpoint)
+        self.assertEqual(0, config.min_price_in_qsp)
+        self.assertEqual(0, config.gas_price_wei)
+        self.assertEqual(5, config.evt_polling)
+        self.assertEqual(2, len(config.analyzers))
+        self.assertEqual(5, config.start_n_blocks_in_the_past)
+        self.assertEqual(1, config.block_discard_on_restart)
+        self.assertTrue(config.heartbeat_allowed)
+        self.assertTrue(config.upload_provider_is_enabled)
+        self.assertEqual(config.upload_provider_args,
+                         {
+                            'bucket_name': 'qsp-protocol-reports-staging',
+                            'contract_bucket_name': 'qsp-protocol-reports-staging'
+                         })
 
     def test_inject_token_auth(self):
         auth_token = "abc123456"

@@ -7,7 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-dev:
+dev: &default
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
   # audit_contract_abi: The contract is injected in tests
@@ -49,44 +49,12 @@ dev:
     destination_endpoint: !!str "https://localhost/node-metrics"
   heartbeat_allowed: !!bool False
 
-
 staging:
-  eth_node:
-    provider: !!str "EthereumTesterProvider" # (no args provided)
-  # audit_contract_abi: The contract is injected in tests
-  min_price_in_qsp: !!int 0
-  gas_price:
-    # Can be set to one of ["fast" (expected to mine in < 60s)|"medium" (< 10 minutes)|"slow" (< 1 hour)|"fixed"]
-    strategy: !!str "dynamic"
-    # Only used if gas_strategy is set to "fixed", or if the other strategies somehow fail
-    default_gas_price_wei: !!int 0
-    # Sets an upper bound on gas_price which would override high values computed by the strategy.
-    # Useful in case the network gets "gas attacked".
-    max_gas_price_wei: !!int 20000000000
-  max_assigned_requests: !!int 1
-  evt_polling_sec: !!int 5
-  block_mined_polling_interval_sec: !!int 5
-  block_discard_on_restart: !!int 1
-  analyzers:
-    - mythril:
-        args: !!str "" # No args provided; rely on defaults for now
-        storage_dir: !!str "/tmp/.mythril"
-        timeout_sec: !!int 120
-    - securify:
-        args: "" # No args provided; rely on defaults for now
-        storage_dir: !!str "/tmp/.securify"
-        timeout_sec: !!int 300
+  <<: *default
   upload_provider:
       is_enabled: !!bool True
       name: !!str "S3Provider"
       args:
         bucket_name: !!str "qsp-protocol-reports-staging"
         contract_bucket_name: !!str "qsp-protocol-reports-staging"
-  #account: No provided account hex (use the first one by default)
-  evt_db_path: !!str "/tmp/evts.test"
-  start_n_blocks_in_the_past: !!int 5
-  n_blocks_confirmation: !!int 10
-  metric_collection:
-    is_enabled: !!bool False
-    interval_seconds: !!int 30
-    destination_endpoint: !!str "https://localhost/node-metrics"
+  heartbeat_allowed: !!bool True

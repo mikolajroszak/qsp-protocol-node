@@ -11,6 +11,7 @@
 Provides the configuration for executing a QSP Audit node,
 as loaded from an input YAML file
 """
+
 import utils.io as io_utils
 
 from dpath.util import get
