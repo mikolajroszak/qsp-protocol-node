@@ -8,8 +8,11 @@
 ####################################################################################################
 
 """
-Provides the thread updating the min price for the QSP Audit node implementation.
+Provides the thread for polling requests for the QSP Audit node implementation.
 """
+
+from threading import Thread
+
 from .qsp_thread import QSPThread
 from utils.eth import send_signed_transaction
 from utils.eth import mk_read_only_call
@@ -37,21 +40,23 @@ class PollRequestsThread(QSPThread):
 
     def __init__(self, config):
         """
-        Builds a QSPAuditNode object from the given input parameters.
+        Builds the thread object from the given input parameters.
         """
         QSPThread.__init__(self, config)
 
     def start(self):
         """
-        Updates min price every 24 hours.
+        Polls audit and police requests with every block.
         """
-        return self.__execute()
+        poll_requests_thread = Thread(target=self.__execute, name="poll_requests thread")
+        poll_requests_thread.start()
+        return poll_requests_thread
 
     def __execute(self):
         """
         Defines the function to be executed and how often.
         """
-        return self.run_block_mined_thread("poll_requests", self.__poll_requests)
+        self.run_when_block_mined(self.__poll_requests)
 
     def __get_min_stake_qsp(self):
         """

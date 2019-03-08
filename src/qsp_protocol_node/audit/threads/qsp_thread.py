@@ -7,7 +7,6 @@
 #                                                                                                  #
 ####################################################################################################
 
-from threading import Thread
 from time import sleep, time
 
 from log_streaming import get_logger
@@ -43,36 +42,28 @@ class QSPThread:
                 last_called = now
             sleep(QSPThread.__THREAD_SLEEP_TIME)
 
-    def run_block_mined_thread(self, handler_name, handler):
+    def run_when_block_mined(self, body_function):
         """
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
         self.__exec = True
 
-        def execute():
-            current_block = 0
-            last_called = 0
-            while self.__exec:
-                now = time()
-                if now - last_called > self.__config.block_mined_polling:
-                    last_called = now
-                    if current_block < self.__config.web3_client.eth.blockNumber:
-                        current_block = self.__config.web3_client.eth.blockNumber
-                        self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
-                        try:
-                            handler()
-                        except Exception as e:
-                            self.__logger.exception(
-                                "Error in block mined thread handler: {0}".format(str(e)))
-                            raise e
-                sleep(QSPThread.__THREAD_SLEEP_TIME)
-
-        # todo(mderka): Upon complete refactoring, this should be done outside this method
-        # todo(mderka): See run_with_interval and be consistent
-        new_block_monitor_thread = Thread(target=execute, name="{0} thread".format(handler_name))
-        new_block_monitor_thread.start()
-
-        return new_block_monitor_thread
+        current_block = 0
+        last_called = 0
+        while self.__exec:
+            now = time()
+            if now - last_called > self.__config.block_mined_polling:
+                last_called = now
+                if current_block < self.__config.web3_client.eth.blockNumber:
+                    current_block = self.__config.web3_client.eth.blockNumber
+                    self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
+                    try:
+                        body_function()
+                    except Exception as e:
+                        self.__logger.exception(
+                            "Error in block mined thread handler: {0}".format(str(e)))
+                        raise e
+            sleep(QSPThread.__THREAD_SLEEP_TIME)
 
     @property
     def thread_name(self):

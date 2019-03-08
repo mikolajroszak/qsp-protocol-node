@@ -25,42 +25,12 @@ from unittest.mock import MagicMock
 
 class TestPoliceFunctions(QSPTest):
 
-    @classmethod
-    def setUpClass(cls):
-        QSPTest.setUpClass()
-        config = fetch_config()
-        remove(config.evt_db_path)
-
-    def setUp(self):
-        self.__config = fetch_config()
-        self.__audit_node = QSPAuditNode(self.__config)
-
-    def test_call_to_is_police_officer(self):
+    def test_call_to_is_police_officer_no_exception(self):
         """
         Tests whether calling the smart contract to assess whether a node is a police works.
         """
-        exception = None
-        try:
-            self.__audit_node.is_police_officer(self.__config)
-        except Exception as e:
-            exception = e
-        self.assertIsNone(exception)
-
-    def tearDown(self):
-        if self.__audit_node._QSPAuditNode__exec:
-            self.__audit_node.stop()
-
-        remove(self.__config.evt_db_path)
-
-    def __load_report(self, report_file_path):
-        return load_json(fetch_file(resource_uri(report_file_path)))
-
-    def __compressed_report(self, report_file_path):
-        full_report = self.__load_report(report_file_path)
-        request_id = full_report['request_id']
-
-        encoder = ReportEncoder()
-        return encoder.compress_report(full_report, request_id)
+        config = fetch_config()
+        QSPAuditNode.is_police_officer(config)
 
 
 class TestPoliceLogic(QSPTest):
@@ -103,7 +73,7 @@ class TestPoliceLogic(QSPTest):
         )
 
         with mock.patch('audit.audit.SubmitReportThread', return_value=submit_report_instance), \
-                mock.patch('audit.audit.PollRequestsThread', return_value=poll_requests_instance):
+             mock.patch('audit.audit.PollRequestsThread', return_value=poll_requests_instance):
             # Sets the node as a police officer.
             self.__audit_node.is_police_officer = MagicMock()
             self.__audit_node.is_police_officer.return_value = True
@@ -199,7 +169,7 @@ class TestPoliceLogic(QSPTest):
         audit_node_thread.start()
 
     def tearDown(self):
-        if self.__audit_node._QSPAuditNode__exec:
+        if self.__audit_node.exec:
             self.__audit_node.stop()
 
         remove(self.__config.evt_db_path)

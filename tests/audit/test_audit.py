@@ -134,14 +134,14 @@ class TestQSPAuditNode(QSPTest):
         # temporarily replaced by a mock object so that the close method of the audit node can stop
         # and merge all the threads, and then placed back. The manager is closed properly at the end
         # of the test before verifying the results.
-        manager = self.__audit_node._QSPAuditNode__config.event_pool_manager
-        self.__audit_node._QSPAuditNode__config._Config__event_pool_manager = ManagerMock()
+        manager = self.__audit_node.config.event_pool_manager
+        self.__audit_node.config._Config__event_pool_manager = ManagerMock()
         self.__audit_node.stop()
-        self.__audit_node._QSPAuditNode__config._Config__event_pool_manager = manager
+        self.__audit_node.config._Config__event_pool_manager = manager
 
-        self.__audit_node._QSPAuditNode__config._Config__web3_client = Web3Mock(EthMock())
-        self.__audit_node._QSPAuditNode__config._Config__submission_timeout_limit_blocks = 10
-        self.__audit_node._QSPAuditNode__config._Config__block_discard_on_restart = 2
+        self.__audit_node.config._Config__web3_client = Web3Mock(EthMock())
+        self.__audit_node.config._Config__submission_timeout_limit_blocks = 10
+        self.__audit_node.config._Config__block_discard_on_restart = 2
         # certainly times out
         evt_first = {'request_id': 1,
                      'requestor': 'x',
@@ -169,22 +169,22 @@ class TestQSPAuditNode(QSPTest):
                      'status_info': 'x',
                      'fk_type': 'AU',
                      'price': 12}
-        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_first)
-        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(
+        self.__audit_node.config.event_pool_manager.add_evt_to_be_assigned(evt_first)
+        self.__audit_node.config.event_pool_manager.add_evt_to_be_assigned(
             evt_second
         )
-        self.__audit_node._QSPAuditNode__config.event_pool_manager.add_evt_to_be_assigned(evt_third)
-        self.__audit_node._QSPAuditNode__config.event_pool_manager.sql3lite_worker.execute(
+        self.__audit_node.config.event_pool_manager.add_evt_to_be_assigned(evt_third)
+        self.__audit_node.config.event_pool_manager.sql3lite_worker.execute(
             "update audit_evt set fk_status = 'TS' where request_id = 1"
         )
         self.__audit_node._QSPAuditNode__timeout_stale_requests()
-        fst = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+        fst = self.__audit_node.config.event_pool_manager.get_event_by_request_id(
             evt_first['request_id'])
-        snd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+        snd = self.__audit_node.config.event_pool_manager.get_event_by_request_id(
             evt_second['request_id'])
-        thrd = self.__audit_node._QSPAuditNode__config.event_pool_manager.get_event_by_request_id(
+        thrd = self.__audit_node.config.event_pool_manager.get_event_by_request_id(
             evt_third['request_id'])
-        self.__audit_node._QSPAuditNode__config.event_pool_manager.close()
+        self.__audit_node.config.event_pool_manager.close()
         self.assertEqual(fst['fk_status'], 'ER')
         self.assertEqual(snd['fk_status'], 'ER')
         self.assertEqual(thrd['fk_status'], 'AS')
@@ -359,10 +359,10 @@ class TestQSPAuditNode(QSPTest):
         to the production of a report and its submission.
         """
         # rewires the config
-        self.__audit_node._QSPAuditNode__config._Config__report_upload_is_enabled = False
-        self.__audit_node._QSPAuditNode__config._Config__upload_provider_name = ""
-        self.__audit_node._QSPAuditNode__config._Config__upload_provider_args = {}
-        self.__audit_node._QSPAuditNode__config._Config__upload_provider = DummyProvider()
+        self.__audit_node.config._Config__report_upload_is_enabled = False
+        self.__audit_node.config._Config__upload_provider_name = ""
+        self.__audit_node.config._Config__upload_provider_args = {}
+        self.__audit_node.config._Config__upload_provider = DummyProvider()
 
         # since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
@@ -442,7 +442,29 @@ class TestQSPAuditNode(QSPTest):
                         "compressed_report": compressed_report
                         }
         self.assert_event_table_contains(self.__config, [expected_row],
-                                            ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
+                                         ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
+
+    def test_check_all_threads_return_while_running(self):
+        """
+        Tests that no exception is thrown when the threads are healthy
+        """
+        self.__audit_node.check_all_threads()
+
+    def test_check_all_threads_exception(self):
+        handles = self.__audit_node._QSPAuditNode__internal_thread_handles
+        self.__audit_node.stop()
+        self.assertFalse(self.__audit_node.exec)
+        # this only sets the exec attribute, the threads remain dead
+        self.__audit_node.start()
+        self.assertTrue(self.__audit_node.exec)
+        # set back all the dead handles
+        self.__audit_node._QSPAuditNode__internal_thread_handles = handles
+        try:
+            self.check_all_threads()
+            self.fail("Dead threads were not detected")
+        except Exception:
+            # expected
+            pass
 
     # TODO(mderka): Disabled flaky test, investigate with QSP-852
     # @timeout(300, timeout_exception=StopIteration)
@@ -658,13 +680,13 @@ class TestQSPAuditNode(QSPTest):
             # It's an expected behaviour
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
             self.assertEqual(
-                self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec,
-                self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name][
+                self.__audit_node.config.analyzers[i].wrapper._Wrapper__timeout_sec,
+                self.__audit_node.config._Config__analyzers_config[i][analyzer_name][
                     'timeout_sec'])
             original_timeouts.append(
-                self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec)
-            self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = 6
-            self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][analyzer_name][
+                self.__audit_node.config.analyzers[i].wrapper._Wrapper__timeout_sec)
+            self.__audit_node.config.analyzers[i].wrapper._Wrapper__timeout_sec = 6
+            self.__audit_node.config._Config__analyzers_config[i][analyzer_name][
                 'timeout_sec'] = 3
 
         contract = resource_uri("kyber.sol")
@@ -677,10 +699,10 @@ class TestQSPAuditNode(QSPTest):
                                            report_file_path="reports/kyber.json")
         # setting back the configurations
         for i in range(0, len(original_timeouts)):
-            self.__audit_node._QSPAuditNode__config.analyzers[i].wrapper._Wrapper__timeout_sec = \
+            self.__audit_node.config.analyzers[i].wrapper._Wrapper__timeout_sec = \
                 original_timeouts[i]
             analyzer_name = self.__config.analyzers[i].wrapper.analyzer_name
-            self.__audit_node._QSPAuditNode__config._Config__analyzers_config[i][
+            self.__audit_node.config._Config__analyzers_config[i][
                 analyzer_name]['timeout_sec'] = original_timeouts[i]
 
         compressed_report = TestQSPAuditNode.__compress_report("reports/kyber.json")
@@ -714,7 +736,7 @@ class TestQSPAuditNode(QSPTest):
         Since this test requires loading the QuantstampAuditData contract, it is better here than
         test_config.py.
         """
-        config = self.__audit_node._QSPAuditNode__config
+        config = self.__audit_node.config
         config_utils = ConfigUtils(config.node_version)
         try:
             temp = config.submission_timeout_limit_blocks
@@ -730,16 +752,16 @@ class TestQSPAuditNode(QSPTest):
             self.fail("Configuration error should have been raised.")
         except ConfigurationException:
             config._Config__submission_timeout_limit_blocks = temp
-        for i in range(0, len(self.__audit_node._QSPAuditNode__config.analyzers)):
+        for i in range(0, len(self.__audit_node.config.analyzers)):
             try:
-                temp = self.__audit_node._QSPAuditNode__config.analyzers[
+                temp = self.__audit_node.config.analyzers[
                     i].wrapper._Wrapper__timeout_sec
-                self.__audit_node._QSPAuditNode__config.analyzers[
+                self.__audit_node.config.analyzers[
                     i].wrapper._Wrapper__timeout_sec = 123456
                 config_utils.check_configuration_settings(config)
                 self.fail("Configuration error should have been raised.")
             except ConfigurationException:
-                self.__audit_node._QSPAuditNode__config.analyzers[
+                self.__audit_node.config.analyzers[
                     i].wrapper._Wrapper__timeout_sec = temp
 
     ##############################################
