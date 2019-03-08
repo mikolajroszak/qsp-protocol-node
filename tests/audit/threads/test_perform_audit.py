@@ -23,14 +23,14 @@ class TestPerformAuditThread(QSPTest):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
-        self.__config = fetch_config()
+        self.__config = fetch_config(inject_contract=True)
         self.__thread = PerformAuditThread(self.__config)
 
     def test_init(self):
         self.assertEqual(self.__config, self.__thread.config)
 
     def test_stop(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = PerformAuditThread(config)
         thread.stop()
         self.assertFalse(thread.exec)

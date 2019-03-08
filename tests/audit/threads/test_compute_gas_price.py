@@ -16,13 +16,13 @@ from timeout_decorator import timeout
 class TestComputeGasPriceThread(QSPTest):
 
     def test_init(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = ComputeGasPriceThread(config)
         self.assertEqual(config, thread.config)
 
     @timeout(30, timeout_exception=StopIteration)
     def test_gas_price_computation_static(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = ComputeGasPriceThread(config)
         config._Config__default_gas_price_wei = 12345
         config._Config__gas_price_strategy = "static"
@@ -31,7 +31,7 @@ class TestComputeGasPriceThread(QSPTest):
 
     @timeout(30, timeout_exception=StopIteration)
     def test_gas_price_computation_empty_blockchain(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = ComputeGasPriceThread(config)
         # tests for errors when there are too few blocks in the blockchain history
         try:
@@ -43,7 +43,7 @@ class TestComputeGasPriceThread(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = ComputeGasPriceThread(config)
         handle = thread.start()
         self.assertTrue(thread.exec)

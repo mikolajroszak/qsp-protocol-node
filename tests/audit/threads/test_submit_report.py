@@ -23,7 +23,7 @@ class TestSubmitReportThread(QSPTest):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
-        self.__config = fetch_config()
+        self.__config = fetch_config(inject_contract=True)
         self.__submit_thread = SubmitReportThread(self.__config)
 
     def test_get_report_in_blockchain_no_exception(self):

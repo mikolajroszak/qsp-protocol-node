@@ -14,7 +14,11 @@ from audit.threads import SubmitReportThread
 from audit.threads import PollRequestsThread
 from audit.report_processing import ReportEncoder
 from helpers.qsp_test import QSPTest
-from helpers.resource import fetch_config, remove, resource_uri
+from helpers.resource import (
+    fetch_config,
+    remove,
+    resource_uri,
+)
 from utils.io import fetch_file, load_json
 
 from timeout_decorator import timeout
@@ -29,7 +33,7 @@ class TestPoliceFunctions(QSPTest):
         """
         Tests whether calling the smart contract to assess whether a node is a police works.
         """
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         QSPAuditNode.is_police_officer(config)
 
 
@@ -38,11 +42,11 @@ class TestPoliceLogic(QSPTest):
     @classmethod
     def setUpClass(cls):
         QSPTest.setUpClass()
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         remove(config.evt_db_path)
 
     def setUp(self):
-        self.__config = fetch_config()
+        self.__config = fetch_config(inject_contract=True)
         self.__audit_node = QSPAuditNode(self.__config)
 
     @timeout(300, timeout_exception=StopIteration)

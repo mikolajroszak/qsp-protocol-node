@@ -20,7 +20,7 @@ from timeout_decorator import timeout
 class TestMonitorSubmissionThreads(QSPTest):
 
     def setUp(self):
-        self.config = fetch_config()
+        self.config = fetch_config(inject_contract=True)
         self.thread = MonitorSubmissionThread(self.config)
         self.evt_pool_manager = self.thread.config.event_pool_manager
         self.evt_pool_manager.set_evt_status_to_error = MagicMock()

@@ -22,7 +22,7 @@ from helpers.resource import (
     fetch_config,
     project_root,
     remove,
-    resource_uri,
+    resource_uri
 )
 from helpers.transact import safe_transact
 from upload import DummyProvider
@@ -53,14 +53,14 @@ class TestQSPAuditNode(QSPTest):
     @classmethod
     def setUpClass(cls):
         QSPTest.setUpClass()
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         remove(config.evt_db_path)
 
     def setUp(self):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
-        self.__config = fetch_config()
+        self.__config = fetch_config(inject_contract=True)
         self.__audit_node = QSPAuditNode(self.__config)
         self.__mk_unique_storage_dir()
 

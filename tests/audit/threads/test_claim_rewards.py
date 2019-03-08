@@ -23,11 +23,11 @@ class TestClaimRewards(QSPTest):
     @classmethod
     def setUpClass(cls):
         QSPTest.setUpClass()
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         remove(config.evt_db_path)
 
     def setUp(self):
-        self.__config = fetch_config()
+        self.__config = fetch_config(inject_contract=True)
         self.__claim_rewards_thread = ClaimRewardsThread(self.__config)
 
     def test_init(self):

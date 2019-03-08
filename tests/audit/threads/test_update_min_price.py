@@ -30,19 +30,19 @@ class TestUpdateMinPriceThread(QSPTest):
         return events
 
     def test_init(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = UpdateMinPriceThread(config)
         self.assertEqual(config, thread.config)
 
     def test_update_min_price_success(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = UpdateMinPriceThread(config)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"):
             thread.update_min_price()
 
     def test_update_min_price_exceptions(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = UpdateMinPriceThread(config)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=Exception):
@@ -81,7 +81,7 @@ class TestUpdateMinPriceThread(QSPTest):
                 pass
 
     def test_check_and_update_min_price(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = UpdateMinPriceThread(config)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"), \
@@ -90,7 +90,7 @@ class TestUpdateMinPriceThread(QSPTest):
             thread.check_and_update_min_price()
 
     def test_stop(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = UpdateMinPriceThread(config)
         thread.stop()
         self.assertFalse(thread.exec)
@@ -101,7 +101,7 @@ class TestUpdateMinPriceThread(QSPTest):
         Tests that the node updates the min_price on the blockchain if the config value changes
         """
 
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         set_audit_price_filter = config.audit_contract.events.setAuditNodePrice_called.createFilter(
             fromBlock=max(0, config.event_pool_manager.get_latest_block_number())
         )
@@ -125,7 +125,7 @@ class TestUpdateMinPriceThread(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = UpdateMinPriceThread(config)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"):

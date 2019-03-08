@@ -21,15 +21,15 @@ class TestPollRequestsThread(QSPTest):
     @classmethod
     def setUpClass(cls):
         QSPTest.setUpClass()
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         remove(config.evt_db_path)
 
     def setUp(self):
-        self.__config = fetch_config()
+        self.__config = fetch_config(inject_contract=True)
         self.__poll_requests_thread = PollRequestsThread(self.__config)
 
     def test_init(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = PollRequestsThread(config)
         self.assertEqual(config, thread.config)
 
@@ -139,7 +139,7 @@ class TestPollRequestsThread(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = PollRequestsThread(config)
         handle = thread.start()
         self.assertTrue(thread.exec)

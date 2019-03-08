@@ -73,26 +73,27 @@ def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
     return address, audit_contract
 
 
-def fetch_config():
+def fetch_config(inject_contract=False):
     # create config from file, the contract is not provided and will be injected separately
     config_file_uri = resource_uri("test_config.yaml")
     config = ConfigFactory.create_from_file(config_file_uri, os.getenv("QSP_ENV", default="dev"),
                                             validate_contract_settings=False)
-    # compile and inject contract
-    contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
-    contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
-    audit_contract_metadata = load_json(fetch_file(contract_metadata_uri))
-    audit_contract_name = get(audit_contract_metadata, '/contractName')
+    if inject_contract:
+        contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
+        contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
+        audit_contract_metadata = load_json(fetch_file(contract_metadata_uri))
+        audit_contract_name = get(audit_contract_metadata, '/contractName')
 
-    addr, contract = __load_audit_contract_from_src(
-        config.web3_client,
-        contract_source_uri,
-        audit_contract_name,
-        config.account)
+        addr, contract = __load_audit_contract_from_src(
+            config.web3_client,
+            contract_source_uri,
+            audit_contract_name,
+            config.account)
 
-    config._Config__audit_contract_address = addr
-    config._Config__audit_contract = contract
+        config._Config__audit_contract_address = addr
+        config._Config__audit_contract = contract
 
-    config_utils = ConfigUtils(config.node_version)
-    config_utils.check_configuration_settings(config)
+        config_utils = ConfigUtils(config.node_version)
+        config_utils.check_configuration_settings(config)
+
     return config

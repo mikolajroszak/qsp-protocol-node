@@ -7,14 +7,10 @@
 #                                                                                                  #
 ####################################################################################################
 
-import os
-
 from helpers.resource import (
-    resource_uri
+    fetch_config
 )
 from helpers.qsp_test import QSPTest
-
-from config import ConfigFactory
 
 
 class TestWrapper(QSPTest):
@@ -83,20 +79,11 @@ class TestWrapper(QSPTest):
                                'Unknown': {'type': 'other'}},
                            'command': 'docker run --rm -v /tmp/.securify/37:/shared/ -i qspprotocol/securify-usolc-0.5.3@sha256:59cd6b0b9f258fd7b493f63cecc304c4365dd98a46b0accaab5e8248fc87d010  -fs /shared/x'}
 
-    @classmethod
-    def fetch_config(cls):
-        # create config from file, the contract is not provided and will be injected separately
-        config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file(config_file_uri,
-                                                os.getenv("QSP_ENV", default="dev"),
-                                                validate_contract_settings=False)
-        return config
-
     def test_get_metadata(self):
         """
         Checks that metadata is loaded correctly
         """
-        config = TestWrapper.fetch_config()
+        config = fetch_config()
         data = []
         for meta in [self.__MYTHRIL_METADATA, self.__SECURIFY_METADATA]:
             start = meta["command"].find("-v /tmp/.") + len("-v /tmp/.")

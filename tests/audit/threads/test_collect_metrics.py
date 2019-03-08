@@ -18,12 +18,12 @@ from timeout_decorator import timeout
 class TestCollectMetricsThread(QSPTest):
 
     def test_init(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = CollectMetricsThread(config)
         self.assertEqual(config, thread.config)
 
     def test_stop(self):
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = CollectMetricsThread(config)
         thread.stop()
         self.assertFalse(thread.exec)
@@ -31,7 +31,7 @@ class TestCollectMetricsThread(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
-        config = fetch_config()
+        config = fetch_config(inject_contract=True)
         thread = CollectMetricsThread(config)
         with mock.patch('audit.threads.collect_metrics_thread.MetricCollector.collect_and_send',
                         return_value=True):
