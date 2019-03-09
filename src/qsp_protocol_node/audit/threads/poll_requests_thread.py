@@ -125,7 +125,20 @@ class PollRequestsThread(QSPThread):
                 self.config,
                 self.config.audit_contract.functions.myMostRecentAssignedAudit()
             )
+
             request_id = most_recent_audit[0]
+            audit_assignment_block_number = most_recent_audit[4]
+            current_block = self.config.web3_client.eth.blockNumber
+
+            # Check if the most recent audit has been confirmed for N blocks. A consequence of this
+            # is that the audit node will not call getNextAuditRequest again while a previous call
+            # is not confirmed. If alternative approaches are developed, they should carefully
+            # consider possibly adverse interactions between myMostRecentAssignedAudit and
+            # waiting for confirmation.
+            if audit_assignment_block_number != 0 and \
+                audit_assignment_block_number + self.config.n_blocks_confirmation > current_block:
+                # Check again when the next block is mined
+                return
 
             # Checks if a previous bid was won. If so, it saves the event to the
             # database for processing by other threads and continues bidding
@@ -142,7 +155,7 @@ class PollRequestsThread(QSPThread):
                     requestor=most_recent_audit[1],
                     uri=most_recent_audit[2],
                     price=most_recent_audit[3],
-                    block_nbr=most_recent_audit[4]
+                    block_nbr=audit_assignment_block_number
                 )
 
             # The node should attempt to bid. Before that, though, gotta perform some checks...
@@ -212,6 +225,9 @@ class PollRequestsThread(QSPThread):
             probe = self.__get_next_police_assignment()
             has_assignment = probe[0]
 
+            police_assignment_block_number = probe[4]
+            current_block = self.config.web3_client.eth.blockNumber
+
             already_processed = self.config.event_pool_manager.is_request_processed(
                 request_id=probe[1]
             )
@@ -221,13 +237,18 @@ class PollRequestsThread(QSPThread):
             if already_processed or not has_assignment:
                 return
 
+            # Check if the most recent police assignment has been confirmed for N blocks.
+            if police_assignment_block_number + self.config.n_blocks_confirmation > current_block:
+                # Check again when the next block is mined
+                return
+
             # Otherwise, save to DB
             self.__add_evt_to_db(
                 request_id=probe[1],
                 requestor=self.config.audit_contract_address,
                 price=probe[2],
                 uri=probe[3],
-                block_nbr=probe[4],
+                block_nbr=police_assignment_block_number,
                 is_audit=False)
 
         except Exception as error:

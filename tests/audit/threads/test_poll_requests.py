@@ -78,6 +78,15 @@ class TestPollRequestsThread(QSPTest):
             should_add_evt=True
         )
 
+    def test_police_does_not_save_evt_when_not_confirmed(self):
+        self.__test_police_poll_event(
+            is_police=True,
+            is_new_assignment=True,
+            is_already_processed=True,
+            should_add_evt=False,
+            is_confirmed=False
+        )
+
     def test_qsp_return_in_get_min_stake_audit(self):
         """
         Tests whether the conversion in get_min_stake_audit works, return
@@ -136,6 +145,18 @@ class TestPollRequestsThread(QSPTest):
             poll_requests_instance._PollRequestsThread__poll_audit_request()
             self.assert_event_table_contains(self.__config, [])
 
+    @timeout(10, timeout_exception=StopIteration)
+    def test_poll_audit_request_when_not_confirmed(self):
+        poll_requests_instance = PollRequestsThread(self.__config)
+
+        # myMostRecentAssignedAudit, make the block number far into the future,
+        # so confirmation fails
+        with mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
+                   return_value=(1, 0, 0, 0, 1000)):
+            self.__config.event_pool_manager.is_request_processed = MagicMock()
+            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            self.__config.event_pool_manager.is_request_processed.assert_not_called()
+
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
@@ -148,11 +169,14 @@ class TestPollRequestsThread(QSPTest):
         handle.join()
 
     def __test_police_poll_event(self, is_police, is_new_assignment, is_already_processed,
-                                 should_add_evt):
+                                 should_add_evt, is_confirmed=True):
         # Configures the behaviour of is_police_officer
         with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=is_police):
+            if is_confirmed:
+                self.__config._Config__n_blocks_confirmation = 0
+            else:
+                self.__config._Config__n_blocks_confirmation = 1000
             poll_requests_instance = PollRequestsThread(self.__config)
-
             # Configures the behaviour of __get_next_police_assignment
             poll_requests_instance._PollRequestsThread__get_next_police_assignment = MagicMock()
             poll_requests_instance._PollRequestsThread__get_next_police_assignment.return_value = \

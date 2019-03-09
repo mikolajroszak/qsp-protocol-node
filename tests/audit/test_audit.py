@@ -215,7 +215,7 @@ class TestQSPAuditNode(QSPTest):
                         "requestor": self.__config.account,
                         "contract_uri": buggy_contract,
                         "evt_name": "LogAuditAssigned",
-                        "block_nbr": "40",
+                        "block_nbr": "IGNORE",
                         "fk_status": "DN",
                         "fk_type": "AU",
                         "price": str(self.__PRICE),
@@ -275,7 +275,7 @@ class TestQSPAuditNode(QSPTest):
                         "requestor": self.__config.account,
                         "contract_uri": buggy_contract,
                         "evt_name": "LogAuditAssigned",
-                        "block_nbr": "40",
+                        "block_nbr": "IGNORE",
                         "fk_status": "DN",
                         "fk_type": "AU",
                         "price": str(self.__PRICE),
@@ -335,7 +335,7 @@ class TestQSPAuditNode(QSPTest):
                         "requestor": self.__config.account,
                         "contract_uri": buggy_contract,
                         "evt_name": "LogAuditAssigned",
-                        "block_nbr": "40",
+                        "block_nbr": "IGNORE",
                         "fk_status": "DN",
                         "fk_type": "AU",
                         "price": str(self.__PRICE),
@@ -383,7 +383,7 @@ class TestQSPAuditNode(QSPTest):
                         "requestor": self.__config.account,
                         "contract_uri": buggy_contract,
                         "evt_name": "LogAuditAssigned",
-                        "block_nbr": "40",
+                        "block_nbr": "IGNORE",
                         "fk_status": "DN",
                         "fk_type": "AU",
                         "price": str(self.__PRICE),
@@ -427,7 +427,7 @@ class TestQSPAuditNode(QSPTest):
                         "requestor": self.__config.account,
                         "contract_uri": empty_contract,
                         "evt_name": "LogAuditAssigned",
-                        "block_nbr": "40",
+                        "block_nbr": "IGNORE",
                         "fk_status": "DN",
                         "fk_type": "AU",
                         "price": str(self.__PRICE),
@@ -556,7 +556,7 @@ class TestQSPAuditNode(QSPTest):
                              "requestor": self.__config.account,
                              "contract_uri": buggy_contract,
                              "evt_name": "LogAuditAssigned",
-                             "block_nbr": "40",
+                             "block_nbr": "IGNORE",
                              "fk_status": "DN",
                              "fk_type": "AU",
                              "price": str(self.__PRICE),
@@ -597,7 +597,7 @@ class TestQSPAuditNode(QSPTest):
                         "requestor": self.__config.account,
                         "contract_uri": buggy_contract,
                         "evt_name": "LogAuditAssigned",
-                        "block_nbr": "40",
+                        "block_nbr": "IGNORE",
                         "fk_status": "DN",
                         "fk_type": "AU",
                         "price": str(self.__PRICE),
@@ -637,7 +637,6 @@ class TestQSPAuditNode(QSPTest):
 
         def mocked__get_next_audit_request():
             # this should be unreachable when the limit is reached
-            print("HIT THIS")
             mocked__get_next_audit_request_called[0] = True
 
         self.assertEqual(int(self.__config.max_assigned_requests), 1)
@@ -648,7 +647,7 @@ class TestQSPAuditNode(QSPTest):
             self.__set_assigned_request_count(1))
 
         buggy_contract = resource_uri("DappBinWallet.sol")
-        self.__request_assign_and_emit(self.__REQUEST_ID, buggy_contract, self.__PRICE, 100)
+        self.__request_assign_and_emit(self.__REQUEST_ID, buggy_contract, self.__PRICE, 1)
         with mock.patch(
                 'audit.threads.poll_requests_thread.PollRequestsThread.'
                 '_PollRequestsThread__get_next_audit_request',
@@ -712,7 +711,7 @@ class TestQSPAuditNode(QSPTest):
                         "requestor": self.__config.account,
                         "contract_uri": contract,
                         "evt_name": "LogAuditAssigned",
-                        "block_nbr": "40",
+                        "block_nbr": "IGNORE",
                         "fk_status": "DN",
                         "fk_type": "AU",
                         "price": str(self.__PRICE),
@@ -834,7 +833,7 @@ class TestQSPAuditNode(QSPTest):
         bidding by removing anyRequestAvailable marker.
         """
         # this block number is high enough for the tests not to time out on this request
-        request_block_number = 40
+        request_block_number = self.__config.web3_client.eth.blockNumber
         result = self.__request_assign_and_emit(
             self.__REQUEST_ID,
             contract_uri,
