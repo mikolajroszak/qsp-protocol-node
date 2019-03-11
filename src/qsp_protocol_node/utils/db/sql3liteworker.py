@@ -64,6 +64,8 @@ class Sqlite3Worker(threading.Thread):
     As with execute, execute_script executes within a transaction.
     """
 
+    EXIT_TOKEN = "Exit Called"
+
     def __init__(self, file_name, max_queue_size=100):
         """Automatically starts the thread.
 
@@ -206,7 +208,7 @@ class Sqlite3Worker(threading.Thread):
             If it's a select query it will return the results of the query.
         """
         if self.exit_set:
-            return "Exit Called"
+            return Sqlite3Worker.EXIT_TOKEN
         values = values or []
         # A token to track this query with.
         token = str(uuid.uuid4())

@@ -58,7 +58,11 @@ class EventPoolManager:
     @staticmethod
     def __exec_sql(worker, query, values=(), error_handler=None):
         query_file = EventPoolManager.__query_path(query)
-        return worker.execute_script(query_file, values, error_handler)
+        result = worker.execute_script(query_file, values, error_handler)
+        if result == Sqlite3Worker.EXIT_TOKEN:
+            return []
+        else:
+            return result
 
     @staticmethod
     def insert_error_handler(sql_worker, query, values, err):
