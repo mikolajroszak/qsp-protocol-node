@@ -166,10 +166,22 @@ class ConfigUtils:
         contract_max_assigned_requests = mk_read_only_call(config, call)
 
         # start_n_blocks_in_the_past should never exceed the submission timeout
-        ConfigUtils.raise_err(config.start_n_blocks_in_the_past > config.submission_timeout_limit_blocks)
+        ConfigUtils.raise_err(
+            cond=config.start_n_blocks_in_the_past > config.submission_timeout_limit_blocks,
+            msg="start_n_blocks_in_the_past {0} should never exceed the "
+                "submission timeout {1}".format(
+                config.start_n_blocks_in_the_past,
+                config.submission_timeout_limit_blocks)
+            )
 
         # the submission timeout limit should not exceed the audit timeout limit
-        ConfigUtils.raise_err(config.submission_timeout_limit_blocks > contract_audit_timeout_in_blocks)
+        ConfigUtils.raise_err(
+            cond=config.submission_timeout_limit_blocks > contract_audit_timeout_in_blocks,
+            msg="the submission timeout {0} limit should not exceed the audit "
+                "timeout limit {1} set in the contract".format(
+                config.submission_timeout_limit_blocks,
+                contract_audit_timeout_in_blocks)
+            )
 
         # the analyzer timeouts should never exceed the audit timeout (converted to seconds)
         for analyzer in config.analyzers:
