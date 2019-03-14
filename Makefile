@@ -42,6 +42,7 @@ test: build
 	docker run -it \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
+		-v $(PWD)/deployment/aws-elasticbeanstalk/app/.ebextensions:/aws-config \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
 		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
@@ -70,6 +71,7 @@ test-ci:
 	docker run -t \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
+		-v $(PWD)/deployment/aws-elasticbeanstalk/app/.ebextensions:/aws-config \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-v $(PWD)/tests/coverage:/app/tests/coverage \
 		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
@@ -82,6 +84,7 @@ test-travis-ci: build
 	docker run -t \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
+		-v $(PWD)/deployment/aws-elasticbeanstalk/app/.ebextensions:/aws-config \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-v $(PWD)/tests/coverage:/app/tests/coverage \
 		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
