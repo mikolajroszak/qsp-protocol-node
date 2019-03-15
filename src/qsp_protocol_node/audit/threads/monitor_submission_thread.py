@@ -56,8 +56,12 @@ class MonitorSubmissionThread(QSPThread):
         timeout_limit = self.config.submission_timeout_limit_blocks
         try:
             if (current_block - evt['block_nbr']) > timeout_limit:
-                msg = "Submission timeout for audit {0}. Setting to error"
-                self.logger.debug(msg.format(str(evt['request_id'])))
+                msg = "Submission timeout for audit {0}. Setting to error. The event was created " \
+                      "in block {1}. The timeout limit is {2} blocks. The current block is {3}."
+                self.logger.debug(msg.format(str(evt['request_id']),
+                                             str(evt['block_nbr']),
+                                             str(timeout_limit),
+                                             str(current_block)))
                 evt['status_info'] = "Submission timeout"
                 self.config.event_pool_manager.set_evt_status_to_error(evt)
         except KeyError as error:
