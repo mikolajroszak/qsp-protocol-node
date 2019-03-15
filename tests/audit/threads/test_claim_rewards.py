@@ -79,14 +79,44 @@ class TestClaimRewards(QSPTest):
         Tests whether the __claim_rewards_if_available function invokes __claim_rewards
         when rewards are available.
         """
-        self.__claim_rewards_thread._ClaimRewardsThread__has_available_rewards = MagicMock()
-        self.__claim_rewards_thread._ClaimRewardsThread__has_available_rewards.return_value = True
+        # simulates the while-loop iterating once
+        has_rewards_generator = iter([True, False])
+
+        def has_available_rewards():
+            return next(has_rewards_generator)
+
+        self.__claim_rewards_thread._QSPThread__exec = True
+        self.__claim_rewards_thread._ClaimRewardsThread__has_available_rewards = \
+            has_available_rewards
 
         claim_rewards = MagicMock()
         self.__claim_rewards_thread._ClaimRewardsThread__claim_rewards = claim_rewards
 
         self.__claim_rewards_thread._ClaimRewardsThread__claim_rewards_if_available()
         claim_rewards.assert_called()
+        self.__claim_rewards_thread._QSPThread__exec = False
+
+    def test_claim_rewards_when_many_rewards_available(self):
+        """
+        Tests whether the __claim_rewards_if_available function invokes __claim_rewards
+        when rewards are available.
+        """
+        # simulates the while-loop iterating multiple times
+        has_rewards_generator = iter([True, True, False])
+
+        def has_available_rewards():
+            return next(has_rewards_generator)
+
+        self.__claim_rewards_thread._QSPThread__exec = True
+        self.__claim_rewards_thread._ClaimRewardsThread__has_available_rewards = \
+            has_available_rewards
+
+        claim_rewards = MagicMock()
+        self.__claim_rewards_thread._ClaimRewardsThread__claim_rewards = claim_rewards
+
+        self.__claim_rewards_thread._ClaimRewardsThread__claim_rewards_if_available()
+        claim_rewards.assert_called()
+        self.__claim_rewards_thread._QSPThread__exec = False
 
     def test_claim_rewards_timeout_exception(self):
         """

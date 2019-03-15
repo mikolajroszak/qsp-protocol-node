@@ -56,17 +56,23 @@ class ClaimRewardsThread(QSPThread):
                 self.config.account
             ))
 
+        # Continually call claim_rewards until the rewards list is emptied
         available_rewards = self.__has_available_rewards()
-        if available_rewards:
-            try:
-                self.__claim_rewards()
-            except Exception as error:
-                self.logger.warning("Could not claim rewards: {0}".format(error))
-        else:
+        if not available_rewards:
             self.logger.info(
                 "There are no available rewards for address {0}.".format(
                     self.config.account
                 ))
+
+        while self.exec and available_rewards:
+            claim_rewards_tx_hash = None
+            try:
+                claim_rewards_tx_hash = self.__claim_rewards()
+            except Exception as error:
+                self.logger.warning("Could not claim rewards: {0}".format(error))
+            if not claim_rewards_tx_hash:
+                break
+            available_rewards = self.__has_available_rewards()
 
     def __claim_rewards(self):
         """
