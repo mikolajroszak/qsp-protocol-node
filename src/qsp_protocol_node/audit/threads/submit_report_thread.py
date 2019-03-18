@@ -91,7 +91,6 @@ class SubmitReportThread(QSPThread):
             evt['tx_hash'] = tx_hash.hex()
             evt['status_info'] = 'Report submitted (waiting for confirmation)'
             self.config.event_pool_manager.set_evt_status_to_submitted(evt)
-            self.__on_successful_submission(int(evt['request_id']))
         except DeduplicationException as error:
             self.logger.debug(
                 "Error when submitting report {0}".format(str(error))
@@ -113,36 +112,6 @@ class SubmitReportThread(QSPThread):
             )
             evt['status_info'] = traceback.format_exc()
             self.config.event_pool_manager.set_evt_status_to_error(evt)
-
-    def __on_successful_submission(self, request_id):
-        audit_evt = None
-        try:
-            is_finished = mk_read_only_call(
-                self.config, self.config.audit_contract.functions.isAuditFinished(request_id)
-            )
-            audit_evt = self.config.event_pool_manager.get_event_by_request_id(request_id)
-            if is_finished and audit_evt != {}:
-                audit_evt['status_info'] = 'Report successfully submitted'
-                self.config.event_pool_manager.set_evt_status_to_done(audit_evt)
-                self.logger.debug(
-                    "Report successfully submitted for event: {0}".format(
-                        str(audit_evt)
-                    ),
-                    request_id=request_id
-                )
-
-        except KeyError as error:
-            self.logger.exception(
-                "KeyError when processing submission event: {0}".format(str(error))
-            )
-        except Exception as error:
-            self.logger.exception(
-                "Error when processing changing event status: {0}. Audit event is {1}".format(
-                    str(error),
-                    str(audit_evt)
-                ),
-                requestId=request_id
-            )
 
     def __submit_audit_report(self, request_id, audit_state, compressed_report):
         """
@@ -205,9 +174,9 @@ class SubmitReportThread(QSPThread):
         if not audit_contract_hash or not police_contract_hash or audit_contract_hash != police_contract_hash:
             msg = "Police check: reports for request ID {0} have different contract hashes: {1} {2}"
             self.logger.debug(msg.format(str(request_id),
-                                           str(decompressed_audit_report.get('contract_hash',
-                                                                             None)),
-                                           str(full_police_report.get('contract_hash', None))))
+                                         str(decompressed_audit_report.get('contract_hash',
+                                                                           None)),
+                                         str(full_police_report.get('contract_hash', None))))
             return False
 
         # If report exists, but building a vulnerability set fails,

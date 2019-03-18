@@ -14,6 +14,7 @@ Provides the thread for monitoring the submissions in the QSP Audit node impleme
 from threading import Thread
 
 from .qsp_thread import QSPThread
+from utils.eth import mk_read_only_call
 
 
 class MonitorSubmissionThread(QSPThread):
@@ -53,22 +54,42 @@ class MonitorSubmissionThread(QSPThread):
         """
         Sets the event to state ER if the timeout window passed.
         """
-        timeout_limit = self.config.submission_timeout_limit_blocks
+        is_finished = mk_read_only_call(
+            self.config, self.config.audit_contract.functions.isAuditFinished(evt['request_id'])
+        )
         try:
-            if (current_block - evt['block_nbr']) > timeout_limit:
-                msg = "Submission timeout for audit {0}. Setting to error. The event was created " \
-                      "in block {1}. The timeout limit is {2} blocks. The current block is {3}."
-                self.logger.debug(msg.format(str(evt['request_id']),
-                                             str(evt['block_nbr']),
-                                             str(timeout_limit),
-                                             str(current_block)))
-                evt['status_info'] = "Submission timeout"
-                self.config.event_pool_manager.set_evt_status_to_error(evt)
+            if is_finished and evt != {}:
+
+                evt['status_info'] = 'Report successfully submitted'
+                self.config.event_pool_manager.set_evt_status_to_done(evt)
+                self.logger.debug(
+                    "Report successfully submitted for event: {0}".format(
+                        str(evt)
+                    ),
+                    requestId=evt['request_id']
+                )
+            else:
+                timeout_limit = self.config.submission_timeout_limit_blocks
+                if (current_block - evt['block_nbr']) > timeout_limit:
+                    msg = "Submission timeout for audit {0}. Setting to error. The event was " \
+                          "created in block {1}. The timeout limit is {2} blocks. The current " \
+                          "block is {3}."
+                    self.logger.debug(msg.format(str(evt['request_id']),
+                                                 str(evt['block_nbr']),
+                                                 str(timeout_limit),
+                                                 str(current_block)),
+                                      requestId=evt['request_id'])
+                    evt['status_info'] = "Submission timeout"
+                    self.config.event_pool_manager.set_evt_status_to_error(evt)
         except KeyError as error:
             self.logger.exception(
-                "KeyError when monitoring timeout: {0}".format(str(error))
+                "KeyError when monitoring submission and timeout: {0}".format(str(error)),
+                requestId=evt.get('request_id', default=-1)
             )
         except Exception as error:
             # TODO How to inform the network of a submission timeout?
             self.logger.exception(
-                "Unexpected error when monitoring timeout: {0}".format(error))
+                "Unexpected error when monitoring submission and timeout: {0}. "
+                "Audit event is {1}".format(str(error),
+                                            str(evt)),
+                requestId=evt['request_id'])
