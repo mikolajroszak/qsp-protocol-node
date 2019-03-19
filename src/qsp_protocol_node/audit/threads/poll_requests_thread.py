@@ -52,11 +52,14 @@ class PollRequestsThread(QSPThread):
         poll_requests_thread.start()
         return poll_requests_thread
 
+    def __on_block_mined(self, *unused):
+        self.__poll_requests()
+
     def __execute(self):
         """
         Defines the function to be executed and how often.
         """
-        self.run_when_block_mined(self.__poll_requests)
+        self.run_when_block_mined(self.__on_block_mined)
 
     def __get_min_stake_qsp(self):
         """

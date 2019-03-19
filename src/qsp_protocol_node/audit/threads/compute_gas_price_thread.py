@@ -33,11 +33,16 @@ class ComputeGasPriceThread(QSPThread):
         compute_gas_price_thread.start()
         return compute_gas_price_thread
 
+    def __on_block_mined(self, block_number):
+        self.compute_gas_price()
+        self.logger.debug("New block detected: {0}. Current gas price: {1}".format(
+            str(block_number), str(self.config.gas_price_wei)))
+
     def __execute(self):
         """
         Defines the function to be executed and how often.
         """
-        self.run_when_block_mined(self.compute_gas_price)
+        self.run_when_block_mined(self.__on_block_mined)
 
     def compute_gas_price(self):
         """
@@ -52,4 +57,3 @@ class ComputeGasPriceThread(QSPThread):
         gas_price = int(min(gas_price, self.config.max_gas_price_wei))
         # set the gas_price in config
         self.config.gas_price_wei = gas_price
-        self.logger.debug("Current gas price: {0}".format(str(gas_price)))

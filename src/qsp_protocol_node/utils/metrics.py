@@ -92,7 +92,6 @@ class MetricCollector:
                 'account': self.__config.account
             }
 
-            self.__logger.info("Metrics", metrics_json=metrics_json)
             if self.__config.metric_collection_destination_endpoint is not None:
                 self.send_to_dashboard(metrics_json)
 

@@ -56,9 +56,8 @@ class QSPThread:
                 last_called = now
                 if current_block < self.__config.web3_client.eth.blockNumber:
                     current_block = self.__config.web3_client.eth.blockNumber
-                    self.__logger.debug("A new block is mined # {0}".format(str(current_block)))
                     try:
-                        body_function()
+                        body_function(current_block)
                     except Exception as e:
                         self.__logger.exception(
                             "Error in block mined thread handler: {0}".format(str(e)))
