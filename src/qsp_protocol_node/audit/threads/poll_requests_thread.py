@@ -111,7 +111,8 @@ class PollRequestsThread(QSPThread):
                 self.config,
                 transaction,
                 wait_for_transaction_receipt=True)
-            self.logger.debug("A getNextAuditRequest transaction has been sent")
+            self.logger.debug("A getNextAuditRequest transaction has been sent in "
+                              "transaction {0}".format(tx_hash))
         except Timeout as e:
             self.logger.debug("Transaction receipt timeout happened for {0}. {1}".format(
                 str(transaction),
@@ -168,29 +169,28 @@ class PollRequestsThread(QSPThread):
                 self.config.audit_contract.functions.assignedRequestCount(self.config.account))
 
             if pending_requests_count >= self.config.max_assigned_requests:
-                self.logger.error(
-                    "Skip bidding as node is currently processing {0} requests".format(
-                        str(pending_requests_count)))
+                self.logger.error("Skip bidding as node is currently processing {0} requests in "
+                                  "audit contract {1}".format(str(pending_requests_count),
+                                                              self.config.audit_contract_address))
                 return
             any_request_available = mk_read_only_call(
                 self.config,
                 self.config.audit_contract.functions.anyRequestAvailable())
 
             if any_request_available == self.__AVAILABLE_AUDIT_UNDERSTAKED:
-                raise NotEnoughStake("Missing funds. To audit contracts, nodes must stake at least {0} QSP".format(
-                    self.__get_min_stake_qsp()
-                ))
+                raise NotEnoughStake("Missing funds. To audit contracts, nodes must stake at "
+                                     "least {0} QSP".format(self.__get_min_stake_qsp()))
 
             if any_request_available == self.__AVAILABLE_AUDIT_STATE_READY:
-                self.logger.debug("There is request available to bid on.")
+                self.logger.debug("There is request available to bid on in contract {0}.".format(
+                    self.config.audit_contract_address))
 
                 # At this point, the node is ready to bid. As such,
                 # it tries to get the next audit request
                 self.__get_next_audit_request()
             else:
-                self.logger.debug(
-                    "No request available as the contract returned {0}.".format(
-                            str(any_request_available)))
+                self.logger.debug("No request available as the contract {0} returned {1}.".format(
+                    self.config.audit_contract_address, str(any_request_available)))
 
         except NotEnoughStake as error:
             self.logger.warning("Cannot poll for audit request: {0}".format(str(error)))
