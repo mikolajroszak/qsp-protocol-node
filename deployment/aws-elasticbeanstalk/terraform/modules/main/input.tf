@@ -50,3 +50,8 @@ variable "volume_size" {
   description = "Volume size (GB) for each node"
   default = 50
 }
+
+variable "beanstalk_stack" {
+  description = "Multicontainer stack name"
+  default = "64bit Amazon Linux 2018.03 v2.11.4 running Multi-container Docker 18.06.1-ce (Generic)"
+}

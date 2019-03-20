@@ -15,7 +15,7 @@ resource "aws_iam_instance_profile" "police" {
 resource "aws_elastic_beanstalk_environment" "police" {
   name                  = "qsp-protocol-police-node-${var.stage}"
   application           = "qsp-protocol-police-node"
-  solution_stack_name   = "64bit Amazon Linux 2018.03 v2.11.4 running Multi-container Docker 18.06.1-ce (Generic)"
+  solution_stack_name   = "${var.beanstalk_stack}"
   tier                  = "WebServer"
 
   # You can set the environment type, single or LoadBalanced
