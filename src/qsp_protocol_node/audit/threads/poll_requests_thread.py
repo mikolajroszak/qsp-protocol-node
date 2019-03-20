@@ -168,7 +168,7 @@ class PollRequestsThread(QSPThread):
                 self.config.audit_contract.functions.assignedRequestCount(self.config.account))
 
             if pending_requests_count >= self.config.max_assigned_requests:
-                self.logger.debug(
+                self.logger.error(
                     "Skip bidding as node is currently processing {0} requests".format(
                         str(pending_requests_count)))
                 return
