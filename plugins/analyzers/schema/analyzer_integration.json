@@ -213,12 +213,12 @@
                                             "start_line": {
                                                 "type": "integer",
                                                 "description": "The initial line where the vulnerability was found",
-                                                "minimum": 1
+                                                "minimum": 0
                                             },
                                             "end_line": {
                                                 "type": "integer",
                                                 "description": "The end line where the vulnerability was found",
-                                                "minimum": 1
+                                                "minimum": 0
                                             }
                                         }
                                     }
