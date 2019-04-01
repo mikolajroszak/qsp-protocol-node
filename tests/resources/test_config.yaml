@@ -48,6 +48,10 @@ dev: &default
     interval_seconds: !!int 30
     destination_endpoint: !!str "https://localhost/node-metrics"
   heartbeat_allowed: !!bool False
+  police:
+    # If set to False, the police node will never poll for regular audits
+    is_auditing_enabled: !!bool False
+
 
 staging:
   <<: *default

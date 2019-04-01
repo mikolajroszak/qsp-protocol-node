@@ -115,6 +115,7 @@ class Config:
                                                                  '/metric_collection/interval_seconds',
                                                                  30)
         self.__heartbeat_allowed = config_value(cfg, '/heartbeat_allowed', True)
+        self.__enable_police_audit_polling = config_value(cfg, '/police/is_auditing_enabled', False)
 
     def __create_eth_provider(self, config_utils):
         """
@@ -247,6 +248,7 @@ class Config:
         self.__block_discard_on_restart = 0
         self.__contract_version = None
         self.__heartbeat_allowed = True
+        self.__enable_police_audit_polling = False
 
     @property
     def eth_provider(self):
@@ -552,3 +554,10 @@ class Config:
         hours. Otherwise, it will only update the min price if it differs.
         """
         return self.__heartbeat_allowed
+
+    @property
+    def enable_police_audit_polling(self):
+        """
+        If true, the police node will also poll for regular audit requests.
+        """
+        return self.__enable_police_audit_polling

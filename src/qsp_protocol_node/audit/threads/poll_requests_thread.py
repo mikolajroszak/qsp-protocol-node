@@ -124,6 +124,11 @@ class PollRequestsThread(QSPThread):
         Checks first an audit is assignable; then, bids to get an audit request.
         If successful, save the event in the database to move it along the audit pipeline.
         """
+        from audit.audit import QSPAuditNode
+        if QSPAuditNode.is_police_officer(self.config) and \
+            not self.config.enable_police_audit_polling:
+            return
+
         try:
             most_recent_audit = mk_read_only_call(
                 self.config,

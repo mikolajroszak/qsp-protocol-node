@@ -324,6 +324,7 @@ class TestConfig(QSPTest):
         self.assertEqual(6, config.n_blocks_confirmation)
         self.assertEqual(0, config.block_discard_on_restart)
         self.assertTrue(config.heartbeat_allowed)
+        self.assertFalse(config.enable_police_audit_polling)
 
     def test_create_components(self):
         eth_provider_name = "eth provider name"
@@ -408,6 +409,7 @@ class TestConfig(QSPTest):
         self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
         self.assertFalse(config.heartbeat_allowed)
+        self.assertFalse(config.enable_police_audit_polling)
 
     def test_inherited_node_config(self):
         config_file_uri = "/aws-config/node-config.config"
@@ -418,7 +420,6 @@ class TestConfig(QSPTest):
         for env in ["dev", "dev-feature", "testnet", "prod", "staging"]:
             # cannot call create_from_file here, as it will try to connect to infura
             config = content[env]
-
             # check that inherited fields exist
             self.assertIsNotNone(config.get("eth_node"))
             self.assertIsNotNone(config.get("audit_contract_abi"))
@@ -437,6 +438,7 @@ class TestConfig(QSPTest):
             self.assertIsNotNone(config.get("logging"))
             self.assertIsNotNone(config.get("metric_collection"))
             self.assertIsNotNone(config.get("heartbeat_allowed"))
+            self.assertIsNotNone(config.get("police"))
             self.assertIsNotNone(config.get("n_blocks_confirmation"))
             # check that the upload provider is correctly overridden
             self.assertTrue(env in config["upload_provider"]["args"]["bucket_name"])
@@ -459,6 +461,7 @@ class TestConfig(QSPTest):
         self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
         self.assertTrue(config.heartbeat_allowed)
+        self.assertFalse(config.enable_police_audit_polling)
         self.assertTrue(config.upload_provider_is_enabled)
         self.assertEqual(config.upload_provider_args,
                          {

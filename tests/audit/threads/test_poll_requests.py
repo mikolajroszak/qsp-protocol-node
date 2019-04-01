@@ -129,6 +129,63 @@ class TestPollRequestsThread(QSPTest):
             self.assert_event_table_contains(self.__config, [])
 
     @timeout(10, timeout_exception=StopIteration)
+    def test_call_to_poll_audit_request_when_disabled_as_police(self):
+        """
+        Tests that calling poll_audit_requests exits if a police node calls it when disabled.
+        """
+        with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=True), \
+             mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
+                        return_value=0) as mk_read_only_call:
+            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            mk_read_only_call.assert_not_called()
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_call_to_poll_audit_request_when_disabled_as_regular_node(self):
+        """
+        Tests that calling poll_audit_requests executes if a regular node calls it when
+        the police node audit option is disabled.
+        """
+        with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=False), \
+             mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
+                        return_value=0) as mk_read_only_call:
+            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            mk_read_only_call.assert_called()
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_call_to_poll_audit_request_when_enabled_as_police_node(self):
+        """
+        Tests that calling poll_audit_requests executes if a police node calls it when
+        the police node audit option is enabled.
+        """
+        with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=True), \
+             mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
+                        return_value=0) as mk_read_only_call:
+            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance.config._Config__enable_police_audit_polling = True
+            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            # the function call is going to fail, but we only care about whether
+            # this function will be called
+            mk_read_only_call.assert_called()
+
+    @timeout(10, timeout_exception=StopIteration)
+    def test_call_to_poll_audit_request_when_enabled_as_regular_node(self):
+        """
+        Tests that calling poll_audit_requests executes if a regular node calls it when
+        the police node audit option is enabled.
+        """
+        with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=False), \
+             mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
+                        return_value=0) as mk_read_only_call:
+            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance.config._Config__enable_police_audit_polling = True
+            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            # the function call is going to fail, but we only care about whether
+            # this function will be called
+            mk_read_only_call.assert_called()
+
+    @timeout(10, timeout_exception=StopIteration)
     def test_poll_audit_request_deduplication_exceptions(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
