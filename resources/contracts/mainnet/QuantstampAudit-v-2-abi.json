@@ -1,5 +1,38 @@
 [
   {
+    "constant": true,
+    "inputs": [],
+    "name": "reportData",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "mostRecentAssignedRequestIdsPerAuditor",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [],
     "name": "unpause",
@@ -70,6 +103,34 @@
   },
   {
     "constant": true,
+    "inputs": [],
+    "name": "tokenEscrow",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "police",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [
       {
         "name": "",
@@ -106,6 +167,18 @@
       {
         "name": "auditDataAddress",
         "type": "address"
+      },
+      {
+        "name": "reportDataAddress",
+        "type": "address"
+      },
+      {
+        "name": "escrowAddress",
+        "type": "address"
+      },
+      {
+        "name": "policeAddress",
+        "type": "address"
       }
     ],
     "payable": false,
@@ -132,11 +205,38 @@
       },
       {
         "indexed": false,
-        "name": "reportHash",
-        "type": "string"
+        "name": "report",
+        "type": "bytes"
       }
     ],
     "name": "LogAuditFinished",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "policeNode",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "report",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "name": "isVerified",
+        "type": "bool"
+      }
+    ],
+    "name": "LogPoliceAuditFinished",
     "type": "event"
   },
   {
@@ -303,6 +403,23 @@
     "inputs": [
       {
         "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "stake",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogAuditAssignmentError_Understaked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "name": "requestId",
         "type": "uint256"
       },
@@ -313,6 +430,18 @@
       }
     ],
     "name": "LogAuditAssignmentUpdate_Expired",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      }
+    ],
+    "name": "LogClaimRewardsReachedGasLimit",
     "type": "event"
   },
   {
@@ -534,6 +663,39 @@
     "constant": false,
     "inputs": [
       {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "stake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "unstake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "name": "requestId",
         "type": "uint256"
       }
@@ -576,6 +738,33 @@
     "constant": false,
     "inputs": [
       {
+        "name": "contractUri",
+        "type": "string"
+      },
+      {
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "name": "existingPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "requestAuditWithPriceHint",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "name": "requestId",
         "type": "uint256"
       },
@@ -584,12 +773,147 @@
         "type": "uint8"
       },
       {
-        "name": "reportHash",
-        "type": "string"
+        "name": "report",
+        "type": "bytes"
       }
     ],
     "name": "submitReport",
     "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getReport",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "node",
+        "type": "address"
+      }
+    ],
+    "name": "isPoliceNode",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "name": "report",
+        "type": "bytes"
+      },
+      {
+        "name": "isVerified",
+        "type": "bool"
+      }
+    ],
+    "name": "submitPoliceReport",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "hasAvailableRewards",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getNextAvailableReward",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "claimReward",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "claimRewards",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
@@ -614,12 +938,141 @@
   },
   {
     "constant": true,
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "totalStakedFor",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "hasEnoughStake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMinAuditStake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getAuditTimeoutInBlocks",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "auditor",
+        "type": "address"
+      }
+    ],
+    "name": "getMinAuditPrice",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMaxAssignedRequests",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [],
     "name": "anyRequestAvailable",
     "outputs": [
       {
         "name": "",
         "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getNextPoliceAssignment",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "string"
+      },
+      {
+        "name": "",
+        "type": "uint256"
       }
     ],
     "payable": false,
@@ -697,6 +1150,36 @@
     ],
     "name": "getNextAssignedRequest",
     "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "myMostRecentAssignedAudit",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "address"
+      },
+      {
+        "name": "",
+        "type": "string"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
       {
         "name": "",
         "type": "uint256"
