@@ -49,4 +49,5 @@ RUN chmod +x ./bin/qsp-protocol-node
 RUN chmod +x ./bin/codec
 RUN mkdir -p /var/log/qsp-protocol/
 RUN find "./plugins/analyzers/wrappers" -type f -exec chmod +x {} \;
+RUN find "./tests/resources/wrappers" -type f -exec chmod +x {} \;
 CMD [ "./bin/qsp-protocol-node" ]

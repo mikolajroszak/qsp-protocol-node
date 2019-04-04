@@ -10,6 +10,7 @@
 MAKEFLAGS += --silent
 
 QSP_ENV ?= "testnet"
+QSP_ENV_CI ?= "dev"
 QSP_CONFIG ?= "./resources/config.yaml"
 QSP_ETH_PASSPHRASE ?= "abc123ropsten"
 QSP_ETH_AUTH_TOKEN ?= "PLEASE-SET-THE-TOKEN"
@@ -78,6 +79,7 @@ test-ci:
 		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
 		-e AWS_SESSION_TOKEN="$(AWS_SESSION_TOKEN)" \
 		-e AWS_DEFAULT_REGION="us-east-1" \
+		-e QSP_ENV="$(QSP_ENV_CI)" \
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t"
 
 test-travis-ci: build
