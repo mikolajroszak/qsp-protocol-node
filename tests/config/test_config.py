@@ -417,7 +417,7 @@ class TestConfig(QSPTest):
 
         content = config_yaml["files"]["/var/node-config/config.yaml"]["content"]
         content = next(yaml.load_all(content))
-        for env in ["dev", "dev-feature", "testnet", "prod", "staging"]:
+        for env in ["dev", "dev-feature", "testnet", "mainnet", "staging"]:
             # cannot call create_from_file here, as it will try to connect to infura
             config = content[env]
             # check that inherited fields exist
