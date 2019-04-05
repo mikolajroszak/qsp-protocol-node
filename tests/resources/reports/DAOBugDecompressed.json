@@ -58,7 +58,7 @@
               "start_line": 25
             }
           ],
-          "type": "exception_state"
+          "type": "unchecked_call_return_value"
         },
         {
           "file": "Unknown File",

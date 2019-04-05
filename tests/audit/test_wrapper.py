@@ -53,7 +53,7 @@ class TestWrapper(QSPTest):
                                'LockedEther': {'type': 'locked_ether'},
                                'UnrestrictedWrite': {'type': 'unprotected_state_manipulation'},
                                'UnrestrictedEtherFlow': {'type': 'unprotected_ether_withdrawal'},
-                               'UnhandledException': {'type': 'exception_state'},
+                               'UnhandledException': {'type': 'unchecked_call_return_value'},
                                'DAO': {'type': 'reentrancy'},
                                'DAOConstantGas': {'type': 'reentrancy'},
                                'TODReceiver': {'type': 'transaction_order_dependency'},
@@ -66,7 +66,7 @@ class TestWrapper(QSPTest):
                                    'type': 'unprotected_state_manipulation_true_positive'},
                                'UnrestrictedEtherFlowTP': {
                                    'type': 'unprotected_ether_withdrawal_true_positive'},
-                               'UnhandledExceptionTP': {'type': 'exception_state_true_positive'},
+                               'UnhandledExceptionTP': {'type': 'unchecked_call_return_value_true_positive'},
                                'DAOTP': {'type': 'reentrancy_true_positive'},
                                'DAOConstantGasTP': {'type': 'reentrancy_true_positive'},
                                'TODReceiverTP': {

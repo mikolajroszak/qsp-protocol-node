@@ -117,7 +117,7 @@
           ]
         },
         {
-          "type": "exception_state",
+          "type": "unchecked_call_return_value",
           "file": "DAOBug.sol",
           "description": "UnhandledException",
           "contract": "SendBalance",
@@ -198,7 +198,7 @@
             "type": "unprotected_ether_withdrawal"
           },
           "UnhandledException": {
-            "type": "exception_state"
+            "type": "unchecked_call_return_value"
           },
           "DAO": {
             "type": "reentrancy"
@@ -228,7 +228,7 @@
             "type": "unprotected_ether_withdrawal_true_positive"
           },
           "UnhandledExceptionTP": {
-            "type": "exception_state_true_positive"
+            "type": "unchecked_call_return_value_true_positive"
           },
           "DAOTP": {
             "type": "reentrancy_true_positive"
