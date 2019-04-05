@@ -56,11 +56,14 @@ Otherwise, launching the audit node will fail.
    URL (in our example  `abcdefg`) is the authentication token. Copy it and assign it to
    the environment variable `QSP_ETH_AUTH_TOKEN`. If you'd like to use
    your own endpoint, modify `eth_node/args/endpoint_uri` in `config.yaml` to
-   the endpoint of your choice.
+   the endpoint of your choice. If the endpoint does not require a token, just
+   set `QSP_ETH_AUTH_TOKEN` to empty string ("").
 
 1. If the location of your keystore file is different from the default one, in `config.yaml`, edit the line `keystore_file: !!str "./resources/keystore/default.json"`
 
 1. Configure other settings as necessary, e.g., `gas_price`.
+
+<!--TODO Add instructions for staking -->
 
 ### Start the docker daemon
 

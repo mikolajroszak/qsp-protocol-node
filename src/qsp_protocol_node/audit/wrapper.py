@@ -75,23 +75,28 @@ class Wrapper:
     def timeout_sec(self):
         return self.__timeout_sec
 
-    def setup_environment(self, contract_path, original_file_name):
+    def get_base_environment(self):
         env_vars = os.environ.copy()
-        contract_file_name = os.path.basename(contract_path)
 
         env_vars['STORAGE_DIR'] = self.__storage_dir
         env_vars['WRAPPER_HOME'] = self.__home
         env_vars['ANALYZER_NAME'] = self.__analyzer_name
+        env_vars['ANALYZER_ARGS'] = self.__args
+        return env_vars
+
+    def get_full_environment(self, contract_path, original_file_name):
+        env_vars = self.get_base_environment()
+        contract_file_name = os.path.basename(contract_path)
+
         env_vars['CONTRACT_PATH'] = contract_path
         env_vars['CONTRACT_FILE_NAME'] = contract_file_name
         env_vars['ORIGINAL_FILE_NAME'] = original_file_name
-        env_vars['ANALYZER_ARGS'] = self.__args
         return env_vars
 
     def get_metadata(self, contract_path, request_id, original_file_name):
         metadata = {'name': self.__analyzer_name}
         try:
-            env_vars = self.setup_environment(contract_path, original_file_name)
+            env_vars = self.get_full_environment(contract_path, original_file_name)
             self.__logger.debug(
                 "Getting {0}'s metadata as subprocess".format(self.analyzer_name),
                 requestId=request_id,
@@ -123,7 +128,7 @@ class Wrapper:
     def __prefetch_image(self):
         try:
             # No contact is needed, only the wrapper home initialization
-            env_vars = self.setup_environment("", "")
+            env_vars = self.get_base_environment()
             self.__logger.debug(
                 "Executing {0}'s once script to download the image".format(self.analyzer_name)
             )
@@ -153,7 +158,7 @@ class Wrapper:
     def check(self, contract_path, request_id, original_file_name):
         json_report = {}
         try:
-            env_vars = self.setup_environment(contract_path, original_file_name)
+            env_vars = self.get_full_environment(contract_path, original_file_name)
             self.__logger.debug("Invoking {0}'s wrapper as subprocess".format(
                     self.analyzer_name
                 ),

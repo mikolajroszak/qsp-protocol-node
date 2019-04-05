@@ -8,11 +8,17 @@
 # Demonstration License Terms at <https://s3.amazonaws.com/qsp-protocol-license/LICENSE.txt>.                                                    #
 #                                                                                                  #
 ####################################################################################################
-source common
-isrunning () {
+
+readonly SCRIPT_DIR=`dirname $(realpath "$0")`
+
+source "$SCRIPT_DIR/common"
+
+function isrunning () {
 	return `ps -A -o pid | grep -q $1`
  }
+
 # Find all running qsp-protocol-nodes
+
 if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
     #Attach to the running container and stop the audit process.
     for container in $(docker ps -q --filter ancestor=qsp-protocol-node); do
@@ -25,16 +31,15 @@ if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
         
         RPID=`cat /tmp/qsp-protocol.pid`
         if [ `isrunning $RPID` ]; then
-	        kill $RPID
-        	if [ `isrunning $RPID` ]; then
-            		echo "Failed to stop the node" | tee -a $LOG_PATH
-        	else
-            		echo "Audit node stopped" | tee -a $LOG_PATH
-        	fi
-	else
-		echo "No process running"
-	fi
+            kill $RPID
+            if [ `isrunning $RPID` ]; then
+                    echo "Failed to stop the node" | tee -a $LOG_PATH
+            else
+                    echo "Audit node stopped" | tee -a $LOG_PATH
+            fi
+    else
+        echo "No process running"
+    fi
     done
-else
-    echo "Nothing to stop!"
 fi
+

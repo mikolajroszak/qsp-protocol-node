@@ -5,7 +5,7 @@
 
 1. Run `make test`. Fix any issues or update the tests if applicable
 
-1. [Run the node](#run-locally) and check if there are any issues
+1. [Run the node](https://github.com/quantstamp/qsp-protocol-node#running-the-node) and check if there are any issues
 
 1. Open a pull request from your branch into `develop`
 
@@ -27,23 +27,27 @@ Currently, the process is mostly manual. To be automated in the future.
 
 * Main file: `qsp_protocol_node/__main__.py`
 
-* Target environments are defined in `deployment/local/config.yaml`
+* Target environments are defined in `deployment/local/config.yaml`, which are
+  passed on to the audit node
 
-* QSPAuditNode gets params from YAML
-  - `config.py`
+* Main files
+  - `config/config.py`
     - provides an interface for accessing configured components
     instantiated from the settings in the YAML file
-  - `audit.py`
-    - main loop is in the run() method
-    - logic for audit computation
-    - report is JSON and posted to Ethereum
-  - `analyzer.py`
-    - abstracts an analyzer tool
-    - needs to accept parameters in a better way
+  - `audit/audit.py`
+    - contains the program's main loop. See the `run()` method
+    - contains the logic for audit computation; calls each analyzer by its
+    wrapper plugin.
+    - report is put into JSON format, compressed, and posted to Ethereum
+  - `audit/wrapper.py`:
+    - wraps the execution of a target analyzer according to a [plugin
+    interface](https://github.com/quantstamp/qsp-protocol-node/blob/develop/plugins/analyzers/README.md). 
+  - `audit/analyzer.py`
+    - abstracts an analyzer tool, invoking its corresponding wrapper
 
 ### Codestyle
 
-The codestyle builds on PEP8 and includes especially the following:
+The general codestyle builds on PEP8 and includes the following:
 
 1. Indentation is done using spaces in multiples of 4
 2. Lines are broken after 100 characters, longer lines are allowed in exceptional cases only
@@ -55,4 +59,7 @@ The codestyle builds on PEP8 and includes especially the following:
 8. Use lowercase_underscore naming for variables
 9. Use `is` and `is not` when comparing to `None`
 10. Beware of overriding built-ins
+
+Before comitting code, run `make stylecheck` to whether you code adheres to our
+style guide. If not, your commit will automatically fail in CI.
 

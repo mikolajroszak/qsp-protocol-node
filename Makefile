@@ -18,8 +18,9 @@ QSP_IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
 QSP_LOG_DIR ?= $(HOME)/qsp-protocol
 
 clean:
-	find . | egrep "^.*/(__pycache__|.*\.pyc|tests/coverage/htmlcov|tests/coverage/.coverage|app.tar)$$" | xargs rm -rf
-	docker rmi --force qsp-protocol-node:latest
+	find . | egrep "^.*/(__pycache__|.*\.pyc|tests/coverage/htmlcov|tests/coverage/.coverage|app.tar|.*\.bak)$$" | xargs rm -rf
+	rm -rf deployment/local/dist
+	docker rmi --force qsp-protocol-node:latest &> /dev/null
 
 run: build
 	docker run -it \

@@ -9,7 +9,10 @@
 #                                                                                                  #
 ####################################################################################################
 
-source common
+readonly SCRIPT_DIR=`dirname $(realpath "$0")`
+readonly RESOURCES_DIR="$(dirname ${SCRIPT_DIR})/resources"
+
+source "$SCRIPT_DIR/common"
 
 # Check if the script is running in background
 case $(ps -o stat= -p $$) in
@@ -17,41 +20,43 @@ case $(ps -o stat= -p $$) in
   *) IN_BACKGROUND="true" ;;
 esac
 
-bash ./stop-node
+if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
+  echo "Stopping....."
+	"$SCRIPT_DIR/stop-node"
+fi
 
 set -e
-readonly BIN_DIR=`dirname $(realpath "$0")`
-readonly RESOURCE_DIR="$(dirname "$BIN_DIR")/resources"
-cd $RESOURCE_DIR
+
+cd "$RESOURCES_DIR"
 
 if [[ "x$QSP_ETH_PASSPHRASE" == "x" ]] ; then
-  echo "Environment variable QSP_ETH_PASSPHRASE is not set" &> /dev/null
+  echo "Environment variable QSP_ETH_PASSPHRASE is not set" &> /dev/stderr
   exit 1
 fi
 
 if [[ "x$QSP_ETH_AUTH_TOKEN" == "x" ]] ; then
-  echo "Environment variable QSP_ETH_AUTH_TOKEN is not set" &> /dev/null
+  echo "Environment variable QSP_ETH_AUTH_TOKEN is not set" &> /dev/stderr
   exit 1
 fi
 
 if [ ! -f app.tar ]; then
 	echo "app.tar file not present. Exiting!!"
-    exit 1
+  exit 1
 fi
 
 touch $PWD/event_database.db
 
-QSP_ENV="testnet"
-QSP_CONFIG="config.yaml"
+QSP_ENV="mainnet"
+QSP_CONFIG="resources/config.yaml"
 
 docker load --input app.tar && \
 docker run -d \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v /tmp:/tmp:Z \
-	-v $PWD/keystore:/app/resources/keystore:Z \
-	-v $PWD/contracts:/app/resources/contracts:Z \
-	-v $PWD/config.yaml:/app/resources/config.yaml:Z \
-	-v $PWD/event_database.db:/root/.audit_node.db:Z \
+	-v "$RESOURCES_DIR/keystore":/app/resources/keystore:Z \
+	-v "$RESOURCES_DIR/contracts":/app/resources/contracts:Z \
+	-v "$RESOURCES_DIR/config.yaml":/app/resources/config.yaml:Z \
+	-v "$RESOURCES_DIR/event_database.db":/root/.audit_node.db:Z \
 	-e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
 	-e AWS_DEFAULT_REGION="us-east-1" \

@@ -30,7 +30,7 @@ steps on how to perform common development tasks.
 
    To use a different provider, modify `eth_node/args/endpoint_uri` in `config.yaml` accordingly.
 
-## Running the node
+## (Running the node)[#run-node]
 
 ```bash
 make run
