@@ -71,7 +71,6 @@ class QSPTest(unittest.TestCase):
         expected_json = load_json(fetch_file(resource_uri(report_file_path)))
         if ignore_id:
             expected_json['request_id'] = actual_json['request_id']
-
         diff = DeepDiff(
             actual_json,
             expected_json,

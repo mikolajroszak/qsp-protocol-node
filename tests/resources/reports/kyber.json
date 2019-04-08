@@ -10,7 +10,7 @@
   "status": "error",
   "analyzers_reports": [
     {
-      "status": "error",
+      "status": "timeout",
       "analyzer": {
         "name": "mythril",
         "version": "06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3",
@@ -71,7 +71,7 @@
       "end_time": 1541708925
     },
     {
-      "status": "error",
+      "status": "timeout",
       "analyzer": {
         "name": "securify",
         "version": "59cd6b0b9f258fd7b493f63cecc304c4365dd98a46b0accaab5e8248fc87d010",

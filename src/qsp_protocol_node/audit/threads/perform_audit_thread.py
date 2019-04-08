@@ -96,6 +96,48 @@ class PerformAuditThread(QSPThread):
 
         return result
 
+    def __compute_audit_result(self, wrappers, local_reports):
+        # This is currently a very simple mechanism to claim an audit as
+        # successful or not. A report is labelled as `success` IFF
+        # at least one analyzer succeeds and no analyzers return error,
+        # however some may timeout.
+        audit_state = PerformAuditThread.__AUDIT_STATE_SUCCESS
+        audit_status = PerformAuditThread.__AUDIT_STATUS_SUCCESS
+
+        has_successful_analyzer = False
+
+        for i, analyzer_report in enumerate(local_reports):
+
+            # The next two fail safe checks should never kick in...
+
+            # This is a fail safe mechanism (defensive programming)
+            if 'analyzer' not in analyzer_report:
+                analyzer_report['analyzer'] = {
+                    'name': wrappers[i].analyzer_name
+                }
+
+            # Another fail safe mechanism (defensive programming)
+            if 'status' not in analyzer_report:
+                analyzer_report['status'] = 'error'
+                errors = analyzer_report.get('errors', [])
+                errors.append('Unknown error: cannot produce report')
+                analyzer_report['errors'] = errors
+
+            # Invariant: no analyzer report can ever be empty!
+
+            if analyzer_report['status'] == 'error':
+                audit_state = PerformAuditThread.__AUDIT_STATE_ERROR
+                audit_status = PerformAuditThread.__AUDIT_STATUS_ERROR
+
+            if analyzer_report['status'] == 'success':
+                has_successful_analyzer = True
+
+        if not has_successful_analyzer:
+            audit_state = PerformAuditThread.__AUDIT_STATE_ERROR
+            audit_status = PerformAuditThread.__AUDIT_STATUS_ERROR
+
+        return audit_state, audit_status
+
     def check_compilation(self, contract, request_id, uri):
         self.logger.debug("Running compilation check. About to check {0}".format(contract),
                             requestId=request_id)
@@ -244,7 +286,7 @@ class PerformAuditThread(QSPThread):
                     )
                 )
                 local_reports[i]['errors'] = errors
-                local_reports[i]['status'] = 'error'
+                local_reports[i]['status'] = 'timeout'
 
             # A timeout has not occurred. Register the end time
             end_time = calendar.timegm(time.gmtime())
@@ -260,35 +302,7 @@ class PerformAuditThread(QSPThread):
             'version': self.config.node_version,
         }
 
-        # FIXME
-        # This is currently a very simple mechanism to claim an audit as
-        # successful or not. Either it is fully successful (all analyzers
-        # produce a successful result), or fails otherwise.
-        audit_state = PerformAuditThread.__AUDIT_STATE_SUCCESS
-        audit_status = PerformAuditThread.__AUDIT_STATUS_SUCCESS
-
-        for i, analyzer_report in enumerate(local_reports):
-
-            # The next two fail safe checks should never kick in...
-
-            # This is a fail safe mechanism (defensive programming)
-            if 'analyzer' not in analyzer_report:
-                analyzer_report['analyzer'] = {
-                    'name': wrappers[i].analyzer_name
-                }
-
-            # Another fail safe mechanism (defensive programming)
-            if 'status' not in analyzer_report:
-                analyzer_report['status'] = 'error'
-                errors = analyzer_report.get('errors', [])
-                errors.append('Unknown error: cannot produce report')
-                analyzer_report['errors'] = errors
-
-            # Invariant: no analyzer report can ever be empty!
-
-            if analyzer_report['status'] == 'error':
-                audit_state = PerformAuditThread.__AUDIT_STATE_ERROR
-                audit_status = PerformAuditThread.__AUDIT_STATUS_ERROR
+        audit_state, audit_status = self.__compute_audit_result(wrappers, local_reports)
 
         audit_report['audit_state'] = audit_state
         audit_report['status'] = audit_status
