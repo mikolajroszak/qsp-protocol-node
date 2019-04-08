@@ -23,7 +23,7 @@ AUTO_RESTART="0"
 export SOL_FILE=""
 
 # Default logging level: debug node
-export QSP_LOGGING_LEVEL="INFO"
+export QSP_LOGGING_LEVEL="DEBUG"
 
 while getopts "t:d:f:ah" FLAG; do
     case $FLAG in

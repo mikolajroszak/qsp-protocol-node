@@ -198,7 +198,7 @@ class PollRequestsThread(QSPThread):
                     self.config.audit_contract_address, str(any_request_available)))
 
         except NotEnoughStake as error:
-            self.logger.warning("Cannot poll for audit request: {0}".format(str(error)))
+            self.logger.error("Cannot poll for audit request: {0}".format(str(error)))
 
         except DeduplicationException as error:
             self.logger.debug(
