@@ -18,6 +18,8 @@ contract QuantstampAudit {
   // mapping from an auditor address to the number of requests that it currently processes
   mapping(address => uint256) public assignedRequestCount;
 
+  // if submit report is called, the mock sets this to true
+  bool hasRewards = false;
 
   // state of audit requests submitted to the contract
   enum AuditState {
@@ -220,6 +222,7 @@ contract QuantstampAudit {
   event submitReport_called(uint256 requestId, AuditState auditResult, bytes compressedReportBytes);
   function submitReport(uint256 requestId, AuditState auditResult, bytes compressedReportBytes){
     finishedAudits[requestId] = true;
+    hasRewards = true;
     emit submitReport_called(requestId, auditResult, compressedReportBytes);
   }
 
@@ -285,12 +288,13 @@ contract QuantstampAudit {
   event setClaimRewards_called();
   function claimRewards() public {
     emit setClaimRewards_called();
+    hasRewards = false;
   }
 
   event hasAvailableRewards_called();
   function hasAvailableRewards() public view returns(bool){
     emit hasAvailableRewards_called();
-    return true;
+    return hasRewards;
   }
 
   event setTotalStakedForResult_called(address addr, uint256 mocked_result);

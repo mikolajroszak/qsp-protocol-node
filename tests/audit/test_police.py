@@ -20,6 +20,7 @@ from helpers.resource import (
     resource_uri,
 )
 from utils.io import fetch_file, load_json
+from upload import DummyProvider
 
 from timeout_decorator import timeout
 from threading import Thread
@@ -48,6 +49,7 @@ class TestPoliceLogic(QSPTest):
     def setUp(self):
         self.__config = fetch_config(inject_contract=True)
         self.__audit_node = QSPAuditNode(self.__config)
+        self.__audit_node.config._Config__upload_provider = DummyProvider()
 
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_police_audit(self):

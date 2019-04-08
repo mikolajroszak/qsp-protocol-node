@@ -9,6 +9,7 @@ from .provider import UploadProvider
 ####################################################################################################
 
 from singleton_decorator import singleton
+import tempfile
 
 
 @singleton
@@ -22,7 +23,12 @@ class DummyProvider(UploadProvider):
         }
 
     def upload_report(self, report_as_string, audit_report_hash=None):
-        return self.__response
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        with open(tmp.name, 'w') as f:
+            f.write(report_as_string)
+        upload_response = self.__response.copy()
+        upload_response['url'] = "file://" + tmp.name
+        return upload_response
 
     def upload_contract(self, request_id, contract_body, file_name):
         return self.__response

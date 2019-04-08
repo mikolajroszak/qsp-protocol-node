@@ -62,6 +62,7 @@ class TestQSPAuditNode(QSPTest):
         """
         self.__config = fetch_config(inject_contract=True)
         self.__audit_node = QSPAuditNode(self.__config)
+        self.__audit_node.config._Config__upload_provider = DummyProvider()
         self.__mk_unique_storage_dir()
 
         # Forces analyzer wrapper to always execute their `once` script prior
@@ -351,54 +352,6 @@ class TestQSPAuditNode(QSPTest):
                         }
         self.assert_event_table_contains(self.__config, [expected_row],
                                           ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
-
-    @timeout(300, timeout_exception=StopIteration)
-    def test_successful_contract_audit_request_with_disabled_upload(self):
-        """
-        Tests the entire flow of a successful audit request, from a request
-        to the production of a report and its submission.
-        """
-        # rewires the config
-        self.__audit_node.config._Config__report_upload_is_enabled = False
-        self.__audit_node.config._Config__upload_provider_name = ""
-        self.__audit_node.config._Config__upload_provider_args = {}
-        self.__audit_node.config._Config__upload_provider = DummyProvider()
-
-        # since we're mocking the smart contract, we should explicitly call its internals
-        buggy_contract = resource_uri("DAOBug.sol")
-        self.__request_audit(buggy_contract, self.__PRICE)
-
-        self.__evt_wait_loop(self.__submitReport_filter)
-
-        # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
-        self.__send_done_message(self.__REQUEST_ID)
-
-        # blocks until the audit is completely recorded in DB
-        self.__assert_audit_request_report(self.__REQUEST_ID)
-
-        compressed_report = TestQSPAuditNode.__compress_report("reports/DAOBug.json")
-
-        # asserting the database content
-        expected_row = {"request_id": 1,
-                        "requestor": self.__config.account,
-                        "contract_uri": buggy_contract,
-                        "evt_name": "LogAuditAssigned",
-                        "block_nbr": "IGNORE",
-                        "fk_status": "DN",
-                        "fk_type": "AU",
-                        "price": str(self.__PRICE),
-                        "status_info": "Report successfully submitted",
-                        "tx_hash": "IGNORE",
-                        "submission_attempts": 1,
-                        "is_persisted": 1,
-                        "audit_uri": "Not available. Full report was not uploaded",
-                        "audit_hash": "IGNORE",
-                        "audit_state": 4,
-                        "full_report": "IGNORE",
-                        "compressed_report": compressed_report
-                        }
-        self.assert_event_table_contains(self.__config, [expected_row],
-                                           ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
     def test_successful_empty_contract_audit_request(self):
