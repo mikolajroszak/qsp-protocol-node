@@ -9,8 +9,10 @@
 
 from streaming import CloudWatchProvider
 from helpers.qsp_test import QSPTest
+import pytest
 
 
+@pytest.mark.ci
 class TestCloudWatchProvider(QSPTest):
     def test_init(self):
         """

@@ -462,12 +462,6 @@ class TestConfig(QSPTest):
         self.assertEqual(1, config.block_discard_on_restart)
         self.assertTrue(config.heartbeat_allowed)
         self.assertFalse(config.enable_police_audit_polling)
-        self.assertTrue(config.upload_provider_is_enabled)
-        self.assertEqual(config.upload_provider_args,
-                         {
-                            'bucket_name': 'qsp-protocol-reports-staging',
-                            'contract_bucket_name': 'qsp-protocol-reports-staging'
-                         })
 
     def test_inject_token_auth(self):
         auth_token = "abc123456"

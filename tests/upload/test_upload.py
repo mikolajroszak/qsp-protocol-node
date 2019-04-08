@@ -11,8 +11,10 @@ import os
 
 from helpers.qsp_test import QSPTest
 from upload import S3Provider
+import pytest
 
 
+@pytest.mark.ci
 class TestS3Provider(QSPTest):
     """
     Tests uploads to Amazon S3.

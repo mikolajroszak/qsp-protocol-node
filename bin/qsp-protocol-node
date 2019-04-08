@@ -7,7 +7,7 @@
 readonly SUCCESS="0"
 
 function usage() {
-    echo "usage: qsp-audit-node [-t | [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]" &> /dev/stderr
+    echo "usage: qsp-protocol-node [-t TEST_ENV] [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]" &> /dev/stderr
     echo "                      environment config-yaml]"          &> /dev/stderr
     exit 1
 }
@@ -16,11 +16,6 @@ function usage() {
 # Main flow
 ################################################
 
-if [[ "$#" == "1" && "$1" == "-t" ]]; then
-    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
-    exit $?
-fi
-
 # Set auto restart to off by default
 AUTO_RESTART="0"
 
@@ -28,11 +23,31 @@ AUTO_RESTART="0"
 export SOL_FILE=""
 
 # Default logging level: debug node
-export QSP_LOGGING_LEVEL="DEBUG"
+export QSP_LOGGING_LEVEL="INFO"
 
-while getopts "d:f:ah" FLAG; do
+while getopts "t:d:f:ah" FLAG; do
     case $FLAG in
         # Debug level
+        t)
+            export QSP_LOGGING_LEVEL="DEBUG"
+            case $OPTARG in
+                ci)
+                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
+                    exit $?
+                ;;
+
+                local)
+                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/ 
+                    exit $?
+                ;;
+
+                *)
+                    echo "Unknown test environment. Expecting one of: ci, local" &> /dev/stderr
+                    exit 1
+                ;;
+            esac
+        ;;
+                
         d)
             # See https://docs.python.org/3/library/logging.html#levels
             case $OPTARG in

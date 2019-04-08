@@ -16,6 +16,9 @@ QSP_ETH_PASSPHRASE ?= "abc123ropsten"
 QSP_ETH_AUTH_TOKEN ?= "PLEASE-SET-THE-TOKEN"
 QSP_IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
 QSP_LOG_DIR ?= $(HOME)/qsp-protocol
+AWS_ACCESS_KEY_ID ?= ""
+AWS_SECRET_ACCESS_KEY ?= ""
+AWS_DEFAULT_REGION ?= ""
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc|tests/coverage/htmlcov|tests/coverage/.coverage|app.tar|.*\.bak)$$" | xargs rm -rf
@@ -30,9 +33,9 @@ run: build
 		-v $(PWD)/resources/contracts:/app/resources/contracts:Z \
 		-v $(PWD)/resources/config.yaml:/app/resources/config.yaml:Z \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
-		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
-		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
-		-e AWS_DEFAULT_REGION="us-east-1" \
+		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
+		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
+		-e AWS_DEFAULT_REGION="$(AWS_DEFAULT_REGION)" \
 		-e QSP_ETH_AUTH_TOKEN=$(QSP_ETH_AUTH_TOKEN) \
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $(QSP_ENV) $(QSP_CONFIG)"
@@ -46,10 +49,7 @@ test: build
 		-v /tmp:/tmp \
 		-v $(PWD)/deployment/aws-elasticbeanstalk/app/.ebextensions:/aws-config \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
-		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
-		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
-		-e AWS_DEFAULT_REGION="us-east-1" \
-		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t"
+		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t local"
 
 interactive: build
 	docker run -it \
@@ -59,9 +59,9 @@ interactive: build
 		-v $(PWD)/resources/contracts:/app/resources/contracts:Z \
 		-v $(PWD)/resources/config.yaml:/app/resources/config.yaml:Z \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
-		-e AWS_ACCESS_KEY_ID="$(shell aws --profile default configure get aws_access_key_id)" \
-		-e AWS_SECRET_ACCESS_KEY="$(shell aws --profile default configure get aws_secret_access_key)" \
-		-e AWS_DEFAULT_REGION="us-east-1" \
+		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
+		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
+		-e AWS_DEFAULT_REGION="$(AWS_DEFAULT_REGION)" \
 		-e QSP_ETH_AUTH_TOKEN=$(QSP_ETH_AUTH_TOKEN) \
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
 		-e QSP_ENV="dev" \
@@ -92,8 +92,9 @@ test-travis-ci: build
 		-v $(PWD)/tests/coverage:/app/tests/coverage \
 		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
 		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
-		-e AWS_DEFAULT_REGION="us-east-1" \
-		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t"
+		-e AWS_DEFAULT_REGION="$(AWS_DEFAULT_REGION)" \
+		-e QSP_ENV="$(QSP_ENV_CI)" \
+		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t ci"
 
 bundle:	
 	./bin/create-bundle

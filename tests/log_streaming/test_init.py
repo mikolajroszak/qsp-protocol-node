@@ -14,6 +14,7 @@ from helpers.resource import resource_uri
 from helpers.qsp_test import QSPTest
 from helpers.qsp_test import setup_logging
 from streaming import CloudWatchProvider
+import pytest
 
 
 def get_config():
@@ -28,6 +29,7 @@ def get_loggers():
     return log_streaming.__stream_loggers
 
 
+@pytest.mark.ci
 class TestLoggingInit(QSPTest):
 
     def test_initialize(self):

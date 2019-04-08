@@ -52,15 +52,10 @@ testnet:
   logging:
     streaming:
       is_enabled: !!bool False
-      provider: !!str "CloudWatchProvider"
-      args:
-        log_group: !!str "qsp-protocol-nodes-testnet"
-        log_stream: !!str "node-{id}"
-        send_interval_seconds: !!int 30
   metric_collection:
     is_enabled: !!bool True
     interval_seconds: !!int 30
-    destination_endpoint: !!str "https://dev-qsp-dashboard.quantstamp.com/node-metrics"
+    destination_endpoint: !!str "https://protocol-staging.quantstamp.com/node-metrics"
   heartbeat_allowed: !!bool False
 
 dev:
@@ -107,15 +102,8 @@ dev:
   logging:
     streaming:
       is_enabled: !!bool False
-      provider: !!str "CloudWatchProvider"
-      args:
-        log_group: !!str "qsp-protocol-nodes-dev"
-        log_stream: !!str "node-{id}"
-        send_interval_seconds: !!int 30
   metric_collection:
-    is_enabled: !!bool True
-    interval_seconds: !!int 30
-    destination_endpoint: !!str "https://dev-qsp-dashboard.quantstamp.com/node-metrics"
+    is_enabled: !!bool False
   heartbeat_allowed: !!bool False
 
 mainnet:
@@ -157,12 +145,7 @@ mainnet:
   logging:
     streaming:
       is_enabled: !!bool False
-      provider: !!str "CloudWatchProvider"
-      args:
-        log_group: !!str "qsp-protocol-nodes-prod"
-        log_stream:  !!str "node-{id}"
-        send_interval_seconds: !!int 30
   metric_collection:
     is_enabled: True
     interval_seconds: !!int 30
-    destination_endpoint: !!str "https://qsp-dashboard.quantstamp.com/node-metrics"
+    destination_endpoint: !!str "https://protocol.quantstamp.com/node-metrics"
