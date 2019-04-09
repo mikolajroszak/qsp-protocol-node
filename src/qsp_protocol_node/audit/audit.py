@@ -224,13 +224,10 @@ class QSPAuditNode(QSPThread):
         self.config.event_pool_manager.process_incoming_events(timeout_event)
         self.config.event_pool_manager.process_events_to_be_submitted(timeout_event)
 
-    def run(self):
-        """
-        Starts all the threads processing different stages of a given event.
-        """
-        if self.exec:
-            raise Exception(
-                "Cannot run audit node thread due to another audit node thread instance")
+    def check_stake(self):
+        if QSPAuditNode.is_police_officer(self.config) \
+                and not self.config.enable_police_audit_polling:
+            return
 
         if not QSPAuditNode.has_enough_stake(self.config):
             # todo(mderka): The conversion from QSPWei to QSP is hardcoded in order to save a call.
@@ -244,6 +241,16 @@ class QSPAuditNode(QSPThread):
                     minimum / (10 ** 18),
                     self.config.audit_contract_address,
                     current_stake / (10 ** 18)))
+
+    def run(self):
+        """
+        Starts all the threads processing different stages of a given event.
+        """
+        if self.exec:
+            raise Exception(
+                "Cannot run audit node thread due to another audit node thread instance")
+
+        self.check_stake()
 
         # Sets exec to True
         self.start()

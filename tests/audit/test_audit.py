@@ -113,11 +113,78 @@ class TestQSPAuditNode(QSPTest):
     # Tests
     ##############################################
 
-    def test_not_enough_stake(self):
+    def test_check_stake_police(self):
+        self.__audit_node.stop()
+        original = self.__audit_node.config._Config__enable_police_audit_polling
+        self.__audit_node.config._Config__enable_police_audit_polling = False
+        stake = 10
+        required = 20
+        is_police = True
+        has_enough_stake = False
+        with mock.patch('audit.audit.mk_read_only_call',
+                        side_effect=[is_police, has_enough_stake, required, stake]):
+            try:
+                self.__audit_node.check_stake()
+                # No exception should be thrown, police should ignore this check
+            finally:
+                self.__audit_node.config._Config__enable_police_audit_polling = original
+
+    def test_check_stake_not_enough_stake(self):
         self.__audit_node.stop()
         stake = 10
         required = 20
-        with mock.patch('audit.audit.mk_read_only_call', side_effect=[False, required, stake]):
+        is_police = False
+        has_enough_stake = False
+        with mock.patch('audit.audit.mk_read_only_call',
+                        side_effect=[is_police, has_enough_stake, required, stake]):
+            try:
+                self.__audit_node.check_stake()
+                self.fail("An exception was expected")
+            except Exception as e:
+                # expected
+                expected_msg = "Audit node does {0} not have enough stake. Please stake at least " \
+                               "{1} QSP into the account {2}. Current stake is {3} QSP. Please " \
+                               "restart the node.".format(
+                    self.__audit_node.config.account,
+                    required / (10 ** 18),
+                    self.__audit_node.config.audit_contract_address,
+                    stake / (10 ** 18))
+                self.assertEqual(expected_msg, str(e))
+
+    def test_check_stake_not_enough_police(self):
+        self.__audit_node.stop()
+        original = self.__audit_node.config._Config__enable_police_audit_polling
+        self.__audit_node.config._Config__enable_police_audit_polling = True
+        stake = 10
+        required = 20
+        is_police = True
+        has_enough_stake = False
+        with mock.patch('audit.audit.mk_read_only_call',
+                        side_effect=[is_police, has_enough_stake, required, stake]):
+            try:
+                self.__audit_node.check_stake()
+                self.fail("An exception was expected")
+            except Exception as e:
+                # expected
+                expected_msg = "Audit node does {0} not have enough stake. Please stake at least " \
+                               "{1} QSP into the account {2}. Current stake is {3} QSP. Please " \
+                               "restart the node.".format(
+                    self.__audit_node.config.account,
+                    required / (10 ** 18),
+                    self.__audit_node.config.audit_contract_address,
+                    stake / (10 ** 18))
+                self.assertEqual(expected_msg, str(e))
+            finally:
+                self.__audit_node.config._Config__enable_police_audit_polling = original
+
+    def test_check_stake_is_called_from_run(self):
+        self.__audit_node.stop()
+        stake = 10
+        required = 20
+        is_police = False
+        has_enough_stake = False
+        with mock.patch('audit.audit.mk_read_only_call',
+                        side_effect=[is_police, has_enough_stake, required, stake]):
             try:
                 self.__audit_node.run()
                 self.fail("An exception was expected")
