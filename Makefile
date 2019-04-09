@@ -22,6 +22,7 @@ AWS_DEFAULT_REGION ?= ""
 
 clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc|tests/coverage/htmlcov|tests/coverage/.coverage|app.tar|.*\.bak)$$" | xargs rm -rf
+	rm -f CONTRIBUTE.md
 	rm -rf deployment/local/dist
 	docker rmi --force qsp-protocol-node:latest &> /dev/null
 
@@ -39,6 +40,9 @@ run: build
 		-e QSP_ETH_AUTH_TOKEN=$(QSP_ETH_AUTH_TOKEN) \
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $(QSP_ENV) $(QSP_CONFIG)"
+		
+docs:
+	markdown-pp CONTRIBUTE.md.template -o ./CONTRIBUTE.md
 
 build:
 		docker build -t qsp-protocol-node .
