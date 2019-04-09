@@ -113,6 +113,25 @@ class TestQSPAuditNode(QSPTest):
     # Tests
     ##############################################
 
+    def test_not_enough_stake(self):
+        self.__audit_node.stop()
+        stake = 10
+        required = 20
+        with mock.patch('audit.audit.mk_read_only_call', side_effect=[False, required, stake]):
+            try:
+                self.__audit_node.run()
+                self.fail("An exception was expected")
+            except Exception as e:
+                # expected
+                expected_msg = "Audit node does {0} not have enough stake. Please stake at least " \
+                               "{1} QSP into the account {2}. Current stake is {3} QSP. Please " \
+                               "restart the node.".format(
+                    self.__audit_node.config.account,
+                    required / (10 ** 18),
+                    self.__audit_node.config.audit_contract_address,
+                    stake / (10 ** 18))
+                self.assertEqual(expected_msg, str(e))
+
     @timeout(8, timeout_exception=StopIteration)
     def test_timeout_stale_events(self):
         class Web3Mock:

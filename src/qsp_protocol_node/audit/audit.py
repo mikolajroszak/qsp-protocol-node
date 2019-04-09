@@ -72,6 +72,51 @@ class QSPAuditNode(QSPThread):
 
         return is_police
 
+    @staticmethod
+    def has_enough_stake(config):
+        """
+        Returns true if the node has enough stake and false otherwise.
+        """
+        has_stake = False
+        try:
+            has_stake = mk_read_only_call(
+                config,
+                config.audit_contract.functions.hasEnoughStake(config.account))
+        except Exception as err:
+            config.logger.debug("Failed to check if node has enough stake: {0}".format(err))
+
+        return has_stake
+
+    @staticmethod
+    def get_stake_required(config):
+        """
+        Returns the minimum required stake.
+        """
+        stake_required = 0
+        try:
+            stake_required = mk_read_only_call(
+                config,
+                config.audit_contract.functions.getMinAuditStake())
+        except Exception as err:
+            config.logger.debug("Failed to check the minimum required stake: {0}".format(err))
+
+        return stake_required
+
+    @staticmethod
+    def get_current_stake(config):
+        """
+        Returns the amount of stake needed.
+        """
+        staked = 0
+        try:
+            staked = mk_read_only_call(
+                config,
+                config.audit_contract.functions.totalStakedFor(config.account))
+        except Exception as err:
+            config.logger.debug("Failed to check the how much stake is missing: {0}".format(err))
+
+        return staked
+
     def __start_gas_price_thread(self):
         """
         Creates and starts the gas price thread. Appends the handle to the internal threads.
@@ -186,6 +231,19 @@ class QSPAuditNode(QSPThread):
         if self.exec:
             raise Exception(
                 "Cannot run audit node thread due to another audit node thread instance")
+
+        if not QSPAuditNode.has_enough_stake(self.config):
+            # todo(mderka): The conversion from QSPWei to QSP is hardcoded in order to save a call.
+            # todo(mderka): If the node is used with tokens other than QSP, this needs to change.
+            minimum = QSPAuditNode.get_stake_required(self.config)
+            current_stake = QSPAuditNode.get_current_stake(self.config)
+            raise Exception(
+                "Audit node does {0} not have enough stake. Please stake at least {1} QSP into "
+                "the account {2}. Current stake is {3} QSP. Please restart the node.".format(
+                    self.config.account,
+                    minimum / (10 ** 18),
+                    self.config.audit_contract_address,
+                    current_stake / (10 ** 18)))
 
         # Sets exec to True
         self.start()
