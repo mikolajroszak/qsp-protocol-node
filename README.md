@@ -54,7 +54,7 @@ the value of `QSP_ETH_PASSPHRASE` in a terminal:
    Otherwise, launching the audit node will fail.
 
 Additionally, the node relies on the configuration settings given in a 
-yaml file (default is `deployment/local/config.yaml`).
+yaml file (default is `resources/config.yaml`).
 
 ## Using custom accounts
 
@@ -111,7 +111,7 @@ any other nodes. Currently, the steps are as follows:
 1. In the audit contract repository, follow the [steps](https://github.com/quantstamp/qsp-protocol-audit-contract#deploy-to-ropsten-or-main-net-through-metamask) to 
 deploy the smart contracts to a separate stage (e.g., "betanet-test-123"). 
 
-1. In `deployment/local/config.yaml`, replace the contract addresses to point to the new stage, e.g., replace:
+1. In `resources/config.yaml`, replace the contract addresses to point to the new stage, e.g., replace:
 `https://s3.amazonaws.com/qsp-protocol-contract/dev/QuantstampAudit-v-{major-version}-abi.json`
 with 
 `https://s3.amazonaws.com/qsp-protocol-contract/betanet-test-123/QuantstampAudit-v-{major-version}-abi.json`.
@@ -148,7 +148,7 @@ Make sure that the AWS role has [correct permissions](https://docs.aws.amazon.co
     1. `contract_bucket_name`
 
 1. Additionally, one can also [stream logs to CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html). Once AWS credentials are in place, simply enable `logging/streaming` in
- `deployment/local/config.yaml`, changing the following default parameters (if desired):
+ `resources/config.yaml`, changing the following default parameters (if desired):
     1. `log_group`
     1. `log_stream`
 
