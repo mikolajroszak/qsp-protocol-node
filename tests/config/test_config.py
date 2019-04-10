@@ -411,38 +411,6 @@ class TestConfig(QSPTest):
         self.assertFalse(config.heartbeat_allowed)
         self.assertFalse(config.enable_police_audit_polling)
 
-    def test_inherited_node_config(self):
-        config_file_uri = "/aws-config/node-config.config"
-        config_yaml = load_yaml(config_file_uri)
-
-        content = config_yaml["files"]["/var/node-config/config.yaml"]["content"]
-        content = next(yaml.load_all(content))
-        for env in ["dev", "dev-feature", "testnet", "mainnet", "staging"]:
-            # cannot call create_from_file here, as it will try to connect to infura
-            config = content[env]
-            # check that inherited fields exist
-            self.assertIsNotNone(config.get("eth_node"))
-            self.assertIsNotNone(config.get("audit_contract_abi"))
-            self.assertIsNotNone(config.get("min_price_in_qsp"))
-            self.assertIsNotNone(config.get("max_assigned_requests"))
-            self.assertIsNotNone(config.get("evt_polling_sec"))
-            self.assertIsNotNone(config.get("block_mined_polling_interval_sec"))
-            self.assertIsNotNone(config.get("block_discard_on_restart"))
-            self.assertIsNotNone(config.get("analyzers"))
-            self.assertIsNotNone(config.get("upload_provider"))
-            self.assertIsNotNone(config.get("keystore_file"))
-            self.assertIsNotNone(config.get("gas_limit"))
-            self.assertIsNotNone(config.get("gas_price"))
-            self.assertIsNotNone(config.get("evt_db_path"))
-            self.assertIsNotNone(config.get("submission_timeout_limit_blocks"))
-            self.assertIsNotNone(config.get("logging"))
-            self.assertIsNotNone(config.get("metric_collection"))
-            self.assertIsNotNone(config.get("heartbeat_allowed"))
-            self.assertIsNotNone(config.get("police"))
-            self.assertIsNotNone(config.get("n_blocks_confirmation"))
-            # check that the upload provider is correctly overridden
-            self.assertTrue(env in config["upload_provider"]["args"]["bucket_name"])
-
     def test_node_config(self):
         config_file_uri = resource_uri("test_config.yaml")
         config = ConfigFactory.create_from_file(config_file_uri,

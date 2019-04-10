@@ -11,12 +11,16 @@ version: 0.1
 phases:
   pre_build:
     commands:
+      - ls -lhtr $CODEBUILD_SRC_DIR/deployment/
+      - cp -R $CODEBUILD_SRC_DIR_DeploymentSourceArtifact/* $CODEBUILD_SRC_DIR/deployment/
+      - ls -lhtr $CODEBUILD_SRC_DIR/deployment/
       - echo Logging in to Amazon ECR...
       - $(aws ecr get-login --region us-east-1 --no-include-email)
       - echo Pulling the latest image as a cache...
       - docker pull $REPO_URL/$REF_NAME:$REF_TAG || true
   build:
     commands:
+      - cd $CODEBUILD_SRC_DIR
       - echo Build started on `date`
       - echo Building the Docker image...
       - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
@@ -31,4 +35,4 @@ phases:
 artifacts:
   files:
     - '**/*'
-  base-directory: deployment/aws-elasticbeanstalk/app
+  base-directory: $CODEBUILD_SRC_DIR/deployment/aws-elasticbeanstalk/app
