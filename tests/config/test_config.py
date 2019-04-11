@@ -411,26 +411,6 @@ class TestConfig(QSPTest):
         self.assertFalse(config.heartbeat_allowed)
         self.assertFalse(config.enable_police_audit_polling)
 
-    def test_node_config(self):
-        config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file(config_file_uri,
-                                                "staging",
-                                                validate_contract_settings=False)
-        self.assertIsNotNone(config.eth_provider)
-        self.assertIsNotNone(config.web3_client)
-        self.assertIsNotNone(config.account)
-        self.assertIsNotNone(config.analyzers)
-        self.assertIsNotNone(config.upload_provider)
-        self.assertIsNotNone(config.metric_collection_destination_endpoint)
-        self.assertEqual(0, config.min_price_in_qsp)
-        self.assertEqual(0, config.gas_price_wei)
-        self.assertEqual(5, config.evt_polling)
-        self.assertEqual(2, len(config.analyzers))
-        self.assertEqual(5, config.start_n_blocks_in_the_past)
-        self.assertEqual(1, config.block_discard_on_restart)
-        self.assertTrue(config.heartbeat_allowed)
-        self.assertFalse(config.enable_police_audit_polling)
-
     def test_inject_token_auth(self):
         auth_token = "abc123456"
         endpoint = "https://test.com/?token={0}".format(auth_token)
