@@ -20,7 +20,7 @@
       ],
       "analyzer": {
         "name": "dockerhub_fail",
-        "version": "06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3",
+        "version": "c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {
             "type": "delegate_call_to_untrusted_contract"
@@ -68,7 +68,7 @@
             "type": "other"
           }
         },
-        "command": "docker run --rm -v /tmp/1543618103.00930830.8891051666701546/725:/shared/ -i qspprotocol/does-not-exist-0.4.25@sha256:06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3  -o json -x /shared/DAOBug.sol"
+        "command": "docker run --rm -v /tmp/1543618103.00930830.8891051666701546/725:/shared/ -i qspprotocol/does-not-exist-0.4.25@sha256:c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913  -o json -x /shared/DAOBug.sol"
       },
       "start_time": 1543618113,
       "end_time": 1543618114

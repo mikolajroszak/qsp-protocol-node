@@ -11,7 +11,7 @@
 
 source "$WRAPPER_HOME"/../common/settings
 
-readonly ANALYZER_DOCKER_IMAGE="qspprotocol/mythril-usolc-0.5.3@sha256:06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3"
+readonly ANALYZER_DOCKER_IMAGE="qspprotocol/mythril-usolc@sha256:c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913"
 readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
 readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -o json -x /shared/$CONTRACT_FILE_NAME"
 

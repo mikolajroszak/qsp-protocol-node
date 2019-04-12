@@ -13,8 +13,8 @@
       "status": "timeout",
       "analyzer": {
         "name": "mythril",
-        "version": "06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3",
-        "command": "docker run -v \"\":/shared/ -i \"qspprotocol/mythril-usolc-0.5.3@sha256:06e27cca39deb074094eb158e2aca1d1f8ad87558a8b0729b64f9dacd8060cd3\" -o json -x \"/shared/kyber.sol\"",
+        "version": "c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913",
+        "command": "docker run -v \"\":/shared/ -i \"qspprotocol/mythril-usolc@sha256:c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913\" -o json -x \"/shared/kyber.sol\"",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {
             "type": "delegate_call_to_untrusted_contract"
@@ -74,7 +74,7 @@
       "status": "timeout",
       "analyzer": {
         "name": "securify",
-        "version": "59cd6b0b9f258fd7b493f63cecc304c4365dd98a46b0accaab5e8248fc87d010",
+        "version": "d1f683b3c561b382a86a1ca7d4d1df1d87986c23ee076345a9bf3679a7d707e3",
         "vulnerabilities_checked": {
           "MissingInputValidation": {
             "type": "missing_input_validation"
@@ -143,7 +143,7 @@
             "type": "other"
           }
         },
-        "command": "docker run --rm -v /tmp/.securify/1548:/shared/ -i qspprotocol/securify-usolc-0.5.3@sha256:59cd6b0b9f258fd7b493f63cecc304c4365dd98a46b0accaab5e8248fc87d010 -fs /shared/kyber.sol"
+        "command": "docker run --rm -v /tmp/.securify/1548:/shared/ -i qspprotocol/securify-usolc@sha256:d1f683b3c561b382a86a1ca7d4d1df1d87986c23ee076345a9bf3679a7d707e3 -fs /shared/kyber.sol"
       },
       "start_time": 1541708919,
       "errors": [
