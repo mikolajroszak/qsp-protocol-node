@@ -16,6 +16,10 @@ function usage() {
 # Main flow
 ################################################
 
+# pulling usolc docker
+docker pull qspprotocol/usolc-entry@sha256:92bd41d22e72c9cb7af28dfa2784ead798916c115f59f1191fe45d6e4fabec4b
+mkdir -p /tmp/solc
+
 # Set auto restart to off by default
 AUTO_RESTART="0"
 
@@ -37,7 +41,7 @@ while getopts "t:d:f:ah" FLAG; do
                 ;;
 
                 local)
-                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/ 
+                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
                     exit $?
                 ;;
 

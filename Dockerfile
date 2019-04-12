@@ -29,10 +29,10 @@ RUN apk add --no-cache vim
 # Install aws-cli
 RUN pip3 install -U awscli
 
-# Install solc
-RUN wget https://github.com/ethereum/solidity/releases/download/v0.4.25/solc-static-linux && \
-  chmod +x solc-static-linux && \
-  mv solc-static-linux /usr/local/bin/solc
+# Install usolc
+COPY ./bin/run_usolc_docker ./
+RUN cp run_usolc_docker /usr/local/bin/solc
+RUN chmod +x /usr/local/bin/solc
 
 RUN mkdir ./app
 WORKDIR ./app/

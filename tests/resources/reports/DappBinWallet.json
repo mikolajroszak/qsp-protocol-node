@@ -1,5 +1,5 @@
 {
-  "timestamp": 1535474310,
+  "timestamp": 1554850200,
   "contract_uri": "file:///app/tests/helpers/../resources/DappBinWallet.sol",
   "contract_hash": "a9c2343908b4a6981e34bee55c971f2104e53973db37a24b83810fa6347fad06",
   "requestor": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
@@ -9,6 +9,6 @@
   "audit_state": 5,
   "status": "error",
   "compilation_errors": [
-    "DappBinWallet.sol:14:1: ParserError: Expected pragma, import directive or contract/interface/library definition.\n<!DOCTYPE html>\n^\n\n        > command: `solc --standard-json`\n        > return code: `0`\n        > stderr:\n        {\"contracts\":{},\"errors\":[{\"component\":\"general\",\"formattedMessage\":\"DappBinWallet.sol:14:1: ParserError: Expected pragma, import directive or contract/interface/library definition.\\n<!DOCTYPE html>\\n^\\n\",\"message\":\"Expected pragma, import directive or contract/interface/library definition.\",\"severity\":\"error\",\"sourceLocation\":{\"end\":814,\"file\":\"DappBinWallet.sol\",\"start\":813},\"type\":\"ParserError\"}],\"sources\":{}}\n\n        > stdout:"
+    "DappBinWallet.sol:14:1: ParserError: Expected pragma, import directive or contract/interface/library definition.\n<!DOCTYPE html>\n^\n\n        > command: `solc --standard-json`\n        > return code: `0`\n        > stderr:\n        {\"errors\":[{\"component\":\"general\",\"formattedMessage\":\"DappBinWallet.sol:14:1: ParserError: Expected pragma, import directive or contract/interface/library definition.\\n<!DOCTYPE html>\\n^\\n\",\"message\":\"Expected pragma, import directive or contract/interface/library definition.\",\"severity\":\"error\",\"sourceLocation\":{\"end\":814,\"file\":\"DappBinWallet.sol\",\"start\":813},\"type\":\"ParserError\"}],\"sources\":{}}\n\n        > stdout:"
   ]
 }

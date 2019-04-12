@@ -18,8 +18,8 @@ class VulnerabilitiesSet:
         vulnerabilities_set = set()
         for analyzer_report in report.get('analyzers_reports', {}):
             for vulnerability in analyzer_report.get('potential_vulnerabilities', []):
-                    vulnerability_type = vulnerability['type']
-                    for instance in vulnerability.get('instances', []):
-                        line = instance['start_line']
-                        vulnerabilities_set.add((vulnerability_type, line))
+                vulnerability_type = vulnerability['type']
+                for instance in vulnerability.get('instances', []):
+                    line = instance['start_line']
+                    vulnerabilities_set.add((vulnerability_type, line))
         return vulnerabilities_set
