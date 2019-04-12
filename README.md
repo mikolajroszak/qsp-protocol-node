@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/quantstamp/qsp-protocol-node.svg?token=99JaZsF6mzdz1szXGqFH&branch=develop)](https://travis-ci.com/quantstamp/qsp-protocol-node)
 
 Implements the QSP audit node in the Quantstamp network. This guide presents
-steps on how to perform common development tasks.
+steps on how to perform common development tasks. For Node operators, please refer to the document ["How to become a node operator"](./doc/node-operator.md) instead.
 
 ## Requirements
 
