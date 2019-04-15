@@ -9,7 +9,7 @@ readonly SCRIPT_DIR=`dirname $(realpath "$0")`
 QSPROOT=`dirname "$SCRIPT_DIR"`
 cd `echo $QSPROOT`
 
-make clean build
+make check-contract-versions clean build
 
 readonly DIST_DIR="$QSPROOT/deployment/local/dist"
 readonly CONFIG_FILE="$QSPROOT/resources/config.yaml"

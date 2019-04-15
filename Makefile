@@ -88,6 +88,9 @@ test-travis-ci: build
 bundle:	
 	./bin/create-bundle
 
+check-contract-versions:
+	./bin/check-contract-versions
+	
 stylecheck:
 	echo "Running Stylecheck"
 	find . -name \*.py -exec flake8 --ignore=$(QSP_IGNORE_CODES) {} +
