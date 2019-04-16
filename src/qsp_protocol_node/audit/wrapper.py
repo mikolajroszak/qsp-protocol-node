@@ -183,6 +183,16 @@ class Wrapper:
 
             json_report = json.loads(analyzer.stdout)
 
+        except subprocess.TimeoutExpired as err:
+            self.__logger.debug("Timeout running {0}'s wrapper: {1}".format(
+                self.analyzer_name,
+                str(err),
+            ),
+                requestId=request_id
+            )
+            # Cannot produce result in time. Get this back to the callee.
+            raise err
+
         except Exception as err:
             self.__logger.error("Error running {0}'s wrapper: {1}".format(
                     self.analyzer_name,
