@@ -7,6 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
+from time import sleep
 from unittest import mock
 
 from audit import CollectMetricsThread
@@ -35,8 +36,8 @@ class TestCollectMetricsThread(QSPTest):
         thread = CollectMetricsThread(config)
         with mock.patch('audit.threads.collect_metrics_thread.MetricCollector.collect_and_send',
                         return_value=True):
-            handle = thread.start()
-            self.assertTrue(thread.exec)
+            thread.start()
+            while not thread.exec:
+                sleep(0.1)
             thread.stop()
             self.assertFalse(thread.exec)
-            handle.join()

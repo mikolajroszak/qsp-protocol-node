@@ -15,7 +15,6 @@ import jsonschema
 import json
 import os
 import traceback
-from threading import Thread
 
 from evt import is_audit
 from evt import is_police_check
@@ -24,31 +23,13 @@ from utils.eth import mk_read_only_call
 from utils.eth import send_signed_transaction
 from utils.eth.tx import TransactionNotConfirmedException
 
-from .qsp_thread import QSPThread
+from .qsp_thread import TimeIntervalPollingThread
 from ..vulnerabilities_set import VulnerabilitiesSet
 
 
-class SubmitReportThread(QSPThread):
+class SubmitReportThread(TimeIntervalPollingThread):
     # Similarity threshold to deem a report correct
     __SIMILARITY_THRESHOLD = .6
-
-    def __init__(self, config):
-        """
-        Builds a QSPAuditNode object from the given input parameters.
-        """
-        QSPThread.__init__(self, config)
-
-    def start(self):
-        """
-        Updates min price every 24 hours.
-        """
-
-        submission_thread = Thread(target=self.__execute, name="submission thread")
-        submission_thread.start()
-        return submission_thread
-
-    def __execute(self):
-        self.run_with_interval(self.process_events_to_be_submitted, self.config.evt_polling)
 
     def process_events_to_be_submitted(self):
         self.config.event_pool_manager.process_events_to_be_submitted(
@@ -231,3 +212,14 @@ class SubmitReportThread(QSPThread):
                 zrequestId=request_id,
             )
             raise Exception("JSON could not be validated") from e
+
+    def __init__(self, config):
+        """
+        Builds a QSPAuditNode object from the given input parameters.
+        """
+        TimeIntervalPollingThread.__init__(
+            self,
+            config=config,
+            target_function=self.process_events_to_be_submitted,
+            thread_name="submission thread"
+        )

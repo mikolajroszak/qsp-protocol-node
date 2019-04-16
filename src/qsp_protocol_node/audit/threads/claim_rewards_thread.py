@@ -11,41 +11,16 @@
 Provides the thread that claims rewards in the QSP Audit node implementation.
 """
 
-from threading import Thread
 from utils.eth import DeduplicationException
 from utils.eth import mk_read_only_call
 from utils.eth import send_signed_transaction
 from utils.eth.tx import TransactionNotConfirmedException
 from web3.utils.threads import Timeout
 
-from .qsp_thread import QSPThread
+from .qsp_thread import TimeIntervalPollingThread
 
 
-class ClaimRewardsThread(QSPThread):
-    # The frequency of checking for claims. Currently, not configurable
-    __CLAIM_REWARDS_BEAT_SEC = 24 * 60 * 60
-
-    def __init__(self, config):
-        """
-        Builds the thread object from the given input parameters.
-        """
-        QSPThread.__init__(self, config)
-
-    def start(self):
-        """
-        Starts the process that claims rewards when available.
-        """
-        rewards_thread = Thread(target=self.__execute, name="claim rewards thread")
-        rewards_thread.start()
-        return rewards_thread
-
-    def __execute(self):
-        """
-        Defines the function to be executed and how often.
-        """
-        self.run_with_interval(self.__claim_rewards_if_available,
-                               ClaimRewardsThread.__CLAIM_REWARDS_BEAT_SEC,
-                               start_with_call=True)
+class ClaimRewardsThread(TimeIntervalPollingThread):
 
     def __claim_rewards_if_available(self):
         """
@@ -134,3 +109,15 @@ class ClaimRewardsThread(QSPThread):
             raise err
 
         return available_rewards
+
+    def __init__(self, config):
+        """
+        Builds the thread object from the given input parameters.
+        """
+        TimeIntervalPollingThread.__init__(
+            self,
+            config=config,
+            target_function=self.__claim_rewards_if_available,
+            thread_name="claim rewards thread",
+            polling_interval=24 * 60 * 60
+        )

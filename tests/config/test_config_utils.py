@@ -82,7 +82,7 @@ class ConfigStubForCheckSettings:
 class TestConfigUtil(QSPTest):
 
     def setUp(self):
-        dummy_node_version = '2.0.0'
+        dummy_node_version = '2.0.1'
         self.config_utils = ConfigUtils(dummy_node_version)
 
     def test_create_upload_provider_ok(self):

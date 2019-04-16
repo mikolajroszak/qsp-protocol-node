@@ -27,7 +27,7 @@ RUN apk add --no-cache linux-headers
 RUN apk add --no-cache vim
 
 # Install aws-cli
-RUN pip3 install -U awscli
+RUN pip3 install -U awscli==1.14.43
 
 # Install usolc
 COPY ./bin/run_usolc_docker ./

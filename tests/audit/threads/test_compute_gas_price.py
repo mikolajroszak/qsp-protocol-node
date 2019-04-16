@@ -12,6 +12,8 @@ from helpers.qsp_test import QSPTest
 from helpers.resource import fetch_config
 from timeout_decorator import timeout
 
+from time import sleep
+
 
 class TestComputeGasPriceThread(QSPTest):
 
@@ -45,8 +47,8 @@ class TestComputeGasPriceThread(QSPTest):
         # start the thread, signal stop and exit. use mock not to make work
         config = fetch_config(inject_contract=True)
         thread = ComputeGasPriceThread(config)
-        handle = thread.start()
-        self.assertTrue(thread.exec)
+        thread.start()
+        while not thread.exec:
+            sleep(0.1)
         thread.stop()
         self.assertFalse(thread.exec)
-        handle.join()

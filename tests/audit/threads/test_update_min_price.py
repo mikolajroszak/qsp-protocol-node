@@ -7,12 +7,12 @@
 #                                                                                                  #
 ####################################################################################################
 
+from time import sleep
 from unittest import mock
 
 from audit import UpdateMinPriceThread
 from helpers.qsp_test import QSPTest
 from helpers.resource import fetch_config
-from time import sleep
 from timeout_decorator import timeout
 from utils.eth.tx import TransactionNotConfirmedException
 from utils.eth.tx import DeduplicationException
@@ -129,8 +129,8 @@ class TestUpdateMinPriceThread(QSPTest):
         thread = UpdateMinPriceThread(config)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"):
-            handle = thread.start()
-            self.assertTrue(thread.exec)
+            thread.start()
+            while not thread.exec:
+                sleep(0.1)
             thread.stop()
             self.assertFalse(thread.exec)
-            handle.join()

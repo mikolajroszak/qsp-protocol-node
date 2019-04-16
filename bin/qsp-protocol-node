@@ -8,7 +8,7 @@ readonly SUCCESS="0"
 
 function usage() {
     echo "usage: qsp-protocol-node [-t TEST_ENV] [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]" &> /dev/stderr
-    echo "                      environment config-yaml]"          &> /dev/stderr
+    echo "                      environment config-yaml"                                    &> /dev/stderr
     exit 1
 }
 

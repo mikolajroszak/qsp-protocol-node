@@ -15,6 +15,8 @@ from unittest import mock
 from utils.eth import DeduplicationException
 from unittest.mock import MagicMock
 
+from time import sleep
+
 
 class TestPollRequestsThread(QSPTest):
 
@@ -219,11 +221,11 @@ class TestPollRequestsThread(QSPTest):
         # start the thread, signal stop and exit. use mock not to make work
         config = fetch_config(inject_contract=True)
         thread = PollRequestsThread(config)
-        handle = thread.start()
-        self.assertTrue(thread.exec)
+        thread.start()
+        while not thread.exec:
+            sleep(0.1)
         thread.stop()
         self.assertFalse(thread.exec)
-        handle.join()
 
     def __test_police_poll_event(self, is_police, is_new_assignment, is_already_processed,
                                  should_add_evt, is_confirmed=True):

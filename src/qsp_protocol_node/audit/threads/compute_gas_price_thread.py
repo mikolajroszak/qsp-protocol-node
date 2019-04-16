@@ -11,38 +11,16 @@
 Provides the thread for computing gas price for the QSP Audit node implementation.
 """
 
-from threading import Thread
-
-from .qsp_thread import QSPThread
+from .qsp_thread import BlockMinedPollingThread
 from utils.eth import get_gas_price
 
 
-class ComputeGasPriceThread(QSPThread):
-
-    def __init__(self, config):
-        """
-        Builds the thread object from the given input parameters.
-        """
-        QSPThread.__init__(self, config)
-
-    def start(self):
-        """
-        Computes the gas price with every block.
-        """
-        compute_gas_price_thread = Thread(target=self.__execute, name="compute_gas_price thread")
-        compute_gas_price_thread.start()
-        return compute_gas_price_thread
+class ComputeGasPriceThread(BlockMinedPollingThread):
 
     def __on_block_mined(self, block_number):
         self.compute_gas_price()
         self.logger.debug("New block detected: {0}. Current gas price: {1}".format(
             str(block_number), str(self.config.gas_price_wei)))
-
-    def __execute(self):
-        """
-        Defines the function to be executed and how often.
-        """
-        self.run_when_block_mined(self.__on_block_mined)
 
     def compute_gas_price(self):
         """
@@ -57,3 +35,14 @@ class ComputeGasPriceThread(QSPThread):
         gas_price = int(min(gas_price, self.config.max_gas_price_wei))
         # set the gas_price in config
         self.config.gas_price_wei = gas_price
+
+    def __init__(self, config):
+        """
+        Builds the thread object from the given input parameters.
+        """
+        BlockMinedPollingThread.__init__(
+            self, config,
+            target_function=self.__on_block_mined,
+            thread_name="compute_gas_price thread"
+        )
+        self.compute_gas_price()

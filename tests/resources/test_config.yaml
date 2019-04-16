@@ -7,7 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-dev: &default
+dev:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
   # audit_contract_abi: The contract is injected in tests

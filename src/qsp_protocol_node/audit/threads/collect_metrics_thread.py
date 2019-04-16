@@ -11,38 +11,28 @@
 Provides the thread for collecting metrics for the QSP Audit node implementation.
 """
 from utils.metrics import MetricCollector
-from threading import Thread
 
-from .qsp_thread import QSPThread
+from .qsp_thread import TimeIntervalPollingThread
 
 
-class CollectMetricsThread(QSPThread):
-
-    def __init__(self, config):
-        """
-        Builds a QSPAuditNode object from the given input parameters.
-        """
-        QSPThread.__init__(self, config)
-        self.__metric_collector = MetricCollector(config)
-
-    def start(self):
-        """
-        Updates min price every 24 hours.
-        """
-        collect_metrics_thread = Thread(target=self.__execute, name="collect metrics thread")
-        collect_metrics_thread.start()
-        return collect_metrics_thread
-
-    def __execute(self):
-        """
-        Defines the function to be executed and how often.
-        """
-        self.run_with_interval(self.__metric_collector.collect_and_send,
-                               self.config.metric_collection_interval_seconds,
-                               start_with_call=False)
+class CollectMetricsThread(TimeIntervalPollingThread):
 
     def collect_and_send(self):
         """
         Collects current metrics for the node and sends logs.
         """
         self.__metric_collector.collect_and_send()
+
+    def __init__(self, config):
+        """
+        Builds a QSPAuditNode object from the given input parameters.
+        """
+        TimeIntervalPollingThread.__init__(
+            self,
+            config,
+            target_function=self.collect_and_send,
+            polling_interval=config.metric_collection_interval_seconds,
+            thread_name="collect metrics thread",
+            start_with_call=False
+        )
+        self.__metric_collector = MetricCollector(config)

@@ -7,6 +7,7 @@
 #                                                                                                  #
 ####################################################################################################
 
+from time import sleep
 from unittest import mock
 from unittest.mock import MagicMock
 from web3.utils.threads import Timeout
@@ -40,11 +41,11 @@ class TestClaimRewards(QSPTest):
                         return_value="hash"), \
              mock.patch('audit.threads.claim_rewards_thread.mk_read_only_call',
                         return_value=False):
-            handle = self.__claim_rewards_thread.start()
-            self.assertTrue(self.__claim_rewards_thread.exec)
+            self.__claim_rewards_thread.start()
+            while not self.__claim_rewards_thread.exec:
+                sleep(0.1)
             self.__claim_rewards_thread.stop()
             self.assertFalse(self.__claim_rewards_thread.exec)
-            handle.join()
 
     def test_call_to_claim_rewards_no_exception(self):
         """
@@ -85,7 +86,8 @@ class TestClaimRewards(QSPTest):
         def has_available_rewards():
             return next(has_rewards_generator)
 
-        self.__claim_rewards_thread._QSPThread__exec = True
+        self.__claim_rewards_thread._exec = True
+
         self.__claim_rewards_thread._ClaimRewardsThread__has_available_rewards = \
             has_available_rewards
 
@@ -94,7 +96,7 @@ class TestClaimRewards(QSPTest):
 
         self.__claim_rewards_thread._ClaimRewardsThread__claim_rewards_if_available()
         claim_rewards.assert_called()
-        self.__claim_rewards_thread._QSPThread__exec = False
+        self.__claim_rewards_thread._exec = False
 
     def test_claim_rewards_when_many_rewards_available(self):
         """
@@ -107,7 +109,7 @@ class TestClaimRewards(QSPTest):
         def has_available_rewards():
             return next(has_rewards_generator)
 
-        self.__claim_rewards_thread._QSPThread__exec = True
+        self.__claim_rewards_thread._exec = True
         self.__claim_rewards_thread._ClaimRewardsThread__has_available_rewards = \
             has_available_rewards
 
@@ -116,7 +118,7 @@ class TestClaimRewards(QSPTest):
 
         self.__claim_rewards_thread._ClaimRewardsThread__claim_rewards_if_available()
         claim_rewards.assert_called()
-        self.__claim_rewards_thread._QSPThread__exec = False
+        self.__claim_rewards_thread._exec = False
 
     def test_claim_rewards_timeout_exception(self):
         """

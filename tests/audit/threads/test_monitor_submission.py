@@ -79,21 +79,20 @@ class TestMonitorSubmissionThreads(QSPTest):
         return_value = [event]
         with mock.patch('evt.evt_pool_manager.EventPoolManager._EventPoolManager__exec_sql',
                         return_value=return_value):
-            handle = self.thread.start()
+            self.thread.start()
             while not self.evt_pool_manager.set_evt_status_to_error.called:
                 sleep(0.1)
 
         if self.thread.exec:
             self.thread.stop()
-            handle.join()
 
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
         # start the thread, signal stop and exit, use mock not to make work
         with mock.patch('audit.threads.monitor_submission_thread.MonitorSubmissionThread'
                         '._MonitorSubmissionThread__monitor_submission_timeout'):
-            handle = self.thread.start()
-            self.assertTrue(self.thread.exec)
+            self.thread.start()
+            while not self.thread.exec:
+                sleep(0.1)
             self.thread.stop()
             self.assertFalse(self.thread.exec)
-            handle.join()

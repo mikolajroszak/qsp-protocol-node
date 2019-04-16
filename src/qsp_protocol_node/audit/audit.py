@@ -12,10 +12,18 @@ Provides the QSP Audit node implementation.
 """
 
 from .threads import ClaimRewardsThread
-from .threads import CollectMetricsThread, ComputeGasPriceThread, PollRequestsThread
-from .threads import UpdateMinPriceThread, QSPThread, SubmitReportThread, PerformAuditThread
+from .threads import CollectMetricsThread
+from .threads import ComputeGasPriceThread
+from .threads import PollRequestsThread
+from .threads import UpdateMinPriceThread
+from .threads import SubmitReportThread
+from .threads import PerformAuditThread
 from .threads import MonitorSubmissionThread
+
+from log_streaming import get_logger
 from utils.eth import mk_read_only_call
+
+from time import sleep
 
 """
 The main QSP audit node thread.
@@ -44,17 +52,29 @@ There are some important invariants that are to be respected at all
 """
 
 
-class QSPAuditNode(QSPThread):
+class QSPAuditNode:
 
     def __init__(self, config):
         """
         Builds a QSPAuditNode object from the given input parameters.
         """
-        QSPThread.__init__(self, config)
-
-        self.__internal_thread_handles = []
-        self.__internal_thread_definitions = []
+        self.__exec = False
+        self.__config = config
         self.__is_initialized = False
+        self.__logger = get_logger(self.__class__.__qualname__)
+
+        self.__internal_threads = [
+            PollRequestsThread(config),
+            SubmitReportThread(config),
+            UpdateMinPriceThread(config),
+            CollectMetricsThread(config),
+            PerformAuditThread(config),
+            ClaimRewardsThread(config),
+            MonitorSubmissionThread(config)
+        ]
+
+        if config.metric_collection_is_enabled:
+            self.__internal_threads.append(ComputeGasPriceThread(config))
 
     @staticmethod
     def is_police_officer(config):
@@ -117,92 +137,6 @@ class QSPAuditNode(QSPThread):
 
         return staked
 
-    def __start_gas_price_thread(self):
-        """
-        Creates and starts the gas price thread. Appends the handle to the internal threads.
-        """
-        gas_price_thread = ComputeGasPriceThread(self.config)
-        self.__internal_thread_definitions.append(gas_price_thread)
-
-        # Immediately compute gas price once upon startup
-        gas_price_thread.compute_gas_price()
-
-        handle = gas_price_thread.start()
-        self.__internal_thread_handles.append(handle)
-
-    def __start_poll_requests_thread(self):
-        """
-        Creates and starts the poll requests thread. Appends the handle to the internal threads.
-        """
-        poll_requests_thread = PollRequestsThread(self.config)
-        self.__internal_thread_definitions.append(poll_requests_thread)
-        handle = poll_requests_thread.start()
-        self.__internal_thread_handles.append(handle)
-
-    def __start_submission_thread(self):
-        submission_thread = SubmitReportThread(self.config)
-        self.__internal_thread_definitions.append(submission_thread)
-        handle = submission_thread.start()
-        self.__internal_thread_handles.append(handle)
-
-    def __start_min_price_thread(self):
-        """
-        Creates and starts the min price thread. Appends the handle to the internal threads.
-        """
-        min_price_thread = UpdateMinPriceThread(self.config)
-        self.__internal_thread_definitions.append(min_price_thread)
-        if self.config.heartbeat_allowed:
-            # Updates min price and starts a thread that will be doing so every 24 hours
-            min_price_thread.update_min_price()
-            # Starts the thread and keeps the handle
-            handle = min_price_thread.start()
-            self.__internal_thread_handles.append(handle)
-
-        else:
-            # Updates min price only if it differs
-            min_price_thread.check_and_update_min_price()
-
-    def __start_metric_collection_thread(self):
-        """
-        Creates and starts the metric collection thread. Appends the handle to the internal threads.
-        """
-        if self.config.metric_collection_is_enabled:
-            metric_collection_thread = CollectMetricsThread(self.config)
-            self.__internal_thread_definitions.append(metric_collection_thread)
-
-            # Collect initial metrics
-            metric_collection_thread.collect_and_send()
-
-            # Starts the thread and keeps the handle
-            handle = metric_collection_thread.start()
-            self.__internal_thread_handles.append(handle)
-
-    def __start_perform_audit_thread(self):
-        """
-        Creates and starts the min price thread. Appends the handle to the internal threads.
-        """
-        audit_thread = PerformAuditThread(self.config)
-        self.__internal_thread_definitions.append(audit_thread)
-
-        # Starts the thread and keeps the handle
-        handle = audit_thread.start()
-        self.__internal_thread_handles.append(handle)
-
-    def __start_claim_rewards_thread(self):
-        """
-        Collects any unclaimed audit rewards every 24 hours.
-        """
-        claim_rewards_thread = ClaimRewardsThread(self.config)
-        self.__internal_thread_definitions.append(claim_rewards_thread)
-        handle = claim_rewards_thread.start()
-        self.__internal_thread_handles.append(handle)
-
-    def __start_monitor_submission_thread(self):
-        monitor_thread = MonitorSubmissionThread(self.config)
-        self.__internal_thread_definitions.append(monitor_thread)
-        handle = monitor_thread.start()
-        self.__internal_thread_handles.append(handle)
-
     def __timeout_stale_requests(self):
         first_valid_block = self.config.web3_client.eth.blockNumber - \
                             self.config.submission_timeout_limit_blocks + \
@@ -224,7 +158,7 @@ class QSPAuditNode(QSPThread):
         self.config.event_pool_manager.process_incoming_events(timeout_event)
         self.config.event_pool_manager.process_events_to_be_submitted(timeout_event)
 
-    def check_stake(self):
+    def __check_stake(self):
         if QSPAuditNode.is_police_officer(self.config) \
                 and not self.config.enable_police_audit_polling:
             return
@@ -242,31 +176,24 @@ class QSPAuditNode(QSPThread):
                     self.config.audit_contract_address,
                     current_stake / (10 ** 18)))
 
-    def run(self):
+    def start(self):
         """
         Starts all the threads processing different stages of a given event.
+        Can only be called once.
         """
-        if self.exec:
+        if self.__exec:
             raise Exception(
                 "Cannot run audit node thread due to another audit node thread instance")
 
-        self.check_stake()
-
-        # Sets exec to True
-        self.start()
+        self.__exec = True
+        self.__check_stake()
 
         # Upon restart, before processing, set all events that timed out to err
         self.__timeout_stale_requests()
 
         # Start all the threads
-        self.__start_gas_price_thread()  # Analyze and set gas price
-        self.__start_min_price_thread()  # Update min price periodically
-        self.__start_claim_rewards_thread()  # Collect any unclaimed rewards every 24 hours
-        self.__start_metric_collection_thread()  # Submit metrics if enables
-        self.__start_poll_requests_thread()  # Poll for audit and police requests
-        self.__start_perform_audit_thread()  # Performs audits
-        self.__start_submission_thread()  # Submits results
-        self.__start_monitor_submission_thread()  # Monitors submission events
+        for thread in self.__internal_threads:
+            thread.start()
 
         self.__is_initialized = True
 
@@ -274,15 +201,18 @@ class QSPAuditNode(QSPThread):
         # audit node. Checking whether a thread is alive or not does not account for timing out
         # audits, which necessarily dies after processing them all.
         health_check_interval_sec = 2
-        self.run_with_interval(self.check_all_threads, health_check_interval_sec)
 
-    def check_all_threads(self):
-        if not self.exec:
+        while self.__exec:
+            self.__check_all_threads()
+            sleep(health_check_interval_sec)
+
+    def __check_all_threads(self):
+        if not self.__exec:
             return
 
         thread_lost = None
         # Checking if all threads are still alive
-        for thread in self.__internal_thread_handles:
+        for thread in self.__internal_threads:
             if not thread.is_alive():
                 thread_lost = thread
                 break
@@ -296,25 +226,39 @@ class QSPAuditNode(QSPThread):
         """
         Signals to the executing QSP audit node that is should stop the execution of the node.
         """
-        QSPThread.stop(self)
+        self.__exec = False
         self.logger.info("Stopping QSP Audit Node")
 
         # indicate to every thread that it should stop its execution
-        for internal_thread in self.__internal_thread_definitions:
-            self.logger.debug("Thread {0} is signaled to stop.".format(internal_thread.thread_name))
-            internal_thread.stop()
+        for thread in self.__internal_threads:
+            self.logger.debug("Thread {0} is signaled to stop.".format(
+                    thread.name
+                )
+            )
+            thread.stop()
 
         # join every thread
-        for internal_thread in self.__internal_thread_handles:
-            internal_thread.join()
-            self.logger.debug("Thread {0} is stopped.".format(internal_thread.name))
+        for thread in self.__internal_threads:
+            thread.join()
+            self.logger.debug("Thread {0} is stopped.".format(thread.name))
 
-        self.__internal_thread_handles = []
-        self.__internal_thread_definitions = []
+        self.__is_initialized = False
 
         # Close resources
         self.config.event_pool_manager.close()
 
     @property
+    def exec(self):
+        return self.__exec
+
+    @property
     def is_initialized(self):
         return self.__is_initialized
+
+    @property
+    def config(self):
+        return self.__config
+
+    @property
+    def logger(self):
+        return self.__logger

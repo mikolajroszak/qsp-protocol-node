@@ -11,9 +11,7 @@
 Provides the thread for polling requests for the QSP Audit node implementation.
 """
 
-from threading import Thread
-
-from .qsp_thread import QSPThread
+from .qsp_thread import BlockMinedPollingThread
 from utils.eth import send_signed_transaction
 from utils.eth import mk_read_only_call
 from utils.eth import DeduplicationException
@@ -27,7 +25,7 @@ class NotEnoughStake(Exception):
     pass
 
 
-class PollRequestsThread(QSPThread):
+class PollRequestsThread(BlockMinedPollingThread):
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
 
     # Must be in sync with
@@ -38,28 +36,8 @@ class PollRequestsThread(QSPThread):
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L110
     __AVAILABLE_AUDIT_UNDERSTAKED = 5
 
-    def __init__(self, config):
-        """
-        Builds the thread object from the given input parameters.
-        """
-        QSPThread.__init__(self, config)
-
-    def start(self):
-        """
-        Polls audit and police requests with every block.
-        """
-        poll_requests_thread = Thread(target=self.__execute, name="poll_requests thread")
-        poll_requests_thread.start()
-        return poll_requests_thread
-
     def __on_block_mined(self, *unused):
         self.__poll_requests()
-
-    def __execute(self):
-        """
-        Defines the function to be executed and how often.
-        """
-        self.run_when_block_mined(self.__on_block_mined)
 
     def __get_min_stake_qsp(self):
         """
@@ -268,3 +246,14 @@ class PollRequestsThread(QSPThread):
         """
         self.__poll_audit_request()
         self.__poll_police_request()
+
+    def __init__(self, config):
+        """
+        Builds the thread object from the given input parameters.
+        """
+        BlockMinedPollingThread.__init__(
+            self,
+            config=config,
+            target_function=self.__on_block_mined,
+            thread_name="poll_requests thread"
+        )

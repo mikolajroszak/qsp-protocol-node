@@ -168,7 +168,12 @@ class Program:
             pprint(audit_report)
         # Runs the QSP audit node in a busy loop fashion
         else:
-            audit_node.run()
+            try:
+                audit_node.start()
+            except Exception as error:
+                if audit_node is not None:
+                    audit_node.stop()
+                    raise error
 
 
 if __name__ == "__main__":

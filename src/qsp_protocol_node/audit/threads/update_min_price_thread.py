@@ -11,9 +11,7 @@
 Provides the thread updating the min price for the QSP Audit node implementation.
 """
 
-from threading import Thread
-
-from .qsp_thread import QSPThread
+from .qsp_thread import TimeIntervalPollingThread
 from utils.eth import DeduplicationException
 from utils.eth import mk_read_only_call
 from utils.eth import send_signed_transaction
@@ -21,32 +19,7 @@ from utils.eth.tx import TransactionNotConfirmedException
 from web3.utils.threads import Timeout
 
 
-class UpdateMinPriceThread(QSPThread):
-    # The frequency of updating min price. This is not configurable as dashboard logic depends
-    # on this frequency
-    __MIN_PRICE_BEAT_SEC = 24 * 60 * 60
-
-    def __init__(self, config):
-        """
-        Builds a QSPAuditNode object from the given input parameters.
-        """
-        QSPThread.__init__(self, config)
-
-    def start(self):
-        """
-        Updates min price every 24 hours.
-        """
-
-        min_price_thread = Thread(target=self.__execute, name="update min price thread")
-        min_price_thread.start()
-        return min_price_thread
-
-    def __execute(self):
-        """
-        Defines the function to be executed and how often.
-        """
-        self.run_with_interval(self.update_min_price, UpdateMinPriceThread.__MIN_PRICE_BEAT_SEC,
-                               start_with_call=False)
+class UpdateMinPriceThread(TimeIntervalPollingThread):
 
     def update_min_price(self):
         """
@@ -111,3 +84,23 @@ class UpdateMinPriceThread(QSPThread):
         min_price_in_mini_qsp = self.config.min_price_in_qsp * (10 ** 18)
         if min_price_in_mini_qsp != contract_price:
             self.update_min_price()
+
+    def __init__(self, config):
+        """
+        Builds a QSPAuditNode object from the given input parameters.
+        """
+        # The frequency of updating the min proce is not configurable as
+        # the dashboard logic depends on this frequency
+        TimeIntervalPollingThread.__init__(
+            self,
+            config=config,
+            target_function=self.update_min_price,
+            polling_interval=24 * 60 * 60,
+            thread_name="update min price thread")
+
+        if self.config.heartbeat_allowed:
+            # Updates min price and starts a thread that will be doing so every 24 hours
+            self.update_min_price()
+        else:
+            # Updates min price only if it differs
+            self.check_and_update_min_price()

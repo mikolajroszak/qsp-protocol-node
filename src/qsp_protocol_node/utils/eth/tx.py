@@ -79,7 +79,7 @@ def __wait_for_confirmed_transaction_receipt(config, tx_hash):
     Needed to avoid issues with uncle chains.
     Raises a Timeout exception if the transaction has disappeared or was never mined.
     """
-    logger.debug("Waiting for an {}-blocks confirmation on the transaction".format(
+    logger.debug("Waiting for {}-blocks confirmation on the transaction".format(
         config.n_blocks_confirmation
     ))
 
@@ -93,7 +93,7 @@ def __wait_for_confirmed_transaction_receipt(config, tx_hash):
         if current_receipt:
             tx_block_number = current_receipt["blockNumber"]
             if current_block - tx_block_number >= config.n_blocks_confirmation:
-                logger.debug("Transaction has an {}-blocks confirmation.".format(
+                logger.debug("Transaction has {}-blocks confirmation.".format(
                     config.n_blocks_confirmation
                 ))
                 return

@@ -207,7 +207,7 @@ class Config:
         Builds a Config object from a target environment (e.g., test) and an input YAML
         configuration file.
         """
-        self.__node_version = '2.0.0'
+        self.__node_version = '2.0.1'
         self.__analyzers = []
         self.__analyzers_config = []
         self.__audit_contract_name = None

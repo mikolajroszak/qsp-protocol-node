@@ -12,19 +12,19 @@ import json
 from audit import QSPAuditNode
 from audit.threads import SubmitReportThread
 from audit.threads import PollRequestsThread
+from audit.threads import ClaimRewardsThread
 from audit.report_processing import ReportEncoder
 from helpers.qsp_test import QSPTest
-from helpers.resource import (
-    fetch_config,
-    remove,
-    resource_uri,
-)
+from helpers.resource import fetch_config
+from helpers.resource import remove
+from helpers.threads import replace_thread
+from helpers.resource import resource_uri
 from utils.io import fetch_file, load_json
 from upload import DummyProvider
 
+from time import sleep
 from timeout_decorator import timeout
 from threading import Thread
-from unittest import mock
 from unittest.mock import MagicMock
 
 
@@ -64,6 +64,7 @@ class TestPoliceLogic(QSPTest):
         submit_report_instance._SubmitReportThread__get_report_in_blockchain = MagicMock()
         submit_report_instance._SubmitReportThread__get_report_in_blockchain.return_value = \
             compressed_report
+        replace_thread(self.__audit_node, SubmitReportThread, submit_report_instance)
 
         # Adds a police event to the database to trigger the flow of a police
         # check. Since no other thread should be writing to the DB at this
@@ -77,37 +78,45 @@ class TestPoliceLogic(QSPTest):
             block_nbr=100,
             is_audit=False
         )
+        replace_thread(self.__audit_node, PollRequestsThread, poll_requests_instance)
 
-        with mock.patch('audit.audit.SubmitReportThread', return_value=submit_report_instance), \
-             mock.patch('audit.audit.PollRequestsThread', return_value=poll_requests_instance):
-            # Sets the node as a police officer.
-            self.__audit_node.is_police_officer = MagicMock()
-            self.__audit_node.is_police_officer.return_value = True
+        # Disables the claim rewards threading from continuously running ahead;
+        # negate the default mocking behaviour of always having rewards
+        # available
+        claim_rewards_instance = ClaimRewardsThread(self.__config)
+        claim_rewards_instance._ClaimRewardsThread__has_available_rewards = MagicMock()
+        claim_rewards_instance._ClaimRewardsThread__has_available_rewards.return_value = False
+        replace_thread(self.__audit_node, ClaimRewardsThread, claim_rewards_instance)
 
-            # Sets the audit report value itself to be returned by the audit node.
-            self.__audit_node.audit = MagicMock()
-            self.__audit_node.audit.return_value = {
-                'audit_state': uncompressed_report['audit_state'],
-                'audit_uri': 'http://some-url.com',
-                'audit_hash': 'some-hash',
-                'full_report': json.dumps(uncompressed_report),
-                'compressed_report': compressed_report
-            }
+        # Sets the node as a police officer.
+        self.__audit_node.is_police_officer = MagicMock()
+        self.__audit_node.is_police_officer.return_value = True
 
-            self.__run_audit_node()
+        # Sets the audit report value itself to be returned by the audit node.
+        self.__audit_node.audit = MagicMock()
+        self.__audit_node.audit.return_value = {
+            'audit_state': uncompressed_report['audit_state'],
+            'audit_uri': 'http://some-url.com',
+            'audit_hash': 'some-hash',
+            'full_report': json.dumps(uncompressed_report),
+            'compressed_report': compressed_report
+        }
 
-            sql3lite_worker = self.__audit_node.config.event_pool_manager.sql3lite_worker
-            result_found = False
+        self.__run_audit_node()
 
-            # Waits till the record moves from assigned status to submitted.
-            sql = "select * from audit_evt where request_id = {0} and fk_status == 'SB' and fk_type='PC'"
-            while not result_found:
-                rows = sql3lite_worker.execute(sql.format(request_id))
-                if len(rows) == 0:
-                    continue
+        sql3lite_worker = self.__audit_node.config.event_pool_manager.sql3lite_worker
+        result_found = False
 
-                self.assertTrue(len(rows), 1)
-                result_found = True
+        # Waits till the record moves from assigned status to submitted.
+        sql = "select * from audit_evt where request_id = {0} and fk_status == 'SB' and fk_type='PC'"
+        while not result_found:
+            rows = sql3lite_worker.execute(sql.format(request_id))
+            if len(rows) == 0:
+                sleep(0.1)
+                continue
+
+            self.assertTrue(len(rows), 1)
+            result_found = True
 
     @timeout(300, timeout_exception=StopIteration)
     def test_police_fails_when_original_audit_is_not_found(self):
@@ -126,50 +135,58 @@ class TestPoliceLogic(QSPTest):
         submit_report_instance = SubmitReportThread(self.__config)
         submit_report_instance._SubmitReportThread__get_report_in_blockchain = MagicMock()
         submit_report_instance._SubmitReportThread__get_report_in_blockchain.return_value = None
+        replace_thread(self.__audit_node, SubmitReportThread, submit_report_instance)
 
-        with mock.patch('audit.audit.SubmitReportThread', return_value=submit_report_instance):
+        # Disables the claim rewards threading from continuously running ahead;
+        # negate the default mocking behaviour of always having rewards
+        # available
+        claim_rewards_instance = ClaimRewardsThread(self.__config)
+        claim_rewards_instance._ClaimRewardsThread__has_available_rewards = MagicMock()
+        claim_rewards_instance._ClaimRewardsThread__has_available_rewards.return_value = False
+        replace_thread(self.__audit_node, ClaimRewardsThread, claim_rewards_instance)
 
-            # Sets the audit report value itself to be returned by the audit node.
-            self.__audit_node.audit = MagicMock()
-            self.__audit_node.audit.return_value = {
-                'audit_state': uncompressed_report['audit_state'],
-                'audit_uri': 'http://some-url.com',
-                'audit_hash': 'some-hash',
-                'full_report': json.dumps(uncompressed_report),
-                'compressed_report': compressed_report
-            }
+        # Sets the audit report value itself to be returned by the audit node.
+        self.__audit_node.audit = MagicMock()
+        self.__audit_node.audit.return_value = {
+            'audit_state': uncompressed_report['audit_state'],
+            'audit_uri': 'http://some-url.com',
+            'audit_hash': 'some-hash',
+            'full_report': json.dumps(uncompressed_report),
+            'compressed_report': compressed_report
+        }
 
-            # Adds a police event to the database to trigger the flow of a police
-            # check. Since no other thread should be writing to the DB at this
-            # point, the write can be performed without a lock.
-            poll_requests_instance = PollRequestsThread(self.__config)
-            poll_requests_instance._PollRequestsThread__add_evt_to_db(
-                request_id=request_id,
-                requestor=self.__audit_node.config.audit_contract_address,
-                price=100,
-                uri=resource_uri("reports/DAOBug.json"),
-                block_nbr=100,
-                is_audit=False
-            )
+        # Adds a police event to the database to trigger the flow of a police
+        # check. Since no other thread should be writing to the DB at this
+        # point, the write can be performed without a lock.
+        poll_requests_instance = PollRequestsThread(self.__config)
+        poll_requests_instance._PollRequestsThread__add_evt_to_db(
+            request_id=request_id,
+            requestor=self.__audit_node.config.audit_contract_address,
+            price=100,
+            uri=resource_uri("reports/DAOBug.json"),
+            block_nbr=100,
+            is_audit=False
+        )
 
-            self.__run_audit_node()
+        self.__run_audit_node()
 
-            sql3lite_worker = self.__audit_node.config.event_pool_manager.sql3lite_worker
-            result_found = False
+        sql3lite_worker = self.__audit_node.config.event_pool_manager.sql3lite_worker
+        result_found = False
 
-            # Waits till the record moves from assigned status to error.
-            sql = "select * from audit_evt where request_id = {0} and fk_status == 'ER'"
-            while not result_found:
-                rows = sql3lite_worker.execute(sql.format(request_id))
-                if len(rows) == 0:
-                    continue
+        # Waits till the record moves from assigned status to error.
+        sql = "select * from audit_evt where request_id = {0} and fk_status == 'ER'"
+        while not result_found:
+            rows = sql3lite_worker.execute(sql.format(request_id))
+            if len(rows) == 0:
+                sleep(0.1)
+                continue
 
-                self.assertTrue(len(rows), 1)
-                result_found = True
+            self.assertTrue(len(rows), 1)
+            result_found = True
 
     def __run_audit_node(self):
         def exec():
-            self.__audit_node.run()
+            self.__audit_node.start()
 
         audit_node_thread = Thread(target=exec, name="Audit node")
         audit_node_thread.start()

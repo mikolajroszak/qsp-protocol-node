@@ -11,33 +11,11 @@
 Provides the thread for monitoring the submissions in the QSP Audit node implementation.
 """
 
-from threading import Thread
-
-from .qsp_thread import QSPThread
+from .qsp_thread import TimeIntervalPollingThread
 from utils.eth import mk_read_only_call
 
 
-class MonitorSubmissionThread(QSPThread):
-
-    def __init__(self, config):
-        """
-        Builds a the thread object from the given input parameters.
-        """
-        QSPThread.__init__(self, config)
-
-    def start(self):
-        """
-        Monitors submissions of reports.
-        """
-        monitor_thread = Thread(target=self.__execute, name="monitor thread")
-        monitor_thread.start()
-        return monitor_thread
-
-    def __execute(self):
-        """
-        Defines the function to be executed and how often.
-        """
-        self.run_with_interval(self.__process_submissions, self.config.evt_polling)
+class MonitorSubmissionThread(TimeIntervalPollingThread):
 
     def __process_submissions(self):
         """
@@ -55,7 +33,9 @@ class MonitorSubmissionThread(QSPThread):
         Sets the event to state ER if the timeout window passed.
         """
         is_finished = mk_read_only_call(
-            self.config, self.config.audit_contract.functions.isAuditFinished(evt['request_id'])
+            self.config, self.config.audit_contract.functions.isAuditFinished(
+                evt['request_id']
+            )
         )
         try:
             if is_finished and evt != {}:
@@ -93,3 +73,14 @@ class MonitorSubmissionThread(QSPThread):
                 "Audit event is {1}".format(str(error),
                                             str(evt)),
                 requestId=evt['request_id'])
+
+    def __init__(self, config):
+        """
+        Builds a the thread object from the given input parameters.
+        """
+        TimeIntervalPollingThread.__init__(
+            self,
+            config=config,
+            target_function=self.__process_submissions,
+            thread_name="monitor thread"
+        )

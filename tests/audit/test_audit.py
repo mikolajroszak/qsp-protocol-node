@@ -16,17 +16,16 @@ from unittest import mock
 from audit import QSPAuditNode
 from audit import Analyzer, Wrapper
 from audit.report_processing import ReportEncoder
+from audit.threads import ClaimRewardsThread
 from config import ConfigUtils, ConfigurationException
 from helpers.qsp_test import QSPTest
-from helpers.resource import (
-    fetch_config,
-    project_root,
-    remove,
-    resource_uri
-)
+from helpers.resource import fetch_config
+from helpers.resource import project_root
+from helpers.resource import remove
+from helpers.resource import resource_uri
+from helpers.threads import replace_thread
 from helpers.transact import safe_transact
 from upload import DummyProvider
-
 from utils.io import fetch_file, digest_file, load_json
 from utils.db import get_first
 
@@ -35,6 +34,7 @@ from time import sleep
 from time import time
 from timeout_decorator import timeout
 from threading import Thread
+from unittest.mock import MagicMock
 
 
 class TestQSPAuditNode(QSPTest):
@@ -57,9 +57,9 @@ class TestQSPAuditNode(QSPTest):
         remove(config.evt_db_path)
 
     def setUp(self):
-        """
-        Starts the execution of the QSP audit node as a separate thread.
-        """
+        self.prepare_test()
+
+    def prepare_test(self):
         self.__config = fetch_config(inject_contract=True)
         self.__audit_node = QSPAuditNode(self.__config)
         self.__audit_node.config._Config__upload_provider = DummyProvider()
@@ -82,15 +82,19 @@ class TestQSPAuditNode(QSPTest):
             self.__config.audit_contract.events.setAnyRequestAvailableResult_called.createFilter(
                 fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
             )
-        self.__setAuditNodePrice_filter = \
-            self.__config.audit_contract.events.setAuditNodePrice_called.createFilter(
-                fromBlock=max(0, self.__config.event_pool_manager.get_latest_block_number())
-            )
 
-        def exec():
-            self.__audit_node.run()
+        # Disables the claim rewards threading from continuously running ahead;
+        # negate the default mocking behaviour of always having rewards
+        # available
+        claim_rewards_instance = ClaimRewardsThread(self.__config)
+        claim_rewards_instance._ClaimRewardsThread__has_available_rewards = MagicMock()
+        claim_rewards_instance._ClaimRewardsThread__has_available_rewards.return_value = False
+        replace_thread(self.__audit_node, ClaimRewardsThread, claim_rewards_instance)
 
-        audit_node_thread = Thread(target=exec, name="Audit node")
+        def exec_audit_node():
+            self.__audit_node.start()
+
+        audit_node_thread = Thread(target=exec_audit_node, name="Audit node")
         audit_node_thread.start()
 
         max_initialization_seconds = 5
@@ -124,7 +128,7 @@ class TestQSPAuditNode(QSPTest):
         with mock.patch('audit.audit.mk_read_only_call',
                         side_effect=[is_police, has_enough_stake, required, stake]):
             try:
-                self.__audit_node.check_stake()
+                self.__audit_node._QSPAuditNode__check_stake()
                 # No exception should be thrown, police should ignore this check
             finally:
                 self.__audit_node.config._Config__enable_police_audit_polling = original
@@ -138,7 +142,7 @@ class TestQSPAuditNode(QSPTest):
         with mock.patch('audit.audit.mk_read_only_call',
                         side_effect=[is_police, has_enough_stake, required, stake]):
             try:
-                self.__audit_node.check_stake()
+                self.__audit_node._QSPAuditNode__check_stake()
                 self.fail("An exception was expected")
             except Exception as e:
                 # expected
@@ -162,7 +166,7 @@ class TestQSPAuditNode(QSPTest):
         with mock.patch('audit.audit.mk_read_only_call',
                         side_effect=[is_police, has_enough_stake, required, stake]):
             try:
-                self.__audit_node.check_stake()
+                self.__audit_node._QSPAuditNode__check_stake()
                 self.fail("An exception was expected")
             except Exception as e:
                 # expected
@@ -186,7 +190,7 @@ class TestQSPAuditNode(QSPTest):
         with mock.patch('audit.audit.mk_read_only_call',
                         side_effect=[is_police, has_enough_stake, required, stake]):
             try:
-                self.__audit_node.run()
+                self.__audit_node.start()
                 self.fail("An exception was expected")
             except Exception as e:
                 # expected
@@ -487,23 +491,30 @@ class TestQSPAuditNode(QSPTest):
         """
         Tests that no exception is thrown when the threads are healthy
         """
-        self.__audit_node.check_all_threads()
+        self.__audit_node._QSPAuditNode__check_all_threads()
 
-    def test_check_all_threads_exception(self):
-        handles = self.__audit_node._QSPAuditNode__internal_thread_handles
-        self.__audit_node.stop()
-        self.assertFalse(self.__audit_node.exec)
-        # this only sets the exec attribute, the threads remain dead
-        self.__audit_node.start()
+    def test_check_all_threads_exception_XXX(self):
+        theads_to_die = range(
+            0,
+            len(self.__audit_node._QSPAuditNode__internal_threads) - 1
+        )
         self.assertTrue(self.__audit_node.exec)
-        # set back all the dead handles
-        self.__audit_node._QSPAuditNode__internal_thread_handles = handles
-        try:
-            self.check_all_threads()
-            self.fail("Dead threads were not detected")
-        except Exception:
-            # expected
-            pass
+        for thread_i in theads_to_die:
+            try:
+                thread_to_die = self.__audit_node._QSPAuditNode__internal_threads[thread_i]
+                thread_to_die._exec = False
+                thread_to_die.join()
+                self.__audit_node._QSPAuditNode__check_all_threads()
+                self.assertTrue(False, "Dead threads were not detected")
+            except AssertionError as assertion_error:
+                # Propagates the error to signal a testing failure
+                raise assertion_error
+            except Exception:
+                # Expected...
+                self.__audit_node.stop()
+                self.assertFalse(self.__audit_node.exec)
+                self.prepare_test()
+                self.assertTrue(self.__audit_node.exec)
 
     # TODO(mderka): Disabled flaky test, investigate with QSP-852
     # @timeout(300, timeout_exception=StopIteration)
@@ -659,7 +670,7 @@ class TestQSPAuditNode(QSPTest):
         """
         thrown = True
         try:
-            self.__audit_node.run()
+            self.__audit_node.start()
             thrown = False
         except Exception:
             # the exception is too generic to use self.fail

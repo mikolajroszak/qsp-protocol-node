@@ -32,10 +32,10 @@ from solc.exceptions import ContractsNotFound, SolcError
 from solc import compile_standard
 from subprocess import TimeoutExpired
 
-from .qsp_thread import QSPThread
+from .qsp_thread import TimeIntervalPollingThread
 
 
-class PerformAuditThread(QSPThread):
+class PerformAuditThread(TimeIntervalPollingThread):
 
     # Must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAuditData.sol#L14
@@ -50,27 +50,6 @@ class PerformAuditThread(QSPThread):
 
     # Empty report for certain error cases
     __EMPTY_COMPRESSED_REPORT = ""
-
-    def __init__(self, config):
-        """
-        Builds a QSPAuditNode object from the given input parameters.
-        """
-        QSPThread.__init__(self, config)
-
-    def start(self):
-        """
-        Updates min price every 24 hours.
-        """
-
-        perform_audit_thread = Thread(target=self.__execute, name="audit thread")
-        perform_audit_thread.start()
-        return perform_audit_thread
-
-    def __execute(self):
-        """
-        Defines the function to be executed and how often.
-        """
-        self.run_with_interval(self.__process_incoming, self.config.evt_polling)
 
     def __process_incoming(self):
         self.config.event_pool_manager.process_incoming_events(
@@ -434,3 +413,14 @@ class PerformAuditThread(QSPThread):
             )
             evt['status_info'] = traceback.format_exc()
             self.config.event_pool_manager.set_evt_status_to_error(evt)
+
+    def __init__(self, config):
+        """
+        Builds a QSPAuditNode object from the given input parameters.
+        """
+        TimeIntervalPollingThread.__init__(
+            self,
+            config=config,
+            target_function=self.__process_incoming,
+            thread_name="audit thread"
+        )
