@@ -234,13 +234,16 @@ You can use nohup to run the script in detached mode:
 
 ### View Logs
 
-Logs are written to `qsp-protocol-node.log` file in /tmp/qsp-protocol directory.
+Logs are written to `qsp-protocol-node.log` file in .qsp-protocol directory within user home directory.
 
 ### Stop
 
 `./bin/stop-node`
 
 Will stop and remove the docker containers.
+
+### To use non production environment
+Node can be run against non-prod environment by setting `QSP_ENV`  variable to `testnet` in ./bin/start-node file
 
 ### Check if you node runs correctly
 1. Go to protocol.quantstamp.com 

@@ -23,10 +23,10 @@ function is_running () {
 if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
     #Attach to the running container and stop the audit process.
     for container in $(docker ps -q --filter ancestor=qsp-protocol-node); do
-        docker exec -it $container bash -c 'PID=$(ps auxw | grep "python -W"| grep -v bin| grep -v grep| awk "{print \$1}") ;echo $PID ; kill $PID'
+        docker exec -it $container bash -c 'PID=$(ps auxw | grep "python -W"| grep -v bin| grep -v grep| awk "{print \$1}") ;echo $PID ; kill $PID' > /dev/null
         #Wait for the audit node to stop
         while [[ $(docker inspect --format={{.State.Status}} $container) == "running" ]]; do
-            echo "Waiting for Audit node to stop" | tee -a $LOG_PATH
+            echo "Waiting for audit node to stop" | tee -a $LOG_PATH
             sleep 4
         done
         

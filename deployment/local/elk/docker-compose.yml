@@ -59,7 +59,7 @@ services:
     volumes:
       - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/qsp-protocol/:/var/log/qsp-protocol:ro
+      - ${HOME}/.qsp-protocol/:/var/log/qsp-protocol:ro
     networks:
       - elk
     depends_on:

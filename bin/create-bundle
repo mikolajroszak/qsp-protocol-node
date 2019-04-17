@@ -28,7 +28,7 @@ if [ ! -f "$CONFIG_FILE" ] && [ ! -f "$SCRIPT_DIR/start-node" ] && [ ! -f "$APP_
         exit 1
 fi
 
-cat "$CONFIG_FILE" | sed -n '/mainnet/,$p' > "$DIST_DIR/resources/$CONFIG_FILE_NAME"
+cp "$CONFIG_FILE" "$DIST_DIR/resources/$CONFIG_FILE_NAME"
 cat "$START_SCRIPT" | sed 's/testnet/mainnet/g' > "$DIST_DIR/bin/$START_SCRIPT_NAME"
 
 cp LICENSE "$DIST_DIR"

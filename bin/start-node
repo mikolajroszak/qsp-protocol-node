@@ -46,7 +46,7 @@ fi
 
 touch $PWD/event_database.db
 
-QSP_ENV="mainnet"
+QSP_ENV="testnet"
 QSP_CONFIG="resources/config.yaml"
 
 docker load --input app.tar && \

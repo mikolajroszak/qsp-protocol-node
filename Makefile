@@ -51,7 +51,6 @@ test: build
 	docker run -it \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
-		-v $(PWD)/deployment/aws-elasticbeanstalk/app/.ebextensions:/aws-config \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t local"
 
@@ -76,7 +75,6 @@ test-travis-ci: build
 	docker run -t \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /tmp:/tmp \
-		-v $(PWD)/deployment/aws-elasticbeanstalk/app/.ebextensions:/aws-config \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-v $(PWD)/tests/coverage:/app/tests/coverage \
 		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
