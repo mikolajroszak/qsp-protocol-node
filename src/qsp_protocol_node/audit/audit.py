@@ -64,17 +64,17 @@ class QSPAuditNode:
         self.__logger = get_logger(self.__class__.__qualname__)
 
         self.__internal_threads = [
-            PollRequestsThread(config),
-            SubmitReportThread(config),
+            ComputeGasPriceThread(config),
             UpdateMinPriceThread(config),
-            CollectMetricsThread(config),
-            PerformAuditThread(config),
             ClaimRewardsThread(config),
+            PollRequestsThread(config),
+            PerformAuditThread(config),
+            SubmitReportThread(config),
             MonitorSubmissionThread(config)
         ]
 
         if config.metric_collection_is_enabled:
-            self.__internal_threads.append(ComputeGasPriceThread(config))
+            self.__internal_threads.append(CollectMetricsThread(config))
 
     @staticmethod
     def is_police_officer(config):
