@@ -1,6 +1,6 @@
 {
-  "contractAddress": "0x9Da5C82e8709dC87Fa742F790d449D8aa9204354",
+  "contractAddress": "0xCC51d63f8557d295F5B364769997Aab3689E0A64",
   "creatorAddress": "0x8FD88a2457f74Ec62e6115B2Eb20f05F24B51c62",
-  "commitHash": "18a300bbd493b4a933b606ce676a16b638e49a27",
-  "version": "2.6.0"
+  "commitHash": "e6044aa958882a716285a722fc41cb1cc6effa47",
+  "version": "2.7.0"
 }

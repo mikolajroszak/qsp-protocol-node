@@ -32,6 +32,7 @@ cat "$CONFIG_FILE" | sed -n '/mainnet/,$p' > "$DIST_DIR/resources/$CONFIG_FILE_N
 cat "$START_SCRIPT" | sed 's/testnet/mainnet/g' > "$DIST_DIR/bin/$START_SCRIPT_NAME"
 
 cp LICENSE "$DIST_DIR"
+cp -a $QSPROOT/doc/. "$DIST_DIR/doc/"
 cp "$SCRIPT_DIR/stop-node" "$SCRIPT_DIR/common" "$DIST_DIR/bin"
 cp -a "$CONTRACTS_DIR/." "$DIST_DIR/resources/contracts"
 mkdir -p "$DIST_DIR/resources/keystore"
@@ -43,3 +44,4 @@ zip -r "$ZIP_FILENAME" *
 rm -rf "resources"
 rm -rf "bin"
 rm -rf "LICENSE"
+rm -rf "doc"

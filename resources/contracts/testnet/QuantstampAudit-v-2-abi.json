@@ -1,1185 +1,1234 @@
 [
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "reportData",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x0c36eb21"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "mostRecentAssignedRequestIdsPerAuditor",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x32143a35"
-    },
-    {
-      "constant": false,
-      "inputs": [],
-      "name": "unpause",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x3f4ba83a"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "paused",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x5c975abb"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "auditData",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x6072ec64"
-    },
-    {
-      "constant": false,
-      "inputs": [],
-      "name": "renounceOwnership",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x715018a6"
-    },
-    {
-      "constant": false,
-      "inputs": [],
-      "name": "pause",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x8456cb59"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "owner",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x8da5cb5b"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "tokenEscrow",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0xaac41ed6"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "police",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0xc7330dd4"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "assignedRequestCount",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0xd1e0cc21"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "transferOwnership",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0xf2fde38b"
-    },
-    {
-      "inputs": [
-        {
-          "name": "auditDataAddress",
-          "type": "address"
-        },
-        {
-          "name": "reportDataAddress",
-          "type": "address"
-        },
-        {
-          "name": "escrowAddress",
-          "type": "address"
-        },
-        {
-          "name": "policeAddress",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "constructor",
-      "signature": "constructor"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "auditResult",
-          "type": "uint8"
-        }
-      ],
-      "name": "LogAuditFinished",
-      "type": "event",
-      "signature": "0x72eb633b318428904b36d464999e9b539dcdeaba757d74a23e0defbad58d8083"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "requestor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "uri",
-          "type": "string"
-        },
-        {
-          "indexed": false,
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogAuditRequested",
-      "type": "event",
-      "signature": "0x4840dade871b5e2ef351b94bf0013ddc305ba95cf2db9d14b18720e1267b5bca"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "requestor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "uri",
-          "type": "string"
-        },
-        {
-          "indexed": false,
-          "name": "price",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "requestBlockNumber",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogAuditAssigned",
-      "type": "event",
-      "signature": "0x7f77829ea87833bf5f6593e4e0c63ef9049662fb927b51278325bcf708b38359"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        }
-      ],
-      "name": "LogReportSubmissionError_InvalidAuditor",
-      "type": "event",
-      "signature": "0xf347c161bf17d622e62922326092dd9579fd3e85fa93f6de90e7df3a7336c2fb"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "state",
-          "type": "uint8"
-        }
-      ],
-      "name": "LogReportSubmissionError_InvalidState",
-      "type": "event",
-      "signature": "0x6b363836716c3877f3c49dd37defa9fb5d124706cb0b6640f49c2e09db911daf"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "state",
-          "type": "uint8"
-        }
-      ],
-      "name": "LogReportSubmissionError_InvalidResult",
-      "type": "event",
-      "signature": "0x3a0de84191b46e385bc9aff0ecb6cb021f3bb03c3ca5ee8434455163c2d81599"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "allowanceBlockNumber",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogReportSubmissionError_ExpiredAudit",
-      "type": "event",
-      "signature": "0xe1f2d12acdc0bb70d6d7daaa80a51c7d266585e839cdf1fe120d178938d42565"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        }
-      ],
-      "name": "LogAuditAssignmentError_ExceededMaxAssignedRequests",
-      "type": "event",
-      "signature": "0xa02f269007e4473186254aa700b45b5a04c17e9620880bda1ab752f0ead12240"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "stake",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogAuditAssignmentError_Understaked",
-      "type": "event",
-      "signature": "0xcd1a5c2608a4f819aefa1f8e9fd631d8f945388ec4f548862145374cfacee622"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "allowanceBlockNumber",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogAuditAssignmentUpdate_Expired",
-      "type": "event",
-      "signature": "0xa711f872e3732bc5b6130b03d9d7e514ffe570ac79dce6d1de822fe98c5b2400"
-    },
-    {
-      "anonymous": false,
-      "inputs": [],
-      "name": "LogAuditQueueIsEmpty",
-      "type": "event",
-      "signature": "0x20c67af46c413c2d718d4d21afe5ab6bfcb13460d2660353bc9058257cf7eb07"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogPayAuditor",
-      "type": "event",
-      "signature": "0xea648b3eaf17a2dc7140d38177ea6c732aa308fdae50d160350b9b4588a0ddb7"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogAuditNodePriceChanged",
-      "type": "event",
-      "signature": "0xddbe8ac5fd80afcdfe74510771f42b2d5faa2540275a36ec03f427b8746a8fdd"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "requestor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogRefund",
-      "type": "event",
-      "signature": "0xd712b46ccde5e095a18ecd18aed6bf9d83d9263601d1942365932b15f23cd7da"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "requestor",
-          "type": "address"
-        }
-      ],
-      "name": "LogRefundInvalidRequestor",
-      "type": "event",
-      "signature": "0xc51ab1f8d63f8e46b3c04ac4a66ac4b693cb2ce80c3b5b7389e154353082592f"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "state",
-          "type": "uint8"
-        }
-      ],
-      "name": "LogRefundInvalidState",
-      "type": "event",
-      "signature": "0x252974ce60c3b659020152c6a83af57c5bbce037c4ee31c2b314351add4da7be"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "currentBlock",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "fundLockEndBlock",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogRefundInvalidFundsLocked",
-      "type": "event",
-      "signature": "0xdb8b2c3ddf278f26b9faf68fffeaf005fdf4fdb58edc05affdf9fcf5efd2294a"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "auditor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogAuditNodePriceHigherThanRequests",
-      "type": "event",
-      "signature": "0x0f6aa5cab8b4a5dfb68af521bc651c3de27e3644244a5194cfec3d4d1e26b00b"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogInvalidResolutionCall",
-      "type": "event",
-      "signature": "0x9ffd554efb98a902b8d6c3f4fed82256e1f067445193a260969bd54c8f124658"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "receiver",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "auditPrice",
-          "type": "uint256"
-        }
-      ],
-      "name": "LogErrorReportResolved",
-      "type": "event",
-      "signature": "0x6193bff2288d5812008cc287330caf5470615bf64d014ed459b5151dfb1a9206"
-    },
-    {
-      "anonymous": false,
-      "inputs": [],
-      "name": "Pause",
-      "type": "event",
-      "signature": "0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625"
-    },
-    {
-      "anonymous": false,
-      "inputs": [],
-      "name": "Unpause",
-      "type": "event",
-      "signature": "0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "name": "previousOwner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnershipRenounced",
-      "type": "event",
-      "signature": "0xf8df31144d9c2f0f6b59d69b8b98abd5459d07f2742c4df920b25aae33c64820"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "name": "previousOwner",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnershipTransferred",
-      "type": "event",
-      "signature": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "stake",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0xa694fc3a"
-    },
-    {
-      "constant": false,
-      "inputs": [],
-      "name": "unstake",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x2def6620"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "requestId",
-          "type": "uint256"
-        }
-      ],
-      "name": "refund",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x278ecde1"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "contractUri",
-          "type": "string"
-        },
-        {
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "requestAudit",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x25200718"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "name": "auditResult",
-          "type": "uint8"
-        },
-        {
-          "name": "report",
-          "type": "bytes"
-        }
-      ],
-      "name": "submitReport",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0xdc61b497"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "requestId",
-          "type": "uint256"
-        }
-      ],
-      "name": "getReport",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bytes"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x4e7f9b19"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "node",
-          "type": "address"
-        }
-      ],
-      "name": "isPoliceNode",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0xe4ca784b"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "name": "report",
-          "type": "bytes"
-        },
-        {
-          "name": "isVerified",
-          "type": "bool"
-        }
-      ],
-      "name": "submitPoliceReport",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x3224ba23"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "hasAvailableRewards",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x9bb1cfd6"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "requestId",
-          "type": "uint256"
-        }
-      ],
-      "name": "claimReward",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0xae169a50"
-    },
-    {
-      "constant": false,
-      "inputs": [],
-      "name": "claimRewards",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x372500ab"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "requestId",
-          "type": "uint256"
-        },
-        {
-          "name": "toRequester",
-          "type": "bool"
-        }
-      ],
-      "name": "resolveErrorReport",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x50c3e676"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "addr",
-          "type": "address"
-        }
-      ],
-      "name": "totalStakedFor",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x4b341aed"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "addr",
-          "type": "address"
-        }
-      ],
-      "name": "hasEnoughStake",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x79735d54"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "getMinAuditStake",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x9a3fc225"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "getAuditTimeoutInBlocks",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x823b5e9f"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "auditor",
-          "type": "address"
-        }
-      ],
-      "name": "getMinAuditPrice",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0xfcb0a7ad"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "getMaxAssignedRequests",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x7d2b48bb"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "anyRequestAvailable",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint8"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x6ca78a1c"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "getNextPoliceAssignment",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        },
-        {
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "name": "",
-          "type": "string"
-        },
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0xf769aeb2"
-    },
-    {
-      "constant": false,
-      "inputs": [],
-      "name": "getNextAuditRequest",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0xbe7a3164"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "setAuditNodePrice",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
-      "signature": "0x236ebbae"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "requestId",
-          "type": "uint256"
-        }
-      ],
-      "name": "isAuditFinished",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x10debdf8"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "getNextPrice",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x976e0da9"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "requestId",
-          "type": "uint256"
-        }
-      ],
-      "name": "getNextAssignedRequest",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x5905b171"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "myMostRecentAssignedAudit",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "name": "",
-          "type": "address"
-        },
-        {
-          "name": "",
-          "type": "string"
-        },
-        {
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x2fd1b320"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "price",
-          "type": "uint256"
-        },
-        {
-          "name": "requestId",
-          "type": "uint256"
-        }
-      ],
-      "name": "getNextAuditByPrice",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
-      "signature": "0x2c90ccba"
-    }
-  ]
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "reportData",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "mostRecentAssignedRequestIdsPerAuditor",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "unpause",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "auditData",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "tokenEscrow",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "police",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "assignedRequestCount",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "auditDataAddress",
+        "type": "address"
+      },
+      {
+        "name": "reportDataAddress",
+        "type": "address"
+      },
+      {
+        "name": "escrowAddress",
+        "type": "address"
+      },
+      {
+        "name": "policeAddress",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "auditResult",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "name": "report",
+        "type": "bytes"
+      }
+    ],
+    "name": "LogAuditFinished",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "policeNode",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "report",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "name": "isVerified",
+        "type": "bool"
+      }
+    ],
+    "name": "LogPoliceAuditFinished",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "requestor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "uri",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogAuditRequested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "requestor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "uri",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "requestBlockNumber",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogAuditAssigned",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      }
+    ],
+    "name": "LogReportSubmissionError_InvalidAuditor",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "state",
+        "type": "uint8"
+      }
+    ],
+    "name": "LogReportSubmissionError_InvalidState",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "state",
+        "type": "uint8"
+      }
+    ],
+    "name": "LogReportSubmissionError_InvalidResult",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "allowanceBlockNumber",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogReportSubmissionError_ExpiredAudit",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      }
+    ],
+    "name": "LogAuditAssignmentError_ExceededMaxAssignedRequests",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "stake",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogAuditAssignmentError_Understaked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "allowanceBlockNumber",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogAuditAssignmentUpdate_Expired",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      }
+    ],
+    "name": "LogClaimRewardsReachedGasLimit",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "LogAuditQueueIsEmpty",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogPayAuditor",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogAuditNodePriceChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "requestor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogRefund",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "requestor",
+        "type": "address"
+      }
+    ],
+    "name": "LogRefundInvalidRequestor",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "state",
+        "type": "uint8"
+      }
+    ],
+    "name": "LogRefundInvalidState",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "currentBlock",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "fundLockEndBlock",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogRefundInvalidFundsLocked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "auditor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogAuditNodePriceHigherThanRequests",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogInvalidResolutionCall",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "receiver",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "auditPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "LogErrorReportResolved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "Pause",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "Unpause",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "previousOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipRenounced",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "stake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "unstake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "refund",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "contractUri",
+        "type": "string"
+      },
+      {
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "requestAudit",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "contractUri",
+        "type": "string"
+      },
+      {
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "name": "existingPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "requestAuditWithPriceHint",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "name": "auditResult",
+        "type": "uint8"
+      },
+      {
+        "name": "report",
+        "type": "bytes"
+      }
+    ],
+    "name": "submitReport",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getReport",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "node",
+        "type": "address"
+      }
+    ],
+    "name": "isPoliceNode",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "name": "report",
+        "type": "bytes"
+      },
+      {
+        "name": "isVerified",
+        "type": "bool"
+      }
+    ],
+    "name": "submitPoliceReport",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "hasAvailableRewards",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getNextAvailableReward",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "claimReward",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "claimRewards",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      },
+      {
+        "name": "toRequester",
+        "type": "bool"
+      }
+    ],
+    "name": "resolveErrorReport",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "totalStakedFor",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "hasEnoughStake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMinAuditStake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getAuditTimeoutInBlocks",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "auditor",
+        "type": "address"
+      }
+    ],
+    "name": "getMinAuditPrice",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMaxAssignedRequests",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "anyRequestAvailable",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getNextPoliceAssignment",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "string"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "getNextAuditRequest",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "setAuditNodePrice",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "isAuditFinished",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "getNextPrice",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getNextAssignedRequest",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "myMostRecentAssignedAudit",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "address"
+      },
+      {
+        "name": "",
+        "type": "string"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "name": "requestId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getNextAuditByPrice",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "findPrecedingPrice",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

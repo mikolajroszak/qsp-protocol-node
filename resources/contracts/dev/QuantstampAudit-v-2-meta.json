@@ -1,6 +1,6 @@
 {
-    "contractAddress": "0xe2188B47c8FbcBc52b46fBc44Aa77c8890922318",
-    "creatorAddress": "0x0283c049ed4705e2d98c807dbafdaf725f34b8d2",
-    "commitHash": "f8a72f39e9f8223918e51f08976698bb3af940b0",
-    "version": "2.0.1"
-  }
+  "contractAddress": "0x8ac608285aEb73688914E47E46EB82Af72a5D8a5",
+  "creatorAddress": "0x0283c049ed4705e2d98c807dbafdaf725f34b8d2",
+  "commitHash": "e6044aa958882a716285a722fc41cb1cc6effa47",
+  "version": "2.7.0"
+}
