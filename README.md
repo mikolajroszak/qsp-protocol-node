@@ -14,6 +14,13 @@ steps on how to perform common development tasks. For Node operators, please ref
     ```bash
     sudo usermod -a -G docker <username>
     ```
+1. **On MacOS-based Systems**: 
+   Make sure `realpath` is installed in your system. If not, install its
+   containing package `coreutils`:
+   
+   ```bash
+   brew install coreutils
+   ```
 
 1. Ensure node's account has enough funds. At all times, the node must have
    enough ether to pay for its associated gas fees (e.g., when bidding,
@@ -28,7 +35,8 @@ steps on how to perform common development tasks. For Node operators, please ref
 
    `export QSP_ETH_AUTH_TOKEN=abcdefg`
 
-   To use a different provider, modify `eth_node/args/endpoint_uri` in `config.yaml` accordingly.
+   To use a different provider, modify `eth_node/args/endpoint_uri` in
+   `config.yaml` accordingly.
 
 ## (Running the node)[#run-node]
 

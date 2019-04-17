@@ -37,6 +37,13 @@
 ### 1. Download the bundle 
 Download and decompress the repository from the release, the newest release can be found on the following page:  https://github.com/quantstamp/qsp-protocol-node/releases
 
+**On MacOS-based Systems**:
+Make sure `realpath` is installed in your system. If not, install its containing package `coreutils`:
+
+   ```bash
+   brew install coreutils
+   ```
+
 ### 2. Setting up Infura
 You need an Infura account and API token for your node to be able to send transactions to the Ethereum network via the Infura API.
 If you already have an Infura API token that you are using elsewhere, we recommend that you create a new token specifically for the node.
