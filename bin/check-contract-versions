@@ -2,10 +2,11 @@
 
 set -e
 
-function getContract() {
+function get_contract() {
     echo "Downloading $2 contract from s3 for $1..."
     aws s3 cp s3://qsp-protocol-contract/$1/$2 $3 > /dev/null
 }
+
 readonly AUDIT_FILENAME="QuantstampAudit-v-2-meta.json"
 readonly SCRIPT_DIR=`dirname $(realpath "$0")`
 readonly DEST_DIR="/tmp"
@@ -20,7 +21,7 @@ for i in $(ls $QSPROOT/resources/contracts); do
         continue
     fi
     local_hash=`jq -S .commitHash $QSPROOT/resources/contracts/$i/$AUDIT_FILENAME`
-    getContract $i $AUDIT_FILENAME $DEST_DIR/$AUDIT_FILENAME
+    get_contract $i $AUDIT_FILENAME $DEST_DIR/$AUDIT_FILENAME
     s3_hash=`jq -S .commitHash /tmp/$AUDIT_FILENAME`
     if [ "$s3_hash" == "$local_hash" ]; then
         echo "Contracts match for $i network"
