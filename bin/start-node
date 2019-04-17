@@ -53,6 +53,7 @@ docker load --input app.tar && \
 docker run -d \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v /tmp:/tmp:Z \
+	-v $LOG_DIR:/var/log/qsp-protocol:Z \
 	-v "$RESOURCES_DIR/keystore":/app/resources/keystore:Z \
 	-v "$RESOURCES_DIR/contracts":/app/resources/contracts:Z \
 	-v "$RESOURCES_DIR/config.yaml":/app/resources/config.yaml:Z \
@@ -64,16 +65,14 @@ docker run -d \
 	-e QSP_ETH_AUTH_TOKEN="$QSP_ETH_AUTH_TOKEN" \
 	qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $QSP_ENV $QSP_CONFIG"
 
-# Redirect log for the docker to a log file in current directory 
-docker logs --follow $(docker ps -a -q --latest --filter "status=running" --filter ancestor=qsp-protocol-node) > $LOG_PATH &
-
 echo $$ > /tmp/qsp-protocol.pid
+
 # Tail the logs if not in background
 if [ "$IN_BACKGROUND" == "false" ]; then
 	while [ ! -f $LOG_PATH ]
 	do
   		sleep 1
 	done
-	echo "Displaying logs from qsp-protocol-node.log file..."
+	echo "Displaying logs from $LOG_PATH file..."
 	tail -f -n +1 $LOG_PATH
 fi

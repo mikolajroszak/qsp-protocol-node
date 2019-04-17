@@ -13,8 +13,9 @@ readonly SCRIPT_DIR=`dirname $(realpath "$0")`
 
 source "$SCRIPT_DIR/common"
 
-function isrunning () {
-	return `ps -A -o pid | grep -q $1`
+function is_running () {
+	ps -A -o pid | grep -q $1
+    return $?
  }
 
 # Find all running qsp-protocol-nodes
@@ -25,21 +26,23 @@ if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
         docker exec -it $container bash -c 'PID=$(ps auxw | grep "python -W"| grep -v bin| grep -v grep| awk "{print \$1}") ;echo $PID ; kill $PID'
         #Wait for the audit node to stop
         while [[ $(docker inspect --format={{.State.Status}} $container) == "running" ]]; do
-            echo "Waiting for Audit node to stop" | tee -a  $LOG_PATH
+            echo "Waiting for Audit node to stop" | tee -a $LOG_PATH
             sleep 4
         done
         
         RPID=`cat /tmp/qsp-protocol.pid`
-        if [ `isrunning $RPID` ]; then
-            kill $RPID
-            if [ `isrunning $RPID` ]; then
+
+        if is_running $RPID ; then
+            kill -9 $RPID
+            sleep 5
+            if is_running $RPID ; then
                     echo "Failed to stop the node" | tee -a $LOG_PATH
             else
                     echo "Audit node stopped" | tee -a $LOG_PATH
             fi
-    else
-        echo "No process running"
-    fi
+        else
+            echo "No process running"
+        fi
     done
 fi
 

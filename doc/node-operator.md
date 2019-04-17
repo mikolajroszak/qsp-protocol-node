@@ -208,6 +208,8 @@ you would need to change the line to `min_price_in_qsp: !!int 50000`.
 
 
 ## Running the Node
+After Downloading the bundle, unzip the bundle and change to that directory
+
 ### Setting up your local machine configuration for every new Terminal opened
 
 You need to set two environment variables for the node to be able to connect to Infura API, and for it
@@ -218,7 +220,27 @@ the following two commands:
 - `export QSP_ETH_PASSPHRASE="[MyEtherWallet Password]"`
 
 ### Run the Node!
-In terminal, navigate to the folder with the Quantstamp protocol node and execute the command `make run`
+To be able to run the audit node container, one must check whether the docker daemon
+is up and running (`ps -A | egrep docker`). If not running, please start it.
+
+### Run
+From within the bundle directory run following command to start the node.
+
+`./bin/start-node`
+
+You can use nohup to run the script in detached mode:
+
+`nohup ./bin/start-node &`
+
+### View Logs
+
+Logs are written to `qsp-protocol-node.log` file in /tmp/qsp-protocol directory.
+
+### Stop
+
+`./bin/stop-node`
+
+Will stop and remove the docker containers.
 
 ### Check if you node runs correctly
 1. Go to protocol.quantstamp.com 
