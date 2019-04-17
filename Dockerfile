@@ -30,8 +30,7 @@ RUN apk add --no-cache vim
 RUN pip3 install -U awscli==1.14.43
 
 # Install usolc
-COPY ./bin/run_usolc_docker ./
-RUN cp run_usolc_docker /usr/local/bin/solc
+COPY ./bin/usolc /usr/local/bin/solc
 RUN chmod +x /usr/local/bin/solc
 
 RUN mkdir ./app
