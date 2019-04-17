@@ -25,7 +25,7 @@
 
 ### [Spinning up your machine to run as a node](#running-the-node)
 1. Set environment variables when using a new terminal
-1. Run command: `make run`
+1. Start node
 1. Check if run correctly 
 
 ### [After running the node for a while](#after-running-the-node-for-a-while-1)
