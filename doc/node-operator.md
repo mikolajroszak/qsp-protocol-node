@@ -37,6 +37,9 @@
 ### 1. Download the bundle 
 Download and decompress the repository from the release, the newest release can be found on the following page:  https://github.com/quantstamp/qsp-protocol-node/releases
 
+![](node-operator/DOWNLOAD_BUNDLE.png)
+
+
 **On MacOS-based Systems**:
 Make sure `realpath` is installed in your system. If not, install its containing package `coreutils`:
 
@@ -83,7 +86,7 @@ After the steps above, you should have:
 * A password that you created for the keystore, we shall refer to it as `[MyEtherWallet password]`
 * A keystore file that allows you to access your account through MyEtherWallet, we shall refer to it as `[MyEtherWallet keystore file]`
 
-Now you can try to access your account through MyEtherWallet to read you address.
+Now you can try to access your account through MyEtherWallet to read your address.
 
 1. Click `Access My Wallet`
 1. Click `Software`
@@ -95,7 +98,7 @@ You should be able to see your account details, your `[Ethereum public address]`
 #### Import account into MetaMask
 Your node will be identifying itself to the network via the account that you just created. In order to be
 accepted as an auditor, you will need to stake some QSP. The instructions below will show you how to import
-the account to Metamasks so that you can do so.
+the account to Metamask so that you can stake QSP.
 
 1. Open MetaMask
 
@@ -126,6 +129,8 @@ the account to Metamasks so that you can do so.
     ![](./node-operator/DOCKER-00-Checkgroup.png)
 
     The example above shows that the group owner is `staff`
+
+    Run command: `id -nG` to enumerate all the groups for the current user.
 
 1. ONLY On Linux environments (SKIP this step if you’re using MacOS), add the current user to that group (generally docker or root):
 `sudo usermod -a -G <group owner of docker.sock> <username>`
@@ -176,7 +181,7 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
 
     ![](node-operator/ETHERSCAN-APPROVE-04-ConnectedGreenLight.png)
 
-1. Approve the `[The Protocol Contract]` to withdraw funds:
+1. Approve the `[The Protocol Contract]` to withdraw minimum [QSP Staking Amount]:
 
     1. Navigate to the `approve` function
     
@@ -221,10 +226,10 @@ After Downloading the bundle, unzip the bundle and change to that directory
 
 You need to set two environment variables for the node to be able to connect to Infura API, and for it
 to be able to send transactions from the Ethereum account that you created. Open `Terminal` and enter
-the following two commands:
+the following two commands (single quotes is to handle special characters):
 
-- `export QSP_ETH_AUTH_TOKEN="[Infura Token]"`
-- `export QSP_ETH_PASSPHRASE="[MyEtherWallet Password]"`
+- `export QSP_ETH_AUTH_TOKEN='[Infura Token]'`
+- `export QSP_ETH_PASSPHRASE='[MyEtherWallet Password]'`
 
 ### Run the Node!
 To be able to run the audit node container, one must check whether the docker daemon
