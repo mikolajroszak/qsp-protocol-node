@@ -24,7 +24,7 @@ clean:
 	find . | egrep "^.*/(__pycache__|.*\.pyc|tests/coverage/htmlcov|tests/coverage/.coverage|app.tar|.*\.bak)$$" | xargs rm -rf
 	rm -f CONTRIBUTE.md
 	rm -rf deployment/local/dist
-	docker rmi --force qsp-protocol-node:latest &> /dev/null
+	docker images --format "{{.Repository}}:{{.ID}}" | egrep qspprotocol | cut -d ':' -f2 | xargs docker rmi --force
 
 run: build
 	docker run -it \

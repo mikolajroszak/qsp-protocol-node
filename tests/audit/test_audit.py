@@ -493,7 +493,7 @@ class TestQSPAuditNode(QSPTest):
         """
         self.__audit_node._QSPAuditNode__check_all_threads()
 
-    def test_check_all_threads_exception_XXX(self):
+    def test_check_all_threads_exception(self):
         theads_to_die = range(
             0,
             len(self.__audit_node._QSPAuditNode__internal_threads) - 1
