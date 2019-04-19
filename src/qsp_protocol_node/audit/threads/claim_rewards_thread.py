@@ -118,6 +118,5 @@ class ClaimRewardsThread(TimeIntervalPollingThread):
             self,
             config=config,
             target_function=self.__claim_rewards_if_available,
-            thread_name="claim rewards thread",
-            polling_interval=24 * 60 * 60
+            thread_name="claim rewards thread"
         )
