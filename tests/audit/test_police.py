@@ -75,7 +75,7 @@ class TestPoliceLogic(QSPTest):
             requestor=self.__audit_node.config.audit_contract_address,
             price=100,
             uri=resource_uri("reports/DAOBug.json"),
-            block_nbr=100,
+            assigned_block_nbr=100,
             is_audit=False
         )
         replace_thread(self.__audit_node, PollRequestsThread, poll_requests_instance)
@@ -164,7 +164,7 @@ class TestPoliceLogic(QSPTest):
             requestor=self.__audit_node.config.audit_contract_address,
             price=100,
             uri=resource_uri("reports/DAOBug.json"),
-            block_nbr=100,
+            assigned_block_nbr=100,
             is_audit=False
         )
 

@@ -144,7 +144,7 @@ class QSPAuditNode:
 
         def timeout_event(evt):
             try:
-                if first_valid_block >= evt['block_nbr']:
+                if first_valid_block >= evt['assigned_block_nbr']:
                     evt['status_info'] = "Submission timeout"
                     self.config.event_pool_manager.set_evt_status_to_error(evt)
             except KeyError as error:

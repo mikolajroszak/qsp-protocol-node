@@ -27,7 +27,8 @@ class EventPoolManager:
 
         new_dictionary = {}
         for key in dictionary.keys():
-            if key == "price" or key == "block_nbr":
+            if dictionary[key] is not None \
+                and (key == "price" or key == 'assigned_block_nbr' or key == 'submission_block_nbr'):
                 new_dictionary[key] = str(dictionary[key])
             else:
                 new_dictionary[key] = dictionary[key]
@@ -41,7 +42,8 @@ class EventPoolManager:
 
         new_dictionary = {}
         for key in dictionary.keys():
-            if key == "price" or key == "block_nbr":
+            if dictionary[key] is not None \
+                and (key == "price" or key == 'assigned_block_nbr' or key == 'submission_block_nbr'):
                 new_dictionary[key] = int(dictionary[key])
             else:
                 new_dictionary[key] = dictionary[key]
@@ -133,7 +135,7 @@ class EventPoolManager:
         Returns the block number of the latest event in the database or -1 if the database is empty.
         """
         row = get_first(EventPoolManager.__exec_sql(self.__sqlworker, 'get_latest_block_number'))
-        return EventPoolManager.__decode(row).get('block_nbr')
+        return EventPoolManager.__decode(row).get('assigned_block_nbr')
 
     def is_request_processed(self, request_id):
         row = self.get_event_by_request_id(request_id)
@@ -163,7 +165,7 @@ class EventPoolManager:
                 encoded_evt['requestor'],
                 encoded_evt['contract_uri'],
                 encoded_evt['evt_name'],
-                encoded_evt['block_nbr'],
+                encoded_evt['assigned_block_nbr'],
                 encoded_evt['status_info'],
                 encoded_evt['fk_type'],
                 encoded_evt['price'],
@@ -197,8 +199,8 @@ class EventPoolManager:
             process_fct,
         )
 
-    def process_submission_events(self, monitor_fct, current_block):
-        kw_args = {'current_block': current_block}
+    def process_submission_events(self, monitor_fct, timeout_limit_blocks):
+        kw_args = {'timeout_limit_blocks': timeout_limit_blocks}
         self.__process_evt_with_status(
             'get_events_to_be_monitored',
             monitor_fct,
@@ -217,6 +219,7 @@ class EventPoolManager:
              encoded_evt['audit_state'],
              encoded_evt['full_report'],
              encoded_evt['compressed_report'],
+             encoded_evt['submission_block_nbr'],
              encoded_evt['request_id'],
              ),
         )

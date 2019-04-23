@@ -50,17 +50,17 @@ class PollRequestsThread(BlockMinedPollingThread):
         # Puts the result (wei-QSP) back to QSP
         return min_stake / (10 ** 18)
 
-    def __add_evt_to_db(self, request_id, requestor, uri, price, block_nbr, is_audit=True):
+    def __add_evt_to_db(self, request_id, requestor, uri, price, assigned_block_nbr, is_audit=True):
         evt = {}
         try:
             evt = {
-                'request_id': str(request_id),
-                'requestor': str(requestor),
-                'contract_uri': str(uri),
+                'request_id': request_id,
+                'requestor': requestor,
+                'contract_uri': uri,
                 'evt_name': PollRequestsThread.__EVT_AUDIT_ASSIGNED,
-                'block_nbr': str(block_nbr),
+                'assigned_block_nbr': assigned_block_nbr,
                 'status_info': "Audit Assigned",
-                'price': str(price),
+                'price': price,
             }
             evt = set_evt_as_audit(evt) if is_audit else set_evt_as_police_check(evt)
             self.config.event_pool_manager.add_evt_to_be_assigned(evt)
@@ -142,7 +142,7 @@ class PollRequestsThread(BlockMinedPollingThread):
                     requestor=most_recent_audit[1],
                     uri=most_recent_audit[2],
                     price=most_recent_audit[3],
-                    block_nbr=audit_assignment_block_number
+                    assigned_block_nbr=audit_assignment_block_number
                 )
 
             # The node should attempt to bid. Before that, though, gotta perform some checks...
@@ -234,7 +234,7 @@ class PollRequestsThread(BlockMinedPollingThread):
                 requestor=self.config.audit_contract_address,
                 price=probe[2],
                 uri=probe[3],
-                block_nbr=police_assignment_block_number,
+                assigned_block_nbr=police_assignment_block_number,
                 is_audit=False)
 
         except Exception as error:

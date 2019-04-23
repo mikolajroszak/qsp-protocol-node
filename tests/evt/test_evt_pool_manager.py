@@ -37,7 +37,7 @@ class TestEvtPoolManager(QSPTest):
                           'requestor': 'x',
                           'contract_uri': 'x',
                           'evt_name': 'x',
-                          'block_nbr': 111,
+                          'assigned_block_nbr': 111,
                           'status_info': 'x',
                           'fk_type': 'AU',
                           'price': 12}
@@ -45,7 +45,7 @@ class TestEvtPoolManager(QSPTest):
                            'requestor': 'x',
                            'contract_uri': 'x',
                            'evt_name': 'x',
-                           'block_nbr': 555,
+                           'assigned_block_nbr': 555,
                            'status_info': 'x',
                            'fk_type': 'AU',
                            'price': 12}
@@ -64,10 +64,10 @@ class TestEvtPoolManager(QSPTest):
         Tests that encoding dictionaries to string values works.
         """
         self.assertIsNone(EventPoolManager._EventPoolManager__encode(None))
-        to_encode = {"price": 1, "block_nbr": 2, "anything": "string"}
+        to_encode = {"price": 1, 'assigned_block_nbr': 2, "anything": "string"}
         encoded = EventPoolManager._EventPoolManager__encode(to_encode)
         self.assertEqual("1", encoded["price"])
-        self.assertEqual("2", encoded["block_nbr"])
+        self.assertEqual("2", encoded['assigned_block_nbr'])
         self.assertEqual("string", encoded["anything"])
 
     def test_decode(self):
@@ -75,10 +75,10 @@ class TestEvtPoolManager(QSPTest):
         Tests that encoding dictionaries to string values works.
         """
         self.assertIsNone(EventPoolManager._EventPoolManager__decode(None))
-        to_decode = {"price": "1", "block_nbr": "2", "anything": "string"}
+        to_decode = {"price": "1", 'assigned_block_nbr': "2", "anything": "string"}
         encoded = EventPoolManager._EventPoolManager__decode(to_decode)
         self.assertEqual(1, encoded["price"])
-        self.assertEqual(2, encoded["block_nbr"])
+        self.assertEqual(2, encoded['assigned_block_nbr'])
         self.assertEqual("string", encoded["anything"])
 
     def test_get_event_by_request_id(self):
@@ -103,14 +103,14 @@ class TestEvtPoolManager(QSPTest):
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_first)
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_second)
         block_number = self.evt_pool_manager.get_next_block_number()
-        self.assertEqual(self.evt_second['block_nbr'] + 1, block_number)
+        self.assertEqual(self.evt_second['assigned_block_nbr'] + 1, block_number)
 
     def test_get_latest_block_nbr(self):
         self.assertEqual(-1, self.evt_pool_manager.get_latest_block_number())
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_first)
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_second)
         block_number = self.evt_pool_manager.get_latest_block_number()
-        self.assertEqual(self.evt_second['block_nbr'], block_number)
+        self.assertEqual(self.evt_second['assigned_block_nbr'], block_number)
 
     def test_get_latest_request_id(self):
         self.assertEqual(-1, self.evt_pool_manager.get_latest_request_id())
@@ -140,7 +140,7 @@ class TestEvtPoolManager(QSPTest):
         self.evt_pool_manager.add_evt_to_be_assigned(self.evt_second)
         self.evt_pool_manager.sql3lite_worker.execute("update audit_evt set fk_status = 'SB'")
 
-        def process(evt, current_block):
+        def process(evt, timeout_limit_blocks):
             TestEvtPoolManager.PROCESSED += [evt["request_id"]]
 
         self.evt_pool_manager.process_submission_events(process, 0)
@@ -168,6 +168,7 @@ class TestEvtPoolManager(QSPTest):
         self.evt_first['audit_hash'] = 'hash'
         self.evt_first['audit_state'] = 'state'
         self.evt_first['full_report'] = 'full_report'
+        self.evt_first['submission_block_nbr'] = 1
         self.evt_first['compressed_report'] = 'compressed_report'
         self.evt_pool_manager.set_evt_status_to_be_submitted(self.evt_first)
         evt = self.evt_pool_manager.get_event_by_request_id(self.evt_first['request_id'])

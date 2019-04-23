@@ -393,6 +393,7 @@ class PerformAuditThread(TimeIntervalPollingThread):
                 evt['audit_state'] = audit_result['audit_state']
                 evt['full_report'] = audit_result['full_report']
                 evt['compressed_report'] = audit_result['compressed_report']
+                evt['submission_block_nbr'] = self.config.web3_client.eth.blockNumber
                 evt['status_info'] = "Successfully generated report"
                 msg = "Generated report URI is {0}. Saving it in the internal database " \
                       "(if not previously saved)"
