@@ -49,11 +49,14 @@ touch $PWD/event_database.db
 QSP_ENV="testnet"
 QSP_CONFIG="resources/config.yaml"
 
+rotate_logs
+touch $LOG_PATH
+
 docker load --input app.tar && \
 docker run -d \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v /tmp:/tmp:Z \
-	-v $LOG_DIR:/var/log/qsp-protocol:Z \
+	-v "$LOG_PATH":/var/log/qsp-protocol/qsp-protocol.log:Z \
 	-v "$RESOURCES_DIR/keystore":/app/resources/keystore:Z \
 	-v "$RESOURCES_DIR/contracts":/app/resources/contracts:Z \
 	-v "$RESOURCES_DIR/config.yaml":/app/resources/config.yaml:Z \
@@ -73,6 +76,6 @@ if [ "$IN_BACKGROUND" == "false" ]; then
 	do
   		sleep 1
 	done
-	echo "Displaying logs from $LOG_PATH file..."
 	tail -f -n +1 $LOG_PATH
+	docker logs --follow $(docker ps -a -q --latest --filter "status=running" --filter ancestor=qsp-protocol-node)
 fi

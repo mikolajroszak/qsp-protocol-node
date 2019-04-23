@@ -30,18 +30,19 @@ if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
             sleep 4
         done
         
+        echo "Audit node stopped"
         RPID=`cat /tmp/qsp-protocol.pid`
 
         if is_running $RPID ; then
+            echo "Start script is still running..."
+            echo "Trying to kill..."
             kill -9 $RPID
             sleep 5
             if is_running $RPID ; then
-                    echo "Failed to stop the node" | tee -a $LOG_PATH
+                    echo "Cannot kill the previously launched start-script" | tee -a $LOG_PATH
             else
-                    echo "Audit node stopped" | tee -a $LOG_PATH
+                    echo "Done (start-script killed)." | tee -a $LOG_PATH
             fi
-        else
-            echo "No process running"
         fi
     done
 fi

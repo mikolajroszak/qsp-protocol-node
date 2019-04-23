@@ -6,3 +6,19 @@ if ! [ -d $LOG_DIR ]; then
 fi
 
 LOG_PATH="$LOG_DIR/$LOG_FILENAME"
+
+function rotate_logs() {
+    pushd $LOG_DIR > /dev/null
+    if [ -s $LOG_PATH ]; then
+        count=`ls -1 *.tar.gz 2>/dev/null | wc -l`
+        if [[ "$count" == 0 ]]; then
+            tar czf qsp-protocol.tar.gz $LOG_FILENAME
+
+        else 
+            tar czf qsp-protocol.tar.gz.`echo $count` $LOG_FILENAME
+        fi
+        rm $LOG_PATH
+    fi
+    popd > /dev/null
+}
+
