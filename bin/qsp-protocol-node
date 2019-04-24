@@ -17,6 +17,7 @@ function usage() {
 ################################################
 
 # pulling usolc docker
+echo `date`
 docker pull qspprotocol/usolc-entry@sha256:92bd41d22e72c9cb7af28dfa2784ead798916c115f59f1191fe45d6e4fabec4b
 mkdir -p /tmp/solc
 
@@ -101,7 +102,6 @@ export QSP_ENV="$1"
 export QSP_CONFIG="$2"
 
 while true ; do
-    echo `date`
     
     # Runs the audit node
     PYTHONPATH=./src/ python -W ignore::DeprecationWarning -m qsp_protocol_node
