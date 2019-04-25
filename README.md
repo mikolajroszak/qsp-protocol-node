@@ -29,6 +29,9 @@ steps on how to perform common development tasks. For Node operators, please ref
    Go to a [Ropsten faucet](https://faucet.ropsten.be/) and transfer testing ether
    to the node's target account (default is `0x60463b7ee0c3d33def3a05313597b1300f6de62b`).
 
+1. Replace the contents of default keystore json file in `resources/keystore`
+   directory with a valid keystore file.
+   
 1. Configure Ethereum node's authentication token. To use Infura as a provider (default),
    sign up on https://infura.io/register, create a new project, and then check the associated endpoint, e.g., `https://mainnet.infura.io/v3/abcdefg`.
    The last part of the URL (`abcdefg`) is the authentication token. Set the environment variable `QSP_ETH_AUTH_TOKEN` to the token:
