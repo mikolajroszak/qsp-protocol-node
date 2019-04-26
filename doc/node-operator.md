@@ -2,6 +2,17 @@
 
 ## Overview
 
+> USER AGREEMENT: By using, accessing, or downloading these materials, you acknowledge and agree to the terms and conditions at the LICENSE file, and the terms, cautionary statements and disclaimers throughout this site and associated repositories. If you do not agree, discontinue use immediately.
+
+### Hardware Requirement
+
+The node is expected to run on a Linux environment or a MacOS system with memory of 16GB or higher.
+
+The node has been tested in the envrionment listed below.
+
+* MacOS 10.12.6 ~ 10.14.4, Memory: 16GB, CPU: >2 GHz, Intel Core i5/i7 
+* Ubuntu 18.04.02 LTS, Memory 16GB, CPU: 1.8GHz × 8, Intel Core i7
+
 ### Local Installation Checkbox ( related to local machine )
 1. [Download the bundle](#1-download-the-bundle)
 2. [Infura](#2-setting-up-infura)
@@ -15,6 +26,8 @@
     1. Docker
         1. Installed on local machine
         1. Set the environment for Docker as specified
+
+> THIRD PARTY ASPECTS: These materials reference and depend upon multiple layers of third party resources, code, analyzers, and platforms that are operated or provided by others subject to their separate branding and terms, including but not limited to Ethereum, Infura, MetaMask, Solidity, Etherscan, Medium, Github, Oyente, MythX, Securify, Amazon, Linux, Apple, Docker, or others. Displays of third party logos, marks, trade names and service names throughout these materials are for your informational purposes only and do not indicate any form of affiliation or endorsement. We are not a party to and do not warrant, endorse, guarantee, or assume responsibility for any such third party aspects or your use or access thereof.
 
 ### [Making your Ethereum Account eligible as a node operator](#making-your-account-eligible-as-a-node-operator)
 1. Transfer ether and QSP to `[MyEtherWallet PublicKey]`
@@ -70,6 +83,8 @@ After the steps above, you should obtain:
 * An Infura token
 
 ### 3. Setting up an Ethereum account
+
+> IMPORTANT CAUTION: By using these materials, you acknowledge and agree that your interactions are NOT private. These materials enable connectivity to the Ethereum platform, a public blockchain-based distributed computing platform and operating system and thus your interactions, audit node operations, information submitted, analyses, and resulting scan reports are publicly accessible as further described herein. In particular, any of your node information, accounts, amounts, staking, and audit analyses that you generate will be publicly accessible, storable, and stored by one or more entities throughout multiple jurisdictions. If you do not want your information to be publicly accessible, discontinue use immediately.
 
 The node sends transactions to the Ethereum network. For this, it needs its own Ethereum account. We recommend that
 you create a new account for the node and do not use the account elsewhere. The following instructions show how you
@@ -141,6 +156,7 @@ To force the new group assignment to take effect, restart you session (e.g., by 
 Copy the `[MyEtherWallet keystore file]` into `resources/keystore/default.json` in the `qsp_protocol_node` directory that you downloaded and unzipped. Replace the original `default.json` file.
 
 ## Making your account eligible as a node operator
+> WARNING: You should conduct your own diligence, exercise caution, and use your best judgment in connection with staking amounts and interacting through use of these materials. Refunds are not available. You may risk loss of QSP, Ether, tokens, or other loss. Features, functionality, schedules, or design architectures are subject to continuing update, modification, cancellation, delay, external dependencies, evolving regulatory frameworks, and/or factors beyond our control and you are cautioned not to place undue reliance on this information. FOR AVOIDANCE OF DOUBT, THE MATERIALS, AND ACCESS AND/OR USAGE THEREOF, INCLUDING ANY ASSOCIATED OR LINKED INFORMATION, SHALL NOT BE CONSIDERED OR RELIED UPON AS ANY MANNER OR FORM OF INVESTMENT, INVESTMENT PURPOSE, VEHICLE WITH AN EXPECTATION TO EARN A PROFIT, OR FINANCIAL, INVESTMENT, TAX, LEGAL, REGULATORY, OR OTHER ADVICE.
 ### Transfer Ether and QSP to  `[Ethereum public address]`
 The node needs Ether to be able to pay for gas when transacting with the network. We recommend that you transfer small amount into the account.
 For example, 0.5 ETH would be a fully sufficient amount. We also recommend that you monitor the balance and keep the account above 0.25 ETH.
@@ -264,7 +280,7 @@ Node can be run against non-prod environment by setting `QSP_ENV`  variable to `
     ![](./node-operator/RUN-NODEPANEL.png)
 
 ## After running the node for a while
-### Checking how much QSP have you earned
+### Checking how much QSP is in your account
 Navigate to https://etherscan.io/address/[MyEtherWallet PublicKey], you can find the information in the Overview panel.
 
 ![](./node-operator/AFTERRUN-CHECKGAIN.png)
