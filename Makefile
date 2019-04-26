@@ -42,7 +42,12 @@ run: build
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $(QSP_ENV) $(QSP_CONFIG)"
 		
 docs:
-	markdown-pp CONTRIBUTE.md.template -o ./CONTRIBUTE.md
+	markdown-pp ./.github/CONTRIBUTE.mdTemplate -o ./CONTRIBUTE.md
+	mkdir -p .github/ISSUE_TEMPLATE
+	markdown-pp ./.github/bug_report.mdTemplate -o ./.github/ISSUE_TEMPLATE/bug_report.md
+	markdown-pp ./.github/pull_request_template.mdTemplate -o ./.github/pull_request_template.md
+	curl https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/CODE_OF_CONDUCT.md > .github/CODE_OF_CONDUCT.md
+	curl https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/github_template/feature_request.md > .github/ISSUE_TEMPLATE/feature_request.md
 
 build:
 		docker build -t qsp-protocol-node .

@@ -14,13 +14,13 @@
 1. Update changelog file for related release
 
 ## Bug report
-!INCLUDEURL "https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/github_template/Contribute.md/BugReport.md"
+!INCLUDEURL "https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/github_template/CONTRIBUTE.md/BugReport.md"
 
 ## Feature suggestion
-!INCLUDEURL "https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/github_template/Contribute.md/FeatureSuggestion.md"
+!INCLUDEURL "https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/github_template/CONTRIBUTE.md/FeatureSuggestion.md"
 
 ## Pull Request Guideline
-!INCLUDEURL "https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/github_template/Contribute.md/PullRequest.md"
+!INCLUDEURL "https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/github_template/CONTRIBUTE.md/PullRequest.md"
 
 ### Making a release
 1. Run `make bundle`. If successful, this creates `qsp-protocol-<version>.zip`
@@ -30,24 +30,24 @@
 
 ### Code walkthrough
 
-* Main file: `qsp_protocol_node/__main__.py`
+* Main file: `src/qsp_protocol_node/__main__.py`
 
-* Target environments are defined in `deployment/local/config.yaml`, which are
+* Target environments are defined in `resources/config.yaml`, which are
   passed on to the audit node
 
 * Main files
-  - `config/config.py`
+  - `src/config/config.py`
     - provides an interface for accessing configured components
     instantiated from the settings in the YAML file
-  - `audit/audit.py`
+  - `src/audit/audit.py`
     - contains the program's main loop. See the `run()` method
     - contains the logic for audit computation; calls each analyzer by its
     wrapper plugin.
     - report is put into JSON format, compressed, and posted to Ethereum
-  - `audit/wrapper.py`:
+  - `src/audit/wrapper.py`:
     - wraps the execution of a target analyzer according to a [plugin
     interface](https://github.com/quantstamp/qsp-protocol-node/blob/develop/plugins/analyzers/README.md). 
-  - `audit/analyzer.py`
+  - `src/audit/analyzer.py`
     - abstracts an analyzer tool, invoking its corresponding wrapper
 
 ### Coding style
@@ -69,5 +69,5 @@ Before comitting code, run `make stylecheck` to whether you code adheres to our
 style guide. If not, your commit will automatically fail in CI.
 
 ## Contributor's code of conduct
-!INCLUDEURL "https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/CodeOfConduct.md"
+!INCLUDEURL "https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/CODE_OF_CONDUCT.md"
 
