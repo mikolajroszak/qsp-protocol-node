@@ -71,6 +71,7 @@ class TestSubmitReportThread(QSPTest):
 
         # Update the police report with the correct hash
         police_report = self.__load_report("reports/Empty.json")
+        police_report["status"] = "success"
         police_report['contract_hash'] = contract_hash
 
         self.__test_auditor_report_correctness(
@@ -118,10 +119,28 @@ class TestSubmitReportThread(QSPTest):
             deemed_correct=True
         )
 
-    def test_is_report_demmed_correct_in_case_of_incorrect_encoding(self):
+    def test_is_report_deemed_correct_in_case_of_incorrect_encoding(self):
         self.__test_auditor_report_correctness(
             auditor_compressed_report=b'garbage',
             police_report=resource_uri("reports/DAOBug.json"),
+            deemed_correct=False
+        )
+
+    def test_is_report_deemed_correct_in_case_error_statuses(self):
+        self.__test_auditor_report_correctness(
+            auditor_compressed_report=self.__compressed_report("reports/Empty.json"),
+            police_report=self.__load_report("reports/Empty.json"),
+            deemed_correct=True
+        )
+
+    def test_is_report_deemed_correct_in_case_different_statuses(self):
+        police_report = self.__load_report("reports/Empty.json")
+        # switch the status to success
+        police_report["status"] = "success"
+
+        self.__test_auditor_report_correctness(
+            auditor_compressed_report=self.__compressed_report("reports/Empty.json"),
+            police_report=police_report,
             deemed_correct=False
         )
 
