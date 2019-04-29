@@ -586,40 +586,6 @@
   },
   {
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "requestId",
-        "type": "uint256"
-      }
-    ],
-    "name": "LogInvalidResolutionCall",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "requestId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "receiver",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "auditPrice",
-        "type": "uint256"
-      }
-    ],
-    "name": "LogErrorReportResolved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
     "inputs": [],
     "name": "Pause",
     "type": "event"
@@ -914,24 +880,6 @@
         "type": "bool"
       }
     ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "requestId",
-        "type": "uint256"
-      },
-      {
-        "name": "toRequester",
-        "type": "bool"
-      }
-    ],
-    "name": "resolveErrorReport",
-    "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
