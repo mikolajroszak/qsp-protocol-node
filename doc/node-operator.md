@@ -218,13 +218,17 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
         ![](node-operator/ETHERSCAN-APPROVE-07-ViewTransactionApperas.png)
 
 #### Tell the `[The Protocol Contract]` to freeze and stake the funds
-1. Find `[The Protocol Contract]` on EtherScan using the address of `[The Protocol Contract]`.
-1. Navigate to the `Write Contract` tab
+1. Find `[The Protocol Contract]` on EtherScan using the address of `[The Protocol Contract]`. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]`. 
+1. Navigate to the `Write Contract` tab.
 1. (Since already connected in the step above, this is likely not the case and you may skip it!) If there is a `Connect with Metamask` link next to the text "Write Contract", click it. Approve its request to connect on Metamask. Then, you should see a green circle next to the write contract after you connected ehterscan.io to MetaMask.
 1. Staking the funds to `[The Protocol Contract]`:
     1. Navigate to the `stake` function
-    1. Fill the field amount with `[QSP Staking Amount]` multiplied by 10^18.
+    1. Fill the field amount with `[QSP Staking Amount]` 
+        1. The current minimum amount of QSP that needs to be staked is 50,000
+        1. The QSP needs to be staked using the wei denomination. 50000 QSP in the wei denomination is 50000000000000000000000
     1. Click the `Write` button
+    
+<img width="394" alt="minimum stake in wei" src="https://user-images.githubusercontent.com/36969633/57096848-0fc15480-6ccb-11e9-9bcb-7e3a26b0f8f6.png">
 
 ### Set the minimum audit price
 You can set a minimum audit price as a configuration parameter. This is the minimum price in QSP for which your node will be willing to perform a scan of a smart contract submitted to the Quantstamp protocol.
