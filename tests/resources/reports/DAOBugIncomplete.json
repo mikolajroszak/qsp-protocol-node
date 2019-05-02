@@ -97,7 +97,7 @@
       ],
       "analyzer": {
         "name": "securify",
-        "version": "d1f683b3c561b382a86a1ca7d4d1df1d87986c23ee076345a9bf3679a7d707e3",
+        "version": "25589280694d5c0e669bc1de086de43efc043e03e7863703a8e35052435c66cc",
         "vulnerabilities_checked": {
           "MissingInputValidation": {
             "type": "missing_input_validation"
@@ -166,7 +166,7 @@
             "type": "other"
           }
         },
-        "command": "docker run --rm -v /tmp/.securify/1373:/shared/ -i qspprotocol/securify-usolc@sha256:d1f683b3c561b382a86a1ca7d4d1df1d87986c23ee076345a9bf3679a7d707e3  -fs /shared/DAOBug.sol"
+        "command": "docker run --rm -v /tmp/.securify/1373:/shared/ -i qspprotocol/securify-usolc@sha256:25589280694d5c0e669bc1de086de43efc043e03e7863703a8e35052435c66cc  -fs /shared/DAOBug.sol"
       },
       "start_time": 1542045940,
       "end_time": 1542045948
