@@ -15,7 +15,7 @@ from helpers.qsp_test import QSPTest
 
 class TestWrapper(QSPTest):
     __MYTHRIL_METADATA = {'name': 'mythril',
-                          'version': 'cee3a3b4eaf18ffb142294851ec3c75025a274d50611f60f934e9995b500cd40',
+                          'version': 'b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775',
                           'vulnerabilities_checked': {'Call data forwarded with delegatecall()': {
                               'type': 'delegate_call_to_untrusted_contract'},
                               'Dependence on predictable environment variable': {
@@ -44,7 +44,7 @@ class TestWrapper(QSPTest):
                               'Unchecked CALL return value': {
                                   'type': 'unchecked_call_return_value'},
                               'Unknown': {'type': 'other'}},
-                          'command': 'docker run --rm -v /tmp/.mythril/25:/shared/ -i qspprotocol/mythril-usolc@sha256:cee3a3b4eaf18ffb142294851ec3c75025a274d50611f60f934e9995b500cd40  -o json -x /shared/x'}
+                          'command': 'docker run --rm -v /tmp/.mythril/25:/shared/ -i qspprotocol/mythril-usolc@sha256:b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775  -o json -x /shared/x'}
 
     __SECURIFY_METADATA = {'name': 'securify',
                            'version': 'd56acfded7fe8ec42f4adaa0cb0ae44b2fb75583da04402c2c1b623c2bfbb0f9',

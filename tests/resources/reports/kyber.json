@@ -13,8 +13,8 @@
       "status": "timeout",
       "analyzer": {
         "name": "mythril",
-        "version": "cee3a3b4eaf18ffb142294851ec3c75025a274d50611f60f934e9995b500cd40",
-        "command": "docker run -v \"\":/shared/ -i \"qspprotocol/mythril-usolc@sha256:cee3a3b4eaf18ffb142294851ec3c75025a274d50611f60f934e9995b500cd40\" -o json -x \"/shared/kyber.sol\"",
+        "version": "b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775",
+        "command": "docker run -v \"\":/shared/ -i \"qspprotocol/mythril-usolc@sha256:b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775\" -o json -x \"/shared/kyber.sol\"",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {
             "type": "delegate_call_to_untrusted_contract"
