@@ -166,7 +166,7 @@ Staking freezes some QSP funds from the node's account and makes the node eligib
 This is to safeguard the correctness of the produced audit report and provide a disincentive for a malicious node.
 If your node does not submit correct results, its stake will be slashed.
 
-The staking amount is pre-defined and fixed, currently it is 10,000 QSP.
+The staking amount is pre-defined and fixed, currently it is 50,000 QSP.
 We will refer to this amount as `[QSP Staking Amount]` later in the document.
 
 There are two steps to stake into the Quantstamp protocol:
