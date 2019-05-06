@@ -47,7 +47,7 @@ class TestWrapper(QSPTest):
                           'command': 'docker run --rm -v /tmp/.mythril/25:/shared/ -i qspprotocol/mythril-usolc@sha256:38d9d9692e04b0fd3ae418120e78cddfd37ea1a9cc2c70b5676f4d7c856cbc28  -o json -x /shared/x'}
 
     __SECURIFY_METADATA = {'name': 'securify',
-                           'version': '71f775a4a1cfbca8c939f98d0cfa3a558ecca4f30464be8fee0c1f48d9b4ffe5',
+                           'version': 'd1f683b3c561b382a86a1ca7d4d1df1d87986c23ee076345a9bf3679a7d707e3',
                            'vulnerabilities_checked': {
                                'MissingInputValidation': {'type': 'missing_input_validation'},
                                'LockedEther': {'type': 'locked_ether'},
@@ -77,7 +77,7 @@ class TestWrapper(QSPTest):
                                    'type': 'transaction_order_dependency_true_positive'},
                                'SecurifyBug': {'type': 'securify_bug'},
                                'Unknown': {'type': 'other'}},
-                           'command': 'docker run --rm -v /tmp/.securify/37:/shared/ -i qspprotocol/securify-usolc@sha256:71f775a4a1cfbca8c939f98d0cfa3a558ecca4f30464be8fee0c1f48d9b4ffe5  -fs /shared/x'}
+                           'command': 'docker run --rm -v /tmp/.securify/37:/shared/ -i qspprotocol/securify-usolc@sha256:d1f683b3c561b382a86a1ca7d4d1df1d87986c23ee076345a9bf3679a7d707e3  -fs /shared/x'}
 
     def test_get_metadata(self):
         """
