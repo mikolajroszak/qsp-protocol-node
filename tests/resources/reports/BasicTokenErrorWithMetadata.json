@@ -19,9 +19,9 @@
         ">> About to execute once script\n",
         ">> Done\n",
         ">> About to execute pre_run script\n",
-        "sha256:b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775: Pulling from qspprotocol/mythril-usolc\n",
-        "Digest: sha256:b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775\n",
-        "Status: Image is up to date for qspprotocol/mythril-usolc@sha256:b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775\n",
+        "sha256:38d9d9692e04b0fd3ae418120e78cddfd37ea1a9cc2c70b5676f4d7c856cbc28: Pulling from qspprotocol/mythril-usolc\n",
+        "Digest: sha256:38d9d9692e04b0fd3ae418120e78cddfd37ea1a9cc2c70b5676f4d7c856cbc28\n",
+        "Status: Image is up to date for qspprotocol/mythril-usolc@sha256:38d9d9692e04b0fd3ae418120e78cddfd37ea1a9cc2c70b5676f4d7c856cbc28\n",
         ">> Done\n",
         ">> Copying contract(s) to docker's mounted volume\n",
         ">> Done\n",
@@ -30,8 +30,8 @@
       ],
       "analyzer": {
         "name": "mythril",
-        "version": "b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775",
-        "command": "docker run -v \"\":/shared/ -i \"qspprotocol/mythril-usolc@sha256:b3495733fdabffe34a1c96f9779de34b29389f838d1c47b8ee34a4efaad85775\" -o json -x \"/shared/BasicToken.sol\"",
+        "version": "38d9d9692e04b0fd3ae418120e78cddfd37ea1a9cc2c70b5676f4d7c856cbc28",
+        "command": "docker run -v \"\":/shared/ -i \"qspprotocol/mythril-usolc@sha256:38d9d9692e04b0fd3ae418120e78cddfd37ea1a9cc2c70b5676f4d7c856cbc28\" -o json -x \"/shared/BasicToken.sol\"",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {
             "type": "delegate_call_to_untrusted_contract"
