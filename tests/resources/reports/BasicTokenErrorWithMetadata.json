@@ -97,9 +97,9 @@
         ">> About to execute once script\n",
         ">> Done\n",
         ">> About to execute pre_run script\n",
-        "sha256:d56acfded7fe8ec42f4adaa0cb0ae44b2fb75583da04402c2c1b623c2bfbb0f9: Pulling from qspprotocol/securify-usolc\n",
-        "Digest: sha256:d56acfded7fe8ec42f4adaa0cb0ae44b2fb75583da04402c2c1b623c2bfbb0f9\n",
-        "Status: Image is up to date for qspprotocol/securify-usolc@sha256:d56acfded7fe8ec42f4adaa0cb0ae44b2fb75583da04402c2c1b623c2bfbb0f9\n",
+        "sha256:71f775a4a1cfbca8c939f98d0cfa3a558ecca4f30464be8fee0c1f48d9b4ffe5: Pulling from qspprotocol/securify-usolc\n",
+        "Digest: sha256:71f775a4a1cfbca8c939f98d0cfa3a558ecca4f30464be8fee0c1f48d9b4ffe5\n",
+        "Status: Image is up to date for qspprotocol/securify-usolc@sha256:71f775a4a1cfbca8c939f98d0cfa3a558ecca4f30464be8fee0c1f48d9b4ffe5\n",
         ">> Done\n",
         ">> Copying contract(s) to docker's mounted volume\n",
         ">> Done\n",
@@ -107,7 +107,7 @@
       ],
       "analyzer": {
         "name": "securify",
-        "version": "d56acfded7fe8ec42f4adaa0cb0ae44b2fb75583da04402c2c1b623c2bfbb0f9",
+        "version": "71f775a4a1cfbca8c939f98d0cfa3a558ecca4f30464be8fee0c1f48d9b4ffe5",
         "vulnerabilities_checked": {
           "MissingInputValidation": {
             "type": "missing_input_validation"
@@ -176,7 +176,7 @@
             "type": "other"
           }
         },
-        "command": "docker run --rm -v /tmp/.securify/624:/shared/ -i qspprotocol/securify-usolc@sha256:d56acfded7fe8ec42f4adaa0cb0ae44b2fb75583da04402c2c1b623c2bfbb0f9 -fs /shared/BasicToken.sol"
+        "command": "docker run --rm -v /tmp/.securify/624:/shared/ -i qspprotocol/securify-usolc@sha256:71f775a4a1cfbca8c939f98d0cfa3a558ecca4f30464be8fee0c1f48d9b4ffe5 -fs /shared/BasicToken.sol"
       },
       "start_time": 1541708691,
       "end_time": 1541708696
