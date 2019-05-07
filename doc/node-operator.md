@@ -131,7 +131,7 @@ the account to Metamask so that you can stake QSP.
 
     ![](./node-operator/METAMASK-IMPORT-04-CheckImport.png)
     
-
+We recommend naming your MetaMask account QSP Node Operator in order to easily distinguish this account from your other accounts. 
 
 ### 4. Local machine setup
 #### Setting up Docker
