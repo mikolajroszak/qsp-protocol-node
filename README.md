@@ -41,7 +41,7 @@ steps on how to perform common development tasks. For Node operators, please ref
    To use a different provider, modify `eth_node/args/endpoint_uri` in
    `config.yaml` accordingly.
 
-## (Running the node)[#run-node]
+## Running the node
 
 ```bash
 make run
