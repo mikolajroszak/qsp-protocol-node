@@ -50,7 +50,13 @@ The node has been tested in the envrionment listed below.
 ### 1. Download the bundle 
 Download and decompress the repository from the release, the newest release can be found on the following page:  https://github.com/quantstamp/qsp-protocol-node/releases
 
-![](node-operator/DOWNLOAD_BUNDLE.png)
+This is our latest release:
+
+![](node-operator/latest.noderelease.png)
+
+In order to download the latest release, go to the **Assets** section of the latest release and click on [qsp-protocol-v2.0.1-alpha3.zip](https://github.com/quantstamp/qsp-protocol-node/releases/download/v2.0.1-alpha3/qsp-protocol-v2.0.1-alpha3.zip) as shown in the image below.
+
+![](node-operator/DOWNLOAD_BUNDLE_ASSETS.png)
 
 
 **On MacOS-based Systems**:
