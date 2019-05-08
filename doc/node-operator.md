@@ -48,9 +48,9 @@ The node has been tested in the envrionment listed below.
 ## Local Installation
 
 ### 1. Download the bundle 
-Download and decompress the repository from the release, the newest release can be found on the following page:  https://github.com/quantstamp/qsp-protocol-node/releases
+Download and decompress the repository from the release, the latest release can be found on the following page:  https://github.com/quantstamp/qsp-protocol-node/releases
 
-This is our latest release:
+Make sure that the latest release you download is marked with a Pre-release tag (noted in the image below) and not a Draft tag. Note: the node version specified in the image below may not be the latest release.  
 
 ![](node-operator/latest.noderelease.png)
 
