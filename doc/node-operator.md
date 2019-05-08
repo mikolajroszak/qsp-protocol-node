@@ -159,7 +159,14 @@ This is required for running analyzer containers from the audit node container.
 To force the new group assignment to take effect, restart you session (e.g., by logging out and logging in).
 
 #### Copy the `[MyEtherWallet keystore file]` into a specific location
-Copy the `[MyEtherWallet keystore file]` into `resources/keystore/default.json` in the `qsp_protocol_node` directory that you downloaded and unzipped. Replace the original `default.json` file.
+Open both `[MyEtherWallet keystore file]` and `resources/keystore/default.json` in a text editor. Copy the contents of the `[MyEtherWallet keystore file]` and paste it in `resources/keystore/default.json`. You will find `resources/keystore/default.json` in the `qsp_protocol_node` directory that you downloaded and unzipped. 
+
+After you paste the contents of `[MyEtherWallet keystore file]` into `resources/keystore/default.json`, `resources/keystore/default.json` should look something like this: 
+
+![](DEFAULT_FILE_COMPLETE_EXAMPLE.png)
+Note: Not all of the code is visible in this image. 
+
+
 
 ## Making your account eligible as a node operator
 > WARNING: You should conduct your own diligence, exercise caution, and use your best judgment in connection with staking amounts and interacting through use of these materials. Refunds are not available. You may risk loss of QSP, Ether, tokens, or other loss. Features, functionality, schedules, or design architectures are subject to continuing update, modification, cancellation, delay, external dependencies, evolving regulatory frameworks, and/or factors beyond our control and you are cautioned not to place undue reliance on this information. FOR AVOIDANCE OF DOUBT, THE MATERIALS, AND ACCESS AND/OR USAGE THEREOF, INCLUDING ANY ASSOCIATED OR LINKED INFORMATION, SHALL NOT BE CONSIDERED OR RELIED UPON AS ANY MANNER OR FORM OF INVESTMENT, INVESTMENT PURPOSE, VEHICLE WITH AN EXPECTATION TO EARN A PROFIT, OR FINANCIAL, INVESTMENT, TAX, LEGAL, REGULATORY, OR OTHER ADVICE.
