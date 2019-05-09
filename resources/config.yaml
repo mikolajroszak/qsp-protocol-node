@@ -101,3 +101,4 @@ mainnet:
     is_enabled: True
     interval_seconds: !!int 30
     destination_endpoint: !!str "https://protocol.quantstamp.com/node-metrics"
+  heartbeat_allowed: !!bool False
