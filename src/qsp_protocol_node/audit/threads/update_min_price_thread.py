@@ -46,11 +46,14 @@ class UpdateMinPriceThread(TimeIntervalPollingThread):
             self.logger.debug("Successfully updated min price to {0}.".format(
                 self.config.min_price_in_qsp))
         except Timeout as e:
-            error_msg = "Update min price timed out. " + msg + " {0}, {1}."
-            self.logger.debug(error_msg.format(
+            error_msg = "Update min price timed out, " \
+                + "increase the tx_timeout_seconds in config.yaml and restart the node. " \
+                + msg + " {0}, {1}."
+            formatted_error = error_msg.format(
                 str(transaction),
-                str(e)))
-            raise e
+                str(e))
+            self.logger.debug(formatted_error)
+            raise Timeout(formatted_error) from e
         except DeduplicationException as e:
             error_msg = "A transaction already exists for updating min price," \
                         + " but has not yet been mined. " + msg \

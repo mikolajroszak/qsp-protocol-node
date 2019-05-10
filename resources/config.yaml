@@ -17,6 +17,7 @@ testnet:
     uri: !!str "./resources/contracts/testnet/QuantstampAudit-v-{major-version}-abi.json"
     metadata: !!str "./resources/contracts/testnet/QuantstampAudit-v-{major-version}-meta.json"
   min_price_in_qsp: !!int 10
+  tx_timeout_seconds: !!int 300
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 1
@@ -67,6 +68,7 @@ mainnet:
     uri: !!str "./resources/contracts/mainnet/QuantstampAudit-v-{major-version}-abi.json" #note that v1 production ABI is not available
     metadata: !!str "./resources/contracts/mainnet/QuantstampAudit-v-{major-version}-meta.json" #note that v1 production ABI is not available
   min_price_in_qsp: !!int 1000
+  tx_timeout_seconds: !!int 300
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
   block_mined_polling_interval_sec: !!int 1

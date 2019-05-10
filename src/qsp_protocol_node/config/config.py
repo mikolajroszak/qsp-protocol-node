@@ -81,6 +81,7 @@ class Config:
 
         self.__block_discard_on_restart = config_value(cfg, '/block_discard_on_restart', 0)
         self.__min_price_in_qsp = config_value(cfg, '/min_price_in_qsp', accept_none=False)
+        self.__tx_timeout_seconds = config_value(cfg, '/tx_timeout_seconds', accept_none=False)
         self.__max_assigned_requests = config_value(cfg, '/max_assigned_requests',
                                                     accept_none=False)
         self.__evt_polling_sec = config_value(cfg, '/evt_polling_sec', accept_none=False)
@@ -233,6 +234,7 @@ class Config:
         self.__gas_price_wei = 0
         self.__max_gas_price_wei = -1
         self.__min_price_in_qsp = 0
+        self.__tx_timeout_seconds = 300
         self.__metric_collection_is_enabled = True
         self.__metric_collection_interval_seconds = 30
         self.__report_encoder = None
@@ -292,6 +294,13 @@ class Config:
         Returns the minimum QSP price for accepting an audit.
         """
         return self.__min_price_in_qsp
+
+    @property
+    def tx_timeout_seconds(self):
+        """
+        Returns the timeout for performing transaction
+        """
+        return self.__tx_timeout_seconds
 
     @property
     def max_assigned_requests(self):
