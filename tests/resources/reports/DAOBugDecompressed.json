@@ -9,9 +9,9 @@
           "file": "Unknown File",
           "instances": [
             {
-              "end_line": 25,
+              "end_line": 23,
               "ref_id": 0,
-              "start_line": 25
+              "start_line": 23
             }
           ],
           "type": "unprotected_ether_withdrawal"
@@ -20,9 +20,9 @@
           "file": "Unknown File",
           "instances": [
             {
-              "end_line": 25,
+              "end_line": 23,
               "ref_id": 0,
-              "start_line": 25
+              "start_line": 23
             }
           ],
           "type": "call_to_external_contract"
@@ -31,9 +31,9 @@
           "file": "Unknown File",
           "instances": [
             {
-              "end_line": 29,
+              "end_line": 27,
               "ref_id": 0,
-              "start_line": 29
+              "start_line": 27
             }
           ],
           "type": "reentrancy"
@@ -42,9 +42,9 @@
           "file": "Unknown File",
           "instances": [
             {
-              "end_line": 25,
+              "end_line": 23,
               "ref_id": 0,
-              "start_line": 25
+              "start_line": 23
             }
           ],
           "type": "transaction_order_dependency"
@@ -53,9 +53,9 @@
           "file": "Unknown File",
           "instances": [
             {
-              "end_line": 25,
+              "end_line": 23,
               "ref_id": 0,
-              "start_line": 25
+              "start_line": 23
             }
           ],
           "type": "unchecked_call_return_value"
@@ -64,9 +64,9 @@
           "file": "Unknown File",
           "instances": [
             {
-              "end_line": 25,
+              "end_line": 23,
               "ref_id": 0,
-              "start_line": 25
+              "start_line": 23
             }
           ],
           "type": "reentrancy_true_positive"
@@ -75,9 +75,9 @@
           "file": "Unknown File",
           "instances": [
             {
-              "end_line": 16,
+              "end_line": 14,
               "ref_id": 0,
-              "start_line": 16
+              "start_line": 14
             }
           ],
           "type": "missing_input_validation_true_positive"
@@ -86,14 +86,14 @@
           "file": "Unknown File",
           "instances": [
             {
-              "end_line": 24,
+              "end_line": 22,
               "ref_id": 0,
-              "start_line": 24
+              "start_line": 22
             },
             {
-              "end_line": 20,
+              "end_line": 18,
               "ref_id": 1,
-              "start_line": 20
+              "start_line": 18
             }
           ],
           "type": "missing_input_validation"
@@ -103,7 +103,7 @@
     }
   ],
   "audit_state": 4,
-  "contract_hash": "B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B",
+  "contract_hash": "DC996A1C50B01EA3EC370A45CE43394F22BC0DFDA4DD43990CEDCDC505E593BF",
   "status": "success",
   "version": "2.0.1"
 }

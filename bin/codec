@@ -1,5 +1,12 @@
 #!/bin/bash
 
+####################################################################################################
+#                                                                                                  #
+# (c) 2019 Quantstamp, Inc. This content and its use are governed by the license terms at          #
+# <https://s3.amazonaws.com/qsp-protocol-license/V2_LICENSE.txt>                                   #
+#                                                                                                  #
+####################################################################################################
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if [ $# -ne 2 ] || [[ "$1" != "-d" && "$1" != "-e" ]]; then

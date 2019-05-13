@@ -32,7 +32,7 @@
           "instances": [
             {
               "ref_id": 0,
-              "start_line": 17
+              "start_line": 15
             }
           ],
           "type": "ether_send"
@@ -43,7 +43,7 @@
           "instances": [
             {
               "ref_id": 1,
-              "start_line": 17
+              "start_line": 15
             }
           ],
           "type": "message_call_to_external_contract"
@@ -54,7 +54,7 @@
           "instances": [
             {
               "ref_id": 2,
-              "start_line": 21
+              "start_line": 19
             }
           ],
           "type": "state_change_after_external_call"
