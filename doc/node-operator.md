@@ -17,9 +17,9 @@ The node has been tested in the envrionment listed below.
 1. [Download the bundle](#1-download-the-bundle)
 2. [Infura](#2-setting-up-infura)
     1. Create an account
-    1. Created a project and obtained an `[Infura Token]`
+    1. Created a project and obtain an `[Infura Token]`
 3. [Ethereum Account (Suggesting MyEtherWallet)](#3-setting-up-an-ethereum-account)
-    1. Created an account `[MyEtherWallet PublicKey]` with `[MyEtherWallet Password]` and obtained `[MyEtherWallet keystore file]`
+    1. Created an account `[MyEtherWallet PublicKey]` with `[MyEtherWallet Password]` and obtain `[MyEtherWallet keystore file]`
     1. Import into MetaMask
 4. [Local Machine setup](#4-local-machine-setup)
     1. Copying `[My EtherWallet keystore file]` to specified location
@@ -50,13 +50,13 @@ The node has been tested in the envrionment listed below.
 ### 1. Download the bundle 
 Download and decompress the repository from the release, the latest release can be found on the following page:  https://github.com/quantstamp/qsp-protocol-node/releases
 
-Note: The node version specified in the image below may not be the latest release.  
+*Note: The node version specified in the image below may not be the latest release.*  
 
 ![](node-operator/latest.noderelease.png)
 
 In order to download the latest release, go to the **Assets** section of the latest release and click on the zip file as shown in the image below. 
 
-Note: The version in the image may not be the latest release.
+*Note: The version specified in the image below may not be the latest release.*
 
 ![](node-operator/DOWNLOAD_BUNDLE_ASSETS.png)
 
@@ -65,13 +65,13 @@ You need an Infura account and API token for your node to be able to send transa
 If you already have an Infura API token that you are using elsewhere, we recommend that you create a new token specifically for the node.
 
 1. Visit https://infura.io
-1. Login or Create an account
+1. Login or sign up for an account
 1. Create new project
     ![](node-operator/INFURA-01-CreateProject.png)
 
 1. Enter project name (we entered "qsp protocol node" as an example)
     ![](node-operator/INFURA-02-ProjectName.png)
-1. After creation of the project, you can see it on the dashboard
+1. After creating the project, you can see it on the dashboard
     ![](node-operator/INFURA-03-ProjectOnFirstPage.png)
 
 1. Click `VIEW PROJECT`
@@ -105,7 +105,7 @@ Now you can try to access your account through MyEtherWallet to read your addres
 
 1. Click `Access My Wallet`
 1. Click `Software`
-1. Select `Keystore` and click `continue`. A dialogue will pop up. In this dialogue, select the `[MyEtherWallet keystore file]` you just downloaded.
+1. Select `Keystore File` and click `Continue`. A dialogue box will pop up. In this dialogue box, select the `[MyEtherWallet keystore file]` you just downloaded.
 1. When done, type in `[MyEtherWallet password]`, then click on `"Access Wallet"`.
 You should be able to see your account details, your `[Ethereum public address]` is under the `Address`
 
@@ -131,7 +131,7 @@ the account to Metamask so that you can stake QSP.
 
     ![](./node-operator/METAMASK-IMPORT-04-CheckImport.png)
     
-We recommend naming your MetaMask account QSP Node Operator in order to easily distinguish this account from your other accounts. 
+*Tip: We recommend naming your MetaMask account QSP Node Operator in order to easily distinguish this account from your other accounts.* 
 
 ### 4. Local machine setup
 #### Setting up Docker
@@ -157,31 +157,31 @@ Open both `[MyEtherWallet keystore file]` and `resources/keystore/default.json` 
 
 After you paste the contents of `[MyEtherWallet keystore file]` into `resources/keystore/default.json`, `resources/keystore/default.json` should look something like this: 
 
-![](DEFAULT_FILE_COMPLETE_EXAMPLE.png)
-Note: Not all of the code is visible in this image. 
+![](./node-operator/DEFAULT_FILE_COMPLETE_EXAMPLE.png)
+*Note: Not all of the code is visible in this image.* 
 
 
 
 ## Making your account eligible as a node operator
 > WARNING: You should conduct your own diligence, exercise caution, and use your best judgment in connection with staking amounts and interacting through use of these materials. Refunds are not available. You may risk loss of QSP, Ether, tokens, or other loss. Features, functionality, schedules, or design architectures are subject to continuing update, modification, cancellation, delay, external dependencies, evolving regulatory frameworks, and/or factors beyond our control and you are cautioned not to place undue reliance on this information. FOR AVOIDANCE OF DOUBT, THE MATERIALS, AND ACCESS AND/OR USAGE THEREOF, INCLUDING ANY ASSOCIATED OR LINKED INFORMATION, SHALL NOT BE CONSIDERED OR RELIED UPON AS ANY MANNER OR FORM OF INVESTMENT, INVESTMENT PURPOSE, VEHICLE WITH AN EXPECTATION TO EARN A PROFIT, OR FINANCIAL, INVESTMENT, TAX, LEGAL, REGULATORY, OR OTHER ADVICE.
 ### Transfer Ether and QSP to  `[Ethereum public address]`
-The node needs Ether to be able to pay for gas when transacting with the network. We recommend that you transfer small amount into the account.
+Your node needs Ether pay for gas when transacting with the network. We recommend that you transfer small amount into the account.
 For example, 0.5 ETH would be a fully sufficient amount. We also recommend that you monitor the balance and keep the account above 0.25 ETH.
 
 ### Stake QSP into the protocol
 Staking freezes some QSP funds from the node's account and makes the node eligible to perform audits.
-This is to safeguard the correctness of the produced audit report and provide a disincentive for a malicious node.
+This is to safeguard the correctness of the produced audit report and disincentivize malicious or negligent behavior on the part of the node operator. 
 If your node does not submit correct results, its stake will be slashed.
 
 The staking amount is pre-defined and fixed, currently it is 50,000 QSP.
 We will refer to this amount as `[QSP Staking Amount]` later in the document.
 
-There are two steps to stake into the Quantstamp protocol:
+There are two steps to stake into the Quantstamp Protocol:
 1. The node operator needs to interact with the `[QSP Token Contract]` to approve `[The Protocol Contract]` to withdraw QSP.
 1. The node operator will need to tell `[The Protocol Contract]` that the funds are ready to be withdrawn and frozen as a stake.
 
 #### Approve `[The Protocol Contract]` to withdraw QSP from you
-In this part, we will be interacting with the `[QSP Token Contract]` to allow staking into `[The Protocol Contract]`. You could interact with the `[QSP Token Contract]` through the website EtherScan(http://etherscan.io).
+In this part, we will be interacting with the `[QSP Token Contract]` to allow staking into `[The Protocol Contract]`. You could interact with the `[QSP Token Contract]` through the website [Etherscan.io](http://etherscan.io).
 
 The address of `[The Protocol Contract]` can be found in the `[contractAddress]` here: 
 https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json
@@ -200,7 +200,7 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
 
     ![](node-operator/ETHERSCAN-APPROVE-03-ConnectMetamask.png)
 
-1. You should see a green circle next to the write contract after you connected ehterscan.io to your MetaMask.
+1. You should see a green circle next to the write contract after you connected [Etherscan.io](http://etherscan.io) to your MetaMask.
 
     ![](node-operator/ETHERSCAN-APPROVE-04-ConnectedGreenLight.png)
 
@@ -212,7 +212,7 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
 
     1. Fill the field `_spender` with the address of `[The Protocol Contract]`
 
-    1. Fill the field `_value` with a number that is `[QSP Staking Amount]` multiplied by 10^18. This is similar to how ETH gets converted to Wei.
+    1. Fill the field `_value` with the amount of QSP you intend to stake in `[The Protocol Contract]` multiplied by 10^18. We are multiplying by 10^18 because the QSP needs to be staked using the wei denomination. The minimum amount of QSP that needs to be staked in order to run a node is 50000 QSP, which in the wei denomination is 50000000000000000000000.
 
     1. Click the `Write` button
 
@@ -227,7 +227,7 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
 #### Tell the `[The Protocol Contract]` to freeze and stake the funds
 1. Find `[The Protocol Contract]` on EtherScan using the address of `[The Protocol Contract]`. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]`. 
 1. Navigate to the `Write Contract` tab.
-1. (Since already connected in the step above, this is likely not the case and you may skip it!) If there is a `Connect with Metamask` link next to the text "Write Contract", click it. Approve its request to connect on Metamask. Then, you should see a green circle next to the write contract after you connected ehterscan.io to MetaMask.
+1. (Since already connected in the step above, this is likely not the case and you may skip it!) If there is a `Connect with Metamask` link next to the text "Write Contract", click it. Approve its request to connect to Metamask. Then, you should see a green circle next to the write contract after you connected Etherscan.io to MetaMask.
 1. Staking the funds to `[The Protocol Contract]`:
     1. Navigate to the `stake` function
     1. Fill the field amount with `[QSP Staking Amount]` 
@@ -238,21 +238,22 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
 <img width="394" alt="minimum stake in wei" src="https://user-images.githubusercontent.com/36969633/57096848-0fc15480-6ccb-11e9-9bcb-7e3a26b0f8f6.png">
 
 ### Set the minimum audit price
-You can set a minimum audit price as a configuration parameter. This is the minimum price in QSP for which your node will be willing to perform a scan of a smart contract submitted to the Quantstamp protocol.
+You can set a minimum audit price as a configuration parameter. This is the minimum price in QSP for which your node will be willing to perform a scan of a smart contract submitted to the Quantstamp Protocol.
 
 Open `resources/config.yaml`. Search for `min_price_in_qsp` and change the value accordingly. Make sure that you do not change anything else in this file, including indentation.
 
 The default setting `min_price_in_qsp: !!int 1000` indicates that the node will not execute any audit request if the reward is less than 1,000 QSP. If you wished to increase this amount to 50,000 QSP,
 you would need to change the line to `min_price_in_qsp: !!int 50000`.
 
+*Troubleshooting Tip: If you are updating `min_price_in_qsp`, make sure that you update this parameter for `mainnet` and not `testnet`.* 
 
 ## Running the Node
-After Downloading the bundle, unzip the bundle and change to that directory
+After downloading the bundle, unzip the bundle and open that directory in your terminal. 
 
 ### Setting up your local machine configuration for every new Terminal opened
 
 You need to set two environment variables for the node to be able to connect to Infura API, and for it
-to be able to send transactions from the Ethereum account that you created. Open `Terminal` and enter
+to be able to send transactions from your Ethereum account. Open `Terminal` and enter
 the following two commands (single quotes is to handle special characters):
 
 - `export QSP_ETH_AUTH_TOKEN='[Infura Token]'`
@@ -263,7 +264,7 @@ To be able to run the audit node container, one must check whether the docker da
 is up and running (`ps -A | egrep docker`). If not running, please start it.
 
 ### Run
-From within the bundle directory run following command to start the node.
+From within the bundle directory, run the following command to start the node.
 
 `./bin/start-node`
 
@@ -273,7 +274,7 @@ You can use nohup to run the script in detached mode:
 
 ### View Logs
 
-Logs are written to `qsp-protocol-node.log` file in .qsp-protocol directory within user home directory.
+Logs are written to `qsp-protocol-node.log` file in .qsp-protocol directory within the user home directory.
 
 ### Stop
 
@@ -284,7 +285,7 @@ Will stop and remove the docker containers.
 ### To use non production environment
 Node can be run against non-prod environment by setting `QSP_ENV`  variable to `testnet` in ./bin/start-node file
 
-### Check if you node runs correctly
+### Check if your node runs correctly
 1. Go to protocol.quantstamp.com 
 1. Check if your `[Ethereum public address]` is in the `QSP Nodes` panel
 
@@ -292,16 +293,16 @@ Node can be run against non-prod environment by setting `QSP_ENV`  variable to `
 
 ## After running the node for a while
 ### Checking how much QSP is in your account
-Navigate to https://etherscan.io/address/[MyEtherWallet PublicKey], you can find the information in the Overview panel.
+Navigate to https://etherscan.io/address/[MyEtherWallet PublicKey]. You can locate this information in the Overview panel.  
 
 ![](./node-operator/AFTERRUN-CHECKGAIN.png)
 
 ### How to unstake your funds (Warning: not eligible to run more scans) 
-When you decide to no longer operate a Quantstamp protocol node, you might want to unstake the funds so that they are returned to the node's account. Here are the steps to unstake your funds:
+When you decide to no longer operate a Quantstamp Protocol node, you might want to unstake the funds so that they are returned to the node's account. Here are the steps to unstake your funds:
 
-1. Find `[The Protocol Contract]` on the website EtherScan using The address of `[The Protocol Contract]`.
+1. Find `[The Protocol Contract]` on the website Etherscan using the address of `[The Protocol Contract]`. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]`. 
 1. Navigate to the `Write Contract` tab
-1. If there is `Connect with Metamask` next to the text "Write Contract", click it. If not, skip this step. Approve its request to connect to Metamask. Then, you should see a green circle next to the write contract after you connected ehterscan.io with MetaMask.
+1. If there is `Connect with Metamask` next to the text "Write Contract", click it. If not, skip this step. Approve its request to connect to MetaMask. After you successfully connect to Etherscan, you will see a green circle next to "Write Contract".
 1. Unstake the funds from `[The Protocol Contract]`:
     1. Navigate to the unstake function
     1. Click the `Write` Button
