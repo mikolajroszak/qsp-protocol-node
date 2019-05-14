@@ -9,4 +9,4 @@ set fk_status = 'TS',
     compressed_report = ?,
     submission_block_nbr = ?,
     submission_attempts = audit_evt.submission_attempts + 1
-where request_id = ? and fk_status = 'AS'
+where request_id = ? and (fk_status = 'AS' or fk_status = 'TS' or fk_status = 'SB')

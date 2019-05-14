@@ -104,7 +104,8 @@ class SubmitReportThread(TimeIntervalPollingThread):
                                               request_id,
                                               audit_state,
                                               compressed_report_bytes))
-        self.logger.debug("Audit report submitted", requestId=request_id)
+        self.logger.debug("Audit report submitted: tx hash {0}".format(tx_hash),
+                          requestId=request_id)
         return tx_hash
 
     def __submit_police_report(self, request_id, compressed_report, is_verified):
@@ -119,7 +120,8 @@ class SubmitReportThread(TimeIntervalPollingThread):
                                               request_id,
                                               compressed_report_bytes,
                                               is_verified))
-        self.logger.debug("Police report submitted", requestId=request_id)
+        self.logger.debug("Police report submitted: tx hash {0}".format(tx_hash),
+                          requestId=request_id)
         return tx_hash
 
     def __is_report_deemed_correct(self, request_id, full_police_report):
