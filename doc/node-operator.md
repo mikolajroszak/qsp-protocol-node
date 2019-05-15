@@ -48,13 +48,14 @@ The node has been tested in the envrionment listed below.
 ## Local Installation
 
 ### 1. Download the bundle 
-Download and decompress the repository from the release, the latest release can be found on the following page:  https://github.com/quantstamp/qsp-protocol-node/releases
+Download and decompress the repository from the release, the latest release can be found at the top of the following page:  https://github.com/quantstamp/qsp-protocol-node/releases
 
 *Note: The node version specified in the image below may not be the latest release.*  
 
-![](node-operator/latest.noderelease.png)
+In order to download the latest release, unfold the **Assets** section of the latest release.
+![](node-operator/ASSETS.png)
 
-In order to download the latest release, go to the **Assets** section of the latest release and click on the zip file as shown in the image below. 
+Then click on the zip file as shown in the image below. 
 
 *Note: The version specified in the image below may not be the latest release.*
 
@@ -115,8 +116,8 @@ Your node will be identifying itself to the network via the account that you jus
 accepted as an auditor, you will need to stake some QSP. The instructions below will show you how to import
 the account to Metamask so that you can stake QSP.
 
-1. Open MetaMask
-
+1. Open MetaMask and login. 
+(If you do not have a metamask account, create one and login until you see this screen.
     ![](./node-operator/METAMASK-IMPORT-01-Open.png)
 
 1. Click the upper right circle to browse `My Accounts`
@@ -135,8 +136,11 @@ the account to Metamask so that you can stake QSP.
 
 ### 4. Local machine setup
 #### Setting up Docker
-1. Install Docker CE: https://www.docker.com/community-edition
-    Verify: `docker -v` should return Docker version 17.09.0-ce or above
+1. Download the appropriate Docker Community Edition for your computer: https://hub.docker.com/search/?type=edition&offering=community
+
+   Install it according to the instructions.   
+   
+   Verify: `docker -v` should return Docker version 17.09.0-ce or above
 
 1. ONLY On Linux environments (SKIP this step if you’re using MacOS), check the group owner of /var/run/docker.sock. 
 
