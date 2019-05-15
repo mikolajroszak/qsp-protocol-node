@@ -224,12 +224,16 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
     
         ![](node-operator/ETHERSCAN-APPROVE-06-MetaMaskConfirm.png)
 
-    1. You will see `View your transaction` button appear next to the `Write` button.
+    1. Click on the `View your transaction` button that appears next to the `Write` button. Make sure that your transaction is confirmed on the blockchain before starting the next step. 
     
         ![](node-operator/ETHERSCAN-APPROVE-07-ViewTransactionApperas.png)
+        
+*Troubleshooting Tip: If your transaction is taking too long to get confirmed on the blockchain, try using the MetaMask's* `speed up` *feature. In MetaMask, click on your pending transaction in the Queue section and select* `speed up`.
+
+    ![](METAMASK_SPEED_UP_FEATURE.png)
 
 #### Tell the `[The Protocol Contract]` to freeze and stake the funds
-1. Find `[The Protocol Contract]` on EtherScan using the address of `[The Protocol Contract]`. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]`. 
+1. Find `[The Protocol Contract]` on Etherscan using the address of `[The Protocol Contract]`. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]`. 
 1. Navigate to the `Write Contract` tab.
 1. (Since already connected in the step above, this is likely not the case and you may skip it!) If there is a `Connect with Metamask` link next to the text "Write Contract", click it. Approve its request to connect to Metamask. Then, you should see a green circle next to the write contract after you connected Etherscan.io to MetaMask.
 1. Staking the funds to `[The Protocol Contract]`:
