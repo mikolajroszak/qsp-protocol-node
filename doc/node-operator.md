@@ -230,7 +230,7 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
         
 *Troubleshooting Tip: If your transaction is taking too long to get confirmed on the blockchain, try using the MetaMask's* `speed up` *feature. In MetaMask, click on your pending transaction in the Queue section and select* `speed up`.
 
-   ![](node-operator/METAMASK_SPEED_UP_FEATURE_NEW.png)
+   ![](node-operator/METAMASK_SPEED_UP_FEATURE_NEW3.png)
 
 #### Tell the `[The Protocol Contract]` to freeze and stake the funds
 1. Find `[The Protocol Contract]` on Etherscan using the address of `[The Protocol Contract]`. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]`. 
