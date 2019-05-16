@@ -227,18 +227,21 @@ class QSPAuditNode:
         self.__exec = False
         self.logger.info("Stopping QSP Audit Node")
 
+        skip = []
         # indicate to every thread that it should stop its execution
         for thread in self.__internal_threads:
-            self.logger.debug("Thread {0} is signaled to stop.".format(
-                    thread.name
-                )
-            )
-            thread.stop()
+            if thread.exec:
+                self.logger.debug("Thread {0} is signaled to stop.".format(thread.name))
+                thread.stop()
+            else:
+                skip += [thread]
+                self.logger.debug("Thread {0} was never started.".format(thread.name))
 
         # join every thread
         for thread in self.__internal_threads:
-            thread.join()
-            self.logger.debug("Thread {0} is stopped.".format(thread.name))
+            if thread not in skip:
+                thread.join()
+            self.logger.debug("Thread {0} is joined and stopped.".format(thread.name))
 
         self.__is_initialized = False
 
