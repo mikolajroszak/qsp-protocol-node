@@ -7,6 +7,8 @@
 #                                                                                                  #
 ####################################################################################################
 
+set -e
+
 UNAME_OUT="$(uname -s)"
 case "${UNAME_OUT}" in
 	Linux*|linux*)     readonly SCRIPT_DIR=`dirname $(realpath \"$0\")`;;
@@ -28,8 +30,6 @@ if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
   echo "Stopping....."
 	"$SCRIPT_DIR/stop-node"
 fi
-
-set -e
 
 cd "$RESOURCES_DIR"
 
