@@ -195,3 +195,5 @@ if __name__ == "__main__":
             logger.exception("Error in running node: {0}".format(str(error)))
         else:
             traceback.print_exc()
+        # A non-zero exit code is required to auto-restart
+        exit(1)
