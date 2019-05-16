@@ -241,7 +241,9 @@ class QSPAuditNode:
         for thread in self.__internal_threads:
             if thread not in skip:
                 thread.join()
-            self.logger.debug("Thread {0} is joined and stopped.".format(thread.name))
+                self.logger.debug("Thread {0} is joined and stopped.".format(thread.name))
+            else:
+                self.logger.debug("Thread {0} does not need to be joined.".format(thread.name))
 
         self.__is_initialized = False
 
