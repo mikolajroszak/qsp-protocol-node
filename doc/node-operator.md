@@ -70,7 +70,7 @@ If you already have an Infura API token that you are using elsewhere, we recomme
 1. Create new project
     ![](node-operator/INFURA-01-CreateProject.png)
 
-1. Enter project name (we entered "Quantstamp Protocol Node" as an example)
+1. Enter project name (we entered "QSP Protocol Node" as an example)
     ![](node-operator/INFURA-02-ProjectName.png)
 1. After creating the project, you can see it on the dashboard
     ![](node-operator/INFURA-03-ProjectOnFirstPage.png)
@@ -84,7 +84,7 @@ The `Project ID` is your `[Infura Token]`. We will need the again `[Infura Token
 
 > IMPORTANT CAUTION: By using these materials, you acknowledge and agree that your interactions are NOT private. These materials enable connectivity to the Ethereum platform, a public blockchain-based distributed computing platform and operating system and thus your interactions, audit node operations, information submitted, analyses, and resulting scan reports are publicly accessible as further described herein. In particular, any of your node information, accounts, amounts, staking, and audit analyses that you generate will be publicly accessible, storable, and stored by one or more entities throughout multiple jurisdictions. If you do not want your information to be publicly accessible, discontinue use immediately.
 
-The Quantstamp node will need to make transactions to the Ethereum network. In order to do this, we will need to make the node its own Ethereum account. The following instructions guide you through creating an account via MyEtherWallet, however, any Ethereum account with a valid keystore file will work fine.
+Your Quantstamp node will need an Ethereum account in order to make transactions on the Ethereum network. The following instructions guide you through creating an account via MyEtherWallet, however, any Ethereum account with a valid keystore file will work fine.
 
 #### Create account via MyEtherWallet
 1. Visit https://www.myetherwallet.com
@@ -257,7 +257,7 @@ After downloading the bundle, unzip the bundle and open that directory in your t
 
 ### Setting up your local machine configuration for every new Terminal opened
 
-You need to set two environment variables for the node connect to the Infura API, and to send transactions from your Ethereum account. Open `Terminal` and enter the following two commands (single quotes is to handle special characters):
+You need to set two environment variables for the node to connect to the Infura API, and to send transactions from your Ethereum account. Open `Terminal` and enter the following two commands (single quotes is to handle special characters):
 
 - `export QSP_ETH_AUTH_TOKEN='[Infura Token]'`
 - `export QSP_ETH_PASSPHRASE='[MyEtherWallet Password]'`
