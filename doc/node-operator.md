@@ -17,12 +17,12 @@ The node has been tested in the envrionment listed below.
 1. [Download the bundle](#1-download-the-bundle)
 2. [Infura](#2-setting-up-infura)
     1. Create an account
-    1. Created a project and obtain an `[Infura Token]`
+    1. Create a project and obtain an `[Infura Token]`
 3. [Ethereum Account (Suggesting MyEtherWallet)](#3-setting-up-an-ethereum-account)
-    1. Created an account `[MyEtherWallet PublicKey]` with `[MyEtherWallet Password]` and obtain `[MyEtherWallet keystore file]`
+    1. Create an account `[MyEtherWallet PublicKey]` with `[MyEtherWallet Password]` and obtain `[MyEtherWallet keystore file]`
     1. Import into MetaMask
 4. [Local Machine setup](#4-local-machine-setup)
-    1. Copying `[My EtherWallet keystore file]` to specified location
+    1. Copy `[My EtherWallet keystore file]` to specified location
     1. Docker
         1. Installed on local machine
         1. Set the environment for Docker as specified
