@@ -11,7 +11,7 @@ The node is expected to run on a Linux environment or a MacOS system with memory
 The node has been tested in the envrionment listed below.
 
 * MacOS 10.12.6 ~ 10.14.4, Memory: 16GB, CPU: >2 GHz, Intel Core i5/i7 
-* Ubuntu 18.04.02 LTS, Memory 16GB, CPU: 1.8GHz × 8, Intel Core i7
+* Ubuntu 18.04.02 LTS, Memory: 16GB, CPU: 1.8GHz × 8, Intel Core i7
 
 ### Local Installation Checkbox ( related to local machine )
 1. [Download the bundle](#1-download-the-bundle)
