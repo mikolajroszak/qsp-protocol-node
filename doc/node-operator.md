@@ -184,9 +184,6 @@ There are two steps to stake in the Quantstamp Protocol:
 #### Approve `[The Protocol Contract]` to withdraw QSP from you
 In this part, we will be interacting with the `[QSP Token Contract]` to allow staking into `[The Protocol Contract]`. You could interact with the `[QSP Token Contract]` through the website [Etherscan.io](http://etherscan.io).
 
-The address of `[The Protocol Contract]` can be found in the `[contractAddress]` here: 
-https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json
-
 1. View `[QSP Token Contract]` on Mainnet with MyEtherScan: https://etherscan.io/address/0x99ea4db9ee77acd40b119bd1dc4e33e1c070b80d
 
 1. Navigate to `Write Contract` in the tabs below
@@ -212,6 +209,9 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
         ![](node-operator/ETHERSCAN-APPROVE-05-WriteAppears.png)
 
     1. Fill the field `_spender` with the address of `[The Protocol Contract]`
+    
+The address of `[The Protocol Contract]` can be found in the `[contractAddress]` here: 
+https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json
 
     1. Fill the field `_value` with the amount of QSP you intend to stake in `[The Protocol Contract]` multiplied by 10^18. We are multiplying by 10^18 because the QSP needs to be staked using the wei denomination. The minimum amount of QSP that needs to be staked in order to run a node is 50000 QSP, which in the wei denomination is 50000000000000000000000.
 
@@ -241,6 +241,7 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
     1. Click the `Write` button
     
 <img width="394" alt="minimum stake in wei" src="https://user-images.githubusercontent.com/36969633/57096848-0fc15480-6ccb-11e9-9bcb-7e3a26b0f8f6.png">
+    1. Confirm the Metamask transaction
 
 ### Set the minimum audit price
 You can set a minimum audit price as a configuration parameter. This is the minimum price in QSP for which your node will be willing to perform a scan of a smart contract submitted to the Quantstamp Protocol.
@@ -253,7 +254,7 @@ you would need to change the line to `min_price_in_qsp: !!int 50000`.
 *Troubleshooting Tip: If you are updating `min_price_in_qsp`, make sure that you update this parameter for `mainnet` and not `testnet`.* 
 
 ## Running the Node
-After downloading the bundle, unzip the bundle and open that directory in your terminal. 
+In a terminal, open the directory of the qsp-protocol package you downloaded and unzipped at the beginning of this guide.
 
 ### Setting up your local machine configuration for every new Terminal opened
 
@@ -267,11 +268,11 @@ In order to run the audit node container, Docker must be running. Check whether 
 is up and running (`ps -A | egrep docker`). If not running, please start it.
 
 ### Run
-From within the bundle directory, run the following command to start the node.
+From within the bundle directory, you can either run the node in the foreground using the following command:
 
 `./bin/start-node`
 
-You can use nohup to run the script in detached mode:
+Or run the node in the background(detached mode) using the following command:
 
 `nohup ./bin/start-node &`
 
