@@ -61,6 +61,8 @@ Then click on the zip file as shown in the image below.
 
 ![](node-operator/DOWNLOAD_BUNDLE_ASSETS.png)
 
+**Attention!** For easy future access, we recommend you save your quantstamp node directory (the folder that was extracted from the zip file) in your home directory. 
+
 ### 2. Setting up Infura
 You need an Infura account and API token for your node to be able to send transactions to the Ethereum network via the Infura API.
 If you already have an Infura API token that you are using elsewhere, we recommend that you create a new token specifically for the node.
@@ -230,7 +232,10 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
    ![](node-operator/METAMASK_SPEED_UP_FEATURE_NEW3.png)
 
 #### Tell the `[The Protocol Contract]` to freeze and stake the funds
-1. Find `[The Protocol Contract]` on Etherscan using the address of `[The Protocol Contract]`. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]`. 
+
+**Attention!:** In the previous section, we interacted with the `[QSP Token Contract]`. In order to complete the staking process, we will now make a transaction on a *different contract*, the `[The Protocol Contract]`. 
+
+1. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]` and then insert that address into [Etherscan.io](Etherscan.io). 
 1. Navigate to the `Write Contract` tab.
 1. (Since already connected in the step above, this is likely not the case and you may skip it!) If there is a `Connect with Metamask` link next to the text "Write Contract", click it. Approve its request to connect to Metamask. Then, you should see a green circle next to the write contract after you connected Etherscan.io to MetaMask.
 1. Stake the funds to `[The Protocol Contract]`:
@@ -246,7 +251,9 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
 ### Set the minimum audit price
 You can set a minimum audit price as a configuration parameter. This is the minimum price in QSP for which your node will be willing to perform a scan of a smart contract submitted to the Quantstamp Protocol.
 
-Open `resources/config.yaml`. Search for `min_price_in_qsp` and change the value accordingly. Make sure that you do not change anything else in this file, including indentation.
+Open `resources/config.yaml`. The resources folder is located within your qsp node directory (folder). Your qsp node directory was extracted from a zip file in step 1.  
+
+Search for `min_price_in_qsp` and change the value accordingly. Make sure that you do not change anything else in this file, including indentation.
 
 The default setting `min_price_in_qsp: !!int 1000` indicates that the node will not execute any audit request if the reward is less than 1,000 QSP. If you wished to increase this amount to 50,000 QSP,
 you would need to change the line to `min_price_in_qsp: !!int 50000`.
