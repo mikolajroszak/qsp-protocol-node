@@ -263,6 +263,8 @@ You need to set two environment variables for the node to connect to the Infura 
 - `export QSP_ETH_AUTH_TOKEN='[Infura Token]'`
 - `export QSP_ETH_PASSPHRASE='[MyEtherWallet Password]'`
 
+Please note that if you close the terminal window you will have to re-set these variables before starting another node instance.
+
 ### Run the Node!
 In order to run the audit node container, Docker must be running. Check whether the docker daemon
 is up and running (`ps -A | egrep docker`). If not running, please start it.
@@ -281,10 +283,11 @@ Or run the node in the background(detached mode) using the following command:
 Logs are written to `qsp-protocol-node.log` file in .qsp-protocol directory within the user home directory.
 
 ### Stop
+To stop a running node instance, open a new window in the bundle directory and issue the following command:
 
 `./bin/stop-node`
 
-Will stop and remove the docker containers.
+This will stop and remove the docker containers.
 
 ### To use non production environment
 Node can be run against non-prod environment by setting `QSP_ENV`  variable to `testnet` in ./bin/start-node file
