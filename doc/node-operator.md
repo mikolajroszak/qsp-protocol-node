@@ -63,7 +63,7 @@ Then click on the zip file as shown in the image below.
 
 **Attention!** For easy future access, we recommend you save your quantstamp node directory (the folder that was extracted from the zip file) in your home directory. 
 
-### 2. Setting up Infura ([Click here](https://youtu.be/-o1HPAA0kPM) to watch it on Youtube)
+### 2. Setting up Infura ([Click here](https://youtu.be/z-lRuKBimW8) to watch it on Youtube)
 You need an Infura account and API token for your node to be able to send transactions to the Ethereum network via the Infura API.
 If you already have an Infura API token that you are using elsewhere, we recommend that you create a new token specifically for the node.
 
