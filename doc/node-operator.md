@@ -212,8 +212,8 @@ In this part, we will be interacting with the `[QSP Token Contract]` to allow st
 
     1. Fill the field `_spender` with the address of `[The Protocol Contract]`
     
-The address of `[The Protocol Contract]` can be found in the `[contractAddress]` here: 
-https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json
+        The address of `[The Protocol Contract]` can be found in the `[contractAddress]` here: 
+        https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json
 
     1. Fill the field `_value` with the amount of QSP you intend to stake in `[The Protocol Contract]` multiplied by 10^18. We are multiplying by 10^18 because the QSP needs to be staked using the wei denomination. The minimum amount of QSP that needs to be staked in order to run a node is 50000 QSP, which in the wei denomination is 50000000000000000000000.
 
@@ -243,11 +243,9 @@ https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.
     1. Fill the field amount with `[QSP Staking Amount]` 
         1. The current minimum amount of QSP that needs to be staked is 50,000
         1. The QSP needs to be staked using the wei denomination. 50000 QSP in the wei denomination is 50000000000000000000000 (which is 50,000 multiplied by 10^18)
-    1. Click the `Write` button
+    1. Click the `Write` button, and then confirm the Metamask transaction. *Make sure the transaction is confirmed on the blockchain before proceeding to the next step.* 
+    <img width="394" alt="minimum stake in wei" src="https://user-images.githubusercontent.com/36969633/57096848-0fc15480-6ccb-11e9-9bcb-7e3a26b0f8f6.png">
     
-<img width="394" alt="minimum stake in wei" src="https://user-images.githubusercontent.com/36969633/57096848-0fc15480-6ccb-11e9-9bcb-7e3a26b0f8f6.png">
-    1. Confirm the Metamask transaction
-
 ### Set the minimum audit price
 You can set a minimum audit price as a configuration parameter. This is the minimum price in QSP for which your node will be willing to perform a scan of a smart contract submitted to the Quantstamp Protocol.
 
@@ -270,6 +268,8 @@ You need to set two environment variables for the node to connect to the Infura 
 - `export QSP_ETH_AUTH_TOKEN='[Infura Token]'`
 - `export QSP_ETH_PASSPHRASE='[MyEtherWallet Password]'`
 
+If you close your terminal you will have to set these variables again before starting another node instance. 
+
 ### Run the Node!
 In order to run the audit node container, Docker must be running. Check whether the docker daemon
 is up and running (`ps -A | egrep docker`). If not running, please start it.
@@ -288,10 +288,11 @@ Or run the node in the background(detached mode) using the following command:
 Logs are written to `qsp-protocol-node.log` file in .qsp-protocol directory within the user home directory.
 
 ### Stop
+To stop the node, open a new terminal in the bundle directory and issue the following command:
 
 `./bin/stop-node`
 
-Will stop and remove the docker containers.
+This will stop and remove the Docker containers.
 
 ### To use non production environment
 Node can be run against non-prod environment by setting `QSP_ENV`  variable to `testnet` in ./bin/start-node file
