@@ -80,7 +80,7 @@ If you already have an Infura API token that you are using elsewhere, we recomme
 1. Click `VIEW PROJECT`
     ![](node-operator/INFURA-04-ProjectDetail.png)
 
-The `Project ID` is your `[Infura Token]`. We will need the again `[Infura Token]` when we set our environment variables in the near future.  
+The `Project ID` is your `[Infura Token]`. We will need the `[Infura Token]` again when we set our environment variables in the near future.  
 
 ### 3. Setting up an Ethereum account ([Click here](https://youtu.be/9qFOSQxrOaM) to watch it on Youtube)
 
