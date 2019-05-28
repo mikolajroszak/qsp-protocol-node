@@ -63,7 +63,7 @@ Then click on the zip file as shown in the image below.
 
 **Attention!** For easy future access, we recommend you save your quantstamp node directory (the folder that was extracted from the zip file) in your home directory. 
 
-### 2. Setting up Infura
+### 2. Setting up Infura ([Click here](https://youtu.be/-o1HPAA0kPM) to watch it on Youtube)
 You need an Infura account and API token for your node to be able to send transactions to the Ethereum network via the Infura API.
 If you already have an Infura API token that you are using elsewhere, we recommend that you create a new token specifically for the node.
 
@@ -82,7 +82,7 @@ If you already have an Infura API token that you are using elsewhere, we recomme
 
 The `Project ID` is your `[Infura Token]`. We will need the again `[Infura Token]` when we set our environment variables in the near future.  
 
-### 3. Setting up an Ethereum account
+### 3. Setting up an Ethereum account ([Click here](https://youtu.be/9qFOSQxrOaM) to watch it on Youtube)
 
 > IMPORTANT CAUTION: By using these materials, you acknowledge and agree that your interactions are NOT private. These materials enable connectivity to the Ethereum platform, a public blockchain-based distributed computing platform and operating system and thus your interactions, audit node operations, information submitted, analyses, and resulting scan reports are publicly accessible as further described herein. In particular, any of your node information, accounts, amounts, staking, and audit analyses that you generate will be publicly accessible, storable, and stored by one or more entities throughout multiple jurisdictions. If you do not want your information to be publicly accessible, discontinue use immediately.
 
@@ -233,7 +233,7 @@ In this part, we will be interacting with the `[QSP Token Contract]` to allow st
 
 #### Tell the `[The Protocol Contract]` to freeze and stake the funds
 
-**Attention!:** In the previous section, we interacted with the `[QSP Token Contract]`. In order to complete the staking process, we will now make a transaction on a *completely different contract*, the `[The Protocol Contract]`. 
+**Attention!:** In the previous section, we interacted with the `[QSP Token Contract]`. In order to complete the staking process, we will now make a transaction on a *different contract*, the `[The Protocol Contract]`. 
 
 1. [Click here](https://s3.amazonaws.com/qsp-protocol-contract/mainnet/QuantstampAudit-v-2-meta.json) to view the current address of `[The Protocol Contract]` and then insert that address into [Etherscan.io](Etherscan.io). 
 1. Navigate to the `Write Contract` tab.
