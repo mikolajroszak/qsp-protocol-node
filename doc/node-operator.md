@@ -117,7 +117,8 @@ the account to MetaMask so that you can stake QSP.
 
 1. Download MetaMask [here](https://metamask.io/)
 
-1. Open MetaMask and login. 
+1. Open MetaMask and login
+
     ![](./node-operator/METAMASK-IMPORT-01-Open.png)
 
 1. Click the upper right circle to browse `My Accounts`
