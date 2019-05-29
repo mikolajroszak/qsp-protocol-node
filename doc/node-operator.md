@@ -113,10 +113,11 @@ You should be able to see your account details, your `[Ethereum public address]`
 #### Import account into MetaMask
 Your node will identify itself to the network via the account that you just created. In order to be
 accepted as an auditor, you will need to stake some QSP. The instructions below will show you how to import
-the account to Metamask so that you can stake QSP.
+the account to MetaMask so that you can stake QSP. 
+
+1. Download MetaMask [here](https://metamask.io/)
 
 1. Open MetaMask and login. 
-(If you do not have a metamask account, create one and login until you see this screen.
     ![](./node-operator/METAMASK-IMPORT-01-Open.png)
 
 1. Click the upper right circle to browse `My Accounts`
