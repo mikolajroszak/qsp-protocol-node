@@ -1,0 +1,21 @@
+#!/bin/bash
+
+####################################################################################################
+#                                                                                                  #
+# (c) 2018, 2019 Quantstamp, Inc. This content and its use are governed by the license terms at    #
+# <https://s3.amazonaws.com/qsp-protocol-license/V2_LICENSE.txt>                                   #
+#                                                                                                  #
+####################################################################################################
+
+set -e 
+
+FORK_BRANCH='.*:.*'
+if [[ $TRAVIS_PULL_REQUEST_BRANCH =~ $FORK_BRANCH ]]; then
+  echo $TRAVIS_PULL_REQUEST_BRANCH
+  echo "Running test in local mode"
+  make stylecheck test
+else
+  echo $TRAVIS_PULL_REQUEST_BRANCH
+  echo "Running test in ci mode"
+  make stylecheck test-travis-ci
+fi

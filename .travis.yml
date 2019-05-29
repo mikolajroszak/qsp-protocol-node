@@ -11,7 +11,7 @@ install:
   - pip3 install pycodestyle==2.4.0
   - pip3 install flake8==3.6.0
 script:
-  - make stylecheck test-travis-ci
+  - ./bin/run-ci
 after_script:
   - echo Collecting coverage information
   - sed -i -e "s@/app/@$PWD/@g" ./tests/coverage/.coverage
