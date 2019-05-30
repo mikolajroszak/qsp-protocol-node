@@ -188,7 +188,7 @@ There are two steps to stake in the Quantstamp Protocol:
 #### Approve `[The Protocol Contract]` to withdraw QSP from you
 In this part, we will be interacting with the `[QSP Token Contract]` to allow staking into `[The Protocol Contract]`. You could interact with the `[QSP Token Contract]` through the website [Etherscan.io](http://etherscan.io).
 
-1. View `[QSP Token Contract]` on Mainnet with MyEtherScan: https://etherscan.io/address/0x99ea4db9ee77acd40b119bd1dc4e33e1c070b80d
+1. View `[QSP Token Contract]` on Mainnet with MyEtherScan: https://etherscan.io/token/0x99ea4db9ee77acd40b119bd1dc4e33e1c070b80d
 
 1. Navigate to `Write Contract` in the tabs below
 
