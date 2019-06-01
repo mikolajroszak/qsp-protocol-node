@@ -167,7 +167,7 @@ After you paste the contents of `[MyEtherWallet keystore file]` into `resources/
 
 
 
-## Making your account eligible as a node operator
+## Making your account eligible as a node operator ([Click here](https://youtu.be/3EeU_BCqAt0) to watch it on Youtube)
 > WARNING: You should conduct your own diligence, exercise caution, and use your best judgment in connection with staking amounts and interacting through use of these materials. Refunds are not available. You may risk loss of QSP, Ether, tokens, or other loss. Features, functionality, schedules, or design architectures are subject to continuing update, modification, cancellation, delay, external dependencies, evolving regulatory frameworks, and/or factors beyond our control and you are cautioned not to place undue reliance on this information. FOR AVOIDANCE OF DOUBT, THE MATERIALS, AND ACCESS AND/OR USAGE THEREOF, INCLUDING ANY ASSOCIATED OR LINKED INFORMATION, SHALL NOT BE CONSIDERED OR RELIED UPON AS ANY MANNER OR FORM OF INVESTMENT, INVESTMENT PURPOSE, VEHICLE WITH AN EXPECTATION TO EARN A PROFIT, OR FINANCIAL, INVESTMENT, TAX, LEGAL, REGULATORY, OR OTHER ADVICE.
 ### Transfer Ether and QSP to  `[Ethereum public address]`
 Your node needs Ether to pay for gas when transacting with the network. We recommend that you transfer a small amount of Ether into the account.
