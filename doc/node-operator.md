@@ -289,11 +289,11 @@ Or run the node in the background(detached mode) using the following command:
 Logs are written to `qsp-protocol-node.log` file in the .qsp-protocol directory within the user home directory. Logs are rotated every time a node restarts. If you encounter any issues including the node failing to restart, check the qsp-protocol-node.log.  If this does not resolve your issue, check old log files that are saved as tar.gz files.  
 
 To find all log files:
-1. cd to ${HOME}/.qsp-protocol directory
+1. `cd` to `${HOME}/.qsp-protocol` directory
 1. run `ls -lhtr`
-1. Check the creation time of the log files
+1. check the creation time of the log files
 1. untar the latest log file to tmp dir using `tar -xvf <tar-file-name> -C /tmp`
-1. Check the file for relevant error messages 
+1. check the file for relevant error messages 
 
 You may have to follow the above process multiple times to debug an issue. 
 If you open up a GitHub issue, please include your findings and [attach all relevant log files](https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests).
