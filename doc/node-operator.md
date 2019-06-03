@@ -110,7 +110,7 @@ Now you can try to access your account through MyEtherWallet to read your addres
 You should be able to see your account details, your `[Ethereum public address]` is under the `Address`
 
 
-#### Import account into MetaMask ([Click here](https://www.youtube.com/watch?v=3c_7iu7VKRE&amp=&feature=youtu.be) to watch it on Youtube)
+#### Import account into MetaMask ([Click here](https://youtu.be/3c_7iu7VKRE) to watch it on Youtube)
 Your node will identify itself to the network via the account that you just created. In order to be
 accepted as an auditor, you will need to stake some QSP. The instructions below will show you how to import
 the account to MetaMask so that you can stake QSP. 
