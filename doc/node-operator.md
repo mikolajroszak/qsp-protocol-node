@@ -296,7 +296,7 @@ To find all log files:
 1. Check the file for relevant error messages 
 
 You may have to follow the above process multiple times to debug an issue. 
-If you open up a github issue, please include your findings and [attach all relevant log files].(https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests)
+If you open up a `Github` issue, please include your findings and [attach all relevant log files].(https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests)
 
 ### Stop
 To stop the node, open a new terminal in the bundle directory and issue the following command:
