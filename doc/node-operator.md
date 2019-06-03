@@ -287,7 +287,7 @@ Or run the node in the background(detached mode) using the following command:
 
 ### View Logs
 
-Logs are written to `qsp-protocol-node.log` file in .qsp-protocol directory within the user home directory. Logs are rotated on each restart of the node. So in case the node is restarted because of any issues check the latest tar files for troubleshooting the underlying cause. In case you open a github issue attach the log files or paste relevant log messages in the issue.
+Logs are written to `qsp-protocol-node.log` file in .qsp-protocol directory within the user home directory. Logs are rotated on each restart of the node. So in case the node is restarted because of any issues check the latest tar files for troubleshooting the underlying cause. In case you open a Github issue [attach the relevant log file](https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests) or paste relevant log messages in the issue.
 
 ### Stop
 To stop the node, open a new terminal in the bundle directory and issue the following command:
