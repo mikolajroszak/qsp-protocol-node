@@ -143,6 +143,9 @@ the account to MetaMask so that you can stake QSP.
    
    Verify: `docker -v` should return Docker version 17.09.0-ce or above
 
+1. Check the memory setting of Docker, it is recommended to set it above 16GB
+    ![](./node-operator/DOCKER-MEMORY-SETTING.png)
+
 1. ONLY On Linux environments (SKIP this step if you’re using MacOS), check the group owner of /var/run/docker.sock. 
 
     Run command: `ls -l /var/run/docker.sock` 
