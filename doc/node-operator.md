@@ -27,7 +27,7 @@ The node has been tested in the envrionment listed below.
         1. Installed on local machine
         1. Set the environment for Docker as specified
 
-> THIRD PARTY ASPECTS: These materials reference and depend upon multiple layers of third party resources, code, analyzers, and platforms that are operated or provided by others subject to their separate branding and terms, including but not limited to Ethereum, Infura, MetaMask, Solidity, Etherscan, Medium, Github, Oyente, MythX, Securify, Amazon, Linux, Apple, Docker, or others. Displays of third party logos, marks, trade names and service names throughout these materials are for your informational purposes only and do not indicate any form of affiliation or endorsement. We are not a party to and do not warrant, endorse, guarantee, or assume responsibility for any such third party aspects or your use or access thereof.
+> THIRD PARTY ASPECTS: These materials reference and depend upon multiple layers of third party resources, code, analyzers, and platforms that are operated or provided by others subject to their separate branding and terms, including but not limited to Ethereum, Infura, MetaMask, Solidity, Etherscan, Medium, GitHub, Oyente, MythX, Securify, Amazon, Linux, Apple, Docker, or others. Displays of third party logos, marks, trade names and service names throughout these materials are for your informational purposes only and do not indicate any form of affiliation or endorsement. We are not a party to and do not warrant, endorse, guarantee, or assume responsibility for any such third party aspects or your use or access thereof.
 
 ### [Making your Ethereum Account eligible as a node operator](#making-your-account-eligible-as-a-node-operator)
 1. Transfer ether and QSP to `[MyEtherWallet PublicKey]`
@@ -296,7 +296,7 @@ To find all log files:
 1. Check the file for relevant error messages 
 
 You may have to follow the above process multiple times to debug an issue. 
-If you open up a `Github` issue, please include your findings and [attach all relevant log files](https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests).
+If you open up a GitHub issue, please include your findings and [attach all relevant log files](https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests).
 
 ### Stop
 To stop the node, open a new terminal in the bundle directory and issue the following command:
