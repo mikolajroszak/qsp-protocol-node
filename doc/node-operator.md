@@ -299,7 +299,16 @@ To find all log files:
 1. check the file for relevant error messages 
 
 You may have to follow the above process multiple times to debug an issue. 
-If you open up a GitHub issue, please include your findings and [attach all relevant log files](https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests).
+
+If you open up a GitHub issue, please include your findings and [attach all relevant log and db files](https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests).
+
+To find the db file:
+1. `cd` to directory that contains qsp-protocol-node code
+1. `cd resources`
+1. Find the latest db file using `ls -Art *.db | tail -n 1`
+
+**NOTE**:Please zip the files before attaching to a Github issue
+
 
 ### Stop
 To stop the node, open a new terminal in the bundle directory and issue the following command:
