@@ -139,7 +139,7 @@ class TestSubmitReportThread(QSPTest):
         self.__test_auditor_report_correctness(
             auditor_compressed_report=self.__compressed_report("reports/Empty.json"),
             police_report=police_report,
-            deemed_correct=False
+            deemed_correct=True
         )
 
     def __compressed_report(self, report_file_path):
