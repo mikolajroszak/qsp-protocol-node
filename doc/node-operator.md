@@ -303,7 +303,7 @@ You may have to follow the above process multiple times to debug an issue.
 If you open up a GitHub issue, please include your findings and [attach all relevant log and db files](https://help.github.com/en/articles/file-attachments-on-issues-and-pull-requests).
 
 To find the db file:
-1. `cd` to directory that contains qsp-protocol-node code
+1. `cd` to the directory that contains qsp-protocol-node code
 1. `cd resources`
 1. Find the latest db file using `ls -Art *.db | tail -n 1`
 
