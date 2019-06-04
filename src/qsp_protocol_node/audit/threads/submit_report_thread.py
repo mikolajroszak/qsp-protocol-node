@@ -160,13 +160,6 @@ class SubmitReportThread(TimeIntervalPollingThread):
                                          str(full_police_report.get('contract_hash', None))))
             return False
 
-        # Makes sure that the audit statuses match
-        audit_contract_status = decompressed_audit_report.get('status', "").lower()
-        police_contract_status = full_police_report.get('status', "").lower()
-        if not audit_contract_status or not police_contract_status or \
-                audit_contract_status != police_contract_status:
-            return False
-
         # If report exists, but building a vulnerability set fails,
         # deem the report as incorrect
         try:
