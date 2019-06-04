@@ -305,7 +305,7 @@ If you open up a GitHub issue, please include your findings and [attach all rele
 To find the db file:
 1. `cd` to the directory that contains qsp-protocol-node code
 1. `cd resources`
-1. Find the latest db file using `ls -Art *.db | tail -n 1`
+1. Find the latest db file using `ls event_database.db`
 
 **NOTE**:Please zip the files before attaching to a Github issue
 
