@@ -263,7 +263,7 @@ you would need to change the line to `min_price_in_qsp: !!int 50000`.
 
 *Troubleshooting Tip: If you are updating `min_price_in_qsp`, make sure that you update this parameter for `mainnet` and not `testnet`.* 
 
-## Running the Node
+## Running the Node ([Click here](https://youtu.be/OZMlWXE82_w) to watch it on Youtube)
 In a terminal, open the directory of the qsp-protocol package you downloaded and unzipped at the beginning of this guide.
 
 ### Setting up your local machine configuration for every new Terminal opened
