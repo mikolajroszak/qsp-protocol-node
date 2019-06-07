@@ -337,13 +337,17 @@ In order to keep your node running and up-to-date, you need to:
    ![](./node-operator/RELEASE-NOTIFICATIONS.png)
 
 ### Staying up-to-date through social media
-You can also be informed of the latest releases by following us on our social media channels. We will make an announcement every time we come out with a new release. 
+You can also be informed of the latest releases by following us social media. We will make an announcement every time we come out with a new release. 
 
 - Follow us on [Twitter](https://twitter.com/Quantstamp)
 - Follow us on [Reddit](https://www.reddit.com/r/quantstamp)
 
 We will also make these announcements in our Monthly Community Updates. 
 
+### Resetting environment variables
+For a refresher on how to reset environment variables on Terminal, visit [this section](https://github.com/quantstamp/qsp-protocol-node/blob/COM-321-keeping-node-up-to-date/doc/node-operator.md#setting-up-your-local-machine-configuration-for-every-new-terminal-opened) of the node operator manual. 
+
+*Note: You will need to reset your environment variables every time close your Terminal.* 
 
 ## After running the node for a while
 ### Checking how much QSP is in your account
