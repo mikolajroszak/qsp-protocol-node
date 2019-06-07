@@ -340,6 +340,7 @@ In order to keep your node running and up-to-date, you need to:
 You can also be informed of the latest releases by following us on our social media channels. We will make an announcement every time we come out with a new release. 
 
 Follow us on [Twitter](https://twitter.com/Quantstamp)
+
 Follow us on [Reddit](https://www.reddit.com/r/quantstamp)
 
 We will also make these announcements in our community updates. 
