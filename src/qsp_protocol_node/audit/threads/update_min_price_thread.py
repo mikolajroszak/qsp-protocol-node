@@ -99,9 +99,4 @@ class UpdateMinPriceThread(TimeIntervalPollingThread):
             polling_interval=24 * 60 * 60,
             thread_name="update min price thread")
 
-        if self.config.heartbeat_allowed:
-            # Updates min price and starts a thread that will be doing so every 24 hours
-            self.update_min_price()
-        else:
-            # Updates min price only if it differs
-            self.check_and_update_min_price()
+        self.check_and_update_min_price()
