@@ -342,7 +342,7 @@ You can also be informed of the latest releases by following us on our social me
 - Follow us on [Twitter](https://twitter.com/Quantstamp)
 - Follow us on [Reddit](https://www.reddit.com/r/quantstamp)
 
-We will also make these announcements in our community updates. 
+We will also make these announcements in our Monthly Community Updates. 
 
 
 ## After running the node for a while
