@@ -157,10 +157,10 @@ Make sure that the AWS role has [correct permissions](https://docs.aws.amazon.co
     1. `log_group`
     1. `log_stream`
 
-## To start developing
+## Contributing
 
-* If you want to build locally just run `make build` 
-For full instructions, please review  [developer's documentation]
+* If you want to build locally just run `make build`. For instructions on how to contribute to the node's
+repository, please check the  instructions in [CONTRIBUTE.md](https://github.com/quantstamp/qsp-protocol-node/blob/develop/CONTRIBUTE.md).
 
 ## Troubleshooting
 
