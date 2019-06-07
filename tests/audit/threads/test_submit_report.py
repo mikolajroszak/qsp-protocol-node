@@ -5,6 +5,7 @@
 #                                                                                                  #
 ####################################################################################################
 
+from hexbytes import HexBytes
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -36,10 +37,11 @@ class TestSubmitReportThread(QSPTest):
         """
         tx_hash = self.__submit_thread._SubmitReportThread__submit_police_report(1, "", True)
         self.assertIsNotNone(tx_hash)
+        submission_hash = HexBytes('0x03087766bf68e78671d1ea436ae087da74a12761dac020011a9eddc4900bf13b')
         with mock.patch('audit.threads.submit_report_thread.send_signed_transaction',
-                        return_value="hash"):
+                        return_value=submission_hash):
             tx_hash = self.__submit_thread._SubmitReportThread__submit_police_report(1, "", True)
-            self.assertEquals(tx_hash, "hash")
+            self.assertEquals(tx_hash, submission_hash)
 
     def test_encoding_to_get_report_in_blockchain(self):
         compressed_report_bytes = b' \x03\x90\xb5U\xf2\xefS\'\xe1\x89`\x01\xd8tb\xe2\xe6\x9d\xa3\xda\xac\xe1\x8c\xb7\xb6\x0f"1$\x93\xa9\xc4\xf9\x05\x00\x0f\x0c\x00\x0f\r\x00\x0f\x05\x00\x13\x03\x00\x0f\x07\x00\x0f\x1a\x00\x0f\x15\x00\x06\x12\x00\x0e\x12\x00\n'
