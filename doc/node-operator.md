@@ -334,7 +334,7 @@ In order to keep your node running and up-to-date, you need to:
 ### Staying up-to-date with the latest releases
 [Click here](https://github.com/quantstamp/qsp-protocol-node/releases) to view and download the latest releases. Sign-up to be automatically notified of new releases on `Github` by visiting [this page](https://github.com/quantstamp/qsp-protocol-node/releases), clicking on `Watch` near the top-right corner of your screen and then selecting `Releases only`.
 
-    ![](./node-operator/RELEASE-NOTIFICATIONS.png)
+   ![](./node-operator/RELEASE-NOTIFICATIONS.png)
 
 ### Staying up-to-date through social media
 You can also be informed of the latest releases by following us on our social media channels. We will make an announcement every time we come out with a new release. 
