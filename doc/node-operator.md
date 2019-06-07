@@ -326,6 +326,25 @@ Node can be run against non-prod environment by setting `QSP_ENV`  variable to `
 
     ![](./node-operator/RUN-NODEPANEL.png)
 
+## How to keep your node running and up-to-date
+In order to keep your node running and up-to-date, you need to:
+1. Stay up-to-date with the latest releases
+1. Reset your environment variables, `QSP_ETH_AUTH_TOKEN` and `QSP_ETH_PASSPHRASE`, every time you close your terminal
+
+### Staying up-to-date with the latest releases
+[Click here](https://github.com/quantstamp/qsp-protocol-node/releases) to view and download the latest releases. Sign-up to be automatically notified of new releases on `Github` by visiting [this page](https://github.com/quantstamp/qsp-protocol-node/releases), clicking on `Watch` near the top-right corner of your screen and then selecting `Releases only`.
+
+    ![](./node-operator/RELEASE-NOTIFICATIONS.png)
+
+### Staying up-to-date through social media
+You can also be informed of the latest releases by following us on our social media channels. We will make an announcement every time we come out with a new release. 
+
+Follow us on [Twitter](https://twitter.com/Quantstamp)
+Follow us on [Reddit](https://www.reddit.com/r/quantstamp)
+
+We will also make these announcements in our community updates. 
+
+
 ## After running the node for a while
 ### Checking how much QSP is in your account
 Navigate to https://etherscan.io/address/[MyEtherWallet PublicKey]. You can locate this information in the Overview panel.  
