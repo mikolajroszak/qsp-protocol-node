@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 from web3.utils.threads import Timeout
 
 from audit import ClaimRewardsThread
-from helpers.resource import fetch_config, remove
+from helpers.resource import fetch_config
 from helpers.qsp_test import QSPTest
 from timeout_decorator import timeout
 from utils.eth import DeduplicationException

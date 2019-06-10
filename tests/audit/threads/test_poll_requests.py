@@ -7,7 +7,7 @@
 
 from audit import PollRequestsThread
 from helpers.qsp_test import QSPTest
-from helpers.resource import fetch_config, remove
+from helpers.resource import fetch_config
 from timeout_decorator import timeout
 from unittest import mock
 from utils.eth import DeduplicationException
