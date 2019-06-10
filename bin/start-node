@@ -11,7 +11,7 @@ set -e
 
 UNAME_OUT="$(uname -s)"
 case "${UNAME_OUT}" in
-	Linux*|linux*)     readonly SCRIPT_DIR=`dirname $(realpath \"$0\")`;;
+	Linux*|linux*)     readonly SCRIPT_DIR=`dirname $(realpath "$0")`;;
 	Darwin*|darwin*)   readonly SCRIPT_DIR=`dirname $(python -c "from __future__ import print_function; from os.path import realpath; from sys import argv; print(realpath(\"$0\"))")`;;
 	*)          echo "Cannot determine OS type. Please make sure you are using Linux or Mac. If so, please open a github issue"; exit 1
 esac

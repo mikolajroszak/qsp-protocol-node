@@ -297,7 +297,7 @@ class TestQSPAuditNode(QSPTest):
                                            report_file_path="reports/DAOBug.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
-        compressed_report = TestQSPAuditNode.__compress_report("reports/DAOBug.json")
+        compressed_report = self.__compress_report("reports/DAOBug.json")
 
         # Asserts the database content.
         expected_row = {"request_id": 1,
@@ -358,7 +358,7 @@ class TestQSPAuditNode(QSPTest):
         self.__audit_node.config._Config__analyzers = original_analyzers
         self.__audit_node.config._Config__analyzers_config = original_analyzers_config
 
-        compressed_report = TestQSPAuditNode.__compress_report("reports/DockerhubFail.json")
+        compressed_report = self.__compress_report("reports/DockerhubFail.json")
 
         # Asserts the database content.
         expected_row = {"request_id": 1,
@@ -419,7 +419,7 @@ class TestQSPAuditNode(QSPTest):
         self.__audit_node.config._Config__analyzers = original_analyzers
         self.__audit_node.config._Config__analyzers_config = original_analyzers_config
 
-        compressed_report = TestQSPAuditNode.__compress_report("reports/DockerhubFailAllAnalyzers.json")
+        compressed_report = self.__compress_report("reports/DockerhubFailAllAnalyzers.json")
 
         # asserting the database content
         expected_row = {"request_id": 1,
@@ -464,7 +464,7 @@ class TestQSPAuditNode(QSPTest):
                                            report_file_path="reports/Empty.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
-        compressed_report = TestQSPAuditNode.__compress_report("reports/Empty.json")
+        compressed_report = self.__compress_report("reports/Empty.json")
 
         # asserting the database content
         expected_row = {"request_id": 1,
@@ -601,7 +601,7 @@ class TestQSPAuditNode(QSPTest):
         self.__assert_audit_request_report(self.__REQUEST_ID,
                                            report_file_path="reports/BasicToken.json")
 
-        compressed_report = TestQSPAuditNode.__compress_report("reports/BasicToken.json")
+        compressed_report = self.__compress_report("reports/BasicToken.json")
 
         # Asserts the database content
         expected_row = {"request_id": 1,
@@ -643,7 +643,7 @@ class TestQSPAuditNode(QSPTest):
         self.__assert_audit_request_report(self.__REQUEST_ID,
                                            report_file_path="reports/DappBinWallet.json")
 
-        compressed_report = TestQSPAuditNode.__compress_report("reports/DappBinWallet.json")
+        compressed_report = self.__compress_report("reports/DappBinWallet.json")
 
         # Asserts the database content.
         expected_row = {"request_id": 1,
@@ -758,7 +758,7 @@ class TestQSPAuditNode(QSPTest):
             self.__audit_node.config._Config__analyzers_config[i][
                 analyzer_name]['timeout_sec'] = original_timeouts[i]
 
-        compressed_report = TestQSPAuditNode.__compress_report("reports/kyber.json")
+        compressed_report = self.__compress_report("reports/kyber.json")
 
         # Asserts the database content.
         expected_row = {"request_id": 1,
@@ -819,18 +819,14 @@ class TestQSPAuditNode(QSPTest):
                     i].wrapper._Wrapper__timeout_sec = temp
 
     ##############################################
-    # Helper methods (class/static level)
-    ##############################################
-
-    @staticmethod
-    def __compress_report(report_path_uri):
-        full_report = load_json(fetch_file(resource_uri(report_path_uri)))
-        encoder = ReportEncoder()
-        return encoder.compress_report(full_report, full_report['request_id'])
-
-    ##############################################
     # Helper methods (object level)
     ##############################################
+
+    def __compress_report(self, report_path_uri):
+        full_report = load_json(fetch_file(resource_uri(report_path_uri)))
+        full_report['version'] = self.__config.node_version
+        encoder = ReportEncoder()
+        return encoder.compress_report(full_report, full_report['request_id'])
 
     def __assert_audit_request_report(self, request_id, report_file_path=None, ignore_id=False):
         audit = self.__fetch_audit_from_db(request_id)

@@ -80,6 +80,7 @@ class QSPTest(unittest.TestCase):
             expected_json,
             exclude_paths={
                 "root['contract_uri']",
+                "root['version']",
                 # There is no keystore used for testing. Accounts
                 # are dynamic and therefore cannot be compared
                 "root['auditor']",

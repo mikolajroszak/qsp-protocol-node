@@ -321,7 +321,6 @@ class TestConfig(QSPTest):
         self.assertEqual(0, config.start_n_blocks_in_the_past)
         self.assertEqual(6, config.n_blocks_confirmation)
         self.assertEqual(0, config.block_discard_on_restart)
-        self.assertTrue(config.heartbeat_allowed)
         self.assertFalse(config.enable_police_audit_polling)
 
     def test_create_components(self):
@@ -406,7 +405,6 @@ class TestConfig(QSPTest):
         self.assertEqual(2, len(config.analyzers))
         self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
-        self.assertFalse(config.heartbeat_allowed)
         self.assertFalse(config.enable_police_audit_polling)
 
     def test_inject_token_auth(self):

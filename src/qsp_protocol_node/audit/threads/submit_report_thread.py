@@ -104,7 +104,7 @@ class SubmitReportThread(TimeIntervalPollingThread):
                                               request_id,
                                               audit_state,
                                               compressed_report_bytes))
-        self.logger.debug("Audit report submitted: tx hash {0}".format(tx_hash),
+        self.logger.debug("Audit report submitted: tx hash {0}".format(tx_hash.hex()),
                           requestId=request_id)
         return tx_hash
 
@@ -120,7 +120,7 @@ class SubmitReportThread(TimeIntervalPollingThread):
                                               request_id,
                                               compressed_report_bytes,
                                               is_verified))
-        self.logger.debug("Police report submitted: tx hash {0}".format(tx_hash),
+        self.logger.debug("Police report submitted: tx hash {0}".format(tx_hash.hex()),
                           requestId=request_id)
         return tx_hash
 
@@ -158,13 +158,6 @@ class SubmitReportThread(TimeIntervalPollingThread):
                                          str(decompressed_audit_report.get('contract_hash',
                                                                            None)),
                                          str(full_police_report.get('contract_hash', None))))
-            return False
-
-        # Makes sure that the audit statuses match
-        audit_contract_status = decompressed_audit_report.get('status', "").lower()
-        police_contract_status = full_police_report.get('status', "").lower()
-        if not audit_contract_status or not police_contract_status or \
-                audit_contract_status != police_contract_status:
             return False
 
         # If report exists, but building a vulnerability set fails,
