@@ -280,6 +280,9 @@ You need to set two environment variables for the node to connect to the Infura 
 
 If you close your terminal you will have to set these variables again before starting another node instance. 
 
+The password must NOT contain quotes (double or single). The safest approach to verify whether your password matches what you have set is to check the value of QSP_ETH_PASSPHRASE in a terminal: `echo $QSP_ETH_PASSPHRASE`
+If the output matches your original password (without the quotes!), the latter is correctly set. Otherwise, launching the audit node will fail.
+
 ### Run the Node!
 In order to run the audit node container, Docker must be running. Check whether the docker daemon
 is up and running (`ps -A | egrep docker`). If not running, please start it.
