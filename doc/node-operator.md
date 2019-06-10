@@ -254,6 +254,11 @@ In this part, we will be interacting with the `[QSP Token Contract]` to allow st
 ### Set the minimum audit price
 You can set a minimum audit price as a configuration parameter. This is the minimum price in QSP for which your node will be willing to perform a scan of a smart contract submitted to the Quantstamp Protocol.
 
+As the release of `v2.0.2-beta2`, we've implemented a min price floor, 
+it requires the node operators to set the minimum price above `1000` (including). 
+While the node that sets something below this will not get slashed, it would also fail to get any request. 
+(And have a potential of losing gas by keep retrying.) Do update your minprice!
+
 Open `resources/config.yaml`. The resources folder is located within your qsp node directory (folder). Your qsp node directory was extracted from a zip file in step 1.  
 
 Search for `min_price_in_qsp` and change the value accordingly. Make sure that you do not change anything else in this file, including indentation.
