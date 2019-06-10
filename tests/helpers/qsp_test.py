@@ -61,6 +61,12 @@ class QSPTest(unittest.TestCase):
         self.assertEqual(len([row for row in content if row in data]), len(data),
                          QSPTest.__find_difference(data, content))
 
+    def delete_events(self, config):
+        """Checks that the table audit_evt contains all dictionaries that are in data"""
+
+        query = "delete from audit_evt"
+        config.event_pool_manager.sql3lite_worker.execute(query)
+
     def compare_json(self, audit_file, report_file_path, json_loaded=False, ignore_id=False):
         if not json_loaded:
             actual_json = load_json(audit_file)

@@ -87,7 +87,7 @@ class Config:
                                                                '/block_mined_polling_interval_sec',
                                                                accept_none=False)
         self.__analyzers = []
-        self.__analyzers_config = config_value(cfg, '/analyzers', accept_none=False)
+        self.__analyzers_config = config_value(cfg, '/analyzers', [])
         self.__account_keystore_file = config_value(cfg, '/keystore_file', None)
         self.__account_private_key = None
         self.__gas_limit = config_value(cfg, '/gas_limit')

@@ -18,19 +18,19 @@ from utils.eth import DeduplicationException
 
 
 class TestClaimRewards(QSPTest):
+    __CONFIG = None
 
     @classmethod
     def setUpClass(cls):
         QSPTest.setUpClass()
-        config = fetch_config(inject_contract=True)
-        remove(config.evt_db_path)
+        cls.__CONFIG = fetch_config(inject_contract=True,
+                                    filename="test_config_with_no_analyzers.yaml")
 
     def setUp(self):
-        self.__config = fetch_config(inject_contract=True)
-        self.__claim_rewards_thread = ClaimRewardsThread(self.__config)
+        self.__claim_rewards_thread = ClaimRewardsThread(TestClaimRewards.__CONFIG)
 
     def test_init(self):
-        self.assertEqual(self.__config, self.__claim_rewards_thread.config)
+        self.assertEqual(TestClaimRewards.__CONFIG, self.__claim_rewards_thread.config)
 
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
@@ -170,4 +170,4 @@ class TestClaimRewards(QSPTest):
         if self.__claim_rewards_thread.exec:
             self.__claim_rewards_thread.stop()
 
-        remove(self.__config.evt_db_path)
+        self.delete_events(TestClaimRewards.__CONFIG)

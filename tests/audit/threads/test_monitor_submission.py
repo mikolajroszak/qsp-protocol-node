@@ -18,28 +18,36 @@ from utils.eth import mk_read_only_call
 
 
 class TestMonitorSubmissionThreads(QSPTest):
+    __CONFIG = None
+    __WEB3_MOCK = None
+
+    @classmethod
+    def setUpClass(cls):
+        QSPTest.setUpClass()
+        cls.__CONFIG = fetch_config(inject_contract=True,
+                                    filename="test_config_with_no_analyzers.yaml")
+        cls.__WEB3_MOCK = MagicMock()
+        cls.__CONFIG._Config__web3_client = cls.__WEB3_MOCK
 
     def setUp(self):
-        self.config = fetch_config(inject_contract=True)
-        self.thread = MonitorSubmissionThread(self.config)
+        # self.config = fetch_config(inject_contract=True)
+        self.thread = MonitorSubmissionThread(TestMonitorSubmissionThreads.__CONFIG)
         self.evt_pool_manager = self.thread.config.event_pool_manager
         self.evt_pool_manager.set_evt_status_to_error = MagicMock()
         self.evt_pool_manager.set_evt_status_to_be_submitted = MagicMock()
         self.evt_pool_manager.set_evt_status_to_done = MagicMock()
         self.timeout_limit_blocks = mk_read_only_call(
-            self.config, self.config.audit_contract.functions.getAuditTimeoutInBlocks()
+            TestMonitorSubmissionThreads.__CONFIG,
+            TestMonitorSubmissionThreads.__CONFIG.audit_contract.functions.getAuditTimeoutInBlocks()
         )
 
     def test_init(self):
-        self.assertEqual(self.config, self.thread.config)
+        self.assertEqual(TestMonitorSubmissionThreads.__CONFIG, self.thread.config)
 
     @timeout(15, timeout_exception=StopIteration)
     def test_timeout_after_reaching_global_limit(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'assigned_block_nbr': current_block - self.timeout_limit_blocks,
@@ -50,9 +58,8 @@ class TestMonitorSubmissionThreads(QSPTest):
         with mock.patch('evt.evt_pool_manager.EventPoolManager._EventPoolManager__exec_sql',
                         return_value=[event]):
             self.thread._MonitorSubmissionThread__process_submissions()
-            event['status_info'] = "Submission of audit report outside completion window ({0} blocks)".format(
-                self.timeout_limit_blocks
-            )
+            event['status_info'] = "Submission of audit report outside completion window " \
+                                   "({0} blocks)".format(self.timeout_limit_blocks)
             self.evt_pool_manager.set_evt_status_to_error.assert_called_with(event)
             self.evt_pool_manager.set_evt_status_to_done.assert_not_called()
             self.evt_pool_manager.set_evt_status_to_be_submitted.assert_not_called()
@@ -60,10 +67,7 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_timeout_after_reaching_global_limit_but_missing_assigned_block_nbr(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'submission_attempts': 1,
@@ -75,7 +79,8 @@ class TestMonitorSubmissionThreads(QSPTest):
             self.thread._MonitorSubmissionThread__process_submissions()
             self.assertRaises(
                 KeyError,
-                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event, current_block)
+                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event,
+                                                                                 current_block)
             )
             self.evt_pool_manager.set_evt_status_to_error.assert_called_with(event)
             self.evt_pool_manager.set_evt_status_to_done.assert_not_called()
@@ -84,10 +89,7 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_missing_submission_attempts(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'assigned_block_nbr': current_block - self.timeout_limit_blocks,
@@ -99,7 +101,8 @@ class TestMonitorSubmissionThreads(QSPTest):
             self.thread._MonitorSubmissionThread__process_submissions()
             self.assertRaises(
                 KeyError,
-                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event, current_block)
+                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event,
+                                                                                 current_block)
             )
             self.evt_pool_manager.set_evt_status_to_error.assert_called_with(event)
             self.evt_pool_manager.set_evt_status_to_done.assert_not_called()
@@ -108,10 +111,7 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_timeout_when_possible_to_resubmit(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'tx_hash': 'some-hash',
@@ -132,10 +132,7 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_timeout_when_possible_to_resubmit_but_missing_assigned_block_nbr(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'submission_attempts': 1,
@@ -147,7 +144,8 @@ class TestMonitorSubmissionThreads(QSPTest):
             self.thread._MonitorSubmissionThread__process_submissions()
             self.assertRaises(
                 KeyError,
-                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event, current_block)
+                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event,
+                                                                                 current_block)
             )
             self.evt_pool_manager.set_evt_status_to_error.assert_called_with(event)
             self.evt_pool_manager.set_evt_status_to_done.assert_not_called()
@@ -156,10 +154,7 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_timeout_after_max_resubmission_attempts(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'assigned_block_nbr': (current_block + 1 - self.timeout_limit_blocks),
@@ -180,10 +175,7 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_timeout_after_max_resubmission_attempts_but_missing_assigned_block_nbr(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'submission_attempts': MonitorSubmissionThread.MAX_SUBMISSION_ATTEMPTS,
@@ -195,29 +187,27 @@ class TestMonitorSubmissionThreads(QSPTest):
             self.thread._MonitorSubmissionThread__process_submissions()
             self.assertRaises(
                 KeyError,
-                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event, current_block)
+                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event,
+                                                                                 current_block)
             )
             self.evt_pool_manager.set_evt_status_to_error.assert_called_with(event)
             self.evt_pool_manager.set_evt_status_to_done.assert_not_called()
             self.evt_pool_manager.set_evt_status_to_be_submitted.assert_not_called()
 
     @timeout(15, timeout_exception=StopIteration)
-    def test_successfull_submission(self):
+    def test_successful_submission(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
-            'submission_block_nbr': current_block - self.config.n_blocks_confirmation,
+            'submission_block_nbr': current_block - TestMonitorSubmissionThreads.__CONFIG.n_blocks_confirmation,
             'submission_attempts': MonitorSubmissionThread.MAX_SUBMISSION_ATTEMPTS,
             'request_id': 17
         }
 
         with mock.patch(
-            'audit.threads.monitor_submission_thread.mk_read_only_call',
-            side_effect=[self.timeout_limit_blocks, True]
+                'audit.threads.monitor_submission_thread.mk_read_only_call',
+                side_effect=[self.timeout_limit_blocks, True]
         ):
             with mock.patch('evt.evt_pool_manager.EventPoolManager._EventPoolManager__exec_sql',
                             return_value=[event]):
@@ -230,10 +220,7 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_successfull_submission_but_missing_submission_block_nbr(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'submission_attempts': MonitorSubmissionThread.MAX_SUBMISSION_ATTEMPTS,
@@ -241,35 +228,33 @@ class TestMonitorSubmissionThreads(QSPTest):
         }
 
         with mock.patch(
-            'audit.threads.monitor_submission_thread.mk_read_only_call',
-            side_effect=[self.timeout_limit_blocks, True]
+                'audit.threads.monitor_submission_thread.mk_read_only_call',
+                side_effect=[self.timeout_limit_blocks, True]
         ):
             with mock.patch('evt.evt_pool_manager.EventPoolManager._EventPoolManager__exec_sql',
                             return_value=[event]):
                 self.thread._MonitorSubmissionThread__process_submissions()
                 self.assertRaises(
                     KeyError,
-                    self.thread._MonitorSubmissionThread__monitor_submission_timeout(event, current_block)
+                    self.thread._MonitorSubmissionThread__monitor_submission_timeout(event,
+                                                                                     current_block)
                 )
 
     @timeout(15, timeout_exception=StopIteration)
     def test_waiting_for_submission_confirmation(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
-        self.config._Config__n_blocks_confirmation = 10
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
+        TestMonitorSubmissionThreads.__CONFIG._Config__n_blocks_confirmation = 10
 
         event = {
-            'submission_block_nbr': current_block - self.config.n_blocks_confirmation + 1,
+            'submission_block_nbr': current_block - TestMonitorSubmissionThreads.__CONFIG.n_blocks_confirmation + 1,
             'submission_attempts': MonitorSubmissionThread.MAX_SUBMISSION_ATTEMPTS,
             'request_id': 17
         }
 
         with mock.patch(
-            'audit.threads.monitor_submission_thread.mk_read_only_call',
-            side_effect=[self.timeout_limit_blocks, True]
+                'audit.threads.monitor_submission_thread.mk_read_only_call',
+                side_effect=[self.timeout_limit_blocks, True]
         ):
             with mock.patch('evt.evt_pool_manager.EventPoolManager._EventPoolManager__exec_sql',
                             return_value=[event]):
@@ -281,11 +266,8 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_waiting_for_submission_confirmation_but_missing_submission_block_nbr(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
-        self.config._Config__n_blocks_confirmation = 10
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
+        TestMonitorSubmissionThreads.__CONFIG._Config__n_blocks_confirmation = 10
 
         event = {
             'submission_attempts': MonitorSubmissionThread.MAX_SUBMISSION_ATTEMPTS,
@@ -293,15 +275,16 @@ class TestMonitorSubmissionThreads(QSPTest):
         }
 
         with mock.patch(
-            'audit.threads.monitor_submission_thread.mk_read_only_call',
-            side_effect=[self.timeout_limit_blocks, True]
+                'audit.threads.monitor_submission_thread.mk_read_only_call',
+                side_effect=[self.timeout_limit_blocks, True]
         ):
             with mock.patch('evt.evt_pool_manager.EventPoolManager._EventPoolManager__exec_sql',
                             return_value=[event]):
                 self.thread._MonitorSubmissionThread__process_submissions()
                 self.assertRaises(
                     KeyError,
-                    self.thread._MonitorSubmissionThread__monitor_submission_timeout(event, current_block)
+                    self.thread._MonitorSubmissionThread__monitor_submission_timeout(event,
+                                                                                     current_block)
                 )
                 self.evt_pool_manager.set_evt_status_to_error.assert_called_with(event)
                 self.evt_pool_manager.set_evt_status_to_done.assert_not_called()
@@ -309,7 +292,9 @@ class TestMonitorSubmissionThreads(QSPTest):
 
     @timeout(15, timeout_exception=StopIteration)
     def test_monitor_submission_timeout_called_through_start(self):
-        event = {'block_nbr': -self.config.submission_timeout_limit_blocks - 5, 'request_id': 17}
+        event = {
+            'block_nbr': -TestMonitorSubmissionThreads.__CONFIG.submission_timeout_limit_blocks - 5,
+            'request_id': 17}
         return_value = [event]
         with mock.patch('evt.evt_pool_manager.EventPoolManager._EventPoolManager__exec_sql',
                         return_value=return_value):
@@ -323,36 +308,31 @@ class TestMonitorSubmissionThreads(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_generic_exception(self):
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
-            'submission_block_nbr': current_block - self.config.n_blocks_confirmation,
+            'submission_block_nbr': current_block - TestMonitorSubmissionThreads.__CONFIG.n_blocks_confirmation,
             'request_id': 17
         }
 
         with mock.patch(
-            'audit.threads.monitor_submission_thread.mk_read_only_call',
-            side_effect=[True, Exception("generic")]
+                'audit.threads.monitor_submission_thread.mk_read_only_call',
+                side_effect=[True, Exception("generic")]
         ):
             with mock.patch('evt.evt_pool_manager.EventPoolManager._EventPoolManager__exec_sql',
                             return_value=[event]):
                 self.thread._MonitorSubmissionThread__process_submissions()
                 self.assertRaises(
                     Exception,
-                    self.thread._MonitorSubmissionThread__monitor_submission_timeout(event, current_block)
+                    self.thread._MonitorSubmissionThread__monitor_submission_timeout(event,
+                                                                                     current_block)
                 )
                 self.evt_pool_manager.set_evt_status_to_error.assert_called_with(event)
                 self.evt_pool_manager.set_evt_status_to_done.assert_not_called()
                 self.evt_pool_manager.set_evt_status_to_be_submitted.assert_not_called()
 
         current_block = 100000000000
-
-        web3_mock = MagicMock()
-        web3_mock.eth.blockNumber = current_block
-        self.config._Config__web3_client = web3_mock
+        TestMonitorSubmissionThreads.__WEB3_MOCK.eth.blockNumber = current_block
 
         event = {
             'submission_attempts': 1,
@@ -364,7 +344,8 @@ class TestMonitorSubmissionThreads(QSPTest):
             self.thread._MonitorSubmissionThread__process_submissions()
             self.assertRaises(
                 KeyError,
-                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event, current_block)
+                self.thread._MonitorSubmissionThread__monitor_submission_timeout(event,
+                                                                                 current_block)
             )
             self.evt_pool_manager.set_evt_status_to_error.assert_called_with(event)
             self.evt_pool_manager.set_evt_status_to_done.assert_not_called()

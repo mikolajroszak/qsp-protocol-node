@@ -19,6 +19,13 @@ from web3.utils.threads import Timeout
 
 class TestUpdateMinPriceThread(QSPTest):
     __SLEEP_INTERVAL = 1
+    __CONFIG = None
+
+    @classmethod
+    def setUpClass(cls):
+        QSPTest.setUpClass()
+        cls.__CONFIG = fetch_config(inject_contract=True,
+                                    filename="test_config_with_no_analyzers.yaml")
 
     def __evt_wait_loop(self, current_filter):
         events = current_filter.get_new_entries()
@@ -28,20 +35,17 @@ class TestUpdateMinPriceThread(QSPTest):
         return events
 
     def test_init(self):
-        config = fetch_config(inject_contract=True)
-        thread = UpdateMinPriceThread(config)
-        self.assertEqual(config, thread.config)
+        thread = UpdateMinPriceThread(TestUpdateMinPriceThread.__CONFIG)
+        self.assertEqual(TestUpdateMinPriceThread.__CONFIG, thread.config)
 
     def test_update_min_price_success(self):
-        config = fetch_config(inject_contract=True)
-        thread = UpdateMinPriceThread(config)
+        thread = UpdateMinPriceThread(TestUpdateMinPriceThread.__CONFIG)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"):
             thread.update_min_price()
 
     def test_update_min_price_exceptions(self):
-        config = fetch_config(inject_contract=True)
-        thread = UpdateMinPriceThread(config)
+        thread = UpdateMinPriceThread(TestUpdateMinPriceThread.__CONFIG)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         side_effect=Exception):
             try:
@@ -79,17 +83,15 @@ class TestUpdateMinPriceThread(QSPTest):
                 pass
 
     def test_check_and_update_min_price(self):
-        config = fetch_config(inject_contract=True)
-        thread = UpdateMinPriceThread(config)
+        thread = UpdateMinPriceThread(TestUpdateMinPriceThread.__CONFIG)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"), \
              mock.patch('audit.threads.update_min_price_thread.mk_read_only_call',
-                        return_value=config.min_price_in_qsp + 5):
+                        return_value=TestUpdateMinPriceThread.__CONFIG.min_price_in_qsp + 5):
             thread.check_and_update_min_price()
 
     def test_stop(self):
-        config = fetch_config(inject_contract=True)
-        thread = UpdateMinPriceThread(config)
+        thread = UpdateMinPriceThread(TestUpdateMinPriceThread.__CONFIG)
         thread.stop()
         self.assertFalse(thread.exec)
 
@@ -99,7 +101,8 @@ class TestUpdateMinPriceThread(QSPTest):
         Tests that the node updates the min_price on the blockchain if the config value changes
         """
 
-        config = fetch_config(inject_contract=True)
+        config = fetch_config(inject_contract=True,
+                              filename="test_config_with_no_analyzers.yaml")
         set_audit_price_filter = config.audit_contract.events.setAuditNodePrice_called.createFilter(
             fromBlock=max(0, config.event_pool_manager.get_latest_block_number())
         )
@@ -123,8 +126,7 @@ class TestUpdateMinPriceThread(QSPTest):
     @timeout(15, timeout_exception=StopIteration)
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
-        config = fetch_config(inject_contract=True)
-        thread = UpdateMinPriceThread(config)
+        thread = UpdateMinPriceThread(TestUpdateMinPriceThread.__CONFIG)
         with mock.patch('audit.threads.update_min_price_thread.send_signed_transaction',
                         return_value="hash"):
             thread.start()

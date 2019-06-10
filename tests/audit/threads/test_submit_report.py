@@ -16,13 +16,19 @@ from utils.io import fetch_file, load_json
 
 
 class TestSubmitReportThread(QSPTest):
+    __CONFIG = None
+
+    @classmethod
+    def setUpClass(cls):
+        QSPTest.setUpClass()
+        cls.__CONFIG = fetch_config(inject_contract=True,
+                                    filename="test_config_with_no_analyzers.yaml")
 
     def setUp(self):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
-        self.__config = fetch_config(inject_contract=True)
-        self.__submit_thread = SubmitReportThread(self.__config)
+        self.__submit_thread = SubmitReportThread(TestSubmitReportThread.__CONFIG)
 
     def test_get_report_in_blockchain_no_exception(self):
         """

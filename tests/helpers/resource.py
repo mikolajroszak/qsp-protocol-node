@@ -71,9 +71,9 @@ def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
     return address, audit_contract
 
 
-def fetch_config(inject_contract=False):
+def fetch_config(inject_contract=False, filename="test_config.yaml"):
     # create config from file, the contract is not provided and will be injected separately
-    config_file_uri = resource_uri("test_config.yaml")
+    config_file_uri = resource_uri(filename)
     config = ConfigFactory.create_from_file(config_file_uri, os.getenv("QSP_ENV", default="dev"),
                                             validate_contract_settings=False)
     if inject_contract:

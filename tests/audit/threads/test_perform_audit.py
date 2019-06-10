@@ -22,22 +22,26 @@ class WrapperMock:
 
 
 class TestPerformAuditThread(QSPTest):
+    __CONFIG = None
+
+    @classmethod
+    def setUpClass(cls):
+        QSPTest.setUpClass()
+        cls.__CONFIG = fetch_config(inject_contract=False,
+                                    filename="test_config_with_no_analyzers.yaml")
 
     def setUp(self):
         """
         Starts the execution of the QSP audit node as a separate thread.
         """
-        self.__config = fetch_config(inject_contract=True)
-        self.__thread = PerformAuditThread(self.__config)
+        self.__thread = PerformAuditThread(TestPerformAuditThread.__CONFIG)
 
     def test_init(self):
-        self.assertEqual(self.__config, self.__thread.config)
+        self.assertEqual(TestPerformAuditThread.__CONFIG, self.__thread.config)
 
     def test_stop(self):
-        config = fetch_config(inject_contract=True)
-        thread = PerformAuditThread(config)
-        thread.stop()
-        self.assertFalse(thread.exec)
+        self.__thread.stop()
+        self.assertFalse(self.__thread.exec)
 
     def test_compute_audit_result_all_timeouts(self):
         statuses = ["timeout", "timeout", "timeout"]
@@ -68,14 +72,16 @@ class TestPerformAuditThread(QSPTest):
         """
         Tests that analyzers produce their metadata even when failure occurs
         """
+        config = fetch_config(inject_contract=False)
+        thread = PerformAuditThread(config)
         buggy_contract = resource_uri("BasicToken.sol")
         buggy_contract_file = fetch_file(buggy_contract)
         # directly calling this function to avoid compilation checks;
         # this will cause error states for the analyzers
-        report = self.__thread.get_audit_report_from_analyzers(buggy_contract_file,
-                                                               "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                                                               buggy_contract,
-                                                               1)
+        report = thread.get_audit_report_from_analyzers(buggy_contract_file,
+                                                        "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
+                                                        buggy_contract,
+                                                        1)
         self.compare_json(report, "reports/BasicTokenErrorWithMetadata.json", json_loaded=True)
 
     def __check_audit_result(self, statuses, expected_state, expected_status):
