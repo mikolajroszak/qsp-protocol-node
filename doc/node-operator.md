@@ -346,8 +346,9 @@ When you decide to stop operating a Quantstamp Protocol node, you might want to 
 
 From time to time, you will need to upgrade the node to its latest version. 
 The following steps are all you need to upgrade your node. 
-As a node operator, you won't need to worry about to unstake from the old contract and stake into the new smart contract. 
+As a node operator, you won't need to worry about to unstake from the old contract and stake into the new smart contract unless we do a major version change. 
 
-1. [Download the bundle](#1-download-the-bundle)
-1. [Copy the `[MyEtherWallet keystore file]` into a specific location](#4-local-machine-setup)
+1. [Download the bundle](#1-download-the-bundle) and extract it to a new folder
+1. Your keystore file in the original node directory, move the keystore file `resources/keystore/default.json` to the same location under the new folder. 
+
 
