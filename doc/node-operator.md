@@ -352,7 +352,7 @@ We will also make these announcements in our Monthly Community Updates.
 ### Setting environment variables
 For a refresher on how to set environment variables on `Terminal`, visit [this section](#setting-up-your-local-machine-configuration-for-every-new-terminal-opened) of the node operator manual. 
 
-*Note: You will need to set your environment variables every time you opened up a new * `Terminal` *or restart your computer.* 
+* Note: You will need to set your environment variables every time you opened up a new* `Terminal` or restart your computer. 
 
 ## After running the node for a while
 ### Checking how much QSP is in your account
