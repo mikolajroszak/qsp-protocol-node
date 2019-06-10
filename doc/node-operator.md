@@ -329,7 +329,8 @@ Node can be run against non-prod environment by setting `QSP_ENV`  variable to `
 ## How to keep your node running and up-to-date
 In order to keep your node running and up-to-date, you need to:
 1. Stay up-to-date with the latest releases
-1. Reset your environment variables, `QSP_ETH_AUTH_TOKEN` and `QSP_ETH_PASSPHRASE`, every time you close `Terminal`
+1. When you open up a new `terminal` to run the node, remember to set your environment variables `QSP_ETH_AUTH_TOKEN` and `QSP_ETH_PASSPHRASE`.
+
 
 ### Staying up-to-date with the latest releases
 [Click here](https://github.com/quantstamp/qsp-protocol-node/releases) to view and download the latest releases. Sign-up to recieve automatic notifications on `Github` by:
@@ -348,10 +349,10 @@ You can also be informed of the latest releases by following us social media. We
 
 We will also make these announcements in our Monthly Community Updates. 
 
-### Resetting environment variables
-For a refresher on how to reset environment variables on `Terminal`, visit [this section](https://github.com/quantstamp/qsp-protocol-node/blob/COM-321-keeping-node-up-to-date/doc/node-operator.md#setting-up-your-local-machine-configuration-for-every-new-terminal-opened) of the node operator manual. 
+### Setting environment variables
+For a refresher on how to reset environment variables on `Terminal`, visit [this section](#setting-up-your-local-machine-configuration-for-every-new-terminal-opened) of the node operator manual. 
 
-*Note: You will need to reset your environment variables every time close* `Terminal` *or restart your computer.* 
+*Note: You will need to set your environment variables every time you opened up a new * `Terminal` *or restart your computer.* 
 
 ## After running the node for a while
 ### Checking how much QSP is in your account
