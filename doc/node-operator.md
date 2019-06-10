@@ -342,3 +342,15 @@ When you decide to stop operating a Quantstamp Protocol node, you might want to 
     1. Navigate to the unstake function
     1. Click the `Write` Button
 
+### Upgrade your Node
+
+From time to time, you will need to upgrade the node to its latest version. 
+The following steps are all you need to upgrade your node. 
+As a node operator, you won't need to worry about to unstake from the old contract and stake into the new smart contract unless we do a major version change. 
+
+1. [Download the bundle](#1-download-the-bundle) and extract it to a new folder
+1. Your keystore file in the original node directory, move the keystore file `resources/keystore/default.json` to the same location under the new folder. 
+1. Make sure the old node has stopped running, read [this section](#stop) on how to stop the node.
+1. [Run the upgraded node](#run) 
+1. Navigate to [Protocol UI](https://protocol.quantstamp.com) and check whether the version has been upgraded in the `QSP Nodes` Panel.
+
