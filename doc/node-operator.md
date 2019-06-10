@@ -333,7 +333,7 @@ In order to keep your node running and up-to-date, you need to:
 
 
 ### Staying up-to-date with the latest releases
-[Click here](https://github.com/quantstamp/qsp-protocol-node/releases) to view and download the latest releases. Sign-up to recieve automatic notifications on `Github` by:
+[Click here](https://github.com/quantstamp/qsp-protocol-node/releases) to view and download the latest releases. Sign-up to recieve automatic notifications on `GitHub` by:
 
 - visiting [this page](https://github.com/quantstamp/qsp-protocol-node/releases) 
 - clicking on `Watch` near the top-right corner of your screen
