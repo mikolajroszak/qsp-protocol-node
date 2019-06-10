@@ -350,7 +350,7 @@ You can also be informed of the latest releases by following us social media. We
 We will also make these announcements in our Monthly Community Updates. 
 
 ### Setting environment variables
-For a refresher on how to reset environment variables on `Terminal`, visit [this section](#setting-up-your-local-machine-configuration-for-every-new-terminal-opened) of the node operator manual. 
+For a refresher on how to set environment variables on `Terminal`, visit [this section](#setting-up-your-local-machine-configuration-for-every-new-terminal-opened) of the node operator manual. 
 
 *Note: You will need to set your environment variables every time you opened up a new * `Terminal` *or restart your computer.* 
 
