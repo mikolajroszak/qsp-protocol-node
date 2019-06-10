@@ -113,7 +113,6 @@ class Config:
         self.__metric_collection_interval_seconds = config_value(cfg,
                                                                  '/metric_collection/interval_seconds',
                                                                  30)
-        self.__heartbeat_allowed = config_value(cfg, '/heartbeat_allowed', True)
         self.__enable_police_audit_polling = config_value(cfg, '/police/is_auditing_enabled', False)
 
     def __create_eth_provider(self, config_utils):
@@ -206,7 +205,7 @@ class Config:
         Builds a Config object from a target environment (e.g., test) and an input YAML
         configuration file.
         """
-        self.__node_version = '2.0.1'
+        self.__node_version = '2.0.2'
         self.__analyzers = []
         self.__analyzers_config = []
         self.__audit_contract_name = None
@@ -247,7 +246,6 @@ class Config:
         self.__web3_client = None
         self.__block_discard_on_restart = 0
         self.__contract_version = None
-        self.__heartbeat_allowed = True
         self.__enable_police_audit_polling = False
 
     @property
@@ -553,14 +551,6 @@ class Config:
         The version of the associated smart contract
         """
         return self.__node_version
-
-    @property
-    def heartbeat_allowed(self):
-        """
-        If true, the node will set min price using a blocking call upon startup and then every 24
-        hours. Otherwise, it will only update the min price if it differs.
-        """
-        return self.__heartbeat_allowed
 
     @property
     def enable_police_audit_polling(self):
