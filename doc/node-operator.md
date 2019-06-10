@@ -350,5 +350,7 @@ As a node operator, you won't need to worry about to unstake from the old contra
 
 1. [Download the bundle](#1-download-the-bundle) and extract it to a new folder
 1. Your keystore file in the original node directory, move the keystore file `resources/keystore/default.json` to the same location under the new folder. 
-
+1. Make sure the old Node has stopped running, read [this section](#stop) on how to stop the node.
+1. [Run the upgraded node](#run) 
+1. Navigate to [Protocol UI](protocol.quantstamp.com) and check whether the version has been upgraded in the `QSP Nodes` Panel.
 
