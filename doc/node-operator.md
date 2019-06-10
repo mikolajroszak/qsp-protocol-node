@@ -342,3 +342,12 @@ When you decide to stop operating a Quantstamp Protocol node, you might want to 
     1. Navigate to the unstake function
     1. Click the `Write` Button
 
+### Upgrade your Node
+
+From time to time, you will need to upgrade the node to its latest version. 
+The following steps are all you need to upgrade your node. 
+As a node operator, you won't need to worry about to unstake from the old contract and stake into the new smart contract. 
+
+1. [Download the bundle](#1-download-the-bundle)
+1. [Copy the `[MyEtherWallet keystore file]` into a specific location](#4-local-machine-setup)
+
