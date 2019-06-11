@@ -378,7 +378,7 @@ class TestReportProcessing(QSPTest):
             decoded_report = self.decode_report(hexstring)
             self.assertEqual(contract_hash, decoded_report["contract_hash"])
 
-    def test_vulnerabilities_compression_and_decoding_XXX(self):
+    def test_vulnerabilities_compression_and_decoding(self):
         """
         Ensures that a report with several vulnerabilities and analyzers is compressed properly.
         """
