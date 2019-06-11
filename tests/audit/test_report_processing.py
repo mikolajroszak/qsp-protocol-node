@@ -36,6 +36,7 @@ ANALYZERS = [
     }
 ]
 
+
 class TestReportProcessing(QSPTest):
     """
     Tests correctness of encoding and decoding functions
