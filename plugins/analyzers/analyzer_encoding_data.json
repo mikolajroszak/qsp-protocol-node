@@ -28,5 +28,20 @@
         "reentrancy_true_positive",
         "transaction_order_dependency_true_positive",
         "securify_bug"
+   ],
+   "analyzers": [
+        {
+          "name": "mythril",
+          "experimental": false
+        },
+        {
+          "name": "securify",
+          "experimental": true
+        }
+   ],
+   "statuses": [
+     "success",
+     "error",
+     "timeout"
    ]
 }
