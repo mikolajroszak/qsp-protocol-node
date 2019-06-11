@@ -75,7 +75,6 @@ class ReportEncoder:
     __CONTRACT_HASH_START = __STATUS_INDEX + 1
     __ANALYZER_REPORTS_START = __CONTRACT_HASH_START + __CONTRACT_HASH_SIZE
 
-
     # Copied from audit.py for self-containment.
     # Must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract
@@ -285,7 +284,6 @@ class ReportEncoder:
         }
         return report
 
-
     def __encode_vulnerabilities(self, analyzer_report):
         """
         Encodes the vulnerabilities associated with an individual analyzer report.
@@ -331,7 +329,6 @@ class ReportEncoder:
         encoded_vulnerabilities_str = "".join(encoded_vulnerabilities)
         return len(encoded_vulnerabilities), encoded_vulnerabilities_str
 
-
     def __encode_report_header(self, analyzer_report, num_vulnerabilities):
         """
         Encodes the header of an analyzer report.
@@ -345,7 +342,6 @@ class ReportEncoder:
                                                              ReportEncoder.__VULNERABILITY_COUNT_SIZE)
         return b_name + b_status + b_experimental + b_num_vulnerabilities
 
-
     def __encode_reports(self, analyzers_reports):
         """
         Encodes each analyzer report as a bitstring.
@@ -356,7 +352,6 @@ class ReportEncoder:
             encoded_header = self.__encode_report_header(analyzer_report, num_vulnerabilities)
             encoded_reports.append(encoded_header + encoded_vulnerabilities)
         return "".join(encoded_reports)
-
 
     def __format_decoded_vulnerabilities(self, vulnerabilities):
         """
@@ -444,8 +439,8 @@ class ReportEncoder:
                      b_analyzer_reports[ReportEncoder.__ANALYZER_NAME_SIZE:
                                         ReportEncoder.__ANALYZER_NAME_SIZE + ReportEncoder.__ANALYZER_STATUS_SIZE]
             ]
-            experimental = True if b_analyzer_reports[ReportEncoder.__ANALYZER_NAME_SIZE +
-                                                      ReportEncoder.__ANALYZER_STATUS_SIZE] == "1" else False
+            experimental_bit_index = ReportEncoder.__ANALYZER_NAME_SIZE + ReportEncoder.__ANALYZER_STATUS_SIZE
+            experimental = True if b_analyzer_reports[experimental_bit_index] == "1" else False
             consumed_bits = ReportEncoder.__ANALYZER_NAME_SIZE + ReportEncoder.__ANALYZER_STATUS_SIZE + 1
             num_vulnerabilities = ReportEncoder.__from_bitstring(
                 b_analyzer_reports[consumed_bits: consumed_bits + ReportEncoder.__VULNERABILITY_COUNT_SIZE]
