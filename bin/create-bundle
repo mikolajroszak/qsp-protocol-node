@@ -13,14 +13,14 @@ VERSION=`PYTHONPATH=:./src/qsp_protocol_node python -c "from config import Confi
 readonly ZIP_FILENAME="qsp-protocol-v$VERSION.zip"
 readonly SCRIPT_DIR=`dirname $(realpath "$0")`
 
-QSPROOT=`dirname "$SCRIPT_DIR"`
-cd `echo $QSPROOT`
+QSP_ROOT=`dirname "$SCRIPT_DIR"`
+cd `echo "$QSP_ROOT"`
 
 make check-contract-versions clean build
 
-readonly DIST_DIR="$QSPROOT/deployment/local/dist"
-readonly CONFIG_FILE="$QSPROOT/resources/config.yaml"
-readonly CONTRACTS_DIR="$QSPROOT/resources/contracts"
+readonly DIST_DIR="$QSP_ROOT/deployment/local/dist"
+readonly CONFIG_FILE="$QSP_ROOT/resources/config.yaml"
+readonly CONTRACTS_DIR="$QSP_ROOT/resources/contracts"
 readonly START_SCRIPT="$SCRIPT_DIR/start-node"
 readonly APP_TAR="$DIST_DIR/resources/app.tar"
 readonly START_SCRIPT_NAME=`basename "$START_SCRIPT"`
@@ -31,16 +31,16 @@ docker save -o "$APP_TAR" qsp-protocol-node:latest
 
 echo "Switched to: `pwd`"
 if [ ! -f "$CONFIG_FILE" ] && [ ! -f "$SCRIPT_DIR/start-node" ] && [ ! -f "$APP_TAR" ]; then
-        echo "Bundle creation requires both config.yaml and start-node, but either one or both are missing"
-        exit 1
+   echo "Bundle creation requires both config.yaml and start-node, but either one or both are missing"
+   exit 1
 fi
 
 cp "$CONFIG_FILE" "$DIST_DIR/resources/$CONFIG_FILE_NAME"
 cat "$START_SCRIPT" | sed 's/testnet/mainnet/g' > "$DIST_DIR/bin/$START_SCRIPT_NAME"
 
-chmod +x $DIST_DIR/bin/$START_SCRIPT_NAME
+chmod +x "$DIST_DIR/bin/$START_SCRIPT_NAME"
 cp LICENSE "$DIST_DIR"
-cp -a $QSPROOT/doc/. "$DIST_DIR/doc/"
+cp -a "$QSP_ROOT/doc/." "$DIST_DIR/doc/"
 cp "$SCRIPT_DIR/stop-node" "$SCRIPT_DIR/common" "$DIST_DIR/bin"
 cp -a "$CONTRACTS_DIR/." "$DIST_DIR/resources/contracts"
 mkdir -p "$DIST_DIR/resources/keystore"
@@ -53,3 +53,4 @@ rm -rf "resources"
 rm -rf "bin"
 rm -rf "LICENSE"
 rm -rf "doc"
+

@@ -22,4 +22,3 @@ export SOL_FILE="$1"
 
 ./bin/qsp-protocol-node -f "$SOL_FILE" -d ERROR "$QSP_ENV" "$QSP_CONFIG"
 
-

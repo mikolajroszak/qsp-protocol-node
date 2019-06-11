@@ -34,38 +34,38 @@ done
 
 if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
     #Attach to the running container and stop the audit process.
-    for container in $(docker ps -q --filter ancestor=qsp-protocol-node); do
-        attempts=0
-        echo "Stopping audit node container $container"
-        docker exec -it $container bash -c 'PID=$(ps auxw | grep "python -W"| grep -v bin| grep -v grep| awk "{print \$1}") ;echo $PID ; kill $PID' > /dev/null
+    for CONTAINER in $(docker ps -q --filter ancestor=qsp-protocol-node); do
+        ATTEMPTS=0
+        echo "Stopping audit node container $CONTAINER"
+        docker exec -it "$CONTAINER" bash -c 'PID=$(ps auxw | grep "python -W"| grep -v bin| grep -v grep| awk "{print \$1}") ;echo $PID ; kill $PID' > /dev/null
+
         #Wait for the audit node to stop
         while [[ $(docker inspect --format={{.State.Status}} $container) == "running" ]]; do
             echo "Waiting for audit node to stop" | tee -a $LOG_PATH
             sleep 2
-            if [[ "$attempts" -eq 4 ]] && [[ "$FORCE" == "true" ]]; then
+            if [[ "$ATTEMPTS" -eq 4 && $FORCE ]]; then
                 echo "Failed to stop $container gracefully. Will try force stopping"
-                docker kill $container
-            elif [[ "$attempts" -eq 4 ]]; then
+                docker kill "$CONTAINER"
+            elif [[ "$ATTEMPTS" -eq 4 ]]; then
                 echo "Failed to stop $container gracefully".
                 echo "Please try running the script again with -f to forcefully stop the container."
                 exit 1
             fi
-            attempts=$((attempts + 1))
+            ATTEMPTS=$((ATTEMPTS + 1))
         done
-        
         
         echo "Audit node stopped"
         RPID=`cat /tmp/qsp-protocol.pid`
 
-        if is_running $RPID ; then
+        if is_running "$RPID" ; then
             echo "Start script is still running..."
             echo "Trying to kill..."
-            kill -9 $RPID
+            kill -9 "$RPID"
             sleep 5
-            if is_running $RPID ; then
-                    echo "Cannot kill the previously launched start-script" | tee -a $LOG_PATH
+            if is_running "$RPID" ; then
+               echo "Cannot kill the previously launched start-script" | tee -a $LOG_PATH
             else
-                    echo "Done (start-script killed)." | tee -a $LOG_PATH
+               echo "Done (start-script killed)." | tee -a $LOG_PATH
             fi
         fi
     done
