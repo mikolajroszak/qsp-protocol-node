@@ -29,9 +29,9 @@ class TestAnalyzerDockerhubFail(QSPTest):
     def __new_analyzer(timeout_sec=60, prefetch=False):
         faulty_wrapper = Wrapper(
             wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
-            analyzer_name="dockerhub_fail",
+            analyzer_name="mythril",
             args="",
-            storage_dir="/tmp/./dockerhub_fail/{}{}".format(time(), random()),
+            storage_dir="/tmp/./mythril/{}{}".format(time(), random()),
             timeout_sec=timeout_sec,
             prefetch=prefetch
         )

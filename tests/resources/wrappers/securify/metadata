@@ -1,0 +1,18 @@
+#!/bin/bash
+
+####################################################################################################
+#                                                                                                  #
+# (c) 2018, 2019 Quantstamp, Inc. This content and its use are governed by the license terms at    #
+# <https://s3.amazonaws.com/qsp-protocol-license/V2_LICENSE.txt>                                   #
+#                                                                                                  #
+####################################################################################################
+
+# Imports common definitions
+
+source "$WRAPPER_HOME"/../common/settings
+
+readonly VULNERABILITIES_JSON_MAPPING=$(cat "$VULNERABILITY_MAPPING")
+
+printf '{"name": "%s", "version": "%s", "vulnerabilities_checked": %s, "command": "%s"}\n' \
+    "$ANALYZER_NAME" "$ANALYZER_VERSION" "$VULNERABILITIES_JSON_MAPPING" "$ANALYZER_CMD" | jq '.'
+

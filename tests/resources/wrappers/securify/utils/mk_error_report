@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+
+####################################################################################################
+#                                                                                                  #
+# (c) 2018, 2019 Quantstamp, Inc. This content and its use are governed by the license terms at    #
+# <https://s3.amazonaws.com/qsp-protocol-license/V2_LICENSE.txt>                                   #
+#                                                                                                  #
+####################################################################################################
+
+import json
+import sys
+
+
+def print_report(errors=[], warnings=[], trace=[]):
+    report = {
+        'status': 'error'
+    }
+
+    if len(errors) > 0:
+        report['errors'] = errors
+
+    if len(warnings) > 0:
+        report['warnings'] = warnings
+
+    if len(trace) > 0:
+        report['trace'] = trace
+
+    print(json.dumps(report, indent=2))
+
+
+def main(argv):
+    errors = []
+    warnings = []
+
+    # A trace is a list of execution points ran by the analyzer
+    trace = []
+
+    if len(argv) != 3:
+        errors.append("Missing argument error. Usage: mk_error_report <errors file> <trace file>")
+
+    try:
+        with open(argv[2]) as trace_file:
+            trace = [t for t in trace_file]
+    except Exception as e:
+        errors.append(str(e))
+
+    try:
+        with open(argv[1]) as errors_file:
+            errors = [error for error in errors_file]
+    except Exception as e:
+        errors.append(str(e))
+
+    try:
+        print_report(errors, warnings, trace)
+    except Exception as e:
+        # Nothing much to do here....
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main(sys.argv)

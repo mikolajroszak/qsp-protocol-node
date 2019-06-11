@@ -329,7 +329,7 @@ class ReportEncoder:
         encoded_vulnerabilities_str = "".join(encoded_vulnerabilities)
         return len(encoded_vulnerabilities), encoded_vulnerabilities_str
 
-    def __encode_report_header(self, analyzer_report, num_vulnerabilities):
+    def __encode_analyzer_report_header(self, analyzer_report, num_vulnerabilities):
         """
         Encodes the header of an analyzer report.
         """
@@ -342,14 +342,14 @@ class ReportEncoder:
                                                              ReportEncoder.__VULNERABILITY_COUNT_SIZE)
         return b_name + b_status + b_experimental + b_num_vulnerabilities
 
-    def __encode_reports(self, analyzers_reports):
+    def __encode_analyzer_reports(self, analyzers_reports):
         """
         Encodes each analyzer report as a bitstring.
         """
         encoded_reports = []
         for analyzer_report in analyzers_reports:
             num_vulnerabilities, encoded_vulnerabilities = self.__encode_vulnerabilities(analyzer_report)
-            encoded_header = self.__encode_report_header(analyzer_report, num_vulnerabilities)
+            encoded_header = self.__encode_analyzer_report_header(analyzer_report, num_vulnerabilities)
             encoded_reports.append(encoded_header + encoded_vulnerabilities)
         return "".join(encoded_reports)
 
@@ -502,7 +502,7 @@ class ReportEncoder:
 
             # may not exist if there are compilation errors
             analyzers_reports = report.get("analyzers_reports", [])
-            b_analyzer_reports = self.__encode_reports(analyzers_reports)
+            b_analyzer_reports = self.__encode_analyzer_reports(analyzers_reports)
 
             b_report = b_header + b_contract_hash + b_analyzer_reports
             return ReportEncoder.__to_hex(b_report)

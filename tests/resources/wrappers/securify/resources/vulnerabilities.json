@@ -1,0 +1,48 @@
+{
+    "Call data forwarded with delegatecall()": {
+        "type": "delegate_call_to_untrusted_contract"
+    },
+    "Dependence on predictable environment variable": {
+        "type": "dependence_on_environment_variable"
+    },
+    "Call to a user-supplied address": {
+        "type": "delegate_call_to_untrusted_contract"
+    },
+    "Use of tx.origin": {
+        "type": "tx_origin_usage"
+    },
+    "Ether send": {
+        "type": "unprotected_ether_withdrawal"
+    },
+    "Exception state": {
+        "type": "exception_state"
+    },
+    "Message call to external contract": {
+        "type": "call_to_external_contract"
+    },
+    "State change after external call": {
+        "type": "reentrancy"
+    },
+    "Integer Overflow": {
+        "type": "integer_overflow"
+    },
+    "Integer Underflow": {
+        "type": "integer_underflow"
+    },
+    "Multiple Calls": {
+        "type": "multiple_calls"
+    },
+    "Unchecked SUICIDE":{
+        "type": "unprotected_self_destruct"
+    },
+    "Transaction order dependence": { 
+        "type": "transaction_order_dependency"
+    },
+    "Unchecked CALL return value": {
+        "type": "unchecked_call_return_value"
+    },
+    "Unknown": {
+        "type": "other"
+    }
+}
+

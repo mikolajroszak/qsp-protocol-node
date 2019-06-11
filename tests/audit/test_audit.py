@@ -366,7 +366,7 @@ class TestQSPAuditNode(QSPTest):
         self.assertEqual(thrd['fk_status'], 'AS')
 
     @timeout(300, timeout_exception=StopIteration)
-    def test_successful_contract_audit_request_XXX(self):
+    def test_successful_contract_audit_request(self):
         """
         Tests the entire flow of a successful audit request, from a request
         to the production of a report and its submission.
@@ -417,7 +417,7 @@ class TestQSPAuditNode(QSPTest):
         # Replace analyzers with a single dockerhub fail analyzer
         faulty_wrapper = Wrapper(
             wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
-            analyzer_name="dockerhub_fail",
+            analyzer_name="mythril",
             args="",
             storage_dir="/tmp/{}{}".format(time(), random()),
             timeout_sec=60,
@@ -427,7 +427,7 @@ class TestQSPAuditNode(QSPTest):
         original_analyzers = self.__audit_node.config._Config__analyzers
         original_analyzers_config = self.__audit_node.config._Config__analyzers_config
         self.__audit_node.config._Config__analyzers = [analyzer]
-        self.__audit_node.config._Config__analyzers_config = [{"dockerhub_fail": analyzer}]
+        self.__audit_node.config._Config__analyzers_config = [{"mythril": analyzer}]
 
         # Since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
@@ -476,19 +476,32 @@ class TestQSPAuditNode(QSPTest):
         Tests that a report is generated when the dockerhub fails
         """
         # Replace analyzers with a single dockerhub fail analyzer
-        faulty_wrapper = Wrapper(
+        faulty_wrapper_mythril = Wrapper(
             wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
-            analyzer_name="dockerhub_fail",
+            analyzer_name="mythril",
             args="",
             storage_dir="/tmp/{}{}".format(time(), random()),
             timeout_sec=60,
             prefetch=False
         )
-        analyzer = Analyzer(faulty_wrapper)
+        mythril_analyzer = Analyzer(faulty_wrapper_mythril)
+
+        faulty_wrapper_securify = Wrapper(
+            wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
+            analyzer_name="securify",
+            args="",
+            storage_dir="/tmp/{}{}".format(time(), random()),
+            timeout_sec=60,
+            prefetch=False
+        )
+        securify_analyzer = Analyzer(faulty_wrapper_securify)
+
         original_analyzers = self.__audit_node.config._Config__analyzers
         original_analyzers_config = self.__audit_node.config._Config__analyzers_config
-        self.__audit_node.config._Config__analyzers[1] = analyzer
-        self.__audit_node.config._Config__analyzers_config[1] = {"dockerhub_fail": analyzer}
+        self.__audit_node.config._Config__analyzers[1] = mythril_analyzer
+        self.__audit_node.config._Config__analyzers_config[1] = {"mythril": mythril_analyzer}
+        self.__audit_node.config._Config__analyzers[1] = securify_analyzer
+        self.__audit_node.config._Config__analyzers_config[1] = {"securify": securify_analyzer}
 
         # since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
