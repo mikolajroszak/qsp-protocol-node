@@ -255,10 +255,9 @@ In this part, we will be interacting with the `[QSP Token Contract]` to allow st
 ### Set the minimum audit price
 You can set a minimum audit price as a configuration parameter. This is the minimum price in QSP for which your node will be willing to perform a scan of a smart contract submitted to the Quantstamp Protocol.
 
-As the release of `v2.0.2-beta2`, we've implemented a min price floor, 
-it requires the node operators to set the minimum price above `1000` (including). 
-While the node that sets something below this will not get slashed, it would also fail to get any request. 
-(And have a potential of losing gas by keep retrying.) Do update your minprice!
+As the release of `v2.0.2-beta2`, we've implemented a min price floor. Node operators are required to set the minimum price above or equal to `1000` QSP.  
+If a node sets a min price floor below `1000` QSP, it will not get slashed but it will fail to recieve scan requests and your node will still consume gas attempting to communicate with the network. 
+Do update your `minprice`!
 
 Open `resources/config.yaml`. The resources folder is located within your qsp node directory (folder). Your qsp node directory was extracted from a zip file in step 1.  
 
@@ -279,10 +278,10 @@ You need to set two environment variables for the node to connect to the Infura 
 - `export QSP_ETH_AUTH_TOKEN='[Infura Token]'`
 - `export QSP_ETH_PASSPHRASE='[MyEtherWallet Password]'`
 
-If you close your terminal you will have to set these variables again before starting another node instance. 
+The password must NOT contain quotes (double or single). The safest approach to verify whether your password matches what you have set is to check the value of `QSP_ETH_PASSPHRASE` in a terminal: `echo $QSP_ETH_PASSPHRASE`
+If the output matches your original password (without the quotes!), you have correctly set the password. Otherwise, launching the audit node will fail.
 
-The password must NOT contain quotes (double or single). The safest approach to verify whether your password matches what you have set is to check the value of QSP_ETH_PASSPHRASE in a terminal: `echo $QSP_ETH_PASSPHRASE`
-If the output matches your original password (without the quotes!), the latter is correctly set. Otherwise, launching the audit node will fail.
+If you close your terminal you will have to set these variables again before starting another node instance. 
 
 ### Run the Node!
 In order to run the audit node container, Docker must be running. Check whether the docker daemon
