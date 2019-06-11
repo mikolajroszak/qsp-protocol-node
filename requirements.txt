@@ -7,9 +7,9 @@ eth-keyfile==0.5.1
 eth-keys==0.2.0b3
 eth-rlp==0.1.2
 eth-tester[py-evm]==0.1.0b33
-eth-utils==1.2.0
+eth-utils==1.3.0
 ethereum==1.6.1
-pyyaml==4.2b1
+pyyaml==3.12
 dpath==1.4.2
 py-solc==2.1.0
 timeout-decorator==0.4.0
@@ -30,3 +30,6 @@ deepdiff==3.3.0
 jsonschema==2.6.0
 singleton-decorator==1.0.0
 coincurve==11.0.0
+eth-typing==2.1.0
+py-ecc==1.7.0
+trie==1.4.0
