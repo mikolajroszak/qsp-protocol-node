@@ -24,9 +24,6 @@ RUN apk add --no-cache libffi-dev
 RUN apk add --no-cache linux-headers
 RUN apk add --no-cache vim
 
-# Install aws-cli
-RUN pip3 install -U awscli==1.14.43
-
 # Install usolc
 COPY ./bin/usolc /usr/local/bin/solc
 RUN chmod +x /usr/local/bin/solc
