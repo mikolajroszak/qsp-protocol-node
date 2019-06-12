@@ -9,11 +9,6 @@
 
 LOG_FILENAME="qsp-protocol.log"
 LOG_DIR="${HOME}/.qsp-protocol"
-
-if [[ ! -d "$LOG_DIR" ]] ; then
-    mkdir "$LOG_DIR"
-fi
-
 LOG_PATH="$LOG_DIR/$LOG_FILENAME"
 
 function rotate_logs() {

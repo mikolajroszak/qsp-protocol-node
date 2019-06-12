@@ -10,27 +10,28 @@
 
 set -e
 
+readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+readonly QSP_HOME=`dirname "$SCRIPT_DIR"`
+
 function get_contract() {
     echo "Downloading $2 contract from s3 for $1..."
     aws s3 cp s3://qsp-protocol-contract/$1/$2 $3 > /dev/null
 }
 
 readonly AUDIT_FILENAME="QuantstampAudit-v-2-meta.json"
-readonly SCRIPT_DIR=`dirname $(realpath "$0")`
 readonly DEST_DIR="/tmp"
-readonly QSP_ROOT=`dirname "$SCRIPT_DIR"`
 
 VALID=true
 echo "Checking contract versions..."
 
-for TARGET in $(ls "$QSP_ROOT/resources/contracts"); do 
-    if ! [ -f "$QSP_ROOT/resources/contracts/$TARGET/$AUDIT_FILENAME" ]; then
-        echo "Contract file missing: $QSP_ROOT/resources/contracts/$TARGET/$AUDIT_FILENAME"
+for TARGET in $(ls "$QSP_HOME/resources/contracts"); do 
+    if ! [ -f "$QSP_HOME/resources/contracts/$TARGET/$AUDIT_FILENAME" ]; then
+        echo "Contract file missing: $QSP_HOME/resources/contracts/$TARGET/$AUDIT_FILENAME"
         VALID=false
         continue
     fi
 
-    LOCAL_HASH=$(jq -S .commitHash "$QSP_ROOT/resources/contracts/$TARGET/$AUDIT_FILENAME")
+    LOCAL_HASH=$(jq -S .commitHash "$QSP_HOME/resources/contracts/$TARGET/$AUDIT_FILENAME")
     get_contract "$TARGET" "$AUDIT_FILENAME $DEST_DIR/$AUDIT_FILENAME"
     S3_HASH=$(jq -S .commitHash "$DEST_DIR/$AUDIT_FILENAME")
 
