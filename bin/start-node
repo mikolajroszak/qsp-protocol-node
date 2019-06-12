@@ -16,7 +16,7 @@ case "${UNAME_OUT}" in
 	*)          echo "Cannot determine OS type. Please make sure you are using Linux or Mac. If so, please open a github issue"; exit 1
 esac
 
-readonly RESOURCES_DIR=`dirname "$SCRIPT_DIR/resources`
+readonly RESOURCES_DIR=`dirname "$SCRIPT_DIR/resources"`
 
 source "$SCRIPT_DIR/common"
 
