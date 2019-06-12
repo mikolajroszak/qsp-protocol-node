@@ -8,10 +8,12 @@
 ####################################################################################################
 
 set -e
-VERSION=`PYTHONPATH=:./src/qsp_protocol_node python -c "from config import Config; c = Config(); print(c.node_version)"`
+
+readonly SCRIPT_DIR=`dirname $(realpath "$0")`
+
+VERSION=`PYTHONPATH=:"$SCRIPT_DIR/../src/qsp_protocol_node" python3 -c "from config import Config; c = Config(); print(c.node_version)"`
 
 readonly ZIP_FILENAME="qsp-protocol-v$VERSION.zip"
-readonly SCRIPT_DIR=`dirname $(realpath "$0")`
 
 QSP_ROOT=`dirname "$SCRIPT_DIR"`
 cd `echo "$QSP_ROOT"`

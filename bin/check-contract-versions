@@ -23,15 +23,15 @@ readonly QSP_ROOT=`dirname "$SCRIPT_DIR"`
 VALID=true
 echo "Checking contract versions..."
 
-for i in $(ls "$QSP_ROOT/resources/contracts"); do 
-    if ! [ -f "$QSP_ROOT/resources/contracts/$i/$AUDIT_FILENAME" ]; then
-        echo "Contract file missing: $QSP_ROOT/resources/contracts/$i/$AUDIT_FILENAME"
+for TARGET in $(ls "$QSP_ROOT/resources/contracts"); do 
+    if ! [ -f "$QSP_ROOT/resources/contracts/$TARGET/$AUDIT_FILENAME" ]; then
+        echo "Contract file missing: $QSP_ROOT/resources/contracts/$TARGET/$AUDIT_FILENAME"
         VALID=false
         continue
     fi
 
-    LOCAL_HASH=$(jq -S .commitHash "$QSP_ROOT/resources/contracts/$i/$AUDIT_FILENAME")
-    get_contract $i "$AUDIT_FILENAME $DEST_DIR/$AUDIT_FILENAME"
+    LOCAL_HASH=$(jq -S .commitHash "$QSP_ROOT/resources/contracts/$TARGET/$AUDIT_FILENAME")
+    get_contract "$TARGET" "$AUDIT_FILENAME $DEST_DIR/$AUDIT_FILENAME"
     S3_HASH=$(jq -S .commitHash "$DEST_DIR/$AUDIT_FILENAME")
 
     if [[ "x$S3_HASH" == "x" && "x$LOCAL_HASH" == "x"  ]] ; then
