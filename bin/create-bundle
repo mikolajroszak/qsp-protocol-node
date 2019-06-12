@@ -17,7 +17,7 @@ readonly DIST_NAME="qsp-protocol-v$VERSION"
 readonly ZIP_FILENAME="${DIST_NAME}.zip"
 
 QSP_ROOT=`dirname "$SCRIPT_DIR"`
-cd `echo "$QSP_ROOT"`
+cd "$QSP_ROOT"
 
 make check-contract-versions clean build
 
