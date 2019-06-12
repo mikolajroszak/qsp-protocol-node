@@ -37,14 +37,14 @@ if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
         docker exec -it "$CONTAINER" bash -c 'PID=$(ps auxw | grep "python -W"| grep -v bin| grep -v grep| awk "{print \$1}") ;echo $PID ; kill $PID' > /dev/null
 
         #Wait for the audit node to stop
-        while [[ $(docker inspect --format={{.State.Status}} $container) == "running" ]]; do
+        while [[ $(docker inspect --format={{.State.Status}} "$CONTAINER") == "running" ]]; do
             echo "Waiting for audit node to stop" | tee -a $LOG_PATH
             sleep 2
             if [[ "$ATTEMPTS" -eq 4 && $FORCE ]]; then
-                echo "Failed to stop $container gracefully. Will try force stopping"
+                echo "Failed to stop $CONTAINER gracefully. Will try force stopping"
                 docker kill "$CONTAINER"
             elif [[ "$ATTEMPTS" -eq 4 ]]; then
-                echo "Failed to stop $container gracefully".
+                echo "Failed to stop $CONTAINER gracefully".
                 echo "Please try running the script again with -f to forcefully stop the container."
                 exit 1
             fi

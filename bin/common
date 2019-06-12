@@ -19,7 +19,7 @@ function rotate_logs() {
             tar czf qsp-protocol.tar.gz "$LOG_FILENAME"
 
         else 
-            tar czf qsp-protocol.tar.gz.`echo "$COUNT"` "$LOG_FILENAME"
+            tar czf qsp-protocol.tar.gz.`echo $COUNT` "$LOG_FILENAME"
         fi
         rm "$LOG_PATH"
     fi

@@ -13,14 +13,16 @@ readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 &&
 
 VERSION=`PYTHONPATH=:"$SCRIPT_DIR/../src/qsp_protocol_node" python3 -c "from config import Config; c = Config(); print(c.node_version)"`
 
-readonly ZIP_FILENAME="qsp-protocol-v$VERSION.zip"
+readonly DIST_NAME="qsp-protocol-v$VERSION"
+readonly ZIP_FILENAME="${DIST_NAME}.zip"
 
 QSP_ROOT=`dirname "$SCRIPT_DIR"`
 cd `echo "$QSP_ROOT"`
 
 make check-contract-versions clean build
 
-readonly DIST_DIR="$QSP_ROOT/deployment/local/dist"
+readonly DIST_DIR="$QSP_ROOT/deployment/local/dist/$DIST_NAME"
+
 readonly CONFIG_FILE="$QSP_ROOT/resources/config.yaml"
 readonly CONTRACTS_DIR="$QSP_ROOT/resources/contracts"
 readonly START_SCRIPT="$SCRIPT_DIR/start-node"
@@ -48,11 +50,10 @@ cp -a "$CONTRACTS_DIR/." "$DIST_DIR/resources/contracts"
 mkdir -p "$DIST_DIR/resources/keystore"
 echo "Add a valid key here" > "$DIST_DIR/resources/keystore/default.json"
 
-cd "$DIST_DIR"
-zip -r "$ZIP_FILENAME" *
+cd "$DIST_DIR/.."
+zip -r "$ZIP_FILENAME" "$DIST_NAME"
 
-rm -rf "resources"
-rm -rf "bin"
-rm -rf "LICENSE"
-rm -rf "doc"
+rm -rf "$DIST_NAME"
+cd "$QSP_ROOT"
+git checkout -- CONTRIBUTE.md
 
