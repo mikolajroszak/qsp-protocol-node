@@ -23,6 +23,19 @@ function usage() {
 # Main flow
 ################################################
 
+# Prompt the user if QSP_ETH_PASSPHRASE is not set
+if [[ "x$QSP_ETH_AUTH_TOKEN" == "x" ]] ; then
+  read -rs -p "Please enter QSP_ETH_AUTH_TOKEN : " $QSP_ETH_AUTH_TOKEN
+  export $QSP_ETH_AUTH_TOKEN
+fi
+
+if [[ "x$QSP_ETH_PASSPHRASE" == "x" ]] ; then
+  read -rs -p "Please enter QSP_ETH_PASSPHRASE : " $QSP_ETH_PASSPHRASE
+  export $QSP_ETH_PASSPHRASE
+fi
+
+
+
 # pulling usolc docker
 echo `date`
 docker pull qspprotocol/usolc-entry@sha256:92bd41d22e72c9cb7af28dfa2784ead798916c115f59f1191fe45d6e4fabec4b
@@ -36,6 +49,10 @@ export SOL_FILE=""
 
 # Default logging level: debug node
 export QSP_LOGGING_LEVEL="DEBUG"
+
+read -rs -p "Password : " ethPassPhrase
+
+echo "you've entered $ethPassPhrase"
 
 while getopts "t:d:f:ah" FLAG; do
     case $FLAG in

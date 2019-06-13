@@ -33,14 +33,16 @@ fi
 
 cd "$RESOURCES_DIR"
 
-if [[ "x$QSP_ETH_PASSPHRASE" == "x" ]] ; then
-  echo "Environment variable QSP_ETH_PASSPHRASE is not set" &> /dev/stderr
-  exit 1
+
+# Pass QSP_ETH_AUTH_TOKEN and QSP_ETH_PASSPHRASE to the docker if it is set
+QSP_ETH_SECRET_PASSER=""
+
+if [[ "x$QSP_ETH_AUTH_TOKEN" != "x" ]] ; then
+  QSP_ETH_SECRET_PASSER="$QSP_ETH_SECRET_PASSER -e QSP_ETH_AUTH_TOKEN=$QSP_ETH_AUTH_TOKEN"
 fi
 
-if [[ "x$QSP_ETH_AUTH_TOKEN" == "x" ]] ; then
-  echo "Environment variable QSP_ETH_AUTH_TOKEN is not set" &> /dev/stderr
-  exit 1
+if [[ "x$QSP_ETH_PASSPHRASE" != "x" ]] ; then
+  QSP_ETH_SECRET_PASSER="$QSP_ETH_SECRET_PASSER -e QSP_ETH_PASSPHRASE=$QSP_ETH_PASSPHRASE"
 fi
 
 if [ ! -f app.tar ]; then
@@ -68,8 +70,7 @@ docker run -d \
 	-e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
 	-e AWS_DEFAULT_REGION="us-east-1" \
-	-e QSP_ETH_PASSPHRASE="$QSP_ETH_PASSPHRASE" \
-	-e QSP_ETH_AUTH_TOKEN="$QSP_ETH_AUTH_TOKEN" \
+	"$QSP_ETH_SECRET_PASSER" \
 	qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $QSP_ENV $QSP_CONFIG"
 
 echo $$ > /tmp/qsp-protocol.pid
