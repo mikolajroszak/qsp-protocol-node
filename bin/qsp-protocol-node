@@ -50,10 +50,6 @@ export SOL_FILE=""
 # Default logging level: debug node
 export QSP_LOGGING_LEVEL="DEBUG"
 
-read -rs -p "Password : " ethPassPhrase
-
-echo "you've entered $ethPassPhrase"
-
 while getopts "t:d:f:ah" FLAG; do
     case $FLAG in
         # Debug level
