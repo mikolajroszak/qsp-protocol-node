@@ -10,6 +10,7 @@ Tests invocation of the analyzer tool.
 """
 import unittest
 
+from tempfile import TemporaryDirectory
 from random import random
 from time import time
 from helpers.resource import project_root
@@ -26,24 +27,26 @@ class TestAnalyzerDockerhubFail(QSPTest):
     """
 
     @staticmethod
-    def __new_analyzer(timeout_sec=60, prefetch=False):
+    def __new_analyzer(storage_dir, timeout_sec=60, prefetch=False):
         faulty_wrapper = Wrapper(
             wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
             analyzer_name="mythril",
             args="",
-            storage_dir="/tmp/./mythril/{}{}".format(time(), random()),
+            storage_dir=storage_dir,
             timeout_sec=timeout_sec,
             prefetch=prefetch
         )
         return Analyzer(faulty_wrapper)
 
-    def test_excpetion_on_create(self):
+    def test_exception_on_create(self):
         """
         Tests whether a report is created upon calling the analyzer on a buggy contract. This SHOULD
         invoke dockerhub fail.
         """
         try:
-            TestAnalyzerDockerhubFail.__new_analyzer(prefetch=True)
+            with TemporaryDirectory('mythril') as storage_dir:
+                TestAnalyzerDockerhubFail.__new_analyzer(storage_dir, prefetch=True)
+
             self.fail("Expected an error from the wrapper pull")
         except CalledProcessError:
             # expected
@@ -54,11 +57,12 @@ class TestAnalyzerDockerhubFail(QSPTest):
         Tests whether a report is created upon calling the analyzer on a buggy contract. This SHOULD
         invoke dockerhub fail.
         """
-        analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
+        with TemporaryDirectory('mythril') as storage_dir:
+            analyzer = TestAnalyzerDockerhubFail.__new_analyzer(storage_dir)
 
-        buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
-        request_id = 15
-        report = analyzer.check(buggy_contract, request_id, "DAOBug.sol")
+            buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
+            request_id = 15
+            report = analyzer.check(buggy_contract, request_id, "DAOBug.sol")
 
         # Asserts some result produced
         self.assertTrue(report)
@@ -76,14 +80,14 @@ class TestAnalyzerDockerhubFail(QSPTest):
         Tests whether a report is created upon calling the analyzer on a buggy contract. This SHOULD
         invoke dockerhub fail.
         """
+        with TemporaryDirectory('mythril') as storage_dir:
+            analyzer = TestAnalyzerDockerhubFail.__new_analyzer(storage_dir)
 
-        analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
+            open(analyzer.wrapper.storage_dir + "/.once", 'a').close()
 
-        open(analyzer.wrapper.storage_dir + "/.once", 'a').close()
-
-        buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
-        request_id = 15
-        report = analyzer.check(buggy_contract, request_id, "DAOBug.sol")
+            buggy_contract = fetch_file(resource_uri("DAOBug.sol"))
+            request_id = 15
+            report = analyzer.check(buggy_contract, request_id, "DAOBug.sol")
 
         # Asserts some result produced
         self.assertTrue(report)
@@ -103,9 +107,10 @@ class TestAnalyzerDockerhubFail(QSPTest):
 
         no_file = str(random()) + ".sol"
 
-        analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
-        request_id = 15
-        report = analyzer.check(no_file, request_id, no_file)
+        with TemporaryDirectory('mythril') as storage_dir:
+            analyzer = TestAnalyzerDockerhubFail.__new_analyzer(storage_dir)
+            request_id = 15
+            report = analyzer.check(no_file, request_id, no_file)
 
         self.assertTrue(report['status'], 'error')
 
@@ -123,10 +128,11 @@ class TestAnalyzerDockerhubFail(QSPTest):
 
         no_file = str(random()) + ".sol"
 
-        analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
-        open(analyzer.wrapper.storage_dir + "/.once", 'a').close()
-        request_id = 15
-        report = analyzer.check(no_file, request_id, no_file)
+        with TemporaryDirectory('mythril') as storage_dir:
+            analyzer = TestAnalyzerDockerhubFail.__new_analyzer(storage_dir)
+            open(analyzer.wrapper.storage_dir + "/.once", 'a').close()
+            request_id = 15
+            report = analyzer.check(no_file, request_id, no_file)
 
         self.assertTrue(report['status'], 'error')
 
@@ -144,9 +150,11 @@ class TestAnalyzerDockerhubFail(QSPTest):
 
         old_contract = fetch_file(resource_uri("DAOBugOld.sol"))
 
-        analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
-        request_id = 15
-        report = analyzer.check(old_contract, request_id, "DAOBugOld.sol")
+        with TemporaryDirectory('mythril') as storage_dir:
+            analyzer = TestAnalyzerDockerhubFail.__new_analyzer(storage_dir)
+            request_id = 15
+            report = analyzer.check(old_contract, request_id, "DAOBugOld.sol")
+
         # Asserts some result produced
         self.assertTrue(report)
 
@@ -165,9 +173,10 @@ class TestAnalyzerDockerhubFail(QSPTest):
 
         old_contract = fetch_file(resource_uri("DAOBugOld-Caret.sol"))
 
-        analyzer = TestAnalyzerDockerhubFail.__new_analyzer()
-        request_id = 15
-        report = analyzer.check(old_contract, request_id, "DAOBugOld-Caret.sol")
+        with TemporaryDirectory('mythril') as storage_dir:
+            analyzer = TestAnalyzerDockerhubFail.__new_analyzer(storage_dir)
+            request_id = 15
+            report = analyzer.check(old_contract, request_id, "DAOBugOld-Caret.sol")
 
         self.assertTrue(report['status'], 'error')
         self.assertEquals(2, len(report['trace']))
