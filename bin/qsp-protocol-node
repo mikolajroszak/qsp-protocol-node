@@ -26,7 +26,6 @@ function usage() {
 # pulling usolc docker
 echo `date`
 docker pull qspprotocol/usolc-entry@sha256:92bd41d22e72c9cb7af28dfa2784ead798916c115f59f1191fe45d6e4fabec4b
-mkdir -p /tmp/solc
 
 # Set auto restart to off by default
 AUTO_RESTART="0"
