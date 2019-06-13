@@ -9,16 +9,15 @@
 
 set -e
 
-UNAME_OUT="$(uname -s)"
-case "${UNAME_OUT}" in
-	Linux*|linux*)     readonly SCRIPT_DIR=`dirname $(realpath "$0")`;;
-	Darwin*|darwin*)   readonly SCRIPT_DIR=`dirname $(python -c "from __future__ import print_function; from os.path import realpath; from sys import argv; print(realpath(\"$0\"))")`;;
-	*)          echo "Cannot determine OS type. Please make sure you are using Linux or Mac. If so, please open a github issue"; exit 1
-esac
-
-readonly RESOURCES_DIR="$(dirname ${SCRIPT_DIR})/resources"
+readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 source "$SCRIPT_DIR/common"
+
+if ! [ -d "$LOG_DIR" ]; then
+    mkdir "$LOG_DIR"
+fi
+
+readonly RESOURCES_DIR="$(dirname ${SCRIPT_DIR})/resources"
 
 # Check if the script is running in background
 case $(ps -o stat= -p $$) in
@@ -28,7 +27,7 @@ esac
 
 if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
   echo "Stopping....."
-	"$SCRIPT_DIR/stop-node"
+  "$SCRIPT_DIR/stop-node"
 fi
 
 cd "$RESOURCES_DIR"
@@ -44,17 +43,17 @@ if [[ "x$QSP_ETH_AUTH_TOKEN" == "x" ]] ; then
 fi
 
 if [ ! -f app.tar ]; then
-	echo "app.tar file not present. Exiting!!"
+  echo "app.tar file not present. Exiting!!"
   exit 1
 fi
 
-touch $PWD/event_database.db
+touch "$PWD/event_database.db"
 
 QSP_ENV="testnet"
 QSP_CONFIG="resources/config.yaml"
 
 rotate_logs
-touch $LOG_PATH
+touch "$LOG_PATH"
 
 docker load --input app.tar && \
 docker run -d \
@@ -76,10 +75,11 @@ echo $$ > /tmp/qsp-protocol.pid
 
 # Tail the logs if not in background
 if [ "$IN_BACKGROUND" == "false" ]; then
-	while [ ! -f $LOG_PATH ]
-	do
-  		sleep 1
-	done
-	tail -f -n +1 $LOG_PATH
-	docker logs --follow $(docker ps -a -q --latest --filter "status=running" --filter ancestor=qsp-protocol-node)
+   while [ ! -f "$LOG_PATH" ]
+   do
+     sleep 1
+   done
+   tail -f -n +1 "$LOG_PATH"
+   docker logs --follow $(docker ps -a -q --latest --filter "status=running" --filter ancestor=qsp-protocol-node)
 fi
+

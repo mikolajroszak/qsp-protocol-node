@@ -10,36 +10,44 @@
 
 set -e
 
+readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+readonly QSP_HOME=`dirname "$SCRIPT_DIR"`
+
 function get_contract() {
     echo "Downloading $2 contract from s3 for $1..."
     aws s3 cp s3://qsp-protocol-contract/$1/$2 $3 > /dev/null
 }
 
 readonly AUDIT_FILENAME="QuantstampAudit-v-2-meta.json"
-readonly SCRIPT_DIR=`dirname $(realpath "$0")`
 readonly DEST_DIR="/tmp"
-readonly QSPROOT=`dirname "$SCRIPT_DIR"`
 
-valid=true
+VALID=true
 echo "Checking contract versions..."
-for i in $(ls $QSPROOT/resources/contracts); do 
-    if ! [ -f $QSPROOT/resources/contracts/$i/$AUDIT_FILENAME ]; then
-        echo "Contract file missing: $QSPROOT/resources/contracts/$i/$AUDIT_FILENAME"
-        valid=false
+
+for TARGET in $(ls "$QSP_HOME/resources/contracts"); do 
+    if ! [ -f "$QSP_HOME/resources/contracts/$TARGET/$AUDIT_FILENAME" ]; then
+        echo "Contract file missing: $QSP_HOME/resources/contracts/$TARGET/$AUDIT_FILENAME"
+        VALID=false
         continue
     fi
-    local_hash=`jq -S .commitHash $QSPROOT/resources/contracts/$i/$AUDIT_FILENAME`
-    get_contract $i $AUDIT_FILENAME $DEST_DIR/$AUDIT_FILENAME
-    s3_hash=`jq -S .commitHash /tmp/$AUDIT_FILENAME`
-    if [ "$s3_hash" == "$local_hash" ]; then
+
+    LOCAL_HASH=$(jq -S .commitHash "$QSP_HOME/resources/contracts/$TARGET/$AUDIT_FILENAME")
+    get_contract "$TARGET" "$AUDIT_FILENAME $DEST_DIR/$AUDIT_FILENAME"
+    S3_HASH=$(jq -S .commitHash "$DEST_DIR/$AUDIT_FILENAME")
+
+    if [[ "x$S3_HASH" == "x" && "x$LOCAL_HASH" == "x"  ]] ; then
+	echo "Unexpected error: hashes are empty"
+
+    elif [[ "$S3_HASH" == "$LOCAL_HASH" ]] ; then
         echo "Contracts match for $i network"
+
     else
         echo "Contracts do not match for $i network"
-        valid=false
+        VALID=false
     fi
-    rm $DEST_DIR/$AUDIT_FILENAME
+    rm "$DEST_DIR/$AUDIT_FILENAME"
 done
 
-if ! $valid; then
+if ! $VALID; then
     exit 1
 fi
