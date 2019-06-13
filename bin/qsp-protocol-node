@@ -11,13 +11,13 @@
 # Helper functions
 ################################################
 
-readonly SUCCESS="0"
-
 function kill_node() {
    echo "Node will not be launched. Stopping"
    exit 1
 }
 trap kill_node SIGTERM SIGINT
+
+readonly SUCCESS="0"
 
 function usage() {
     echo "usage: qsp-protocol-node [-t TEST_ENV] [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]" &> /dev/stderr
