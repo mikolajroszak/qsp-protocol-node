@@ -475,7 +475,8 @@ class TestQSPAuditNode(QSPTest):
         """
         Tests that a report is generated when the dockerhub fails
         """
-        # Replace analyzers with a single dockerhub fail analyzer
+        # Replace both analyzers with a dockerhub fail analyzer
+        # This is named mythril since the report compression module requires a valid name.
         faulty_wrapper_mythril = Wrapper(
             wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
             analyzer_name="mythril",
@@ -486,22 +487,12 @@ class TestQSPAuditNode(QSPTest):
         )
         mythril_analyzer = Analyzer(faulty_wrapper_mythril)
 
-        faulty_wrapper_securify = Wrapper(
-            wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
-            analyzer_name="securify",
-            args="",
-            storage_dir="/tmp/{}{}".format(time(), random()),
-            timeout_sec=60,
-            prefetch=False
-        )
-        securify_analyzer = Analyzer(faulty_wrapper_securify)
-
         original_analyzers = self.__audit_node.config._Config__analyzers
         original_analyzers_config = self.__audit_node.config._Config__analyzers_config
+        self.__audit_node.config._Config__analyzers[0] = mythril_analyzer
+        self.__audit_node.config._Config__analyzers_config[0] = {"mythril": mythril_analyzer}
         self.__audit_node.config._Config__analyzers[1] = mythril_analyzer
         self.__audit_node.config._Config__analyzers_config[1] = {"mythril": mythril_analyzer}
-        self.__audit_node.config._Config__analyzers[1] = securify_analyzer
-        self.__audit_node.config._Config__analyzers_config[1] = {"securify": securify_analyzer}
 
         # since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
