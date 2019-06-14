@@ -11,6 +11,12 @@
 # Helper functions
 ################################################
 
+function kill_node() {
+   echo "Node will not be launched. Stopping"
+   exit 1
+}
+trap kill_node SIGTERM SIGINT
+
 readonly SUCCESS="0"
 
 function usage() {
