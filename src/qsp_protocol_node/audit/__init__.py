@@ -9,7 +9,7 @@ from .audit import QSPAuditNode
 from .wrapper import Wrapper
 from .analyzer import Analyzer
 from .vulnerabilities_set import VulnerabilitiesSet
-from .threads import QSPThread, UpdateMinPriceThread, ComputeGasPriceThread, CollectMetricsThread, \
+from .threads import QSPThread, ComputeGasPriceThread, CollectMetricsThread, \
     SubmitReportThread, PerformAuditThread, ClaimRewardsThread, PollRequestsThread, \
     MonitorSubmissionThread
 
@@ -18,7 +18,6 @@ __all__ = ['QSPAuditNode',
            'Analyzer',
            'VulnerabilitiesSet',
            'QSPThread',
-           'UpdateMinPriceThread',
            'ClaimRewardsThread',
            'ComputeGasPriceThread',
            'CollectMetricsThread',
