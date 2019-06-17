@@ -163,13 +163,44 @@ class TestQSPAuditNode(QSPTest):
                 # expected
                 pass
 
-    def test_check_and_update_min_price(self):
+    def test_check_and_update_min_price_needs_updating(self):
         self.__audit_node.stop()
         with mock.patch('audit.audit.send_signed_transaction',
                         return_value="hash"), \
              mock.patch('audit.audit.mk_read_only_call',
-                        return_value=self.__audit_node.config.min_price_in_qsp + 5):
+                        side_effect=[
+                            (self.__audit_node.config.min_price_in_qsp + 5) * (10**18),
+                            self.__audit_node.config.min_price_in_qsp * (10**18),
+                        ]):
             self.__audit_node._QSPAuditNode__check_and_update_min_price()
+
+    def test_check_and_update_min_price_does_not_need_updating(self):
+        self.__audit_node.stop()
+        with mock.patch('audit.audit.send_signed_transaction',
+                        side_effect=Exception("Should not be called")), \
+             mock.patch('audit.audit.mk_read_only_call',
+                        side_effect=[
+                            self.__audit_node.config.min_price_in_qsp * (10**18),
+                            self.__audit_node.config.min_price_in_qsp * (10**18),
+                        ]):
+            self.__audit_node._QSPAuditNode__check_and_update_min_price()
+
+    def test_check_and_update_min_price_set_lower_than_floor(self):
+        self.__audit_node.stop()
+        with mock.patch('audit.audit.send_signed_transaction',
+                        side_effect=Exception("Should not be called")), \
+             mock.patch('audit.audit.mk_read_only_call',
+                        side_effect=[
+                            (self.__audit_node.config.min_price_in_qsp + 2) * (10**18),
+                            10 * (10**18),
+                        ]):
+            try:
+                self.__audit_node._QSPAuditNode__check_and_update_min_price()
+                self.fail("An exception was expected")
+            except Exception as e:
+                # expected
+                expected_msg = "The provided min price 5 QSP must be equal to or higher than the floor of 10.0 QSP"
+                self.assertEqual(expected_msg, str(e))
 
     def test_check_stake_police(self):
         self.__audit_node.stop()
