@@ -186,8 +186,9 @@ class QSPAuditNode:
 
         min_price_in_mini_qsp = self.config.min_price_in_qsp * (10 ** 18)
         self.logger.info(
-            "Updating min_price in the smart contract for address {0}.".format(
-                self.config.account
+            "Updating min_price in the smart contract for address {0} to {1} QSP.".format(
+                self.config.account,
+                self.config.min_price_in_qsp,
             ))
         transaction = self.config.audit_contract.functions.setAuditNodePrice(
             min_price_in_mini_qsp)
@@ -239,7 +240,19 @@ class QSPAuditNode:
             self.config,
             self.config.audit_contract.functions.getMinAuditPrice(self.config.account)
         )
+
+        contract_price_lower_cap = mk_read_only_call(
+            self.config,
+            self.config.audit_contract.functions.getMinAuditPriceLowerCap()
+        )
+
         min_price_in_mini_qsp = self.config.min_price_in_qsp * (10 ** 18)
+        if min_price_in_mini_qsp < contract_price_lower_cap:
+            error_msg = "The provided min price {0} QSP must be equal to or higher than the floor of {1} QSP".format(
+                self.config.min_price_in_qsp, contract_price_lower_cap / (10 ** 18))
+            self.logger.exception(error_msg)
+            raise Exception(error_msg)
+
         if min_price_in_mini_qsp != contract_price:
             self.__update_min_price()
 
