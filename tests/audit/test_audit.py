@@ -33,6 +33,9 @@ from time import time
 from timeout_decorator import timeout
 from threading import Thread
 from unittest.mock import MagicMock
+from utils.eth.tx import TransactionNotConfirmedException
+from utils.eth.tx import DeduplicationException
+from web3.utils.threads import Timeout
 
 
 class TestQSPAuditNode(QSPTest):
@@ -114,6 +117,59 @@ class TestQSPAuditNode(QSPTest):
     ##############################################
     # Tests
     ##############################################
+
+    def test_update_min_price_success(self):
+        self.__audit_node.stop()
+        with mock.patch('audit.audit.mk_read_only_call',
+                        return_value="hash"):
+            self.__audit_node._QSPAuditNode__update_min_price()
+            # No exception should be thrown
+
+    def test_update_min_price_exceptions(self):
+        self.__audit_node.stop()
+        with mock.patch('audit.audit.send_signed_transaction',
+                        side_effect=Exception):
+            try:
+                self.__audit_node._QSPAuditNode__update_min_price()
+                self.fail("Exception was not propagated")
+            except Exception:
+                # expected
+                pass
+
+        with mock.patch('audit.audit.send_signed_transaction',
+                        side_effect=TransactionNotConfirmedException):
+            try:
+                self.__audit_node._QSPAuditNode__update_min_price()
+                self.fail("Exception was not propagated")
+            except TransactionNotConfirmedException:
+                # expected
+                pass
+
+        with mock.patch('audit.audit.send_signed_transaction',
+                        side_effect=Timeout):
+            try:
+                self.__audit_node._QSPAuditNode__update_min_price()
+                self.fail("Exception was not propagated")
+            except Timeout:
+                # expected
+                pass
+
+        with mock.patch('audit.audit.send_signed_transaction',
+                        side_effect=DeduplicationException):
+            try:
+                self.__audit_node._QSPAuditNode__update_min_price()
+                self.fail("Exception was not propagated")
+            except DeduplicationException:
+                # expected
+                pass
+
+    def test_check_and_update_min_price(self):
+        self.__audit_node.stop()
+        with mock.patch('audit.audit.send_signed_transaction',
+                        return_value="hash"), \
+             mock.patch('audit.audit.mk_read_only_call',
+                        return_value=self.__audit_node.config.min_price_in_qsp + 5):
+            self.__audit_node._QSPAuditNode__check_and_update_min_price()
 
     def test_check_stake_police(self):
         self.__audit_node.stop()
