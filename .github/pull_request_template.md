@@ -37,3 +37,4 @@
 - [ ] I have read the **CONTRIBUTING** document.
 - [ ] I have added tests to cover my changes.
 - [ ] All new and existing tests passed.
+- [ ] I have updated the version in src/qsp_protocol_node/config/config.py
