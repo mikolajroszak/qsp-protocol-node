@@ -11,6 +11,20 @@ set -e
 
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+trap cleanup SIGINT SIGTERM
+
+function cleanup() {
+	export PARENT_PID=$$
+	${SCRIPT_DIR}/stop-node
+	if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
+		read -r -p "To stop forcefully enter f, any other key to quit: " response
+		if [[ "$response" =~ ^([fF])+$ ]]; then 
+    	${SCRIPT_DIR}/stop-node -f
+		fi
+  	exit 0
+	fi
+}
+
 source "$SCRIPT_DIR/common"
 
 if ! [ -d "$LOG_DIR" ]; then
@@ -26,8 +40,8 @@ case $(ps -o stat= -p $$) in
 esac
 
 if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
-  echo "Stopping....."
-  "$SCRIPT_DIR/stop-node"
+  echo "Audit node is already running. Check ${LOG_PATH} for logs"
+  exit 0
 fi
 
 cd "$RESOURCES_DIR"
@@ -47,6 +61,7 @@ if [ ! -f app.tar ]; then
   exit 1
 fi
 
+echo $$ > /tmp/qsp-protocol.pid
 touch "$PWD/event_database.db"
 
 QSP_ENV="testnet"
@@ -70,8 +85,6 @@ docker run -d \
 	-e QSP_ETH_PASSPHRASE="$QSP_ETH_PASSPHRASE" \
 	-e QSP_ETH_AUTH_TOKEN="$QSP_ETH_AUTH_TOKEN" \
 	qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $QSP_ENV $QSP_CONFIG"
-
-echo $$ > /tmp/qsp-protocol.pid
 
 # Tail the logs if not in background
 if [ "$IN_BACKGROUND" == "false" ]; then
