@@ -10,11 +10,11 @@ testnet:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://ropsten.infura.io/v3/${token}"
+      endpoint_uri: !!str "https://ropsten.infura.io/v3/${auth-token}"
   audit_contract_abi:
-    uri: !!str "./resources/contracts/testnet/QuantstampAudit-v-{major-version}-abi.json"
-    metadata: !!str "./resources/contracts/testnet/QuantstampAudit-v-{major-version}-meta.json"
-  min_price_in_qsp: !!int 10
+    uri: !!str "${qsp-home}/resources/contracts/testnet/QuantstampAudit-v-${major-version}-abi.json"
+    metadata: !!str "${qsp-home}/resources/contracts/testnet/QuantstampAudit-v-${major-version}-meta.json"
+  min_price_in_qsp: !!int 1
   tx_timeout_seconds: !!int 300
   max_assigned_requests: !!int 5
   evt_polling_sec: !!int 5
@@ -37,7 +37,7 @@ testnet:
       args:
         bucket_name: !!str "qsp-protocol-reports-testnet"
         contract_bucket_name: !!str "qsp-protocol-reports-testnet"
-  keystore_file: !!str "./resources/keystore/default.json"
+  keystore_file: !!str "${qsp-home}/resources/keystore/default.json"
   gas_limit: !!int 1000000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)
@@ -60,10 +60,10 @@ mainnet:
   eth_node:
     provider: !!str "HTTPProvider"
     args:
-      endpoint_uri: !!str "https://mainnet.infura.io/v3/${token}"
+      endpoint_uri: !!str "https://mainnet.infura.io/v3/${auth-token}"
   audit_contract_abi:
-    uri: !!str "./resources/contracts/mainnet/QuantstampAudit-v-{major-version}-abi.json" #note that v1 production ABI is not available
-    metadata: !!str "./resources/contracts/mainnet/QuantstampAudit-v-{major-version}-meta.json" #note that v1 production ABI is not available
+    uri: !!str "${qsp-home}/resources/contracts/mainnet/QuantstampAudit-v-${major-version}-abi.json" #note that v1 production ABI is not available
+    metadata: !!str "${qsp-home}/resources/contracts/mainnet/QuantstampAudit-v-${major-version}-meta.json" #note that v1 production ABI is not available
   min_price_in_qsp: !!int 1000
   tx_timeout_seconds: !!int 300
   max_assigned_requests: !!int 5
@@ -82,7 +82,7 @@ mainnet:
         timeout_sec: !!int 276
   upload_provider:
       is_enabled: !!bool False
-  keystore_file: !!str "./resources/keystore/default.json"
+  keystore_file: !!str "${qsp-home}/resources/keystore/default.json"
   gas_limit: !!int 1000000
   gas_price:
     # Can be set to either dynamic (compute average gas price of recent blocks) or static (fixed gas price)

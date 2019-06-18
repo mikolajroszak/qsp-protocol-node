@@ -94,7 +94,7 @@ make interactive
 {'audit_state': 4,
  'contract_hash': 'B7F55BC69671C5F4FB295FD5ACF1375EB7F1363093176F4BEC190C39F95C235B',
  'status': 'success',
- 'version': '2.0.1',
+ 'version': '2.0.2',
  'vulnerabilities': [('unprotected_ether_withdrawal', 25, 25),
                      ('call_to_external_contract', 25, 25),
                      ('reentrancy', 29, 29),

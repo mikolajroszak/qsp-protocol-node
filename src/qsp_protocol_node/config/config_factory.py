@@ -12,26 +12,26 @@ from .config_utils import ConfigUtils
 class ConfigFactory:
 
     @staticmethod
-    def create_from_file(config_file_uri, environment, account_passwd="", auth_token="",
+    def create_from_file(config_file_uri, environment, node_version, account_passwd="",
                          validate_contract_settings=True, config_utils=None):
         """
         This is now public and is to be called from wherever this class gets initialized.
         """
-        config = Config()
-        utils = config_utils if config_utils is not None else ConfigUtils(config.node_version)
-        config.load_file(config_file_uri, utils, environment, account_passwd, auth_token,
+        config = Config(node_version)
+        utils = config_utils if config_utils is not None else ConfigUtils()
+        config.load_file(config_file_uri, utils, environment, account_passwd,
                          validate_contract_settings)
         return config
 
     @staticmethod
-    def create_from_dictionary(dictionary, environment, account_passwd="", auth_token="",
+    def create_from_dictionary(dictionary, environment, node_version, account_passwd="",
                                validate_contract_settings=True, config_utils=None):
-        config = Config()
-        utils = config_utils if config_utils is not None else ConfigUtils(config.node_version)
+        config = Config(node_version)
+        utils = config_utils if config_utils is not None else ConfigUtils()
         config.load_dictionary(dictionary[environment], utils, environment, account_passwd,
-                               auth_token, validate_contract_settings)
+                               validate_contract_settings)
         return config
 
     @staticmethod
-    def create_empty_config():
-        return Config()
+    def create_empty_config(node_version):
+        return Config(node_version)

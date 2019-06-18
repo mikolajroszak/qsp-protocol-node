@@ -1,1 +1,1 @@
-{"Error": "Replace with a valid keystore file"}
+{"version":3,"id":"94fd19bc-75f4-489c-9215-7409438fbbc7","address":"8fd1dd8f9bdcb779f977db63d6bd26335e47cccc","crypto":{"ciphertext":"a7a936e5e2a8257054bd90283ad89ca728a0f7a621c04e363cda6d01adc1a4e1","cipherparams":{"iv":"528d5579595dc7051a0f7894a78da0eb"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"22b871f5814516537cb9c8dd14b52ff75f79edf5d0878a3425c1d3d66ae6863d","n":131072,"r":8,"p":1},"mac":"ee983e4b0624cd7f912e4b93585996cd5b053ba72e1abbb149cd48b1298899c4"}}

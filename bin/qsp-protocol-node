@@ -8,16 +8,20 @@
 ####################################################################################################
 
 ################################################
-# Helper functions
+# Initial setup
 ################################################
 
-function kill_node() {
-   echo "Node will not be launched. Stopping"
-   exit 1
-}
-trap kill_node SIGTERM SIGINT
+readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-readonly SUCCESS="0"
+shopt -s expand_aliases
+alias python=python3
+
+export QSP_HOME=`dirname "$SCRIPT_DIR"`
+export QSP_NODE_VERSION=$(cat "$QSP_HOME/VERSION" | tr -d '[:space:]')
+
+################################################
+# Helper functions
+################################################
 
 function usage() {
     echo "usage: qsp-protocol-node [-t TEST_ENV] [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]" &> /dev/stderr
@@ -29,16 +33,12 @@ function usage() {
 # Main flow
 ################################################
 
-# pulling usolc docker
+# Pull usolc docker
 echo `date`
 docker pull qspprotocol/usolc-entry@sha256:92bd41d22e72c9cb7af28dfa2784ead798916c115f59f1191fe45d6e4fabec4b
-mkdir -p /tmp/solc
 
 # Set auto restart to off by default
 AUTO_RESTART="0"
-
-# Set the solidity file to "" in order to run the node in normal operating mode
-export SOL_FILE=""
 
 # Default logging level: debug node
 export QSP_LOGGING_LEVEL="DEBUG"
@@ -48,14 +48,16 @@ while getopts "t:d:f:ah" FLAG; do
         # Debug level
         t)
             export QSP_LOGGING_LEVEL="DEBUG"
+            export PYTHONPATH="$QSP_HOME/tests:$QSP_HOME/src/qsp_protocol_node"
+
             case $OPTARG in
                 ci)
-                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
+                    pytest --cov="$QSP_HOME/src/qsp_protocol_node" -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
                     exit $?
                 ;;
 
                 local)
-                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
+                    pytest --cov="$QSP_HOME/src/qsp_protocol_node" -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
                     exit $?
                 ;;
 
@@ -103,7 +105,9 @@ if [[ "$#" != "2" ]] ; then
    usage
 fi
 
-if [[ "$SOL_FILE" != "" ]] && [[ "$AUTO_RESTART" != "0" ]] ; then
+if [[ -v $SOL_FILE ]] && [[ "$AUTO_RESTART" != "0" ]] ; then
+    echo "SOL_FILE IS $SOL_FILE"
+    echo "AUTO_RESTART IS $AUTO_RESTART"
     echo "sol_file [-f] is mutually exclusive to auto_restart [-a]" &> /dev/stderr
     usage
 fi
@@ -114,10 +118,13 @@ fi
 export QSP_ENV="$1"
 export QSP_CONFIG="$2"
 
+readonly SUCCESS="0"
+
+export PYTHONPATH="$QSP_HOME/src"
 while true ; do
     
-    # Runs the audit node
-    PYTHONPATH=./src/ python -W ignore::DeprecationWarning -m qsp_protocol_node
+    # Runs the audit node (in foreground)
+    python -W ignore::DeprecationWarning -m qsp_protocol_node
 
     # Fetches the return code of the node
     RETURN_CODE=$?

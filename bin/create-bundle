@@ -10,21 +10,20 @@
 set -e
 
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+QSP_HOME=`dirname "$SCRIPT_DIR"`
+QSP_NODE_VERSION=$(cat "$QSP_HOME/VERSION" | tr -d '[:space:]')
 
-VERSION=`PYTHONPATH=:"$SCRIPT_DIR/../src/qsp_protocol_node" python3 -c "from config import Config; c = Config(); print(c.node_version)"`
+cd "$QSP_HOME"
 
-readonly DIST_NAME="qsp-protocol-v$VERSION"
+readonly DIST_NAME="qsp-protocol-v$QSP_NODE_VERSION"
 readonly ZIP_FILENAME="${DIST_NAME}.zip"
-
-QSP_ROOT=`dirname "$SCRIPT_DIR"`
-cd "$QSP_ROOT"
 
 make check-contract-versions clean build
 
-readonly DIST_DIR="$QSP_ROOT/deployment/local/dist/$DIST_NAME"
+readonly DIST_DIR="$QSP_HOME/deployment/local/dist/$DIST_NAME"
 
-readonly CONFIG_FILE="$QSP_ROOT/resources/config.yaml"
-readonly CONTRACTS_DIR="$QSP_ROOT/resources/contracts"
+readonly CONFIG_FILE="$QSP_HOME/resources/config.yaml"
+readonly CONTRACTS_DIR="$QSP_HOME/resources/contracts"
 readonly START_SCRIPT="$SCRIPT_DIR/start-node"
 readonly APP_TAR="$DIST_DIR/resources/app.tar"
 readonly START_SCRIPT_NAME=`basename "$START_SCRIPT"`
@@ -43,10 +42,13 @@ cp "$CONFIG_FILE" "$DIST_DIR/resources/$CONFIG_FILE_NAME"
 cat "$START_SCRIPT" | sed 's/testnet/mainnet/g' > "$DIST_DIR/bin/$START_SCRIPT_NAME"
 
 chmod +x "$DIST_DIR/bin/$START_SCRIPT_NAME"
+
 cp LICENSE "$DIST_DIR"
-cp -a "$QSP_ROOT/doc/." "$DIST_DIR/doc/"
+cp VERSION "$DIST_DIR"
+cp -a "$QSP_HOME/doc/." "$DIST_DIR/doc/"
 cp "$SCRIPT_DIR/stop-node" "$SCRIPT_DIR/common" "$DIST_DIR/bin"
 cp -a "$CONTRACTS_DIR/." "$DIST_DIR/resources/contracts"
+
 mkdir -p "$DIST_DIR/resources/keystore"
 echo "Add a valid key here" > "$DIST_DIR/resources/keystore/default.json"
 
@@ -54,6 +56,6 @@ cd "$DIST_DIR/.."
 zip -r "$ZIP_FILENAME" "$DIST_NAME"
 
 rm -rf "$DIST_NAME"
-cd "$QSP_ROOT"
+cd "$QSP_HOME"
 git checkout -- CONTRIBUTE.md
 

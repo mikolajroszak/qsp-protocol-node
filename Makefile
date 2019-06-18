@@ -48,7 +48,7 @@ docs:
 	curl https://raw.githubusercontent.com/quantstamp/opensource-doc-gen/master/github_template/feature_request.md > .github/ISSUE_TEMPLATE/feature_request.md
 
 build:
-		docker build -t qsp-protocol-node .
+	docker build -t qsp-protocol-node .
 
 test: build
 	docker run -it \
