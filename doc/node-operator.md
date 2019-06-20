@@ -6,7 +6,9 @@
 
 ### Hardware Requirement
 
-The node is expected to run on a Linux environment or a MacOS system with memory of 16GB or higher.
+The node is expected to run on a Linux environment or a MacOS system with memory of 16GB or higher. There's no strong CPU requirements. 
+
+### Tested Environments
 
 The node has been tested in the envrionment listed below.
 
