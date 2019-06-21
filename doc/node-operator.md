@@ -160,7 +160,7 @@ the account to MetaMask so that you can stake QSP.
 1. ONLY On Linux environments (SKIP this step if you’re using MacOS), add the current user to that group (generally docker or root):
 `sudo usermod -a -G <group owner of docker.sock> <username>`
 This is required for running analyzer containers from the audit node container.
-To force the new group assignment to take effect, restart you session (e.g., by logging out and logging in).
+To force the new group assignment to take effect, restart you session (e.g., by logging out and logging in. In some cases you may need to restart your machine.).
 
 #### Copy the `[MyEtherWallet keystore file]` into a specific location
 Open both `[MyEtherWallet keystore file]` and `resources/keystore/default.json` in a text editor. Copy the contents of the `[MyEtherWallet keystore file]` and paste it in `resources/keystore/default.json`. You will find `resources/keystore/default.json` in the `qsp_protocol_node` directory that you downloaded and unzipped. 
