@@ -17,6 +17,8 @@ after_script:
   - sed -i -e "s@/app/@$PWD/@g" ./tests/coverage/.coverage
   - cat ./tests/coverage/.coverage
   - coveralls
+  - chmod +x ./bin/create-github-release
+  - ./bin/create-github-release
 branches:
   only:
   - develop
