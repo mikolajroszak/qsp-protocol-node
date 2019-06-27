@@ -18,7 +18,7 @@ readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 &&
 
 echo "Travis branch: $TRAVIS_BRANCH"
 DEVELOP_BRANCH='quantstamp\/develop'
-CURRENT_VERSION=`PYTHONPATH=:"$SCRIPT_DIR/../src/qsp_protocol_node" python3 -c "from config import Config; c = Config(); print(c.node_version)"`
+CURRENT_VERSION="v$(PYTHONPATH=:$SCRIPT_DIR/../src/qsp_protocol_node python3 -c 'from config import Config; c = Config(); print(c.node_version)')"
 LATEST_TAG=$(git describe --tags --abbrev=0)
 readonly DIST_NAME="qsp-protocol-$CURRENT_VERSION"
 readonly ZIP_FILENAME="${DIST_NAME}.zip"
@@ -26,6 +26,13 @@ readonly ZIP_DIR="$SCRIPT_DIR/../deployment/local/dist"
 
 if [ -f "$SCRIPT_DIR/response.json" ]; then
   rm "$SCRIPT_DIR/response.json"
+fi
+
+echo "Current Version: $CURRENT_VERSION"
+GIT_DIR="$SCRIPT_DIR/.."
+if git rev-parse "$CURRENT_VERSION" >/dev/null 2>&1 ; then
+  echo "Tag $CURRENT_VERSION already exists"
+  exit 0
 fi
 
 echo "$LATEST_TAG"

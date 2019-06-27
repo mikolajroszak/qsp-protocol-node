@@ -15,7 +15,7 @@ readonly QSP_HOME=`dirname "$SCRIPT_DIR"`
 
 function get_contract() {
     echo "Downloading $2 contract from s3 for $1..."
-    aws s3 cp s3://qsp-protocol-contract/$1/$2 $3 > /dev/null
+    curl "https://qsp-protocol-contract.s3.amazonaws.com/$1/$2" --output "$3" > /dev/null
 }
 
 readonly AUDIT_FILENAME="QuantstampAudit-v-2-meta.json"
@@ -32,17 +32,17 @@ for TARGET in $(ls "$QSP_HOME/resources/contracts"); do
     fi
 
     LOCAL_HASH=$(jq -S .commitHash "$QSP_HOME/resources/contracts/$TARGET/$AUDIT_FILENAME")
-    get_contract "$TARGET" "$AUDIT_FILENAME $DEST_DIR/$AUDIT_FILENAME"
+    get_contract "$TARGET" "$AUDIT_FILENAME" "$DEST_DIR/$AUDIT_FILENAME"
     S3_HASH=$(jq -S .commitHash "$DEST_DIR/$AUDIT_FILENAME")
 
     if [[ "x$S3_HASH" == "x" && "x$LOCAL_HASH" == "x"  ]] ; then
 	echo "Unexpected error: hashes are empty"
 
     elif [[ "$S3_HASH" == "$LOCAL_HASH" ]] ; then
-        echo "Contracts match for $i network"
+        echo "Contracts match for $TARGET network"
 
     else
-        echo "Contracts do not match for $i network"
+        echo "Contracts do not match for $TARGET network"
         VALID=false
     fi
     rm "$DEST_DIR/$AUDIT_FILENAME"
