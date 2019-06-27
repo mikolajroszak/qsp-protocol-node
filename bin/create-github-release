@@ -38,7 +38,7 @@ if [[ ! "$TRAVIS_BRANCH" =~ "$DEVELOP_BRANCH" ]]; then
     body="$(cat $SCRIPT_DIR/CHANGELOG.md)"
 
     echo "Creating new bundle"
-    #"$SCRIPT_DIR/create-bundle"
+    "$SCRIPT_DIR/create-bundle"
     if [ ! -f "$ZIP_DIR/$ZIP_FILENAME" ]; then 
       echo "Failed to create a bundle file: $ZIP_FILENAME"
       exit 1
