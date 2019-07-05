@@ -35,8 +35,6 @@ class Program:
         Expands variables referenced in a given config dictionary
         """
 
-        print("===> input config is {0}".format(input_config))
-
         # Check if there is something to expand
         if config_vars is None or len(config_vars) == 0:
             return input_config
@@ -158,9 +156,6 @@ class Program:
 
         with open(yaml_file_name) as y:
             Program.__yaml_config = Program.__expand_vars(yaml.load(y), config_vars)
-
-        print("===> CONFIG")
-        pprint(Program.__yaml_config)
 
         Program.__setup_log_streaming()
 
