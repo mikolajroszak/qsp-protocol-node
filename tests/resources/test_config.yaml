@@ -9,7 +9,7 @@ dev:
   eth_node:
     provider: !!str "EthereumTesterProvider" # (no args provided)
   # audit_contract_abi: The contract is injected in tests
-  min_price_in_qsp: !!int 0
+  min_price_in_qsp: !!int 5
   tx_timeout_seconds: !!int 300
   gas_price:
     # Can be set to one of ["fast" (expected to mine in < 60s)|"medium" (< 10 minutes)|"slow" (< 1 hour)|"fixed"]

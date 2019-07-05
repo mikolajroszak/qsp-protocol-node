@@ -16,7 +16,7 @@ source "$SCRIPT_DIR/common"
 function is_running () {
 	ps -A -o pid | grep -q $1
     return $?
- }
+}
 
 FORCE=false
 while getopts "f" FLAG; do
@@ -33,36 +33,46 @@ if [[ $(docker ps -q --filter ancestor=qsp-protocol-node) ]]; then
     #Attach to the running container and stop the audit process.
     for CONTAINER in $(docker ps -q --filter ancestor=qsp-protocol-node); do
         ATTEMPTS=0
-        echo "Stopping audit node container $CONTAINER"
-        docker exec -it "$CONTAINER" bash -c 'PID=$(ps auxw | grep "python -W"| grep -v bin| grep -v grep| awk "{print \$1}") ;echo $PID ; kill $PID' > /dev/null
+        echo "Stopping audit node container $CONTAINER" | tee -a $LOG_PATH
+        if [ "$FORCE" == true ]; then
+            echo "Trying to forcefully stop $CONTAINER" | tee -a $LOG_PATH
+            docker kill "$CONTAINER" > /dev/null
+        else
+            docker exec -it "$CONTAINER" bash -c 'PID=$(ps auxw | grep "python -W"| grep -v bin| grep -v grep| awk "{print \$1}") ;if [ -z $PID ]; then echo "No PID found."; else kill $PID; fi' > /dev/null
 
         #Wait for the audit node to stop
-        while [[ $(docker inspect --format={{.State.Status}} "$CONTAINER") == "running" ]]; do
-            echo "Waiting for audit node to stop" | tee -a $LOG_PATH
-            sleep 2
-            if [[ "$ATTEMPTS" -eq 4 && $FORCE ]]; then
-                echo "Failed to stop $CONTAINER gracefully. Will try force stopping"
-                docker kill "$CONTAINER"
-            elif [[ "$ATTEMPTS" -eq 4 ]]; then
-                echo "Failed to stop $CONTAINER gracefully".
-                echo "Please try running the script again with -f to forcefully stop the container."
-                exit 1
-            fi
-            ATTEMPTS=$((ATTEMPTS + 1))
-        done
+            while [[ $(docker inspect --format={{.State.Status}} "$CONTAINER") == "running" ]]; do
+                echo "Waiting for audit node to stop" | tee -a $LOG_PATH
+                sleep 2
+                if [[ "$ATTEMPTS" -eq 4 ]]; then
+                
+                    
+                    echo "Failed to stop $CONTAINER gracefully" | tee -a $LOG_PATH
+                    echo "Please try running stop-node script with -f to forcefully stop the container." | tee -a $LOG_PATH
+                    exit 0
+                fi
+                ATTEMPTS=$((ATTEMPTS + 1))
+            done
+        fi
         
         echo "Audit node stopped"
-        RPID=`cat /tmp/qsp-protocol.pid`
+        readonly START_PIDFILE="/tmp/qsp-protocol.pid"
+        if [ -f "$START_PIDFILE" ] && [ -z $PARENT_PID  ]; then
+            RPID=`cat "$START_PIDFILE"`
 
-        if is_running "$RPID" ; then
-            echo "Start script is still running..."
-            echo "Trying to kill..."
-            kill -9 "$RPID"
-            sleep 5
             if is_running "$RPID" ; then
-               echo "Cannot kill the previously launched start-script" | tee -a $LOG_PATH
+                echo "Start script is still running..."
+                echo "Trying to kill..."
+                kill -9 "$RPID"
+                sleep 5
+                if is_running "$RPID" ; then
+                    echo "Cannot kill the previously launched start-script" | tee -a $LOG_PATH
+                else
+                    echo "Done (start-script killed)." | tee -a $LOG_PATH
+                    rm "$START_PIDFILE"
+                fi
             else
-               echo "Done (start-script killed)." | tee -a $LOG_PATH
+                rm "$START_PIDFILE"
             fi
         fi
     done

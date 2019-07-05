@@ -11,7 +11,7 @@
 
 1. Wait for CI tests to finish and pass
 
-1. Update changelog file for related release
+1. Bump the version in src/qsp_protocol_node/config/config.py
 
 ## Bug report
 
@@ -190,4 +190,3 @@ available at [http://contributor-covenant.org/version/1/4][version]
 
 [homepage]: http://contributor-covenant.org
 [version]: http://contributor-covenant.org/version/1/4/
-

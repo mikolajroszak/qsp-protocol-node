@@ -400,7 +400,7 @@ class TestConfig(QSPTest):
         self.assertIsNotNone(config.analyzers)
         self.assertIsNotNone(config.upload_provider)
         self.assertIsNotNone(config.metric_collection_destination_endpoint)
-        self.assertEqual(0, config.min_price_in_qsp)
+        self.assertEqual(5, config.min_price_in_qsp)
         self.assertEqual(0, config.gas_price_wei)
         self.assertEqual(5, config.evt_polling)
         self.assertEqual(2, len(config.analyzers))

@@ -13,13 +13,16 @@ from .threads import ClaimRewardsThread
 from .threads import CollectMetricsThread
 from .threads import ComputeGasPriceThread
 from .threads import PollRequestsThread
-from .threads import UpdateMinPriceThread
 from .threads import SubmitReportThread
 from .threads import PerformAuditThread
 from .threads import MonitorSubmissionThread
 
 from log_streaming import get_logger
 from utils.eth import mk_read_only_call
+from utils.eth import DeduplicationException
+from utils.eth import send_signed_transaction
+from utils.eth.tx import TransactionNotConfirmedException
+from web3.utils.threads import Timeout
 
 from time import sleep
 
@@ -63,7 +66,6 @@ class QSPAuditNode:
 
         self.__internal_threads = [
             ComputeGasPriceThread(config),
-            UpdateMinPriceThread(config),
             ClaimRewardsThread(config),
             PollRequestsThread(config),
             PerformAuditThread(config),
@@ -174,6 +176,86 @@ class QSPAuditNode:
                     self.config.audit_contract_address,
                     current_stake / (10 ** 18)))
 
+    def __update_min_price(self):
+        """
+        Updates smart contract with the minimum price in the audit node's configuration.
+        """
+        msg = "Make sure the account has enough Ether, " \
+              + "the Ethereum node is connected and synced, " \
+              + "and restart your node to try again."
+
+        min_price_in_mini_qsp = self.config.min_price_in_qsp * (10 ** 18)
+        self.logger.info(
+            "Updating min_price in the smart contract for address {0} to {1} QSP.".format(
+                self.config.account,
+                self.config.min_price_in_qsp,
+            ))
+        transaction = self.config.audit_contract.functions.setAuditNodePrice(
+            min_price_in_mini_qsp)
+        try:
+            tx_hash = send_signed_transaction(self.config,
+                                              transaction,
+                                              wait_for_transaction_receipt=True)
+            # If the tx_hash is None, the transaction did not actually complete. Exit
+            if not tx_hash:
+                raise Exception("The min price transaction did not complete")
+            self.logger.debug("Successfully updated min price to {0}.".format(
+                self.config.min_price_in_qsp))
+        except Timeout as e:
+            error_msg = "Update min price timed out, " \
+                + "increase the tx_timeout_seconds in config.yaml and restart the node. " \
+                + msg + " {0}, {1}."
+            formatted_error = error_msg.format(
+                str(transaction),
+                str(e))
+            self.logger.debug(formatted_error)
+            raise Timeout(formatted_error) from e
+        except DeduplicationException as e:
+            error_msg = "A transaction already exists for updating min price," \
+                        + " but has not yet been mined. " + msg \
+                        + " This may take several iterations. {0}, {1}."
+            self.logger.debug(error_msg.format(
+                str(transaction),
+                str(e)))
+            raise e
+        except TransactionNotConfirmedException as e:
+            error_msg = "A transaction occurred, but was then uncled and never recovered. {0}, {1}"
+            self.logger.debug(error_msg.format(
+                str(transaction),
+                str(e)))
+            raise e
+        except Exception as e:
+            error_msg = "Error occurred setting min price. " + msg + " {0}, {1}."
+            self.logger.exception(error_msg.format(
+                str(transaction),
+                str(e)))
+            raise e
+
+    def __check_and_update_min_price(self):
+        """
+        Checks that the minimum price in the audit node's configuration matches the smart contract
+        and updates it if it differs. This is a blocking function.
+        """
+        contract_price = mk_read_only_call(
+            self.config,
+            self.config.audit_contract.functions.getMinAuditPrice(self.config.account)
+        )
+
+        contract_price_lower_cap = mk_read_only_call(
+            self.config,
+            self.config.audit_contract.functions.getMinAuditPriceLowerCap()
+        )
+
+        min_price_in_mini_qsp = self.config.min_price_in_qsp * (10 ** 18)
+        if min_price_in_mini_qsp < contract_price_lower_cap:
+            error_msg = "The provided min price {0} QSP must be equal to or higher than the floor of {1} QSP".format(
+                self.config.min_price_in_qsp, contract_price_lower_cap / (10 ** 18))
+            self.logger.exception(error_msg)
+            raise Exception(error_msg)
+
+        if min_price_in_mini_qsp != contract_price:
+            self.__update_min_price()
+
     def start(self):
         """
         Starts all the threads processing different stages of a given event.
@@ -185,6 +267,7 @@ class QSPAuditNode:
 
         self.__exec = True
         self.__check_stake()
+        self.__check_and_update_min_price()
 
         # Upon restart, before processing, set all events that timed out to err
         self.__timeout_stale_requests()

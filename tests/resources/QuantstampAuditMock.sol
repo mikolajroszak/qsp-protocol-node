@@ -245,6 +245,10 @@ contract QuantstampAudit {
     return minPrices[auditor];
   }
 
+  function getMinAuditPriceLowerCap() public view returns(uint256) {
+    return 2000000000000000000;
+  }
+
   uint256 minAuditStake_mocked_result = 0;
 
   event setMinAuditStake_called(uint256 mocked_result);
