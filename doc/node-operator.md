@@ -399,11 +399,12 @@ As a node operator, you won't need to worry about to unstake from the old contra
 1. Navigate to [Protocol UI](https://protocol.quantstamp.com) and check whether the version has been upgraded in the `QSP Nodes` Panel.
 
 ## Reaching out for help
+When you've encountered issues following the guide, please browse open/closed issues to see if others have experienced the same problem. Navigate to [Issues](https://github.com/quantstamp/qsp-protocol-node/issues) to check them out.
 
-When you've encountered issues following the guide, feel free to reach out, we would gladly help! To help us help you better, we would suggest to open up a GitHub issue for the following reasons:
+If you couldn't find issues related to your problem, feel free to reach out, we would gladly help! To help us help you better, we would suggest to open up a GitHub issue for the following reasons:
 
 1. Get faster response: The technical team will get notified if you opened up a GitHub issue and would be able to get back to you much sooner!
 
 2. Better Guidance: To help troubleshoot your problem, we would need you to provide some information and logs from you. The format of GitHub issues would guide you to answer these questions and reduce the time for communication.
 
-You could also browse open/closed issues to see if others have experienced the same problem. Navigate to [Issues](https://github.com/quantstamp/qsp-protocol-node/issues) to check them out.
+
