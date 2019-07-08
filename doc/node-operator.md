@@ -52,7 +52,6 @@ The node has been tested in the envrionment listed below.
 - Staying up-to-date through social media
 - Setting environment variables
 
-
 ### [Reaching out for help](#Reaching-out-for-help)
 
 ## Local Installation
