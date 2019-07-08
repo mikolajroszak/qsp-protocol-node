@@ -6,6 +6,16 @@
 ####################################################################################################
 
 
+
+# ***NOTE***
+# 
+# ANY import to a module in the node's code base should
+# be not occur here. Rather, make it local so that
+# any declared logger is correctly routed to the LogStreamLogger
+# Having a local import makes sure the logging in each imported 
+# module is correctly set (e.g., in case of having a global declared
+# logger variable)
+
 import logging
 import logging.config
 import os

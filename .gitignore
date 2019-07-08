@@ -13,3 +13,4 @@ app.tar
 tmp/
 keystore/
 qsp-protocol.log
+resources/keystore/default.json
