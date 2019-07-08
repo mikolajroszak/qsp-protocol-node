@@ -47,7 +47,7 @@ The node has been tested in the envrionment listed below.
 -  Checking how much QSP have you earned 
 -  How to unstake your funds (Warning: not eligible to audit anymore)
 
-## [How to keep your node running and up-to-date](#how-to-keep-your-node-running-and-up-to-date)
+### [How to keep your node running and up-to-date](#how-to-keep-your-node-running-and-up-to-date)
 - Staying up-to-date with the latest releases
 - Staying up-to-date through social media
 - Setting environment variables
