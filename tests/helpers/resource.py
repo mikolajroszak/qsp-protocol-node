@@ -13,20 +13,10 @@ import os
 
 from config import ConfigFactory, ConfigUtils
 from .transact import safe_transact
-from utils.io import fetch_file, load_json
+from utils.io import fetch_file, load_json, read_file
 
 from dpath.util import get
 from solc import compile_files
-
-
-def resource_uri(path, is_main=False):
-    """
-    Returns the filesystem URI of a given resource.
-    """
-    if is_main:
-        return "file://{0}/../../src/qsp_protocol_node/{1}".format(os.path.dirname(__file__), path)
-    else:
-        return "file://{0}/../resources/{1}".format(os.path.dirname(__file__), path)
 
 
 def project_root():
@@ -36,9 +26,21 @@ def project_root():
     return os.path.abspath("{0}/../../".format(os.path.dirname(__file__)))
 
 
+def resource_uri(path):
+    """
+    Returns the filesystem URI of a given resource.
+    """
+    return "file://{0}/../resources/{1}".format(os.path.dirname(__file__), path)
+
+
 def remove(path):
     with contextlib.suppress(FileNotFoundError):
         os.remove(path)
+
+
+def node_version():
+    version = read_file("{0}/VERSION".format(project_root()))
+    return version.strip()
 
 
 def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
@@ -71,11 +73,14 @@ def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
     return address, audit_contract
 
 
-def fetch_config(inject_contract=False):
+def fetch_config(inject_contract=False, version=None):
+    if version is None:
+        version = node_version()
+
     # create config from file, the contract is not provided and will be injected separately
     config_file_uri = resource_uri("test_config.yaml")
     config = ConfigFactory.create_from_file(config_file_uri, os.getenv("QSP_ENV", default="dev"),
-                                            validate_contract_settings=False)
+                                            version, validate_contract_settings=False)
     if inject_contract:
         contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
         contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
@@ -91,7 +96,7 @@ def fetch_config(inject_contract=False):
         config._Config__audit_contract_address = addr
         config._Config__audit_contract = contract
 
-        config_utils = ConfigUtils(config.node_version)
+        config_utils = ConfigUtils()
         config_utils.check_configuration_settings(config)
 
     return config

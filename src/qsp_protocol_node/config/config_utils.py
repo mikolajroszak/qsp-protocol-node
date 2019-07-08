@@ -54,9 +54,8 @@ class ConfigUtils:
         config_file = io_utils.load_yaml(config_file_path)
         return config_file[environment]
 
-    def __init__(self, node_version):
+    def __init__(self):
         self.__logger = get_logger(self.__class__.__qualname__)
-        self.__node_version = node_version
 
     def create_upload_provider(self, account, upload_provider_name,
         upload_provider_args, is_enabled):
@@ -229,16 +228,6 @@ class ConfigUtils:
             address=contract_address,
             abi=abi_json,
         )
-
-    def resolve_version(self, version):
-        """
-        Instruments a given string with the version of the protocol
-        """
-        major_version = self.__node_version[0:self.__node_version.index('.')]
-        result = None
-        if version is not None:
-            result = version.replace('{major-version}', major_version)
-        return result
 
     def create_analyzers(self, analyzers_config):
         """

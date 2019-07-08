@@ -12,3 +12,5 @@ app.tar
 **/event_database.db
 tmp/
 keystore/
+qsp-protocol.log
+resources/keystore/default.json

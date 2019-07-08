@@ -15,10 +15,7 @@ from tempfile import NamedTemporaryFile
 from config import config_value, Config, ConfigFactory
 from helpers.simple_mock import SimpleMock
 from helpers.resource import resource_uri
-from utils.io import (
-    fetch_file,
-    load_yaml,
-)
+from utils.io import fetch_file
 from helpers.qsp_test import QSPTest
 
 
@@ -46,9 +43,6 @@ class ConfigUtilsDummy:
 
     def load_config(self, config_file_uri, environment):
         return self.return_values.get('load_config', None)
-
-    def resolve_version(self, input):
-        return self.return_values.get('resolve_version', None)
 
 
 class ConfigUtilsMock(SimpleMock):
@@ -217,7 +211,7 @@ class TestConfig(QSPTest):
         upload_provider_name = "provider name"
         upload_provider_args = "arguments"
         upload_provider = "value"
-        config = ConfigFactory.create_empty_config()
+        config = ConfigFactory.create_empty_config("dummy-version")
         config._Config__account = account
         config._Config__upload_provider_name = upload_provider_name
         config._Config__upload_provider_is_enabled = True
@@ -237,7 +231,7 @@ class TestConfig(QSPTest):
         name = "provider name"
         args = "arguments"
         return_value = "value"
-        config = ConfigFactory.create_empty_config()
+        config = ConfigFactory.create_empty_config("dummy-version")
         config._Config__eth_provider_name = name
         config._Config__eth_provider_args = args
         utils = ConfigUtilsMock()
@@ -252,7 +246,7 @@ class TestConfig(QSPTest):
         analyzers_config = "config list"
         logger = "logger"
         return_value = "value"
-        config = ConfigFactory.create_empty_config()
+        config = ConfigFactory.create_empty_config("dummy-version")
         config._Config__analyzers_config = analyzers_config
         config._Config__logger = logger
         utils = ConfigUtilsMock()
@@ -268,7 +262,7 @@ class TestConfig(QSPTest):
         account_passwd = "account password"
         account_keystore_file = "./mykey.json"
         created_web3_provider = "created provider"
-        config = ConfigFactory.create_empty_config()
+        config = ConfigFactory.create_empty_config("dummy-version")
         config._Config__eth_provider = eth_provider
         config._Config__account_passwd = account_passwd
         config._Config__account_keystore_file = account_keystore_file
@@ -285,7 +279,9 @@ class TestConfig(QSPTest):
         """
         Tests that all properties are listed in the constructor and have default values
         """
-        config = Config()
+        version = "dummy-version"
+        config = Config(version)
+        self.assertEqual(config.node_version, version)
         self.assertIsNone(config.eth_provider)
         self.assertIsNone(config.eth_provider_name)
         self.assertIsNone(config.eth_provider_args)
@@ -341,7 +337,7 @@ class TestConfig(QSPTest):
         audit_contract_address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         created_audit_contract = "contract"
         created_web3_client = Web3Mock()
-        config = ConfigFactory.create_empty_config()
+        config = ConfigFactory.create_empty_config("dummy-version")
         config._Config__eth_provider_name = eth_provider_name
         config._Config__eth_provider_args = eth_provider_args
         config._Config__account = account
@@ -392,7 +388,12 @@ class TestConfig(QSPTest):
 
     def test_load_config(self):
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file(config_file_uri, "dev", validate_contract_settings=False)
+        config = ConfigFactory.create_from_file(
+            config_file_uri,
+            "dev",
+            "dummy-version",
+            validate_contract_settings=False
+        )
         self.assertIsNotNone(config.eth_provider)
         self.assertIsNotNone(config.web3_client)
         self.assertIsNotNone(config.account)
@@ -406,26 +407,6 @@ class TestConfig(QSPTest):
         self.assertEqual(5, config.start_n_blocks_in_the_past)
         self.assertEqual(1, config.block_discard_on_restart)
         self.assertFalse(config.enable_police_audit_polling)
-
-    def test_inject_token_auth(self):
-        auth_token = "abc123456"
-        endpoint = "https://test.com/?token={0}".format(auth_token)
-        target_env = "dev"
-
-        # Sets the dictionary to be returned by a call to load_config
-        config_file = fetch_file(resource_uri("test_config_with_auth_token.yaml"))
-        config_yaml = load_yaml(config_file)
-        dummy_utils = ConfigUtilsDummy({'load_config': config_yaml[target_env]})
-
-        config = ConfigFactory.create_from_file(
-            environment=target_env,
-            config_file_uri="some dummy uri",
-            auth_token=auth_token,
-            validate_contract_settings=False,
-            config_utils=dummy_utils,
-        )
-        self.assertEqual(config.auth_token, auth_token)
-        self.assertEqual(config.eth_provider_args['endpoint_uri'], endpoint)
 
 
 if __name__ == '__main__':

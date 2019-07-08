@@ -49,8 +49,7 @@ class Config:
     Provides a set of methods for accessing configuration parameters.
     """
     def __fetch_contract_metadata(self, cfg, config_utils, contract_abi):
-        metadata_uri = config_utils.resolve_version(
-            config_value(cfg, '/' + contract_abi + '/metadata'))
+        metadata_uri = config_value(cfg, '/' + contract_abi + '/metadata')
         if metadata_uri is not None:
             return io_utils.load_json(
                 io_utils.fetch_file(metadata_uri)
@@ -63,19 +62,13 @@ class Config:
         self.__audit_contract_address = config_value(audit_contract_metadata, '/contractAddress')
         self.__contract_version = config_value(audit_contract_metadata, '/version')
         self.__audit_contract = None
-        self.__audit_contract_abi_uri = config_utils.resolve_version(
-            config_value(cfg, '/audit_contract_abi/uri'))
+        self.__audit_contract_abi_uri = config_value(cfg, '/audit_contract_abi/uri')
 
         self.__eth_provider_name = config_value(cfg, '/eth_node/provider', accept_none=False)
         self.__eth_provider = None
         self.__eth_provider_args = config_value(cfg, '/eth_node/args', {})
 
-        # Makes sure the endpoint URL contains the authentication token
-        endpoint = self.__eth_provider_args.get('endpoint_uri')
-        if endpoint is not None:
-            if self.auth_token is None:
-                raise ValueError("Authentication token is missing. Cannot set provider endpoint")
-            self.__eth_provider_args['endpoint_uri'] = endpoint.replace("${token}", self.auth_token)
+        self.__eth_provider_args['endpoint_uri'] = self.__eth_provider_args.get('endpoint_uri')
 
         self.__block_discard_on_restart = config_value(cfg, '/block_discard_on_restart', 0)
         self.__min_price_in_qsp = config_value(cfg, '/min_price_in_qsp', accept_none=False)
@@ -186,26 +179,25 @@ class Config:
         self.__report_encoder = ReportEncoder()
         self.__upload_provider = self.__create_upload_provider(config_utils)
 
-    def load_dictionary(self, config_dictionary, config_utils, env, account_passwd="", auth_token="",
+    def load_dictionary(self, config_dictionary, config_utils, env, account_passwd="",
                         validate_contract_settings=True):
         self.__env = env
         self.__account_passwd = account_passwd
-        self.__auth_token = auth_token
         self.__setup_values(config_dictionary, config_utils)
         self.__create_components(config_utils, validate_contract_settings)
 
-    def load_file(self, config_file_uri, config_utils, env, account_passwd="", auth_token="",
+    def load_file(self, config_file_uri, config_utils, env, account_passwd="",
                     validate_contract_settings=True):
         cfg = config_utils.load_config(config_file_uri, env)
         self.__config_file_uri = config_file_uri
-        self.load_dictionary(cfg, config_utils, env, account_passwd, auth_token, validate_contract_settings)
+        self.load_dictionary(cfg, config_utils, env, account_passwd, validate_contract_settings)
 
-    def __init__(self):
+    def __init__(self, node_version):
         """
         Builds a Config object from a target environment (e.g., test) and an input YAML
         configuration file.
         """
-        self.__node_version = '2.0.3'
+        self.__node_version = node_version
         self.__analyzers = []
         self.__analyzers_config = []
         self.__audit_contract_name = None
@@ -216,7 +208,6 @@ class Config:
         self.__account_keystore_file = None
         self.__account_private_key = None
         self.__account_passwd = None
-        self.__auth_token = None
         self.__config_file_uri = None
         self.__gas_limit = 0
         self.__evt_db_path = None
@@ -353,13 +344,6 @@ class Config:
         Returns the account associated password.
         """
         return self.__account_passwd
-
-    @property
-    def auth_token(self):
-        """
-        Returns the authentication token required to access the provider endpoint.
-        """
-        return self.__auth_token
 
     @property
     def account_keystore_file(self):

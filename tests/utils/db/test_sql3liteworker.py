@@ -16,10 +16,14 @@ from timeout_decorator import timeout
 
 from config import config_value
 from evt.evt_pool_manager import EventPoolManager
-from helpers.resource import remove, resource_uri
+from helpers.resource import project_root, remove, resource_uri
 from helpers.qsp_test import QSPTest
 from utils.db import Sqlite3Worker
 from utils.io import fetch_file, load_yaml
+
+
+def sql_file(filename):
+    return fetch_file("{0}/src/qsp_protocol_node/evt/{1}.sql".format(project_root(), filename))
 
 
 class TestSqlLite3Worker(QSPTest):
@@ -39,7 +43,7 @@ class TestSqlLite3Worker(QSPTest):
         Sets up fresh database for each test.
         """
         self.worker = Sqlite3Worker(TestSqlLite3Worker.db_file)
-        self.worker.execute_script(fetch_file(resource_uri('evt/createdb.sql', is_main=True)))
+        self.worker.execute_script(sql_file('createdb'))
 
     def tearDown(self):
         """
@@ -109,7 +113,7 @@ class TestSqlLite3Worker(QSPTest):
                 self.assertFalse(sql3liteworker_logger_mock.warning.called)
 
                 self.worker.execute_script(
-                    fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
+                    sql_file('add_evt_to_be_assigned'),
                     values=(1, 'x', 'x', 'x', 10, 'x', 'x', 12),
                     error_handler=EventPoolManager.insert_error_handler
                 )
@@ -120,7 +124,7 @@ class TestSqlLite3Worker(QSPTest):
         with mock.patch.object(self.worker, 'logger') as sql3liteworker_logger_mock:
             with mock.patch('evt.evt_pool_manager.logger') as evt_pool_manager_logger_mock:
                 self.worker.execute_script(
-                    fetch_file(resource_uri('evt/add_evt_to_be_assigned.sql', is_main=True)),
+                    sql_file('add_evt_to_be_assigned'),
                     values=(1, 'x', 'x', 'x', 10, 'x', 'x', 12),
                     error_handler=EventPoolManager.insert_error_handler
                 )
