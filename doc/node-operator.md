@@ -170,6 +170,9 @@ After you paste the contents of `[MyEtherWallet keystore file]` into `resources/
 ![](./node-operator/DEFAULT_FILE_COMPLETE_EXAMPLE.png)
 *Note: Not all of the code is visible in this image.* 
 
+Change the permissions for default.json so that only owner can read and write to the file: 
+
+`chmod 600 resources/keystore/default.json`
 
 
 ## Making your account eligible as a node operator ([Click here](https://youtu.be/3EeU_BCqAt0) to watch it on Youtube)
