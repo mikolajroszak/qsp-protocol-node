@@ -401,10 +401,10 @@ As a node operator, you won't need to worry about to unstake from the old contra
 ## Reaching out for help
 When you've encountered issues following this guide, please browse open/closed issues to see if others have experienced the same problem. Navigate to [Issues](https://github.com/quantstamp/qsp-protocol-node/issues) to check them out.
 
-If you couldn't find issues related to your problem, feel free to reach out, we would gladly help! To help us assist you better, we would suggest to open up a GitHub issue for the following reasons:
+If you couldn't find issues related to your problem, feel free to reach out, we would gladly help! To help us assist you better, we suggest opening up a Github issue. Reasons are:
 
-1. Get faster response: the technical team is notified when you open a GitHub issue and will get back to you as soon as possible!
+1. Get faster response: the technical team is notified when new issues appear and will get back to you as soon as possible!
 
-2. Better Guidance: To help troubleshoot your problem, we need some context and logs output from your node. When opening an issue on GitHub, you will be given guidance on how to provide the team with enough information for them to attempt to solve your issue.
+2. Better Guidance: to help troubleshoot your problem, we need some context and logs output from your node. When opening an issue on GitHub, you will be given guidance on how to provide the team with enough information for them to attempt to solve your issue.
 
 
