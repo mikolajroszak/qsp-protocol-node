@@ -8,9 +8,6 @@ before_install:
 addons:
   apt:
     update: true
-install:
-  - pip3 install pycodestyle==2.4.0
-  - pip3 install flake8==3.6.0
 script:
   - ./bin/run-ci
 after_script:
