@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+QSP_IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
+
+readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+QSP_ROOT=`dirname "$SCRIPT_DIR"`
+cd "$QSP_ROOT"
+
+echo "Running Stylecheck..."
+find . -name \*.py -exec flake8 --ignore="$QSP_IGNORE_CODES" {} +
+find . -name \*.py -exec pycodestyle --ignore="$QSP_IGNORE_CODES" {} +
+echo "Stylecheck passed!!!"

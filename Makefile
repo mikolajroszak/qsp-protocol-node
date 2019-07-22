@@ -12,7 +12,6 @@ QSP_ENV_CI ?= "dev"
 QSP_CONFIG ?= "./resources/config.yaml"
 QSP_ETH_PASSPHRASE ?= "abc123ropsten"
 QSP_ETH_AUTH_TOKEN ?= "PLEASE-SET-THE-TOKEN"
-QSP_IGNORE_CODES=E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E501
 QSP_LOG_DIR ?= $(HOME)/qsp-protocol
 AWS_ACCESS_KEY_ID ?= ""
 AWS_SECRET_ACCESS_KEY ?= ""
@@ -92,11 +91,14 @@ bundle:
 check-contract-versions:
 	./bin/check-contract-versions
 	
-stylecheck:
-	echo "Running Stylecheck"
-	find . -name \*.py -exec flake8 --ignore=$(QSP_IGNORE_CODES) {} +
-	find . -name \*.py -exec pycodestyle --ignore=$(QSP_IGNORE_CODES) {} +
-	echo "Stylecheck passed"
+stylecheck: build
+	docker run -t \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v /tmp:/tmp \
+		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
+		-v $(PWD)/tests/coverage:/app/tests/coverage \
+		-e QSP_ENV="$(QSP_ENV_CI)" \
+		qsp-protocol-node sh -c "./bin/stylecheck"
 
 elk:
 	cd deployment/local/elk && docker-compose up -d

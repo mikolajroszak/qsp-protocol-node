@@ -34,3 +34,5 @@ eth-typing==2.1.0
 py-ecc==1.7.0
 trie==1.4.0
 py-evm==0.2.0a34
+pycodestyle==2.4.0
+flake8==3.6.0
