@@ -10,6 +10,6 @@ QSP_ROOT=`dirname "$SCRIPT_DIR"`
 cd "$QSP_ROOT"
 
 echo "Running Stylecheck..."
-find . -name \*.py -exec flake8 --ignore="$QSP_IGNORE_CODES" {} +
-find . -name \*.py -exec pycodestyle --ignore="$QSP_IGNORE_CODES" {} +
+find . -name \*.py -path ./plugins/usolc -prune -exec flake8 --ignore="$QSP_IGNORE_CODES" {} +
+find . -name \*.py -path ./plugins/usolc -prune -exec pycodestyle --ignore="$QSP_IGNORE_CODES" {} +
 echo "Stylecheck passed!!!"
