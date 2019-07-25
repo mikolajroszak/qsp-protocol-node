@@ -22,6 +22,10 @@ from web3 import Web3
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 
+class InvalidKeyStoreError(Exception):
+    pass
+
+
 class Program:
 
     __yaml_config = None
@@ -88,15 +92,7 @@ class Program:
         logging.config.dictConfig(dict_config)
 
     @classmethod
-    def __setup_log_streaming(cls):
-        # Load keystore
-        keystore_file = get(Program.__yaml_config[Program.__env], "/keystore_file")
-        with open(keystore_file) as k:
-            keystore = load(k)
-
-        # Get account
-        account = Web3.toChecksumAddress('0x' + keystore['address'])
-
+    def __setup_log_streaming(cls, account):
         # Get log streaming config (if any)
         log_streaming_config = None
         try:
@@ -116,7 +112,22 @@ class Program:
         with open(yaml_file_name) as y:
             Program.__yaml_config = yaml.load(y)
 
-        Program.__setup_log_streaming()
+        account = None
+        try:
+            # Load keystore
+            keystore_file = get(Program.__yaml_config[Program.__env], "/keystore_file")
+            with open(keystore_file) as k:
+                keystore = load(k)
+            # Get account
+            account = Web3.toChecksumAddress('0x' + keystore['address'])
+
+        except KeyError:
+            pass
+
+        if not account:
+            raise InvalidKeyStoreError("Keystore file invalid. Replace with valid keystore file.")
+
+        Program.__setup_log_streaming(account)
 
     @classmethod
     def run(cls, eth_passphrase, eth_auth_token, sol_file):
@@ -178,18 +189,17 @@ class Program:
 if __name__ == "__main__":
     logger = None
     try:
+        from log_streaming import get_logger
+        logger = get_logger(__name__)
+
         Program.setup(
             os.environ['QSP_ENV'],
             os.environ['QSP_CONFIG'],
             os.environ['QSP_LOGGING_LEVEL']
         )
+
         sol_file = os.environ.get('SOL_FILE')
-
-        from log_streaming import get_logger
-        logger = get_logger(__name__)
-
         Program.run(os.environ['QSP_ETH_PASSPHRASE'], os.environ['QSP_ETH_AUTH_TOKEN'], sol_file)
-
     except Exception as error:
         if logger is not None:
             logger.exception("Error in running node: {0}".format(str(error)))
