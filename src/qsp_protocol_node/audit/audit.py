@@ -16,6 +16,7 @@ from .threads import PollRequestsThread
 from .threads import SubmitReportThread
 from .threads import PerformAuditThread
 from .threads import MonitorSubmissionThread
+from .threads import BlockMinedPollingThread
 
 from log_streaming import get_logger
 from utils.eth import mk_read_only_call
@@ -64,10 +65,13 @@ class QSPAuditNode:
         self.__is_initialized = False
         self.__logger = get_logger(self.__class__.__qualname__)
 
+        blockMinedThread = BlockMinedPollingThread(config)
+
         self.__internal_threads = [
-            ComputeGasPriceThread(config),
+            blockMinedThread,
+            ComputeGasPriceThread(config, blockMinedThread),
             ClaimRewardsThread(config),
-            PollRequestsThread(config),
+            PollRequestsThread(config, blockMinedThread),
             PerformAuditThread(config),
             SubmitReportThread(config),
             MonitorSubmissionThread(config)

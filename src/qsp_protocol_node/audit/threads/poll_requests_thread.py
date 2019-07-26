@@ -9,7 +9,7 @@
 Provides the thread for polling requests for the QSP Audit node implementation.
 """
 
-from .qsp_thread import BlockMinedPollingThread
+from .qsp_thread import BlockMinedSubscriberThread
 from utils.eth import send_signed_transaction
 from utils.eth import mk_read_only_call
 from utils.eth import DeduplicationException
@@ -23,7 +23,7 @@ class NotEnoughStake(Exception):
     pass
 
 
-class PollRequestsThread(BlockMinedPollingThread):
+class PollRequestsThread(BlockMinedSubscriberThread):
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
 
     # Must be in sync with
@@ -245,13 +245,14 @@ class PollRequestsThread(BlockMinedPollingThread):
         self.__poll_audit_request()
         self.__poll_police_request()
 
-    def __init__(self, config):
+    def __init__(self, config, block_mined_polling_thread):
         """
         Builds the thread object from the given input parameters.
         """
-        BlockMinedPollingThread.__init__(
+        BlockMinedSubscriberThread.__init__(
             self,
             config=config,
             target_function=self.__on_block_mined,
-            thread_name="poll_requests thread"
+            thread_name="poll_requests thread",
+            block_mined_polling_thread=block_mined_polling_thread
         )
