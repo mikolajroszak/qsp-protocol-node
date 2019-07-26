@@ -5,7 +5,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-from audit import PollRequestsThread
+from audit import PollRequestsThread, BlockMinedPollingThread
 from helpers.qsp_test import QSPTest
 from helpers.resource import fetch_config, remove
 from timeout_decorator import timeout
@@ -26,11 +26,12 @@ class TestPollRequestsThread(QSPTest):
 
     def setUp(self):
         self.__config = fetch_config(inject_contract=True)
-        self.__poll_requests_thread = PollRequestsThread(self.__config)
+        self.__block_mined_polling_thread = BlockMinedPollingThread(self.__config)
+        self.__poll_requests_thread = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
 
     def test_init(self):
         config = fetch_config(inject_contract=True)
-        thread = PollRequestsThread(config)
+        thread = PollRequestsThread(config, self.__block_mined_polling_thread)
         self.assertEqual(config, thread.config)
 
     def test_call_to_get_next_police_assignment(self):
@@ -40,7 +41,7 @@ class TestPollRequestsThread(QSPTest):
         """
         exception = None
         try:
-            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             poll_requests_instance._PollRequestsThread__get_next_police_assignment()
         except Exception as e:
             exception = e
@@ -94,7 +95,7 @@ class TestPollRequestsThread(QSPTest):
         """
         with mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                    return_value=(1000 * (10 ** 18))):
-            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             min_stake = poll_requests_instance._PollRequestsThread__get_min_stake_qsp()
 
             self.assertEquals(min_stake, 1000)
@@ -105,7 +106,7 @@ class TestPollRequestsThread(QSPTest):
         """
         exception = None
         try:
-            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             poll_requests_instance._PollRequestsThread__get_min_stake_qsp()
         except Exception as e:
             exception = e
@@ -115,7 +116,7 @@ class TestPollRequestsThread(QSPTest):
     def test_poll_audit_request_exception(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
-        poll_requests_instance = PollRequestsThread(self.__config)
+        poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
 
         def mocked__get_next_audit_request():
             raise Exception('mocked exception')
@@ -136,7 +137,7 @@ class TestPollRequestsThread(QSPTest):
         with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=True), \
              mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                         return_value=0) as mk_read_only_call:
-            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             poll_requests_instance._PollRequestsThread__poll_audit_request()
             mk_read_only_call.assert_not_called()
 
@@ -149,7 +150,7 @@ class TestPollRequestsThread(QSPTest):
         with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=False), \
              mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                         return_value=0) as mk_read_only_call:
-            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             poll_requests_instance._PollRequestsThread__poll_audit_request()
             mk_read_only_call.assert_called()
 
@@ -162,7 +163,7 @@ class TestPollRequestsThread(QSPTest):
         with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=True), \
              mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                         return_value=0) as mk_read_only_call:
-            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             poll_requests_instance.config._Config__enable_police_audit_polling = True
             poll_requests_instance._PollRequestsThread__poll_audit_request()
             # the function call is going to fail, but we only care about whether
@@ -178,7 +179,7 @@ class TestPollRequestsThread(QSPTest):
         with mock.patch('audit.audit.QSPAuditNode.is_police_officer', return_value=False), \
              mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                         return_value=0) as mk_read_only_call:
-            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             poll_requests_instance.config._Config__enable_police_audit_polling = True
             poll_requests_instance._PollRequestsThread__poll_audit_request()
             # the function call is going to fail, but we only care about whether
@@ -189,7 +190,7 @@ class TestPollRequestsThread(QSPTest):
     def test_poll_audit_request_deduplication_exceptions(self):
         # The following causes an exception in the auditing node, but it should be caught and
         # should not propagate
-        poll_requests_instance = PollRequestsThread(self.__config)
+        poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
 
         def mocked__get_next_audit_request():
             raise DeduplicationException('mocked exception')
@@ -204,7 +205,7 @@ class TestPollRequestsThread(QSPTest):
 
     @timeout(10, timeout_exception=StopIteration)
     def test_poll_audit_request_when_not_confirmed(self):
-        poll_requests_instance = PollRequestsThread(self.__config)
+        poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
 
         # myMostRecentAssignedAudit, make the block number far into the future,
         # so confirmation fails
@@ -218,7 +219,7 @@ class TestPollRequestsThread(QSPTest):
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
         config = fetch_config(inject_contract=True)
-        thread = PollRequestsThread(config)
+        thread = PollRequestsThread(config, self.__block_mined_polling_thread)
         thread.start()
         while not thread.exec:
             sleep(0.1)
@@ -233,7 +234,7 @@ class TestPollRequestsThread(QSPTest):
                 self.__config._Config__n_blocks_confirmation = 0
             else:
                 self.__config._Config__n_blocks_confirmation = 1000
-            poll_requests_instance = PollRequestsThread(self.__config)
+            poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             # Configures the behaviour of __get_next_police_assignment
             poll_requests_instance._PollRequestsThread__get_next_police_assignment = MagicMock()
             poll_requests_instance._PollRequestsThread__get_next_police_assignment.return_value = \

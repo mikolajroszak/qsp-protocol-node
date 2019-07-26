@@ -11,6 +11,7 @@ from audit import QSPAuditNode
 from audit.threads import SubmitReportThread
 from audit.threads import PollRequestsThread
 from audit.threads import ClaimRewardsThread
+from audit.threads import BlockMinedPollingThread
 from audit.report_processing import ReportEncoder
 from helpers.qsp_test import QSPTest
 from helpers.resource import fetch_config
@@ -46,6 +47,7 @@ class TestPoliceLogic(QSPTest):
 
     def setUp(self):
         self.__config = fetch_config(inject_contract=True)
+        self.__block_mined_polling_thread = BlockMinedPollingThread(self.__config)
         self.__audit_node = QSPAuditNode(self.__config)
         self.__audit_node.config._Config__upload_provider = DummyProvider()
 
@@ -67,7 +69,7 @@ class TestPoliceLogic(QSPTest):
         # Adds a police event to the database to trigger the flow of a police
         # check. Since no other thread should be writing to the DB at this
         # point, the write can be performed without a lock.
-        poll_requests_instance = PollRequestsThread(self.__config)
+        poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
         poll_requests_instance._PollRequestsThread__add_evt_to_db(
             request_id=request_id,
             requestor=self.__audit_node.config.audit_contract_address,
@@ -156,7 +158,7 @@ class TestPoliceLogic(QSPTest):
         # Adds a police event to the database to trigger the flow of a police
         # check. Since no other thread should be writing to the DB at this
         # point, the write can be performed without a lock.
-        poll_requests_instance = PollRequestsThread(self.__config)
+        poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
         poll_requests_instance._PollRequestsThread__add_evt_to_db(
             request_id=request_id,
             requestor=self.__audit_node.config.audit_contract_address,

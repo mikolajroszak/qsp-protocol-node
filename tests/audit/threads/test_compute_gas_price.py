@@ -5,7 +5,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-from audit import ComputeGasPriceThread
+from audit import ComputeGasPriceThread, BlockMinedPollingThread
 from helpers.qsp_test import QSPTest
 from helpers.resource import fetch_config
 from timeout_decorator import timeout
@@ -17,13 +17,15 @@ class TestComputeGasPriceThread(QSPTest):
 
     def test_init(self):
         config = fetch_config(inject_contract=True)
-        thread = ComputeGasPriceThread(config)
+        block_mined_polling_thread = BlockMinedPollingThread(config)
+        thread = ComputeGasPriceThread(config, block_mined_polling_thread)
         self.assertEqual(config, thread.config)
 
     @timeout(30, timeout_exception=StopIteration)
     def test_gas_price_computation_static(self):
         config = fetch_config(inject_contract=True)
-        thread = ComputeGasPriceThread(config)
+        block_mined_polling_thread = BlockMinedPollingThread(config)
+        thread = ComputeGasPriceThread(config, block_mined_polling_thread)
         config._Config__default_gas_price_wei = 12345
         config._Config__gas_price_strategy = "static"
         thread.compute_gas_price()
@@ -32,7 +34,8 @@ class TestComputeGasPriceThread(QSPTest):
     @timeout(30, timeout_exception=StopIteration)
     def test_gas_price_computation_empty_blockchain(self):
         config = fetch_config(inject_contract=True)
-        thread = ComputeGasPriceThread(config)
+        block_mined_polling_thread = BlockMinedPollingThread(config)
+        thread = ComputeGasPriceThread(config, block_mined_polling_thread)
         # tests for errors when there are too few blocks in the blockchain history
         try:
             thread.compute_gas_price()
@@ -44,7 +47,8 @@ class TestComputeGasPriceThread(QSPTest):
     def test_start_stop(self):
         # start the thread, signal stop and exit. use mock not to make work
         config = fetch_config(inject_contract=True)
-        thread = ComputeGasPriceThread(config)
+        block_mined_polling_thread = BlockMinedPollingThread(config)
+        thread = ComputeGasPriceThread(config, block_mined_polling_thread)
         thread.start()
         while not thread.exec:
             sleep(0.1)

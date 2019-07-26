@@ -101,8 +101,8 @@ class TimeIntervalPollingThread(QSPThread):
 
 class BlockMinedPollingThread(QSPThread):
 
-    def __init__(self, config, thread_name):
-        QSPThread.__init__(self, config, None, thread_name, False)
+    def __init__(self, config):
+        QSPThread.__init__(self, config, None, "block_mined_polling thread", False)
         self.current_block = 0
 
     # This was previously named `run_when_block_mined`
@@ -125,7 +125,7 @@ class BlockMinedPollingThread(QSPThread):
 class BlockMinedSubscriberThread(QSPThread):
     def __init__(self, config, target_function, thread_name, block_mined_polling_thread):
         QSPThread.__init__(self, config, target_function, thread_name, True)
-        self.__block_mined_polling_thread = self.block_mined_polling_thread
+        self.__block_mined_polling_thread = block_mined_polling_thread
 
     def run(self):
         """
@@ -134,7 +134,7 @@ class BlockMinedSubscriberThread(QSPThread):
         self._exec = True
         last_block_number = 0
         while self._exec:
-            if last_block_number != self.__block_mined_polling_thread.currentBlock:
-                last_block_number = self.__block_mined_polling_thread.currentBlock
-                self.__on_block_mined(last_block_number)
+            if last_block_number != self.__block_mined_polling_thread.current_block:
+                last_block_number = self.__block_mined_polling_thread.current_block
+                self._target_function(last_block_number)
             sleep(self.sleep_time())
