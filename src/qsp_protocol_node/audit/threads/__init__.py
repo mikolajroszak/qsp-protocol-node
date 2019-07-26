@@ -10,7 +10,7 @@ from .compute_gas_price_thread import ComputeGasPriceThread
 from .collect_metrics_thread import CollectMetricsThread
 from .monitor_submission_thread import MonitorSubmissionThread
 from .perform_audit_thread import PerformAuditThread
-from .qsp_thread import QSPThread
+from .qsp_thread import QSPThread, BlockMinedPollingThread
 from .submit_report_thread import SubmitReportThread
 from .poll_requests_thread import PollRequestsThread
 
@@ -21,4 +21,5 @@ __all__ = ['QSPThread',
            'MonitorSubmissionThread',
            'PerformAuditThread',
            'SubmitReportThread',
-           'PollRequestsThread']
+           'PollRequestsThread',
+           'BlockMinedPollingThread']
