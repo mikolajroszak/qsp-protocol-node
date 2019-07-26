@@ -121,6 +121,7 @@ class BlockMinedPollingThread(QSPThread):
                     self.current_block = remote_block_number
             sleep(self.sleep_time())
 
+
 class BlockMinedSubscriberThread(QSPThread):
     def __init__(self, config, target_function, thread_name, block_mined_polling_thread):
         QSPThread.__init__(self, config, target_function, thread_name, True)

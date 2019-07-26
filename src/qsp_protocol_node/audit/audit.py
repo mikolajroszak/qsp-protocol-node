@@ -65,13 +65,13 @@ class QSPAuditNode:
         self.__is_initialized = False
         self.__logger = get_logger(self.__class__.__qualname__)
 
-        blockMinedThread = BlockMinedPollingThread(config)
+        block_mined_thread = BlockMinedPollingThread(config)
 
         self.__internal_threads = [
-            blockMinedThread,
-            ComputeGasPriceThread(config, blockMinedThread),
+            block_mined_thread,
+            ComputeGasPriceThread(config, block_mined_thread),
             ClaimRewardsThread(config),
-            PollRequestsThread(config, blockMinedThread),
+            PollRequestsThread(config, block_mined_thread),
             PerformAuditThread(config),
             SubmitReportThread(config),
             MonitorSubmissionThread(config)
