@@ -14,10 +14,10 @@ QUANTSTAMP_OWNED='quantstamp\/.*'
 if [[ ! $TRAVIS_PULL_REQUEST_SLUG =~ $QUANTSTAMP_OWNED ]]; then
   echo "$TRAVIS_PULL_REQUEST_SLUG"
   echo "Running test in local mode"
-  make test
+  make stylecheck test
 else
   echo "$TRAVIS_PULL_REQUEST_SLUG"
   echo "Running test in ci mode"
-  make test-travis-ci
+  make stylecheck test-travis-ci
 fi
 
