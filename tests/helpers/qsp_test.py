@@ -99,9 +99,9 @@ class QSPTest(unittest.TestCase):
                 "root['analyzers_reports'][2]['start_time']",
                 "root['analyzers_reports'][2]['end_time']",
                 # Once scripts are either executed or skipped. The traces at position 1 differ.
-                "root['analyzers_reports'][0]['trace'][1]",
-                "root['analyzers_reports'][1]['trace'][1]",
-                "root['analyzers_reports'][2]['trace'][1]"
+                "root['analyzers_reports'][0]['trace']",
+                "root['analyzers_reports'][1]['trace']",
+                "root['analyzers_reports'][2]['trace']"
             }
         )
         pprint(diff)
