@@ -126,7 +126,7 @@ class TestPollRequestsThread(QSPTest):
         # any request available is 1
         with mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                    return_value=1):
-            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            poll_requests_instance._PollRequestsThread__poll_audit_request(self.__config.web3_client.eth.blockNumber)
             self.assert_event_table_contains(self.__config, [])
 
     @timeout(10, timeout_exception=StopIteration)
@@ -138,7 +138,7 @@ class TestPollRequestsThread(QSPTest):
              mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                         return_value=0) as mk_read_only_call:
             poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
-            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            poll_requests_instance._PollRequestsThread__poll_audit_request(self.__config.web3_client.eth.blockNumber)
             mk_read_only_call.assert_not_called()
 
     @timeout(10, timeout_exception=StopIteration)
@@ -151,7 +151,7 @@ class TestPollRequestsThread(QSPTest):
              mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                         return_value=0) as mk_read_only_call:
             poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
-            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            poll_requests_instance._PollRequestsThread__poll_audit_request(self.__config.web3_client.eth.blockNumber)
             mk_read_only_call.assert_called()
 
     @timeout(10, timeout_exception=StopIteration)
@@ -165,7 +165,7 @@ class TestPollRequestsThread(QSPTest):
                         return_value=0) as mk_read_only_call:
             poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             poll_requests_instance.config._Config__enable_police_audit_polling = True
-            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            poll_requests_instance._PollRequestsThread__poll_audit_request(self.__config.web3_client.eth.blockNumber)
             # the function call is going to fail, but we only care about whether
             # this function will be called
             mk_read_only_call.assert_called()
@@ -181,7 +181,7 @@ class TestPollRequestsThread(QSPTest):
                         return_value=0) as mk_read_only_call:
             poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
             poll_requests_instance.config._Config__enable_police_audit_polling = True
-            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            poll_requests_instance._PollRequestsThread__poll_audit_request(self.__config.web3_client.eth.blockNumber)
             # the function call is going to fail, but we only care about whether
             # this function will be called
             mk_read_only_call.assert_called()
@@ -200,7 +200,7 @@ class TestPollRequestsThread(QSPTest):
         # any request available is 1
         with mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                    return_value=1):
-            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            poll_requests_instance._PollRequestsThread__poll_audit_request(self.__config.web3_client.eth.blockNumber)
             self.assert_event_table_contains(self.__config, [])
 
     @timeout(10, timeout_exception=StopIteration)
@@ -212,7 +212,7 @@ class TestPollRequestsThread(QSPTest):
         with mock.patch('audit.threads.poll_requests_thread.mk_read_only_call',
                    return_value=(1, 0, 0, 0, 1000)):
             self.__config.event_pool_manager.is_request_processed = MagicMock()
-            poll_requests_instance._PollRequestsThread__poll_audit_request()
+            poll_requests_instance._PollRequestsThread__poll_audit_request(self.__config.web3_client.eth.blockNumber)
             self.__config.event_pool_manager.is_request_processed.assert_not_called()
 
     @timeout(15, timeout_exception=StopIteration)
@@ -249,7 +249,7 @@ class TestPollRequestsThread(QSPTest):
             poll_requests_instance._PollRequestsThread__add_evt_to_db = MagicMock()
 
             # Polls for police requests
-            poll_requests_instance._PollRequestsThread__poll_police_request()
+            poll_requests_instance._PollRequestsThread__poll_police_request(self.__config.web3_client.eth.blockNumber)
 
             if should_add_evt:
                 poll_requests_instance._PollRequestsThread__add_evt_to_db.assert_called()

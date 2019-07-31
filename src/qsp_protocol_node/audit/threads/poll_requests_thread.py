@@ -34,8 +34,8 @@ class PollRequestsThread(BlockMinedSubscriberThread):
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L110
     __AVAILABLE_AUDIT_UNDERSTAKED = 5
 
-    def __on_block_mined(self, *unused):
-        self.__poll_requests()
+    def __on_block_mined(self, current_block):
+        self.__poll_requests(current_block)
 
     def __get_min_stake_qsp(self):
         """
@@ -95,7 +95,7 @@ class PollRequestsThread(BlockMinedSubscriberThread):
                 e))
         return tx_hash
 
-    def __poll_audit_request(self):
+    def __poll_audit_request(self, current_block):
         """
         Checks first an audit is assignable; then, bids to get an audit request.
         If successful, save the event in the database to move it along the audit pipeline.
@@ -113,7 +113,6 @@ class PollRequestsThread(BlockMinedSubscriberThread):
 
             request_id = most_recent_audit[0]
             audit_assignment_block_number = most_recent_audit[4]
-            current_block = self.config.web3_client.eth.blockNumber
 
             # Check if the most recent audit has been confirmed for N blocks. A consequence of this
             # is that the audit node will not call getNextAuditRequest again while a previous call
@@ -195,7 +194,7 @@ class PollRequestsThread(BlockMinedSubscriberThread):
             self.config.audit_contract.functions.getNextPoliceAssignment()
         )
 
-    def __poll_police_request(self):
+    def __poll_police_request(self, current_block):
         """
         Polls the audit contract for police requests (aka assignments). If the
         node is not a police officer, do nothing. Otherwise, save the event in
@@ -210,7 +209,6 @@ class PollRequestsThread(BlockMinedSubscriberThread):
             has_assignment = probe[0]
 
             police_assignment_block_number = probe[4]
-            current_block = self.config.web3_client.eth.blockNumber
 
             already_processed = self.config.event_pool_manager.is_request_processed(
                 request_id=probe[1]
@@ -238,12 +236,12 @@ class PollRequestsThread(BlockMinedSubscriberThread):
         except Exception as error:
             self.logger.exception("Error polling police requests: {0}".format(str(error)))
 
-    def __poll_requests(self):
+    def __poll_requests(self, current_block):
         """
         Polls the audit contract for any possible requests.
         """
-        self.__poll_audit_request()
-        self.__poll_police_request()
+        self.__poll_audit_request(current_block)
+        self.__poll_police_request(current_block)
 
     def __init__(self, config, block_mined_polling_thread):
         """
