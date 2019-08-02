@@ -11,7 +11,7 @@ set -e
 
 QUANTSTAMP_OWNED='quantstamp\/.*'
 
-if [[ ! "$TRAVIS_PULL_REQUEST_SLUG" =~ "$QUANTSTAMP_OWNED" ]]; then
+if [[ ! $TRAVIS_PULL_REQUEST_SLUG =~ $QUANTSTAMP_OWNED ]]; then
   echo "$TRAVIS_PULL_REQUEST_SLUG"
   echo "Running test in local mode"
   make stylecheck test
