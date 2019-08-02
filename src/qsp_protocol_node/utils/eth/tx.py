@@ -15,6 +15,7 @@ from web3.utils.empty import empty
 
 logger = get_logger(__name__)
 
+
 def method_call(method, transaction=None, block_identifier=None):
         """
         Execute a contract function call using the `eth_call` interface.
@@ -71,6 +72,7 @@ def method_call(method, transaction=None, block_identifier=None):
             *method.args,
             **method.kwargs
         )
+
 
 def mk_args(config):
     gas_limit = config.gas_limit
