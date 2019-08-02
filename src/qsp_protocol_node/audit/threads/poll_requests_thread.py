@@ -108,7 +108,8 @@ class PollRequestsThread(BlockMinedSubscriberThread):
         try:
             most_recent_audit = mk_read_only_call(
                 self.config,
-                self.config.audit_contract.functions.myMostRecentAssignedAudit()
+                self.config.audit_contract.functions.myMostRecentAssignedAudit(),
+                current_block
             )
 
             request_id = most_recent_audit[0]

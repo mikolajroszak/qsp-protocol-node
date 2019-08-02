@@ -89,9 +89,10 @@ class SimpleTransactionMock:
 
 
 class ReadOnlyMethodMock:
-    def __init__(self, value, exception):
+    def __init__(self, value, exception, address):
         self.value = value
         self.exception = exception
+        self.address = address
 
     def call(self, *args):
         if self.exception is None:
@@ -184,10 +185,11 @@ class TestFile(QSPTest):
         exception is raised by the call.
         """
         error = ValueError("unknown error")
-        read_only = ReadOnlyMethodMock(15, None)
+        address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
+        read_only = ReadOnlyMethodMock(15, None, address)
         config = TestFile.get_config_mock(4000000000, 0)
         self.assertEquals(15, mk_read_only_call(config, read_only))
-        read_only = ReadOnlyMethodMock(15, error)
+        read_only = ReadOnlyMethodMock(15, error, address)
         try:
             mk_read_only_call(config, read_only)
             self.fail("An error was expected")

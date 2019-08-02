@@ -10,9 +10,67 @@ from log_streaming import get_logger
 from .singleton_lock import SingletonLock
 
 from web3.utils.threads import Timeout
+from web3.contract import call_contract_function
+from web3.utils.empty import empty
 
 logger = get_logger(__name__)
 
+def method_call(method, transaction=None, block_identifier=None):
+        """
+        Execute a contract function call using the `eth_call` interface.
+        This method prepares a ``Caller`` object that exposes the contract
+        functions and public variables as callable Python functions.
+        Reading a public ``owner`` address variable example:
+        .. code-block:: python
+            ContractFactory = w3.eth.contract(
+                abi=wallet_contract_definition["abi"]
+            )
+            # Not a real contract address
+            contract = ContractFactory("0x2f70d3d26829e412A602E83FE8EeBF80255AEeA5")
+            # Read "owner" public variable
+            addr = contract.functions.owner().call()
+        :param transaction: Dictionary of transaction info for web3 interface
+        :return: ``Caller`` object that has contract public functions
+            and variables exposed as Python methods
+        """
+        if transaction is None:
+            call_transaction = {}
+        else:
+            call_transaction = dict(**transaction)
+            logger.debug("call_transaction --- {}".format(call_transaction))
+
+        if 'data' in call_transaction:
+            raise ValueError("Cannot set data in call transaction")
+
+        if method.address:
+            call_transaction.setdefault('to', method.address)
+        if method.web3.eth.defaultAccount is not empty:
+            call_transaction.setdefault('from', method.web3.eth.defaultAccount)
+
+        if 'to' not in call_transaction:
+            if isinstance(method, type):
+                raise ValueError(
+                    "When using `Contract.[methodtype].[method].call()` from"
+                    " a contract factory you "
+                    "must provide a `to` address with the transaction"
+                )
+            else:
+                raise ValueError(
+                    "Please ensure that this contract instance has an address."
+                )
+
+        logger.debug("method web3 {}".format(method.web3))
+        return call_contract_function(
+            method.contract_abi,
+            method.web3,
+            method.address,
+            method._return_data_normalizers,
+            method.function_identifier,
+            call_transaction,
+            block_identifier,
+            *method.args,
+            **method.kwargs
+        )
 
 def mk_args(config):
     gas_limit = config.gas_limit
@@ -29,10 +87,14 @@ def mk_args(config):
     return args
 
 
-def mk_read_only_call(config, method):
+def mk_read_only_call(config, method, block_number=None):
+    if not block_number:
+        block_number = config.web3_client.eth.blockNumber
+    logger.debug("type of block number is {}".format(type(block_number)))
+    logger.debug("Block number for mk_read_only_call is {}".format(block_number))
     try:
         SingletonLock.instance().lock.acquire()
-        return method.call({'from': config.account})
+        return method_call(method, {'from': config.account}, block_number)
     finally:
         try:
             SingletonLock.instance().lock.release()
