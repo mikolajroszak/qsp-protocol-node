@@ -16,8 +16,9 @@ from web3.utils.empty import empty
 logger = get_logger(__name__)
 
 
-# A modified version of method.call() that does not query for the
-# entire block every time a transaction is sent
+# A modified version of method.call() that exposes block_identifier
+# and queries for one if it's not specified rather than querying for
+# the entire block (eth_getBlock) every time a transaction is sent
 
 def method_call(method, transaction=None, block_identifier=None):
         if transaction is None:
