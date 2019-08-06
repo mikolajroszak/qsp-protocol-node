@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 # A modified version of web3.py's method.call() that exposes block_identifier
 # and queries for one if it's not specified rather than querying for
 # the entire block (eth_getBlock) every time a transaction is sent
+# Original code: https://github.com/ethereum/web3.py/blob/b899050df8614db1d5ec339a920a7aa6b570fa99/web3/contract.py#L780
 
 def __method_call(method, transaction=None, block_identifier=None):
         if transaction is None:
