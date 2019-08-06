@@ -22,7 +22,7 @@ from web3 import Web3
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 
-class InvalidKeyStoreError(Exception):
+class InvalidKeyStoreException(Exception):
     pass
 
 
@@ -92,17 +92,31 @@ class Program:
         logging.config.dictConfig(dict_config)
 
     @classmethod
-    def __setup_log_streaming(cls, account):
-        # Get log streaming config (if any)
+    def __setup_log_streaming(cls):
         log_streaming_config = None
+        account = None
+        error = None
         try:
+            # Load keystore
+            keystore_file = get(Program.__yaml_config[Program.__env], "/keystore_file")
+            with open(keystore_file) as k:
+                keystore = load(k)
+
+            account = Web3.toChecksumAddress('0x' + keystore['address'])
+
+            # Get log streaming config (if any)
             log_streaming_config = get(Program.__yaml_config[Program.__env], "/logging/streaming")
         except KeyError:
-            pass
+            error = InvalidKeyStoreException("Invalid keystore file")
 
-        # Initialize the log streaming module (should be done once)
-        import log_streaming
-        log_streaming.initialize(account, log_streaming_config)
+        except Exception as unknown_error:
+            error = unknown_error
+        finally:
+            # Initialize the log streaming module (should be done once)
+            import log_streaming
+            log_streaming.initialize(account, log_streaming_config)
+            if error:
+                raise error
 
     @classmethod
     def setup(cls, env, yaml_file_name, log_level):
@@ -112,22 +126,7 @@ class Program:
         with open(yaml_file_name) as y:
             Program.__yaml_config = yaml.load(y)
 
-        account = None
-        try:
-            # Load keystore
-            keystore_file = get(Program.__yaml_config[Program.__env], "/keystore_file")
-            with open(keystore_file) as k:
-                keystore = load(k)
-            # Get account
-            account = Web3.toChecksumAddress('0x' + keystore['address'])
-
-        except KeyError:
-            pass
-
-        if not account:
-            raise InvalidKeyStoreError("Keystore file invalid. Replace with valid keystore file.")
-
-        Program.__setup_log_streaming(account)
+        Program.__setup_log_streaming()
 
     @classmethod
     def run(cls, eth_passphrase, eth_auth_token, sol_file):
@@ -187,23 +186,30 @@ class Program:
 
 
 if __name__ == "__main__":
+    setup_exception = None
     logger = None
     try:
-        from log_streaming import get_logger
-        logger = get_logger(__name__)
 
         Program.setup(
             os.environ['QSP_ENV'],
             os.environ['QSP_CONFIG'],
             os.environ['QSP_LOGGING_LEVEL']
         )
-
         sol_file = os.environ.get('SOL_FILE')
+    except Exception as error:
+        setup_exception = error
+
+    try:
+        from log_streaming import get_logger
+        logger = get_logger(__name__)
+
+        if setup_exception:
+            raise setup_exception
+
         Program.run(os.environ['QSP_ETH_PASSPHRASE'], os.environ['QSP_ETH_AUTH_TOKEN'], sol_file)
     except Exception as error:
-        if logger is not None:
+        if logger:
             logger.exception("Error in running node: {0}".format(str(error)))
         else:
             traceback.print_exc()
-        # A non-zero exit code is required to auto-restart
         exit(1)
