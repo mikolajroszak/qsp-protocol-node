@@ -11,6 +11,7 @@ from config import ConfigurationException
 from upload import S3Provider
 from helpers.resource import resource_uri
 from helpers.qsp_test import QSPTest
+from unittest.mock import patch
 from web3 import (
     Web3,
     HTTPProvider,
@@ -77,13 +78,17 @@ class ConfigStubForCheckSettings:
         self.analyzers = []
 
 
-class TestConfigUtil(QSPTest):
+def method_call(method, unused1, unused2):
+    return method.value
 
+
+@patch('utils.eth.tx.method_call', side_effect=method_call)
+class TestConfigUtil(QSPTest):
     def setUp(self):
         dummy_node_version = '2.0.1'
         self.config_utils = ConfigUtils(dummy_node_version)
 
-    def test_create_upload_provider_ok(self):
+    def test_create_upload_provider_ok(self, method_call_mock):
         """
         Tests that the S3Provider can be created and is properly returend.
         """
@@ -97,7 +102,7 @@ class TestConfigUtil(QSPTest):
                                                           True)
         self.assertTrue(isinstance(result, S3Provider), "The created provider is not an S3Provider")
 
-    def test_create_upload_provider_not_ok(self):
+    def test_create_upload_provider_not_ok(self, method_call_mock):
         """
         Tests that wrong upload provider specification causes an exception being thrown.
         """
@@ -120,7 +125,7 @@ class TestConfigUtil(QSPTest):
             # expected
             pass
 
-    def test_raise_error(self):
+    def test_raise_error(self, method_call_mock):
         """
         Tests that raising an error throws an exception
         """
@@ -132,7 +137,7 @@ class TestConfigUtil(QSPTest):
             # Expected
             pass
 
-    def test_check_audit_contract_settings(self):
+    def test_check_audit_contract_settings(self, method_call_mock):
         """
         Tests that verification of ABI and source code in a config happens properly and admits
         exactly one of the two but not both.
@@ -165,7 +170,7 @@ class TestConfigUtil(QSPTest):
             # Expected
             pass
 
-    def test_check_configuration_settings(self):
+    def test_check_configuration_settings(self, method_call_mock):
         """
         Tests various configuration settings
         """
@@ -227,7 +232,7 @@ class TestConfigUtil(QSPTest):
             # Expected
             pass
 
-    def test_create_eth_provider(self):
+    def test_create_eth_provider(self, method_call_mock):
         """
         Tests that all providers can be successfully created and if a wrong name is specified, an
         an exception is raised.
@@ -245,7 +250,7 @@ class TestConfigUtil(QSPTest):
             # Expected
             pass
 
-    def test_create_web3_client(self):
+    def test_create_web3_client(self, method_call_mock):
         """
         Test that web3 client and accounts can be created using an ethereum provider
         """
@@ -261,7 +266,7 @@ class TestConfigUtil(QSPTest):
             # Expected
             pass
 
-    def test_create_web3_client_private_key(self):
+    def test_create_web3_client_private_key(self, method_call_mock):
         """
         Test that private key is instantiated correctly when creating web3 client
         """
@@ -281,7 +286,7 @@ class TestConfigUtil(QSPTest):
             # Expected
             pass
 
-    def test_load_config(self):
+    def test_load_config(self, method_call_mock):
         """
         Tests that utils are able to load a configuration dictionary from yaml file.
         """
@@ -291,14 +296,14 @@ class TestConfigUtil(QSPTest):
         self.assertTrue("evt_db_path" in config_dict.keys(),
                         "Key evt_db_path is missing from loaded data")
 
-    def test_create_contract(self):
+    def test_create_contract(self, method_call_mock):
         eth_provider = self.config_utils.create_eth_provider("EthereumTesterProvider", {})
         client, new_account, new_private_key = self.config_utils.create_web3_client(eth_provider, None, None, 2)
         abi_uri = "file://tests/resources/QuantstampAudit.abi.json"
         address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
         self.config_utils.create_contract(client, abi_uri, address)
 
-    def test_resolve_version(self):
+    def test_resolve_version(self, method_call_mock):
         config_utils = ConfigUtils('10.0.1')
         version = config_utils.resolve_version('a-{major-version}-b')
         self.assertEqual(version, "a-10-b")

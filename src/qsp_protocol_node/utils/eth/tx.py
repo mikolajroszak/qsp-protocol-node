@@ -16,24 +16,10 @@ from web3.utils.empty import empty
 logger = get_logger(__name__)
 
 
+# A modified version of method.call() that does not query for the
+# entire block every time a transaction is sent
+
 def method_call(method, transaction=None, block_identifier=None):
-        """
-        Execute a contract function call using the `eth_call` interface.
-        This method prepares a ``Caller`` object that exposes the contract
-        functions and public variables as callable Python functions.
-        Reading a public ``owner`` address variable example:
-        .. code-block:: python
-            ContractFactory = w3.eth.contract(
-                abi=wallet_contract_definition["abi"]
-            )
-            # Not a real contract address
-            contract = ContractFactory("0x2f70d3d26829e412A602E83FE8EeBF80255AEeA5")
-            # Read "owner" public variable
-            addr = contract.functions.owner().call()
-        :param transaction: Dictionary of transaction info for web3 interface
-        :return: ``Caller`` object that has contract public functions
-            and variables exposed as Python methods
-        """
         if transaction is None:
             call_transaction = {}
         else:
@@ -59,6 +45,9 @@ def method_call(method, transaction=None, block_identifier=None):
                 raise ValueError(
                     "Please ensure that this contract instance has an address."
                 )
+
+        if not block_identifier:
+            block_identifier = method.web3.eth.blockNumber
 
         logger.debug("method web3 {}".format(method.web3))
         return call_contract_function(
@@ -90,13 +79,10 @@ def mk_args(config):
 
 
 def mk_read_only_call(config, method, block_number=None):
-    if not block_number:
-        block_number = config.web3_client.eth.blockNumber
-    logger.debug("type of block number is {}".format(type(block_number)))
-    logger.debug("Block number for mk_read_only_call is {}".format(block_number))
+    setattr(method, 'call', method_call)  # monkey-patching method.call()
     try:
         SingletonLock.instance().lock.acquire()
-        return method_call(method, {'from': config.account}, block_number)
+        return method.call(method, {'from': config.account}, block_number)
     finally:
         try:
             SingletonLock.instance().lock.release()
