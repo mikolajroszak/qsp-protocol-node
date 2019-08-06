@@ -16,11 +16,11 @@ from web3.utils.empty import empty
 logger = get_logger(__name__)
 
 
-# A modified version of method.call() that exposes block_identifier
+# A modified version of web3.py's method.call() that exposes block_identifier
 # and queries for one if it's not specified rather than querying for
 # the entire block (eth_getBlock) every time a transaction is sent
 
-def method_call(method, transaction=None, block_identifier=None):
+def __method_call(method, transaction=None, block_identifier=None):
         if transaction is None:
             call_transaction = {}
         else:
@@ -78,7 +78,7 @@ def mk_args(config):
 
 
 def mk_read_only_call(config, method, block_number=None):
-    setattr(method, 'call', method_call)  # monkey-patching method.call()
+    setattr(method, 'call', __method_call)  # monkey-patching method.call()
     try:
         SingletonLock.instance().lock.acquire()
         return method.call(method, {'from': config.account}, block_number)

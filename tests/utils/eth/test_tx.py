@@ -99,13 +99,13 @@ class ReadOnlyMethodMock:
         self.address = address
 
 
-def method_call(method, unused1, unused2):
+def __method_call(method, unused1, unused2):
     if method.exception is None:
         return method.value
     raise method.exception
 
 
-@patch('utils.eth.tx.method_call', side_effect=method_call)
+@patch('utils.eth.tx.__method_call', side_effect=__method_call)
 class TestFile(QSPTest):
 
     @staticmethod

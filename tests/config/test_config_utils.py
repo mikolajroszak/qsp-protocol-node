@@ -78,11 +78,11 @@ class ConfigStubForCheckSettings:
         self.analyzers = []
 
 
-def method_call(method, unused1, unused2):
+def __method_call(method, unused1, unused2):
     return method.value
 
 
-@patch('utils.eth.tx.method_call', side_effect=method_call)
+@patch('utils.eth.tx.__method_call', side_effect=__method_call)
 class TestConfigUtil(QSPTest):
     def setUp(self):
         dummy_node_version = '2.0.1'
