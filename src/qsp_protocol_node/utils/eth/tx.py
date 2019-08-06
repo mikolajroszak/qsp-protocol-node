@@ -24,7 +24,6 @@ def method_call(method, transaction=None, block_identifier=None):
             call_transaction = {}
         else:
             call_transaction = dict(**transaction)
-            logger.debug("call_transaction --- {}".format(call_transaction))
 
         if 'data' in call_transaction:
             raise ValueError("Cannot set data in call transaction")
@@ -49,7 +48,6 @@ def method_call(method, transaction=None, block_identifier=None):
         if not block_identifier:
             block_identifier = method.web3.eth.blockNumber
 
-        logger.debug("method web3 {}".format(method.web3))
         return call_contract_function(
             method.contract_abi,
             method.web3,
