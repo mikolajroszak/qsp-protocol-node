@@ -155,7 +155,6 @@ class Program:
 
         logger.debug("min_price_in_qsp: {0}".format(cfg.min_price_in_qsp))
         logger.debug("evt_polling: {0}".format(cfg.evt_polling))
-        logger.debug("audit contract address: {0}".format(cfg.audit_contract_address))
 
         # Based on the provided configuration, instantiates a new
         # QSP audit node
