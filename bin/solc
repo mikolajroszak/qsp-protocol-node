@@ -7,17 +7,21 @@
 #                                                                                                  #
 ####################################################################################################
 
-if [ $# == 1 ];
-then
-    docker run -i -v /tmp:/tmp qspprotocol/usolc-entry $@
-elif [ $# == 3 ];
-then
-    mkdir -p /tmp/solc
-    ESCAPED_FILEPATH="$(echo "$3" | sed 's/[^-A-Za-z0-9_]/\\&/g')"
-    cp "$3" "/tmp/solc/target_compile.sol"
-        docker run -i -v /tmp:/tmp qspprotocol/usolc-entry "$1" "$2" "/tmp/solc/target_compile.sol" | sed "s/\/tmp\/solc\/target_compile\.sol/$ESCAPED_FILEPATH/g"
-    rm -rf /tmp/solc/target_compile.sol
-else
-    echo "ERROR: the number of parameters is not as expected to run the usolc docker" 1>&2
-    exit 1
+if [[ "$#" == 0 ]] ; then
+    docker run usolc
+    exit 0
 fi
+
+# There are some arguments that need to be processed...
+
+MOUNT_ARGS=""
+
+for ARG in "$@"; do
+    if [[ -f  "$ARG" ]]; then
+        # If the argument matches a file that exist in the filesystem,
+        # save it to be mounted
+        MOUNT_ARGS="${MOUNT_ARGS} -v ${ARG}:${ARG}"
+    fi
+done
+
+docker run -i $MOUNT_ARGS usolc $@
