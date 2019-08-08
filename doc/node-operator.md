@@ -307,6 +307,10 @@ Or run the node in the background(detached mode) using the following command:
 
 `nohup ./bin/start-node &`
 
+*Note:* If you encounter an `InvalidKeyStoreError` please check 
+`resources/keystore/default.json` and make sure that it is a valid 
+keystore file. 
+
 ### View Logs
 Logs are written to `qsp-protocol-node.log` file in the .qsp-protocol directory within the user home directory. Logs are rotated every time a node restarts. If you encounter any issues including the node failing to restart, check the qsp-protocol-node.log.  If this does not resolve your issue, check old log files that are saved as tar.gz files.  
 
