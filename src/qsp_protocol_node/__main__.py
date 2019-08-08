@@ -212,3 +212,4 @@ if __name__ == "__main__":
         else:
             traceback.print_exc()
         exit(1)
+        # A non-zero exit code is required to auto-restart
