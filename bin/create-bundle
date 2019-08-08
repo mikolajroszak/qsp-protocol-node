@@ -48,7 +48,6 @@ cp -a "$QSP_ROOT/doc/." "$DIST_DIR/doc/"
 cp "$SCRIPT_DIR/stop-node" "$SCRIPT_DIR/common" "$DIST_DIR/bin"
 cp -a "$CONTRACTS_DIR/." "$DIST_DIR/resources/contracts"
 mkdir -p "$DIST_DIR/resources/keystore"
-echo "Add a valid key here" > "$DIST_DIR/resources/keystore/default.json"
 
 cd "$DIST_DIR/.."
 zip -r "$ZIP_FILENAME" "$DIST_NAME"
