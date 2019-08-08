@@ -42,7 +42,7 @@ class TestPollRequestsThread(QSPTest):
         exception = None
         try:
             poll_requests_instance = PollRequestsThread(self.__config, self.__block_mined_polling_thread)
-            poll_requests_instance._PollRequestsThread__get_next_police_assignment()
+            poll_requests_instance._PollRequestsThread__get_next_police_assignment(None)
         except Exception as e:
             exception = e
         self.assertIsNone(exception)
