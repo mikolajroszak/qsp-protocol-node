@@ -95,13 +95,22 @@ class PollRequestsThread(BlockMinedSubscriberThread):
                 e))
         return tx_hash
 
+    def __is_police_officer(self):
+        """
+        Checks first an node is a police node.
+        The call is cached locally to avoid excessive use of web3.
+        """
+        from audit.audit import QSPAuditNode
+        if self.__is_police_officer_cached is None:
+            self.__is_police_officer_cached = QSPAuditNode.is_police_officer(self.config)
+        return self.__is_police_officer_cached
+
     def __poll_audit_request(self, current_block):
         """
         Checks first an audit is assignable; then, bids to get an audit request.
         If successful, save the event in the database to move it along the audit pipeline.
         """
-        from audit.audit import QSPAuditNode
-        if QSPAuditNode.is_police_officer(self.config) and \
+        if self.__is_police_officer() and \
             not self.config.enable_police_audit_polling:
             return
 
@@ -186,13 +195,14 @@ class PollRequestsThread(BlockMinedSubscriberThread):
         except Exception as error:
             self.logger.exception(str(error))
 
-    def __get_next_police_assignment(self):
+    def __get_next_police_assignment(self, current_block):
         """
         Gets the next police assignment tuple.
         """
         return mk_read_only_call(
             self.config,
-            self.config.audit_contract.functions.getNextPoliceAssignment()
+            self.config.audit_contract.functions.getNextPoliceAssignment(),
+            current_block
         )
 
     def __poll_police_request(self, current_block):
@@ -201,12 +211,11 @@ class PollRequestsThread(BlockMinedSubscriberThread):
         node is not a police officer, do nothing. Otherwise, save the event in
         the database to move it along the audit pipeline.
         """
-        from audit.audit import QSPAuditNode
-        if not QSPAuditNode.is_police_officer(self.config):
+        if not self.__is_police_officer():
             return
 
         try:
-            probe = self.__get_next_police_assignment()
+            probe = self.__get_next_police_assignment(current_block)
             has_assignment = probe[0]
 
             police_assignment_block_number = probe[4]
@@ -248,6 +257,7 @@ class PollRequestsThread(BlockMinedSubscriberThread):
         """
         Builds the thread object from the given input parameters.
         """
+        self.__is_police_officer_cached = None
         BlockMinedSubscriberThread.__init__(
             self,
             config=config,

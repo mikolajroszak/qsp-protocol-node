@@ -47,7 +47,7 @@ def __method_call(method, transaction=None, block_identifier=None):
                     "Please ensure that this contract instance has an address."
                 )
 
-        if not block_identifier:
+        if block_identifier is None:
             block_identifier = method.web3.eth.blockNumber
 
         return call_contract_function(
@@ -79,10 +79,9 @@ def mk_args(config):
 
 
 def mk_read_only_call(config, method, block_number=None):
-    setattr(method, 'call', __method_call)  # monkey-patching method.call()
     try:
         SingletonLock.instance().lock.acquire()
-        return method.call(method, {'from': config.account}, block_number)
+        return __method_call(method, {'from': config.account}, block_number)
     finally:
         try:
             SingletonLock.instance().lock.release()
