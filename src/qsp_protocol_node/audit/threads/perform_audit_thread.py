@@ -17,6 +17,7 @@ import time
 import json
 import copy
 import threading
+import subprocess
 
 from threading import Thread
 from evt import is_police_check
@@ -115,7 +116,7 @@ class PerformAuditThread(TimeIntervalPollingThread):
 
         return audit_state, audit_status
 
-    def check_compilation(self, contract, request_id, uri):
+    def __check_compilation(self, contract, request_id, uri):
         self.logger.debug("Running compilation check. About to check {0}".format(contract),
                             requestId=request_id)
         parse_uri = urllib.parse.urlparse(uri)
@@ -289,13 +290,26 @@ class PerformAuditThread(TimeIntervalPollingThread):
 
         return audit_report
 
+    def __fetch_usolc_updates(self):
+        update_usolc = subprocess.run(
+                "{0}/bin/fetch_usolc_updates".format(self.config.qsp_home_dir),
+                check=False, 
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+        self.logger.info(update_usolc.stdout)
+        self.logger.debug(update_usolc.stderr)
+
     def get_full_report(self, requestor, uri, request_id):
         """
         Produces the full report for a smart contract.
         """
         target_contract = fetch_file(uri)
 
-        warnings, errors = self.check_compilation(target_contract, request_id, uri)
+        self.__fetch_usolc_updates()
+
+        warnings, errors = self.__check_compilation(target_contract, request_id, uri)
         audit_report = {}
         if len(errors) != 0:
             audit_report = self.__create_err_result(errors, warnings, request_id, requestor, uri,

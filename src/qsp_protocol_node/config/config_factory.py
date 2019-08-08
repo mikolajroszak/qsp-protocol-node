@@ -12,7 +12,7 @@ from .config_utils import ConfigUtils
 class ConfigFactory:
 
     @staticmethod
-    def create_from_file(config_file_uri, environment, node_version, account_passwd="",
+    def create_from_file(config_file_uri, environment, node_version, qsp_home_dir, account_passwd="",
                          validate_contract_settings=True, config_utils=None):
         """
         This is now public and is to be called from wherever this class gets initialized.
@@ -24,7 +24,7 @@ class ConfigFactory:
         return config
 
     @staticmethod
-    def create_from_dictionary(dictionary, environment, node_version, account_passwd="",
+    def create_from_dictionary(dictionary, environment, node_version, qsp_home_dir, account_passwd="", 
                                validate_contract_settings=True, config_utils=None):
         config = Config(node_version)
         utils = config_utils if config_utils is not None else ConfigUtils()

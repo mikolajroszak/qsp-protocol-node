@@ -37,6 +37,7 @@ class Program:
     __yaml_config = None
     __env = None
     __account_passwd = None
+    __qsp_home_dir = None
     __version = None
 
     @classmethod
@@ -156,6 +157,7 @@ class Program:
         Program.__setup_basic_logging(qsp_home_dir, log_level)
         Program.__env = env
         Program.__account_passwd = account_passwd
+        Program.__qsp_home_dir = qsp_home_dir
 
         major_version = version[0:version.index('.')]
         config_vars = {
@@ -177,7 +179,8 @@ class Program:
             Program.__yaml_config,
             Program.__env,
             Program.__version,
-            Program.__account_passwd
+            Program.__account_passwd,
+            Program.__qsp_home_dir,
         )
 
     @classmethod

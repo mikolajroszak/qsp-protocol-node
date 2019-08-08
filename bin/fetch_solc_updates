@@ -7,25 +7,6 @@
 #                                                                                                  #
 ####################################################################################################
 
-# TODO remove this hard coded tag and rely on a env var
-# injected by the node
+# TODO: this tag is to be parameterized in the future
 # See https://quantstamp.atlassian.net/browse/QSP-1264
-
-if [[ "$#" == 0 ]] ; then
-    docker run usolc@latest-node
-    exit 0
-fi
-
-# There are some arguments that need to be processed...
-
-MOUNT_ARGS=""
-
-for ARG in "$@"; do
-    if [[ -f  "$ARG" ]]; then
-        # If the argument matches a file that exist in the filesystem,
-        # save it to be mounted
-        MOUNT_ARGS="${MOUNT_ARGS} -v ${ARG}:${ARG}"
-    fi
-done
-
-docker run -i $MOUNT_ARGS usolc $@
+docker pull "usolc@latest-node"

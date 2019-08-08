@@ -179,18 +179,19 @@ class Config:
         self.__report_encoder = ReportEncoder()
         self.__upload_provider = self.__create_upload_provider(config_utils)
 
-    def load_dictionary(self, config_dictionary, config_utils, env, account_passwd="",
+    def load_dictionary(self, config_dictionary, config_utils, env, qsp_home_dir, account_passwd="",
                         validate_contract_settings=True):
         self.__env = env
+        self.__qsp_home_dir = qsp_home_dir
         self.__account_passwd = account_passwd
         self.__setup_values(config_dictionary, config_utils)
         self.__create_components(config_utils, validate_contract_settings)
 
-    def load_file(self, config_file_uri, config_utils, env, account_passwd="",
+    def load_file(self, config_file_uri, config_utils, env, qsp_home_dir, account_passwd="",
                     validate_contract_settings=True):
         cfg = config_utils.load_config(config_file_uri, env)
         self.__config_file_uri = config_file_uri
-        self.load_dictionary(cfg, config_utils, env, account_passwd, validate_contract_settings)
+        self.load_dictionary(cfg, config_utils, env, qsp_home_dir, account_passwd, validate_contract_settings)
 
     def __init__(self, node_version):
         """
@@ -237,6 +238,7 @@ class Config:
         self.__web3_client = None
         self.__block_discard_on_restart = 0
         self.__contract_version = None
+        self.__qsp_home_dir = None
         self.__enable_police_audit_polling = False
 
     @property
@@ -542,3 +544,7 @@ class Config:
         If true, the police node will also poll for regular audit requests.
         """
         return self.__enable_police_audit_polling
+
+    @property
+    def qsp_home_dir(self):
+        return self.__qsp_home_dir
