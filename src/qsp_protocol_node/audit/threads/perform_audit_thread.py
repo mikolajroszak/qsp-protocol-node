@@ -115,7 +115,7 @@ class PerformAuditThread(TimeIntervalPollingThread):
 
         return audit_state, audit_status
 
-    def check_compilation(self, contract, request_id, uri):
+    def __check_compilation(self, contract, request_id, uri):
         self.logger.debug("Running compilation check. About to check {0}".format(contract),
                             requestId=request_id)
         parse_uri = urllib.parse.urlparse(uri)
@@ -163,6 +163,17 @@ class PerformAuditThread(TimeIntervalPollingThread):
             errors += [str(error)]
 
         return warnings, errors
+
+    def __pull_usolc(self):
+        update_usolc = subprocess.run(
+                "{0}/bin/pull_usolc".format(self.config.qsp_home_dir),
+                check=False, 
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+        self.logger.info(update_usolc.stdout)
+        self.logger.debug(update_usolc.stderr)
 
     def get_audit_report_from_analyzers(self, target_contract, requestor, uri, request_id):
         number_of_analyzers = len(self.config.analyzers)
@@ -295,7 +306,10 @@ class PerformAuditThread(TimeIntervalPollingThread):
         """
         target_contract = fetch_file(uri)
 
-        warnings, errors = self.check_compilation(target_contract, request_id, uri)
+        # Fetches the latest version of usolc (to be dynamically injected inside analyzers)
+        self.__pull_usolc()
+
+        warnings, errors = self.__check_compilation(target_contract, request_id, uri)
         audit_report = {}
         if len(errors) != 0:
             audit_report = self.__create_err_result(errors, warnings, request_id, requestor, uri,

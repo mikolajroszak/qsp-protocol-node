@@ -119,9 +119,10 @@ class Program:
                 raise error
 
     @classmethod
-    def setup(cls, env, yaml_file_name, log_level):
+    def setup(cls, env, yaml_file_name, qsp_home_dir, log_level):
         Program.__setup_basic_logging(log_level)
         Program.__env = env
+        Program.__qsp_home_dir = qsp_home_dir
 
         with open(yaml_file_name) as y:
             Program.__yaml_config = yaml.load(y)
@@ -144,6 +145,7 @@ class Program:
         cfg = ConfigFactory.create_from_dictionary(
             Program.__yaml_config,
             Program.__env,
+            Program.__qsp_home_dir,
             account_passwd=eth_passphrase,
             auth_token=eth_auth_token,
         )
@@ -192,6 +194,7 @@ if __name__ == "__main__":
         Program.setup(
             os.environ['QSP_ENV'],
             os.environ['QSP_CONFIG'],
+            os.environ['QSP_HOME'],
             os.environ['QSP_LOGGING_LEVEL']
         )
         sol_file = os.environ.get('SOL_FILE')

@@ -9,7 +9,8 @@
 
 source "$WRAPPER_HOME"/../common/settings
 
-readonly ANALYZER_DOCKER_IMAGE="qspprotocol/mythril-usolc@sha256:c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913"
+readonly ANALYZER_DOCKER_IMAGE="qspprotocol/mythril:node-latest"
+readonly ANALYZER_SYS_PATH=$(docker run --entrypoint /bin/bash "$ANALYZER_DOCKER_IMAGE" -c 'echo "$PATH"') 
 readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
-readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -o json -x /shared/$CONTRACT_FILE_NAME"
+readonly ANALYZER_CMD="docker run --rm -e PATH=$QSP_USOLC_BIN_DIR:$ANALYZER_SYS_PATH -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -o json -x /shared/$CONTRACT_FILE_NAME"
 
