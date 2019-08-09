@@ -781,8 +781,8 @@ class TestQSPAuditNode(QSPTest):
             mocked__get_next_audit_request_called[0] = True
 
         self.assertEqual(int(self.__config.max_assigned_requests), 1)
-        # Make sure there anyAvailableRequest returns ready state
-        self.__set_any_request_available(1)
+        # Make sure there anyAvailableRequest returns EXCEEDED state
+        self.__set_any_request_available(4)
 
         self.__config.web3_client.eth.waitForTransactionReceipt(
             self.__set_assigned_request_count(1))
@@ -803,7 +803,6 @@ class TestQSPAuditNode(QSPTest):
 
         # This is a critical line to be called as the node did all it audits and starts bidding
         # again
-        self.__evt_wait_loop(self.__getNextAuditRequest_filter)
         self.__set_any_request_available(0)
         # an extra call to get_next_audit is no accepted
         self.assertFalse(mocked__get_next_audit_request_called[0])

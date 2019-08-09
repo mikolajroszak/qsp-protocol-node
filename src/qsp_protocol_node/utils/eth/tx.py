@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 # the entire block (eth_getBlock) every time a transaction is sent
 # Original code: https://github.com/ethereum/web3.py/blob/b899050df8614db1d5ec339a920a7aa6b570fa99/web3/contract.py#L780
 
-def __method_call(method, transaction=None, block_identifier=None):
+def __method_call(method, transaction=None):
         if transaction is None:
             call_transaction = {}
         else:
@@ -47,9 +47,6 @@ def __method_call(method, transaction=None, block_identifier=None):
                     "Please ensure that this contract instance has an address."
                 )
 
-        if block_identifier is None:
-            block_identifier = method.web3.eth.blockNumber
-
         return call_contract_function(
             method.contract_abi,
             method.web3,
@@ -57,7 +54,7 @@ def __method_call(method, transaction=None, block_identifier=None):
             method._return_data_normalizers,
             method.function_identifier,
             call_transaction,
-            block_identifier,
+            None,
             *method.args,
             **method.kwargs
         )
@@ -78,10 +75,10 @@ def mk_args(config):
     return args
 
 
-def mk_read_only_call(config, method, block_number=None):
+def mk_read_only_call(config, method):
     try:
         SingletonLock.instance().lock.acquire()
-        return __method_call(method, {'from': config.account}, block_number)
+        return __method_call(method, {'from': config.account})
     finally:
         try:
             SingletonLock.instance().lock.release()

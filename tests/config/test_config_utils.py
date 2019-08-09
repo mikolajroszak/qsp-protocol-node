@@ -78,7 +78,7 @@ class ConfigStubForCheckSettings:
         self.analyzers = []
 
 
-def __method_call(method, unused1, unused2):
+def __method_call(method, unused1):
     return method.value
 
 

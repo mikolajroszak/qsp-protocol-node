@@ -99,7 +99,7 @@ class ReadOnlyMethodMock:
         self.address = address
 
 
-def __method_call(method, unused1, unused2):
+def __method_call(method, unused1):
     if method.exception is None:
         return method.value
     raise method.exception

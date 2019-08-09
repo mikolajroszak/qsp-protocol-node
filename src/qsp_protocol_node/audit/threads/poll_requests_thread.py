@@ -31,6 +31,10 @@ class PollRequestsThread(BlockMinedSubscriberThread):
     __AVAILABLE_AUDIT_STATE_READY = 1
 
     # Must be in sync with
+    # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L109
+    __AVAILABLE_AUDIT_EXCEEDED = 4
+
+    # Must be in sync with
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L110
     __AVAILABLE_AUDIT_UNDERSTAKED = 5
 
@@ -117,8 +121,7 @@ class PollRequestsThread(BlockMinedSubscriberThread):
         try:
             most_recent_audit = mk_read_only_call(
                 self.config,
-                self.config.audit_contract.functions.myMostRecentAssignedAudit(),
-                current_block
+                self.config.audit_contract.functions.myMostRecentAssignedAudit()
             )
 
             request_id = most_recent_audit[0]
@@ -152,20 +155,19 @@ class PollRequestsThread(BlockMinedSubscriberThread):
                     assigned_block_nbr=audit_assignment_block_number
                 )
 
-            # The node should attempt to bid. Before that, though, gotta perform some checks...
-
-            pending_requests_count = mk_read_only_call(
+            any_request_available = mk_read_only_call(
                 self.config,
-                self.config.audit_contract.functions.assignedRequestCount(self.config.account))
+                self.config.audit_contract.functions.anyRequestAvailable())
 
-            if pending_requests_count >= self.config.max_assigned_requests:
+            if any_request_available == self.__AVAILABLE_AUDIT_EXCEEDED:
+                pending_requests_count = mk_read_only_call(
+                    self.config,
+                    self.config.audit_contract.functions.assignedRequestCount(self.config.account))
+
                 self.logger.error("Skip bidding as node is currently processing {0} requests in "
                                   "audit contract {1}".format(str(pending_requests_count),
                                                               self.config.audit_contract_address))
                 return
-            any_request_available = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.anyRequestAvailable())
 
             if any_request_available == self.__AVAILABLE_AUDIT_UNDERSTAKED:
                 raise NotEnoughStake("Missing funds. To audit contracts, nodes must stake at "
@@ -195,14 +197,13 @@ class PollRequestsThread(BlockMinedSubscriberThread):
         except Exception as error:
             self.logger.exception(str(error))
 
-    def __get_next_police_assignment(self, current_block):
+    def __get_next_police_assignment(self):
         """
         Gets the next police assignment tuple.
         """
         return mk_read_only_call(
             self.config,
-            self.config.audit_contract.functions.getNextPoliceAssignment(),
-            current_block
+            self.config.audit_contract.functions.getNextPoliceAssignment()
         )
 
     def __poll_police_request(self, current_block):
@@ -215,7 +216,7 @@ class PollRequestsThread(BlockMinedSubscriberThread):
             return
 
         try:
-            probe = self.__get_next_police_assignment(current_block)
+            probe = self.__get_next_police_assignment()
             has_assignment = probe[0]
 
             police_assignment_block_number = probe[4]
