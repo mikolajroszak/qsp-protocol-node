@@ -10,6 +10,7 @@
 source "$WRAPPER_HOME"/../common/settings
 
 readonly ANALYZER_DOCKER_IMAGE="qspprotocol/securify-usolc@sha256:d1f683b3c561b382a86a1ca7d4d1df1d87986c23ee076345a9bf3679a7d707e3"
+readonly ANALYZER_SYS_PATH=$(docker run --entrypoint /bin/bash "$ANALYZER_DOCKER_IMAGE" -c 'echo "$PATH"')
 readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
-readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -fs /shared/$CONTRACT_FILE_NAME"
+readonly ANALYZER_CMD="docker run --rm -e PATH=$QSP_USOLC_BIN_DIR:$ANALYZER_SYS_PATH -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -fs /shared/$CONTRACT_FILE_NAME"
 

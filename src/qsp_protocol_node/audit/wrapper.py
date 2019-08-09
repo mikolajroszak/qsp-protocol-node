@@ -51,7 +51,7 @@ class Wrapper:
         # Prefetch the configured analyzer image. If the prefetching fails,
         # an exception is thrown, the program exits and the auto-restart feature kicks in.
         if prefetch:
-            self.__prefetch_image()
+            self.__pull_analyzer()
 
     @property
     def analyzer_name(self):
@@ -123,12 +123,11 @@ class Wrapper:
 
         return metadata
 
-    def __prefetch_image(self):
+    def __pull_analyzer(self):
         try:
-            # No contact is needed, only the wrapper home initialization
             env_vars = self.get_base_environment()
             self.__logger.debug(
-                "Executing {0}'s once script to download the image".format(self.analyzer_name)
+                "Prefetching {0} image".format(self.analyzer_name)
             )
 
             subprocess.run(

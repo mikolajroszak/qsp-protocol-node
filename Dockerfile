@@ -24,12 +24,8 @@ RUN apk add --no-cache libffi-dev
 RUN apk add --no-cache linux-headers
 RUN apk add --no-cache vim
 
-# Install usolc
-COPY ./bin/usolc /usr/local/bin/solc
-RUN chmod +x /usr/local/bin/solc
-
-RUN mkdir ./app
-WORKDIR ./app/
+RUN mkdir /app
+WORKDIR /app
 RUN mkdir ./audit-db
 COPY requirements.txt ./
 RUN pip3 install -r requirements.txt

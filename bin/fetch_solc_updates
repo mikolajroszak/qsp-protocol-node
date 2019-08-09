@@ -9,4 +9,5 @@
 
 # TODO: this tag is to be parameterized in the future
 # See https://quantstamp.atlassian.net/browse/QSP-1264
-docker pull "usolc@latest-node"
+
+docker pull qspprotocol/usolc:node-latest

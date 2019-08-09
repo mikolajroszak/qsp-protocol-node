@@ -32,6 +32,7 @@ if ! [ -d "$LOG_DIR" ]; then
 fi
 
 readonly RESOURCES_DIR="$(dirname ${SCRIPT_DIR})/resources"
+readonly BIN_DIR=="$(dirname ${SCRIPT_DIR})/bin"
 
 # Check if the script is running in background
 case $(ps -o stat= -p $$) in
@@ -70,10 +71,13 @@ QSP_CONFIG="resources/config.yaml"
 rotate_logs
 touch "$LOG_PATH"
 
+readonly QSP_USOLC_BIN="/opt/usolc/bin"
+
 docker load --input app.tar && \
 docker run -d \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v /tmp:/tmp:Z \
+    -v "$BIN_DIR/solc":"$QSP_USOLC_BIN_DIR/solc":Z \
 	-v "$LOG_PATH":/var/log/qsp-protocol/qsp-protocol.log:Z \
 	-v "$RESOURCES_DIR/keystore":/app/resources/keystore:Z \
 	-v "$RESOURCES_DIR/contracts":/app/resources/contracts:Z \
@@ -84,6 +88,7 @@ docker run -d \
 	-e AWS_DEFAULT_REGION="us-east-1" \
 	-e QSP_ETH_PASSPHRASE="$QSP_ETH_PASSPHRASE" \
 	-e QSP_ETH_AUTH_TOKEN="$QSP_ETH_AUTH_TOKEN" \
+    -e QSP_USOLC_BIN_DIR="$QSP_USOLC_BIN_DIR" \
 	qsp-protocol-node sh -c "./bin/qsp-protocol-node -a $QSP_ENV $QSP_CONFIG"
 
 # Tail the logs if not in background

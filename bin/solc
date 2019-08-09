@@ -12,7 +12,7 @@
 # See https://quantstamp.atlassian.net/browse/QSP-1264
 
 if [[ "$#" == 0 ]] ; then
-    docker run usolc@latest-node
+    docker run qspprotocol/usolc:node-latest
     exit 0
 fi
 
@@ -28,4 +28,4 @@ for ARG in "$@"; do
     fi
 done
 
-docker run -i $MOUNT_ARGS usolc $@
+docker run -i $MOUNT_ARGS qspprotocol/usolc:node-latest $@

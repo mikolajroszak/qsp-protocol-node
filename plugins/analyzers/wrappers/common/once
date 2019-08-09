@@ -11,8 +11,5 @@
 
 source "$WRAPPER_HOME"/../common/settings
 
-# Pull docker image
-"$WRAPPER_HOME"/../common/pull_analyzer || exit 1
-
 > "$STORAGE_DIR/.once"
 
