@@ -32,7 +32,7 @@ if ! [ -d "$LOG_DIR" ]; then
 fi
 
 readonly RESOURCES_DIR="$(dirname ${SCRIPT_DIR})/resources"
-readonly BIN_DIR=="$(dirname ${SCRIPT_DIR})/bin"
+readonly BIN_DIR="$(dirname ${SCRIPT_DIR})/bin"
 
 # Check if the script is running in background
 case $(ps -o stat= -p $$) in
