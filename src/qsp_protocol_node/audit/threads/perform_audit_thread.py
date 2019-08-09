@@ -290,9 +290,9 @@ class PerformAuditThread(TimeIntervalPollingThread):
 
         return audit_report
 
-    def __fetch_usolc_updates(self):
+    def __pull_usolc(self):
         update_usolc = subprocess.run(
-                "{0}/bin/fetch_usolc_updates".format(self.config.qsp_home_dir),
+                "{0}/bin/pull_usolc".format(self.config.qsp_home_dir),
                 check=False, 
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -307,7 +307,8 @@ class PerformAuditThread(TimeIntervalPollingThread):
         """
         target_contract = fetch_file(uri)
 
-        self.__fetch_usolc_updates()
+        # Fetches the latest version of usolc (to be dynamically injected inside analyzers)
+        self.__pull_usolc()
 
         warnings, errors = self.__check_compilation(target_contract, request_id, uri)
         audit_report = {}
