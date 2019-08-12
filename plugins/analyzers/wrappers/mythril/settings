@@ -10,7 +10,6 @@
 source "$WRAPPER_HOME"/../common/settings
 
 readonly ANALYZER_DOCKER_IMAGE="qspprotocol/mythril:node-latest"
-readonly ANALYZER_SYS_PATH=$(docker run --entrypoint /bin/bash "$ANALYZER_DOCKER_IMAGE" -c 'echo "$PATH"') 
+readonly ANALYZER_SYS_PATH=$(docker run --entrypoint sh "$ANALYZER_DOCKER_IMAGE" -c 'echo "$PATH"') 
 readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
-readonly ANALYZER_CMD="docker run --rm -e PATH=$QSP_USOLC_BIN_DIR:$ANALYZER_SYS_PATH -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -o json -x /shared/$CONTRACT_FILE_NAME"
-
+readonly ANALYZER_CMD="docker run --rm -e PATH=$(dirname ${QSP_CONTAINER_USOLC}):$ANALYZER_SYS_PATH -v $QSP_HOST_USOLC:$QSP_CONTAINER_USOLC -v $QSP_DOCKER_SOCKET:$QSP_DOCKER_SOCKET -v $TMP_FOLDER:$TMP_FOLDER -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -o json -x $TMP_FOLDER/$CONTRACT_FILE_NAME"

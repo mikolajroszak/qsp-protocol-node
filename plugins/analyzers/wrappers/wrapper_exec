@@ -22,6 +22,22 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 SCRIPT="$2"
 
+if [[ "x$QSP_HOME" == "x" ]] ; then
+    export QSP_HOME=$(cd ../../../ && pwd)
+fi
+
+if [[ "x$QSP_HOST_USOLC" == "x" ]] ; then
+    export QSP_HOST_USOLC="$QSP_HOME/bin/solc"
+fi
+
+if [[ "x$QSP_CONTAINER_USOLC" == "x" ]] ; then
+    export QSP_CONTAINER_USOLC="/opt/usolc/bin/solc"
+fi
+
+if [[ "x$QSP_DOCKER_SOCKET" == "x" ]] ; then
+    export QSP_DOCKER_SOCKET="/var/run/docker.sock"
+fi
+
 export ANALYZER_NAME="$1"
 export WRAPPER_HOME="$SCRIPT_DIR/$ANALYZER_NAME"
 export STORAGE_DIR="/tmp"

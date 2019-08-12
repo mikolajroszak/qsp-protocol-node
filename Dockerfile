@@ -5,8 +5,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-FROM docker:dind
-# for "Docker-in-Docker" support
+FROM alpine:3.7
  
 # the following steps are based on https://hub.docker.com/r/frolvlad/alpine-python3/
 
@@ -16,7 +15,7 @@ WORKDIR ./app/
 RUN mkdir ./audit-db
 COPY requirements.txt ./
 
-RUN apk add --no-cache python3 jq vim bash && \
+RUN apk add --no-cache python3 jq vim bash && docker \
   apk add --no-cache --virtual .build-deps python3-dev gcc musl-dev libtool automake autoconf libressl-dev make libffi-dev linux-headers && \
   python3 -m ensurepip && \
   rm -r /usr/lib/python*/ensurepip && \
@@ -25,7 +24,7 @@ RUN apk add --no-cache python3 jq vim bash && \
   if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
   if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
   rm -r /root/.cache && \
-  apk del .build-deps
+  apk del .build-deps 
 
 COPY .coveragerc .
 COPY ./bin ./bin

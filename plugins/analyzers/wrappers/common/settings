@@ -47,4 +47,3 @@ if [ -z ${COMMON_GLOBAL_SETTINGS+x} ] ; then
 
     source "$WRAPPER_HOME"/settings
 fi
-

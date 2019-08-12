@@ -19,6 +19,9 @@ trap kill_node SIGTERM SIGINT
 
 readonly SUCCESS="0"
 
+readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export QSP_HOME=`dirname "$SCRIPT_DIR"`
+
 function usage() {
     echo "usage: qsp-protocol-node [-t TEST_ENV] [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]" &> /dev/stderr
     echo "                      environment config-yaml"                                    &> /dev/stderr

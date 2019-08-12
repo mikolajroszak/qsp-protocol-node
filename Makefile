@@ -12,7 +12,10 @@ QSP_ENV_CI ?= "dev"
 QSP_CONFIG ?= "./resources/config.yaml"
 QSP_ETH_PASSPHRASE ?= "abc123ropsten"
 QSP_ETH_AUTH_TOKEN ?= "PLEASE-SET-THE-TOKEN"
-QSP_LOG_DIR ?= $(HOME)/qsp-protocol
+QSP_HOST_USOLC = $(PWD)/bin/solc
+QSP_CONTAINER_USOLC = /opt/usolc/bin/solc
+QSP_LOG_DIR ?= "$(HOME)/qsp-protocol"
+QSP_DOCKER_SOCKET = "/var/run/docker.sock"
 AWS_ACCESS_KEY_ID ?= ""
 AWS_SECRET_ACCESS_KEY ?= ""
 AWS_DEFAULT_REGION ?= ""
@@ -25,7 +28,7 @@ clean:
 
 run: build
 	docker run -it \
-		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $(QSP_DOCKER_SOCKET):$(QSP_DOCKER_SOCKET) \
 		-v /tmp:/tmp \
 		-v $(PWD)/resources/keystore:/app/resources/keystore:Z \
 		-v $(PWD)/resources/contracts:/app/resources/contracts:Z \
@@ -51,15 +54,17 @@ build:
 
 test: build
 	docker run -it \
-		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $(QSP_DOCKER_SOCKET):$(QSP_DOCKER_SOCKET) \
 		-v /tmp:/tmp \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
+		-e $(QSP_DOCKER_SOCKET)="$(QSP_DOCKER_SOCKET)" \
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t local"
 
 interactive: build
 	docker run -it \
-		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $(QSP_DOCKER_SOCKET):$(QSP_DOCKER_SOCKET) \
 		-v /tmp:/tmp \
+		-v $(QSP_HOST_USOLC):$(QSP_CONTAINER_USOLC):Z \
 		-v $(PWD)/resources/keystore:/app/resources/keystore:Z \
 		-v $(PWD)/resources/contracts:/app/resources/contracts:Z \
 		-v $(PWD)/resources/config.yaml:/app/resources/config.yaml:Z \
@@ -71,18 +76,24 @@ interactive: build
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
 		-e QSP_ENV="dev" \
         -e QSP_CONFIG="$(QSP_CONFIG)" \
+		-e QSP_HOST_USOLC="$(QSP_HOST_USOLC)" \
+		-e QSP_CONTAINER_USOLC="$(QSP_CONTAINER_USOLC)" \
+		-e $(QSP_DOCKER_SOCKET)="$(QSP_DOCKER_SOCKET)" \
         qsp-protocol-node sh
 
 test-travis-ci: build
 	docker run -t \
-		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $(QSP_DOCKER_SOCKET):$(QSP_DOCKER_SOCKET) \
 		-v /tmp:/tmp \
+		-v $(PWD)/bin/solc:"$(QSP_USOLC_BIN_DIR/solc)":Z \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-v $(PWD)/tests/coverage:/app/tests/coverage \
 		-e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
 		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
 		-e AWS_DEFAULT_REGION="$(AWS_DEFAULT_REGION)" \
 		-e QSP_ENV="$(QSP_ENV_CI)" \
+		-e QSP_USOLC_BIN_DIR="$(QSP_USOLC_BIN_DIR)" \
+		-e $(QSP_DOCKER_SOCKET)="$(QSP_DOCKER_SOCKET)" \
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t ci"
 
 bundle:	

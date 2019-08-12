@@ -47,15 +47,11 @@ fi
 
 cd "$RESOURCES_DIR"
 
-if [[ "x$QSP_ETH_PASSPHRASE" == "x" ]] ; then
-  echo "Environment variable QSP_ETH_PASSPHRASE is not set" &> /dev/stderr
-  exit 1
-fi
-
-if [[ "x$QSP_ETH_AUTH_TOKEN" == "x" ]] ; then
-  echo "Environment variable QSP_ETH_AUTH_TOKEN is not set" &> /dev/stderr
-  exit 1
-fi
+[[ "x$QSP_ETH_PASSPHRASE"  != "x" ]] || (echo "QSP_ETH_PASSPHRASE is not set"  ; exit 1)
+[[ "x$QSP_ETH_AUTH_TOKEN"  != "x" ]] || (echo "QSP_ETH_AUTH_TOKEN is not set"  ; exit 1)
+[[ "x$QSP_HOST_USOLC"      != "x" ]] || (echo "QSP_HOST_USOLC is not set"      ; exit 1)
+[[ "x$QSP_CONTAINER_USOLC" != "x" ]] || (echo "QSP_CONTAINER_USOLC is not set" ; exit 1)
+[[ "x$QSP_DOCKER_SOCKET"   != "x" ]] || (echo "QSP_DOCKER_SOCKET is not set"   ; exit 1) 
 
 if [ ! -f app.tar ]; then
   echo "app.tar file not present. Exiting!!"
@@ -71,7 +67,7 @@ QSP_CONFIG="resources/config.yaml"
 rotate_logs
 touch "$LOG_PATH"
 
-readonly QSP_USOLC_BIN="/opt/usolc/bin"
+readonly QSP_USOLC_BIN_DIR="/usr/bin"
 
 docker load --input app.tar && \
 docker run -d \

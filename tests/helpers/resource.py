@@ -75,6 +75,7 @@ def fetch_config(inject_contract=False):
     # create config from file, the contract is not provided and will be injected separately
     config_file_uri = resource_uri("test_config.yaml")
     config = ConfigFactory.create_from_file(config_file_uri, os.getenv("QSP_ENV", default="dev"),
+                                            os.getenv("QSP_HOME"),
                                             validate_contract_settings=False)
     if inject_contract:
         contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"

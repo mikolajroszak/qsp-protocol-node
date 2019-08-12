@@ -6,6 +6,7 @@
 ####################################################################################################
 
 import log_streaming
+import os
 
 from config import ConfigFactory, config_value
 from helpers.resource import resource_uri
@@ -32,7 +33,7 @@ class TestLoggingInit(QSPTest):
 
     def test_initialize(self):
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file(config_file_uri, "dev",
+        config = ConfigFactory.create_from_file(config_file_uri, "dev", qsp_home_dir=os.getenv('QSP_HOME'),
                                                 validate_contract_settings=False)
         log_streaming.initialize("account", config_value(config, "/logging/streaming", {}),
                                  force=True)

@@ -8,6 +8,7 @@
 """
 Tests different scenarios for retrieving configuration values.
 """
+import os
 import unittest
 import yaml
 
@@ -392,7 +393,7 @@ class TestConfig(QSPTest):
 
     def test_load_config(self):
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file(config_file_uri, "dev", validate_contract_settings=False)
+        config = ConfigFactory.create_from_file(config_file_uri, "dev", os.getenv("QSP_HOME"), validate_contract_settings=False)
         self.assertIsNotNone(config.eth_provider)
         self.assertIsNotNone(config.web3_client)
         self.assertIsNotNone(config.account)
@@ -423,6 +424,7 @@ class TestConfig(QSPTest):
             auth_token=auth_token,
             validate_contract_settings=False,
             config_utils=dummy_utils,
+            qsp_home_dir=os.getenv('QSP_HOME'),
         )
         self.assertEqual(config.auth_token, auth_token)
         self.assertEqual(config.eth_provider_args['endpoint_uri'], endpoint)
