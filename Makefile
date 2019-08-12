@@ -52,13 +52,23 @@ docs:
 build:
 	docker build -t qsp-protocol-node .
 
+# test: build
+# 	docker run -it \
+# 		-v $(QSP_DOCKER_SOCKET):$(QSP_DOCKER_SOCKET) \
+# 		-v /tmp:/tmp \
+# 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
+# 		-e $(QSP_DOCKER_SOCKET)="$(QSP_DOCKER_SOCKET)" \
+# 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t local"
+
 test: build
 	docker run -it \
-		-v $(QSP_DOCKER_SOCKET):$(QSP_DOCKER_SOCKET) \
 		-v /tmp:/tmp \
+		-v $(PWD)/tests/resources:/app/tests/resources:Z \
+		-v $(QSP_DOCKER_SOCKET):$(QSP_DOCKER_SOCKET) \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
 		-e $(QSP_DOCKER_SOCKET)="$(QSP_DOCKER_SOCKET)" \
-		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t local"
+ 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t local"
+
 
 interactive: build
 	docker run -it \

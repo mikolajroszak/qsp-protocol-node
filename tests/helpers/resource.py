@@ -73,13 +73,15 @@ def __load_audit_contract_from_src(web3_client, contract_src_uri, contract_name,
 
 def fetch_config(inject_contract=False):
     # create config from file, the contract is not provided and will be injected separately
-    config_file_uri = resource_uri("test_config.yaml")
-    config = ConfigFactory.create_from_file(config_file_uri, os.getenv("QSP_ENV", default="dev"),
-                                            os.getenv("QSP_HOME"),
+    uri = resource_uri("test_config.yaml")
+    config = ConfigFactory.create_from_file(config_file_uri=uri, 
+                                            environment=os.getenv("QSP_ENV", default="dev"),
+                                            qsp_home_dir=os.getenv("QSP_HOME"),
                                             validate_contract_settings=False)
+    
     if inject_contract:
-        contract_source_uri = "./tests/resources/QuantstampAuditMock.sol"
-        contract_metadata_uri = "./tests/resources/QuantstampAudit-metadata.json"
+        contract_source_uri = "{0}/tests/resources/QuantstampAuditMock.sol".format(project_root())
+        contract_metadata_uri = "{0}/tests/resources/QuantstampAudit-metadata.json".format(project_root())
         audit_contract_metadata = load_json(fetch_file(contract_metadata_uri))
         audit_contract_name = get(audit_contract_metadata, '/contractName')
 
