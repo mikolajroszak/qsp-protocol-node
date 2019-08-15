@@ -64,7 +64,7 @@ class TestPerformAuditThread(QSPTest):
                                   self.__thread._PerformAuditThread__AUDIT_STATUS_SUCCESS)
 
     @timeout(300, timeout_exception=StopIteration)
-    def test_analyzer_produces_metadata_for_errors(self):
+    def test_analyzer_produces_metadata_for_errors_XXX(self):
         """
         Tests that analyzers produce their metadata even when failure occurs
         """

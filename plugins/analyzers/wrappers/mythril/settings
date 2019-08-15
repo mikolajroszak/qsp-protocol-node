@@ -9,7 +9,7 @@
 
 source "$WRAPPER_HOME"/../common/settings
 
-readonly ANALYZER_DOCKER_IMAGE="qspprotocol/mythril-usolc@sha256:c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913"
+readonly ANALYZER_DOCKER_IMAGE="qspprotocol/mythril-usolc@sha256:5ac33515b42694f7b69daa62ffe75c7128ab5b565f27315c0a2c08a20685648e"
 readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
 readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -o json -x /shared/$CONTRACT_FILE_NAME"
 
