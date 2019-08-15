@@ -12,7 +12,7 @@
     {
       "status": "error",
       "errors": [
-        "{\"success\": false, \"error\": \"Solc experienced a fatal error (code 1).\\n\\n/shared/BasicToken.sol:11:1: Error: Source \\\"/shared/ERC20Basic.sol\\\" not found: File not found.\\nimport \\\"./ERC20Basic.sol\\\";\\n^------------------------^\\n/shared/BasicToken.sol:12:1: Error: Source \\\"math/SafeMath.sol\\\" not found: File not found.\\nimport \\\"../../math/SafeMath.sol\\\";\\n^-------------------------------^\\n\", \"issues\": []}\n"
+        "{\"success\": false, \"error\": \"Solc experienced a fatal error (code 1).\\n\\nWarning: This is a pre-release compiler version, please do not use it in production.\\n/shared/BasicToken.sol:11:1: Error: Source \\\"/shared/ERC20Basic.sol\\\" not found: File not found.\\nimport \\\"./ERC20Basic.sol\\\";\\n^------------------------^\\n/shared/BasicToken.sol:12:1: Error: Source \\\"math/SafeMath.sol\\\" not found: File not found.\\nimport \\\"../../math/SafeMath.sol\\\";\\n^-------------------------------^\\n\", \"issues\": []}\n"
       ],
       "trace": [
         ">> Wrapper setup finished\n",

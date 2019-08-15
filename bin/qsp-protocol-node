@@ -54,7 +54,7 @@ while getopts "t:d:f:ah" FLAG; do
                 ;;
 
                 local)
-                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/ -k XXX
+                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
                     exit $?
                 ;;
 

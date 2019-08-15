@@ -366,7 +366,7 @@ class TestQSPAuditNode(QSPTest):
         self.assertEqual(thrd['fk_status'], 'AS')
 
     @timeout(300, timeout_exception=StopIteration)
-    def test_successful_contract_audit_request_XXX(self):
+    def test_successful_contract_audit_request(self):
         """
         Tests the entire flow of a successful audit request, from a request
         to the production of a report and its submission.
@@ -410,7 +410,7 @@ class TestQSPAuditNode(QSPTest):
                                          ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
-    def test_successful_contract_audit_request_dockerhub_fail_isolation_XXX(self):
+    def test_successful_contract_audit_request_dockerhub_fail_isolation(self):
         """
         Tests that a report is generated when the dockerhub fails
         """
@@ -471,7 +471,7 @@ class TestQSPAuditNode(QSPTest):
                                          ignore_keys=[key for key in expected_row if expected_row[key] == "IGNORE"])
 
     @timeout(300, timeout_exception=StopIteration)
-    def test_successful_contract_audit_request_dockerhub_fail_multiple_analyzers_XXX(self):
+    def test_successful_contract_audit_request_dockerhub_fail_multiple_analyzers(self):
         """
         Tests that a report is generated when the dockerhub fails
         """

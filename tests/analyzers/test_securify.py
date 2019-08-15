@@ -36,7 +36,7 @@ class TestAnalyzerSecurify(QSPTest):
         )
         return Analyzer(securify_wrapper)
 
-    def test_report_creation_XXX(self):
+    def test_report_creation(self):
         """
         Tests whether a report is created upon calling the analyzer
         on a buggy contract
@@ -93,7 +93,7 @@ class TestAnalyzerSecurify(QSPTest):
         self.assertTrue("ch.securify.CompilationHelpers.compileContracts" in ''.join(
             err + '\n' for err in report['errors']))
 
-    def test_old_pragma_with_caret_XXX(self):
+    def test_old_pragma_with_caret(self):
         """
         Tests whether no exception is raised upon calling the analyzer
         with a contract locking an old version of Solidity with caret.
