@@ -13,7 +13,7 @@ from helpers.qsp_test import QSPTest
 
 class TestWrapper(QSPTest):
     __MYTHRIL_METADATA = {'name': 'mythril',
-                          'version': '5ac33515b42694f7b69daa62ffe75c7128ab5b565f27315c0a2c08a20685648e',
+                          'version': 'ab192ccc8826b964d0e19a93fe7f5615ef56c0c6c88721f96a1d80c5b02ec135',
                           'vulnerabilities_checked': {'Call data forwarded with delegatecall()': {
                               'type': 'delegate_call_to_untrusted_contract'},
                               'Dependence on predictable environment variable': {
@@ -42,10 +42,10 @@ class TestWrapper(QSPTest):
                               'Unchecked CALL return value': {
                                   'type': 'unchecked_call_return_value'},
                               'Unknown': {'type': 'other'}},
-                          'command': 'docker run --rm -v /tmp/.mythril/25:/shared/ -i qspprotocol/mythril-usolc@sha256:5ac33515b42694f7b69daa62ffe75c7128ab5b565f27315c0a2c08a20685648e  -o json -x /shared/x'}
+                          'command': 'docker run --rm -v /tmp/.mythril/25:/shared/ -i qspprotocol/mythril-usolc@sha256:ab192ccc8826b964d0e19a93fe7f5615ef56c0c6c88721f96a1d80c5b02ec135  -o json -x /shared/x'}
 
     __SECURIFY_METADATA = {'name': 'securify',
-                           'version': 'c7f708b61f5e5b5600644d3cce2709fdbcbbfc0e7e9508379f3e64a83d434e37',
+                           'version': 'd367b17b6f1ad898a16cf5d663bc95eaf2cefa5de8779590d31575493f9de799',
                            'vulnerabilities_checked': {
                                'MissingInputValidation': {'type': 'missing_input_validation'},
                                'LockedEther': {'type': 'locked_ether'},
@@ -75,7 +75,7 @@ class TestWrapper(QSPTest):
                                    'type': 'transaction_order_dependency_true_positive'},
                                'SecurifyBug': {'type': 'securify_bug'},
                                'Unknown': {'type': 'other'}},
-                           'command': 'docker run --rm -v /tmp/.securify/37:/shared/ -i qspprotocol/securify-usolc@sha256:c7f708b61f5e5b5600644d3cce2709fdbcbbfc0e7e9508379f3e64a83d434e37  -fs /shared/x'}
+                           'command': 'docker run --rm -v /tmp/.securify/37:/shared/ -i qspprotocol/securify-usolc@sha256:d367b17b6f1ad898a16cf5d663bc95eaf2cefa5de8779590d31575493f9de799  -fs /shared/x'}
 
     def test_get_metadata(self):
         """
