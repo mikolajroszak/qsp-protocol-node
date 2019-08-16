@@ -48,7 +48,7 @@
       ],
       "analyzer": {
         "name": "mythril",
-        "version": "c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913",
+        "version": "ab192ccc8826b964d0e19a93fe7f5615ef56c0c6c88721f96a1d80c5b02ec135",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {
             "type": "delegate_call_to_untrusted_contract"
@@ -96,7 +96,7 @@
             "type": "other"
           }
         },
-        "command": "docker run --rm -v /tmp/.mythril/1356:/shared/ -i qspprotocol/mythril-usolc@sha256:c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913  -o json -x /shared/DAOBug.sol"
+        "command": "docker run --rm -v /tmp/.mythril/1356:/shared/ -i qspprotocol/mythril-usolc@sha256:ab192ccc8826b964d0e19a93fe7f5615ef56c0c6c88721f96a1d80c5b02ec135  -o json -x /shared/DAOBug.sol"
       },
       "start_time": 1542045940,
       "end_time": 1542045946
