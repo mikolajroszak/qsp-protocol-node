@@ -916,7 +916,7 @@ class TestQSPAuditNode(QSPTest):
     def __compress_report(self, report_path_uri):
         full_report = load_json(fetch_file(resource_uri(report_path_uri)))
         full_report['version'] = self.__config.node_version
-        encoder = ReportEncoder()
+        encoder = ReportEncoder(self.__config)
         return encoder.compress_report(full_report, full_report['request_id'])
 
     def __assert_audit_request_report(self, request_id, report_file_path=None, ignore_id=False):

@@ -95,4 +95,6 @@ class TestWrapper(QSPTest):
             start = meta["command"].find("-v /tmp/.") + len("-v /tmp/.")
             end = meta["command"].find("shared/ -i qspprotocol")
             meta["command"] = meta["command"][0:start] + meta["command"][end:]
+            print(meta)
+            print(data)
             self.assertTrue(meta in data)
