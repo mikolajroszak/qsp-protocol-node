@@ -20,7 +20,8 @@ import audit.report_processing
 
 from audit.report_processing import ReportEncoder
 from audit.report_processing import ReportFormattingException
-from helpers.resource import resource_uri
+from helpers.resource import resource_uri, fetch_config
+
 from helpers.qsp_test import QSPTest
 from utils.io import load_json, fetch_file
 
@@ -43,7 +44,8 @@ class TestReportProcessing(QSPTest):
     """
 
     def setUp(self):
-        self.__encoder = audit.report_processing.ReportEncoder()
+        self.__config = fetch_config(inject_contract=True)
+        self.__encoder = audit.report_processing.ReportEncoder(self.__config)
 
     def __compare_json(self, actual_json, expected_json):
         diff = DeepDiff(

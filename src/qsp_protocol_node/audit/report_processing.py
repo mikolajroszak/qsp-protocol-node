@@ -85,7 +85,8 @@ class ReportEncoder:
 
     __HEX_BITS = 4
 
-    def __init__(self):
+    def __init__(self, config):
+        self.__config = config
         self.__logger = get_logger(self.__class__.__qualname__)
         self.__vulnerability_types, \
         self.__vulnerability_types_inverted, \
@@ -93,10 +94,9 @@ class ReportEncoder:
         self.__analyzer_data_inverted, \
         self.__statuses, \
         self.__statuses_inverted = \
-            ReportEncoder.__initialize_analyzer_encoding_data()
+            self.__initialize_analyzer_encoding_data()
 
-    @staticmethod
-    def __initialize_analyzer_encoding_data():
+    def __initialize_analyzer_encoding_data(self):
         """
         Initializes the mapping of vulnerability types to bitstring IDs and other analyzer data.
         """
@@ -112,20 +112,8 @@ class ReportEncoder:
         with open(json_file) as json_data:
             loaded_json = json.load(json_data)
 
-            # analyzer data
-            analyzer_list = loaded_json["analyzers"]
-            analyzer_count = 0
-            for analyzer in analyzer_list:
-                bitstring = ReportEncoder.__to_bitstring(analyzer_count,
-                                                         ReportEncoder.__ANALYZER_NAME_SIZE)
-                experimental = analyzer["experimental"]
-                analyzer_data_inverted[bitstring] = analyzer
-                analyzer_data[analyzer['name']] = {
-                    "experimental": experimental,
-                    "name_bitstring": bitstring
-                }
-                analyzer_count += 1
-            # vulnerability data
+
+            # Vulnerability data
             type_list = loaded_json["vulnerabilities"]
             vulnerability_count = 0
             for vulnerability_type in type_list:
@@ -135,7 +123,7 @@ class ReportEncoder:
                 vulnerability_types_inverted[bitstring] = vulnerability_type
                 vulnerability_count += 1
 
-            # status data
+            # Status data
             status_list = loaded_json["statuses"]
             status_count = 0
             for status in status_list:
@@ -144,6 +132,31 @@ class ReportEncoder:
                 statuses[status] = bitstring
                 statuses_inverted[bitstring] = status
                 status_count += 1
+
+        # Analyzer data
+        # Ensure that the analyzers are ordered by name, not the yaml file order.
+        sorted_analyzers = sorted(self.config.analyzers, key=lambda x: str(x))
+
+        # We only need the "experimental" and "name" metadata fields; using stubbed values here.
+        STUB_FILE = ""
+        STUB_ID = 0
+
+        analyzer_count = 0
+        for analyzer in sorted_analyzers:
+            metadata = analyzer.wrapper.get_metadata(STUB_FILE, STUB_ID, STUB_FILE)
+
+            bitstring = ReportEncoder.__to_bitstring(analyzer_count,
+                                                     ReportEncoder.__ANALYZER_NAME_SIZE)
+            experimental = metadata["experimental"]
+            analyzer_data_inverted[bitstring] = {
+                "experimental": experimental,
+                "name": metadata["name"]
+            }
+            analyzer_data[metadata['name']] = {
+                "experimental": experimental,
+                "name_bitstring": bitstring
+            }
+            analyzer_count += 1
 
         return vulnerability_types, \
                vulnerability_types_inverted, \
@@ -183,7 +196,7 @@ class ReportEncoder:
     @staticmethod
     def __from_bitstring(bitstring):
         """
-        Converts a bitstring back to a decimal representation
+        Converts a bitstring back to a decimal representation.
         """
         return int(bitstring, 2)
 
@@ -548,6 +561,9 @@ class ReportEncoder:
 
         return report
 
+    @property
+    def config(self):
+        return self.__config
 
 def main():
     """

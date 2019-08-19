@@ -176,7 +176,9 @@ class Config:
 
         self.__analyzers = self.__create_analyzers(config_utils)
         self.__event_pool_manager = EventPoolManager(self.evt_db_path)
-        self.__report_encoder = ReportEncoder()
+
+        # Note: self.__analyzers must be created before the ReportEncoder
+        self.__report_encoder = ReportEncoder(self)
         self.__upload_provider = self.__create_upload_provider(config_utils)
 
     def load_dictionary(self, config_dictionary, config_utils, env, account_passwd="",
