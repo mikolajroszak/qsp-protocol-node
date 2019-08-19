@@ -129,7 +129,7 @@ class TestVulnerabilitiesSet(unittest.TestCase):
 
             request_id = uncompressed_report['request_id']
             config = fetch_config(inject_contract=True)
-            encoder = ReportEncoder()
+            encoder = ReportEncoder(config)
             compressed_report = encoder.compress_report(uncompressed_report, request_id)
             decompressed_report = encoder.decode_report(compressed_report, request_id)
             found_set = VulnerabilitiesSet.from_uncompressed_report(decompressed_report)
