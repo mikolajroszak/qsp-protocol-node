@@ -9,11 +9,11 @@
 Provides the thread for computing gas price for the QSP Audit node implementation.
 """
 
-from .qsp_thread import BlockMinedPollingThread
+from .qsp_thread import BlockMinedSubscriberThread
 from utils.eth import get_gas_price
 
 
-class ComputeGasPriceThread(BlockMinedPollingThread):
+class ComputeGasPriceThread(BlockMinedSubscriberThread):
 
     def __on_block_mined(self, block_number):
         self.compute_gas_price()
@@ -34,13 +34,14 @@ class ComputeGasPriceThread(BlockMinedPollingThread):
         # set the gas_price in config
         self.config.gas_price_wei = gas_price
 
-    def __init__(self, config):
+    def __init__(self, config, block_mined_polling_thread):
         """
         Builds the thread object from the given input parameters.
         """
-        BlockMinedPollingThread.__init__(
+        BlockMinedSubscriberThread.__init__(
             self, config,
             target_function=self.__on_block_mined,
-            thread_name="compute_gas_price thread"
+            thread_name="compute_gas_price thread",
+            block_mined_polling_thread=block_mined_polling_thread
         )
         self.compute_gas_price()

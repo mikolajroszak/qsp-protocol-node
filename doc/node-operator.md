@@ -6,7 +6,9 @@
 
 ### Hardware Requirement
 
-The node is expected to run on a Linux environment or a MacOS system with memory of 16GB or higher.
+The node is expected to run on a Linux environment or a MacOS system with memory of 16GB or higher. There's no strict CPU requirements. Please see below the list of tested environments for examples.
+
+### Tested Environments
 
 The node has been tested in the envrionment listed below.
 
@@ -44,6 +46,13 @@ The node has been tested in the envrionment listed below.
 ### [After running the node for a while](#after-running-the-node-for-a-while-1)
 -  Checking how much QSP have you earned 
 -  How to unstake your funds (Warning: not eligible to audit anymore)
+
+### [How to keep your node running and up-to-date](#how-to-keep-your-node-running-and-up-to-date)
+- Staying up-to-date with the latest releases
+- Staying up-to-date through social media
+- Setting environment variables
+
+### [Reaching out for help](#Reaching-out-for-help)
 
 ## Local Installation
 
@@ -168,6 +177,9 @@ After you paste the contents of `[MyEtherWallet keystore file]` into `resources/
 ![](./node-operator/DEFAULT_FILE_COMPLETE_EXAMPLE.png)
 *Note: Not all of the code is visible in this image.* 
 
+Change the permissions for default.json so that only owner can read and write to the file: 
+
+`chmod 600 resources/keystore/default.json`
 
 
 ## Making your account eligible as a node operator ([Click here](https://youtu.be/3EeU_BCqAt0) to watch it on Youtube)
@@ -295,6 +307,10 @@ Or run the node in the background(detached mode) using the following command:
 
 `nohup ./bin/start-node &`
 
+*Note:* If you encounter an `InvalidKeyStoreError` please check 
+`resources/keystore/default.json` and make sure that it is a valid 
+keystore file. 
+
 ### View Logs
 Logs are written to `qsp-protocol-node.log` file in the .qsp-protocol directory within the user home directory. Logs are rotated every time a node restarts. If you encounter any issues including the node failing to restart, check the qsp-protocol-node.log.  If this does not resolve your issue, check old log files that are saved as tar.gz files.  
 
@@ -388,4 +404,14 @@ As a node operator, you won't need to worry about to unstake from the old contra
 1. Make sure the old node has stopped running, read [this section](#stop) on how to stop the node.
 1. [Run the upgraded node](#run) 
 1. Navigate to [Protocol UI](https://protocol.quantstamp.com) and check whether the version has been upgraded in the `QSP Nodes` Panel.
+
+## Reaching out for help
+When you've encountered issues following this guide, please browse open/closed issues to see if others have experienced the same problem. Navigate to [Issues](https://github.com/quantstamp/qsp-protocol-node/issues) to check them out.
+
+If you couldn't find issues related to your problem, feel free to reach out, we would gladly help! To help us assist you better, we suggest opening up a Github issue. Reasons are:
+
+1. Get faster response: the technical team is notified when new issues appear and will get back to you as soon as possible!
+
+2. Better Guidance: to help troubleshoot your problem, we need some context and logs output from your node. When opening an issue on GitHub, you will be given guidance on how to provide the team with enough information for them to attempt to solve your issue.
+
 

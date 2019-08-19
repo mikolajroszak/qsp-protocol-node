@@ -10,8 +10,54 @@ from log_streaming import get_logger
 from .singleton_lock import SingletonLock
 
 from web3.utils.threads import Timeout
+from web3.contract import call_contract_function
+from web3.utils.empty import empty
 
 logger = get_logger(__name__)
+
+
+# A modified version of web3.py's method.call() that exposes block_identifier
+# and queries for one if it's not specified rather than querying for
+# the entire block (eth_getBlock) every time a transaction is sent
+# Original code: https://github.com/ethereum/web3.py/blob/b899050df8614db1d5ec339a920a7aa6b570fa99/web3/contract.py#L780
+
+def __method_call(method, transaction=None):
+        if transaction is None:
+            call_transaction = {}
+        else:
+            call_transaction = dict(**transaction)
+
+        if 'data' in call_transaction:
+            raise ValueError("Cannot set data in call transaction")
+
+        if method.address:
+            call_transaction.setdefault('to', method.address)
+        if method.web3.eth.defaultAccount is not empty:
+            call_transaction.setdefault('from', method.web3.eth.defaultAccount)
+
+        if 'to' not in call_transaction:
+            if isinstance(method, type):
+                raise ValueError(
+                    "When using `Contract.[methodtype].[method].call()` from"
+                    " a contract factory you "
+                    "must provide a `to` address with the transaction"
+                )
+            else:
+                raise ValueError(
+                    "Please ensure that this contract instance has an address."
+                )
+
+        return call_contract_function(
+            method.contract_abi,
+            method.web3,
+            method.address,
+            method._return_data_normalizers,
+            method.function_identifier,
+            call_transaction,
+            None,
+            *method.args,
+            **method.kwargs
+        )
 
 
 def mk_args(config):
@@ -32,7 +78,7 @@ def mk_args(config):
 def mk_read_only_call(config, method):
     try:
         SingletonLock.instance().lock.acquire()
-        return method.call({'from': config.account})
+        return __method_call(method, {'from': config.account})
     finally:
         try:
             SingletonLock.instance().lock.release()

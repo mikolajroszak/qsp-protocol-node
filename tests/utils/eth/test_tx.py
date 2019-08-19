@@ -12,7 +12,7 @@ from web3.utils.threads import Timeout
 from helpers.qsp_test import QSPTest
 from utils.eth.tx import mk_args, send_signed_transaction, mk_read_only_call, TransactionNotConfirmedException
 from utils.eth.tx import DeduplicationException
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 
 class AccountMock:
@@ -60,6 +60,10 @@ class EthMock:
     def blockNumber(self):
         return next(self.block_generator)
 
+    @property
+    def defaultAccount(self):
+        return self.account
+
 
 class SimpleTransactionMock:
     def __init__(self, error_to_throw=None):
@@ -89,16 +93,19 @@ class SimpleTransactionMock:
 
 
 class ReadOnlyMethodMock:
-    def __init__(self, value, exception):
+    def __init__(self, value, exception, address):
         self.value = value
         self.exception = exception
-
-    def call(self, *args):
-        if self.exception is None:
-            return self.value
-        raise self.exception
+        self.address = address
 
 
+def __method_call(method, unused1):
+    if method.exception is None:
+        return method.value
+    raise method.exception
+
+
+@patch('utils.eth.tx.__method_call', side_effect=__method_call)
 class TestFile(QSPTest):
 
     @staticmethod
@@ -123,7 +130,7 @@ class TestFile(QSPTest):
 
         return mock
 
-    def test_mk_args_none_gas(self):
+    def test_mk_args_none_gas(self, method_call_mock):
         """
         If no gas is provided, the arguments do not contain the gas record.
         """
@@ -134,7 +141,7 @@ class TestFile(QSPTest):
         self.assertEqual('account', result['from'])
         self.assertTrue('gas' not in result)
 
-    def test_mk_args_zero_gas(self):
+    def test_mk_args_zero_gas(self, method_call_mock):
         """
         Tests zero gas case.
         """
@@ -145,7 +152,7 @@ class TestFile(QSPTest):
         self.assertEqual('account', result['from'])
         self.assertEqual(0, result['gas'])
 
-    def test_mk_args_positive_gas(self):
+    def test_mk_args_positive_gas(self, method_call_mock):
         """
         Tests positive gas case.
         """
@@ -156,7 +163,7 @@ class TestFile(QSPTest):
         self.assertEqual('account', result['from'])
         self.assertEqual(7, result['gas'])
 
-    def test_mk_args_string_gas(self):
+    def test_mk_args_string_gas(self, method_call_mock):
         """
         Tests positive gas case where gas is provided as a string.
         """
@@ -167,7 +174,7 @@ class TestFile(QSPTest):
         self.assertEqual('account', result['from'])
         self.assertEqual(7, result['gas'])
 
-    def test_mk_args_negative_gas(self):
+    def test_mk_args_negative_gas(self, method_call_mock):
         """
         Tests negative gas case provided as string. The value should not be included.
         """
@@ -178,23 +185,24 @@ class TestFile(QSPTest):
             # Expected
             pass
 
-    def test_mk_read_only_call(self):
+    def test_mk_read_only_call(self, method_call_mock):
         """
         Tests that the method returns a value if a value is returned, and raises an exception if an
         exception is raised by the call.
         """
         error = ValueError("unknown error")
-        read_only = ReadOnlyMethodMock(15, None)
+        address = "0xc1220b0bA0760817A9E8166C114D3eb2741F5949"
+        read_only = ReadOnlyMethodMock(15, None, address)
         config = TestFile.get_config_mock(4000000000, 0)
         self.assertEquals(15, mk_read_only_call(config, read_only))
-        read_only = ReadOnlyMethodMock(15, error)
+        read_only = ReadOnlyMethodMock(15, error, address)
         try:
             mk_read_only_call(config, read_only)
             self.fail("An error was expected")
         except ValueError as e:
             self.assertTrue(e is error)
 
-    def test_send_signed_transaction_local_signing_with_unknown_error(self):
+    def test_send_signed_transaction_local_signing_with_unknown_error(self, method_call_mock):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
         """
@@ -210,7 +218,7 @@ class TestFile(QSPTest):
 
         self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
 
-    def test_send_signed_transaction_local_signing_with_known_transaction(self):
+    def test_send_signed_transaction_local_signing_with_known_transaction(self, method_call_mock):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
         """
@@ -228,7 +236,7 @@ class TestFile(QSPTest):
 
         self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
 
-    def test_send_signed_transaction_local_signing_with_replacement(self):
+    def test_send_signed_transaction_local_signing_with_replacement(self, method_call_mock):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
         """
@@ -244,7 +252,7 @@ class TestFile(QSPTest):
         self.assertEqual(124, result.build_args['nonce'])
         self.assertIsNone(result.transact_args)
 
-    def test_send_signed_transaction_local_signing_with_low_nonce(self):
+    def test_send_signed_transaction_local_signing_with_low_nonce(self, method_call_mock):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
         """
@@ -260,7 +268,7 @@ class TestFile(QSPTest):
         self.assertEqual(124, result.build_args['nonce'])
         self.assertIsNone(result.transact_args)
 
-    def test_send_signed_transaction_local_signing_out_of_retries(self):
+    def test_send_signed_transaction_local_signing_out_of_retries(self, method_call_mock):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
         """
@@ -277,7 +285,7 @@ class TestFile(QSPTest):
 
         self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
 
-    def test_send_signed_transaction_local_timeout(self):
+    def test_send_signed_transaction_local_timeout(self, method_call_mock):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
         """
@@ -294,7 +302,7 @@ class TestFile(QSPTest):
 
         self.assertEqual(private_key, config.web3_client.eth.account.signed_private_key)
 
-    def test_send_signed_transaction_local_signing(self):
+    def test_send_signed_transaction_local_signing(self, method_call_mock):
         """
         Tests the case when the transaction is signed locally (the private key is provided).
         """
@@ -308,7 +316,7 @@ class TestFile(QSPTest):
         self.assertEqual(123, result.build_args['nonce'])
         self.assertIsNone(result.transact_args)
 
-    def test_send_signed_transaction_remote_signing(self):
+    def test_send_signed_transaction_remote_signing(self, method_call_mock):
         """
         Tests the case when the transaction is not signed locally (when the private key is not
         provided).
@@ -322,7 +330,7 @@ class TestFile(QSPTest):
         self.assertIsNone(result.build_args)
         self.assertEqual(mk_args(config), result.transact_args)
 
-    def test_wait_for_confirmed_transaction_receipt_basic_confirmation(self):
+    def test_wait_for_confirmed_transaction_receipt_basic_confirmation(self, method_call_mock):
         gas_price_wei = 4000000000
         transaction = SimpleTransactionMock()
         private_key = "abc"
@@ -338,7 +346,7 @@ class TestFile(QSPTest):
         self.assertEqual(123, result.build_args['nonce'])
         self.assertIsNone(result.transact_args)
 
-    def test_wait_for_confirmed_transaction_receipt_confirmation_with_slowed_block_time(self):
+    def test_wait_for_confirmed_transaction_receipt_confirmation_with_slowed_block_time(self, method_call_mock):
         gas_price_wei = 4000000000
         transaction = SimpleTransactionMock()
         private_key = "abc"
@@ -358,7 +366,7 @@ class TestFile(QSPTest):
         self.assertEqual(123, result.build_args['nonce'])
         self.assertIsNone(result.transact_args)
 
-    def test_wait_for_confirmed_transaction_receipt_confirmation_uncled_once(self):
+    def test_wait_for_confirmed_transaction_receipt_confirmation_uncled_once(self, method_call_mock):
         gas_price_wei = 4000000000
         transaction = SimpleTransactionMock()
         private_key = "abc"
@@ -383,7 +391,7 @@ class TestFile(QSPTest):
         self.assertEqual(123, result.build_args['nonce'])
         self.assertIsNone(result.transact_args)
 
-    def test_wait_for_confirmed_transaction_receipt_confirmation_orphaned_once(self):
+    def test_wait_for_confirmed_transaction_receipt_confirmation_orphaned_once(self, method_call_mock):
         gas_price_wei = 4000000000
         transaction = SimpleTransactionMock()
         private_key = "abc"
@@ -409,7 +417,7 @@ class TestFile(QSPTest):
         self.assertEqual(123, result.build_args['nonce'])
         self.assertIsNone(result.transact_args)
 
-    def test_wait_for_confirmed_transaction_receipt_exceeded_max_confirmation_timeout(self):
+    def test_wait_for_confirmed_transaction_receipt_exceeded_max_confirmation_timeout(self, method_call_mock):
         error_occurred = False
         gas_price_wei = 4000000000
         transaction = SimpleTransactionMock()

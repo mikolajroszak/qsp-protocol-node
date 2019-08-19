@@ -9,7 +9,7 @@
 Provides the thread for polling requests for the QSP Audit node implementation.
 """
 
-from .qsp_thread import BlockMinedPollingThread
+from .qsp_thread import BlockMinedSubscriberThread
 from utils.eth import send_signed_transaction
 from utils.eth import mk_read_only_call
 from utils.eth import DeduplicationException
@@ -23,7 +23,7 @@ class NotEnoughStake(Exception):
     pass
 
 
-class PollRequestsThread(BlockMinedPollingThread):
+class PollRequestsThread(BlockMinedSubscriberThread):
     __EVT_AUDIT_ASSIGNED = "LogAuditAssigned"
 
     # Must be in sync with
@@ -34,8 +34,8 @@ class PollRequestsThread(BlockMinedPollingThread):
     # https://github.com/quantstamp/qsp-protocol-audit-contract/blob/develop/contracts/QuantstampAudit.sol#L110
     __AVAILABLE_AUDIT_UNDERSTAKED = 5
 
-    def __on_block_mined(self, *unused):
-        self.__poll_requests()
+    def __on_block_mined(self, current_block):
+        self.__poll_requests(current_block)
 
     def __get_min_stake_qsp(self):
         """
@@ -95,13 +95,22 @@ class PollRequestsThread(BlockMinedPollingThread):
                 e))
         return tx_hash
 
-    def __poll_audit_request(self):
+    def __is_police_officer(self):
+        """
+        Checks first an node is a police node.
+        The call is cached locally to avoid excessive use of web3.
+        """
+        from audit.audit import QSPAuditNode
+        if self.__is_police_officer_cached is None:
+            self.__is_police_officer_cached = QSPAuditNode.is_police_officer(self.config)
+        return self.__is_police_officer_cached
+
+    def __poll_audit_request(self, current_block):
         """
         Checks first an audit is assignable; then, bids to get an audit request.
         If successful, save the event in the database to move it along the audit pipeline.
         """
-        from audit.audit import QSPAuditNode
-        if QSPAuditNode.is_police_officer(self.config) and \
+        if self.__is_police_officer() and \
             not self.config.enable_police_audit_polling:
             return
 
@@ -113,7 +122,6 @@ class PollRequestsThread(BlockMinedPollingThread):
 
             request_id = most_recent_audit[0]
             audit_assignment_block_number = most_recent_audit[4]
-            current_block = self.config.web3_client.eth.blockNumber
 
             # Check if the most recent audit has been confirmed for N blocks. A consequence of this
             # is that the audit node will not call getNextAuditRequest again while a previous call
@@ -143,17 +151,6 @@ class PollRequestsThread(BlockMinedPollingThread):
                     assigned_block_nbr=audit_assignment_block_number
                 )
 
-            # The node should attempt to bid. Before that, though, gotta perform some checks...
-
-            pending_requests_count = mk_read_only_call(
-                self.config,
-                self.config.audit_contract.functions.assignedRequestCount(self.config.account))
-
-            if pending_requests_count >= self.config.max_assigned_requests:
-                self.logger.error("Skip bidding as node is currently processing {0} requests in "
-                                  "audit contract {1}".format(str(pending_requests_count),
-                                                              self.config.audit_contract_address))
-                return
             any_request_available = mk_read_only_call(
                 self.config,
                 self.config.audit_contract.functions.anyRequestAvailable())
@@ -163,6 +160,16 @@ class PollRequestsThread(BlockMinedPollingThread):
                                      "least {0} QSP".format(self.__get_min_stake_qsp()))
 
             if any_request_available == self.__AVAILABLE_AUDIT_STATE_READY:
+                pending_requests_count = mk_read_only_call(
+                    self.config,
+                    self.config.audit_contract.functions.assignedRequestCount(self.config.account))
+
+                if pending_requests_count >= self.config.max_assigned_requests:
+                    self.logger.error("Skip bidding as node is currently processing {0} requests in "
+                                      "audit contract {1}".format(str(pending_requests_count),
+                                                                  self.config.audit_contract_address))
+                    return
+
                 self.logger.debug("There is request available to bid on in contract {0}.".format(
                     self.config.audit_contract_address))
 
@@ -195,14 +202,13 @@ class PollRequestsThread(BlockMinedPollingThread):
             self.config.audit_contract.functions.getNextPoliceAssignment()
         )
 
-    def __poll_police_request(self):
+    def __poll_police_request(self, current_block):
         """
         Polls the audit contract for police requests (aka assignments). If the
         node is not a police officer, do nothing. Otherwise, save the event in
         the database to move it along the audit pipeline.
         """
-        from audit.audit import QSPAuditNode
-        if not QSPAuditNode.is_police_officer(self.config):
+        if not self.__is_police_officer():
             return
 
         try:
@@ -210,7 +216,6 @@ class PollRequestsThread(BlockMinedPollingThread):
             has_assignment = probe[0]
 
             police_assignment_block_number = probe[4]
-            current_block = self.config.web3_client.eth.blockNumber
 
             already_processed = self.config.event_pool_manager.is_request_processed(
                 request_id=probe[1]
@@ -238,20 +243,22 @@ class PollRequestsThread(BlockMinedPollingThread):
         except Exception as error:
             self.logger.exception("Error polling police requests: {0}".format(str(error)))
 
-    def __poll_requests(self):
+    def __poll_requests(self, current_block):
         """
         Polls the audit contract for any possible requests.
         """
-        self.__poll_audit_request()
-        self.__poll_police_request()
+        self.__poll_audit_request(current_block)
+        self.__poll_police_request(current_block)
 
-    def __init__(self, config):
+    def __init__(self, config, block_mined_polling_thread):
         """
         Builds the thread object from the given input parameters.
         """
-        BlockMinedPollingThread.__init__(
+        self.__is_police_officer_cached = None
+        BlockMinedSubscriberThread.__init__(
             self,
             config=config,
             target_function=self.__on_block_mined,
-            thread_name="poll_requests thread"
+            thread_name="poll_requests thread",
+            block_mined_polling_thread=block_mined_polling_thread
         )

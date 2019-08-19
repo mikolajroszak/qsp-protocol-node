@@ -1,0 +1,82 @@
+#!/bin/bash
+
+####################################################################################################
+#                                                                                                  #
+# (c) 2018, 2019 Quantstamp, Inc. This content and its use are governed by the license terms at    #
+# <https://s3.amazonaws.com/qsp-protocol-license/V2_LICENSE.txt>                                   #
+#                                                                                                  #
+####################################################################################################
+
+set -e 
+
+if [ "$TRAVIS_PULL_REQUEST" != false ];then
+  echo "Skipping release for pull request.."
+  exit 0
+fi
+
+readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+echo "Travis branch: $TRAVIS_BRANCH"
+DEVELOP_BRANCH='quantstamp\/develop'
+CURRENT_VERSION="v$(PYTHONPATH=:$SCRIPT_DIR/../src/qsp_protocol_node python3 -c 'from config import Config; c = Config(); print(c.node_version)')"
+LATEST_TAG=$(git describe --tags --abbrev=0)
+readonly DIST_NAME="qsp-protocol-$CURRENT_VERSION"
+readonly ZIP_FILENAME="${DIST_NAME}.zip"
+readonly ZIP_DIR="$SCRIPT_DIR/../deployment/local/dist"
+
+if [ -f "$SCRIPT_DIR/response.json" ]; then
+  rm "$SCRIPT_DIR/response.json"
+fi
+
+echo "Current Version: $CURRENT_VERSION"
+GIT_DIR="$SCRIPT_DIR/.."
+if git rev-parse "$CURRENT_VERSION" >/dev/null 2>&1 ; then
+  echo "Tag $CURRENT_VERSION already exists"
+  exit 0
+fi
+
+echo "$LATEST_TAG"
+if [[ ! "$TRAVIS_BRANCH" =~ "$DEVELOP_BRANCH" ]]; then
+  if [[ "$CURRENT_VERSION" != "$LATEST_TAG" ]]; then
+    echo "New version tag: $CURRENT_VERSION"
+    echo "Need to create a new release"
+    echo "CHANEGLOG.md file created"
+    git log $"$LATEST_TAG"..HEAD --pretty=format:"%h %s" > "$SCRIPT_DIR/CHANGELOG.md"
+    body="$(cat $SCRIPT_DIR/CHANGELOG.md)"
+
+    echo "Creating new bundle"
+    "$SCRIPT_DIR/create-bundle"
+    if [ ! -f "$ZIP_DIR/$ZIP_FILENAME" ]; then 
+      echo "Failed to create a bundle file: $ZIP_FILENAME"
+      exit 1
+    fi
+    echo "Bundle created"
+
+    jq -n \
+      --arg body "$body" \
+      --arg name "$CURRENT_VERSION" \
+      --arg tag_name "$CURRENT_VERSION" \
+      --arg target_commitish "develop" \
+      '{
+        body: $body,
+        name: $name,
+        tag_name: $tag_name,
+        target_commitish: $target_commitish,
+        draft: true,
+        prerelease: true
+      }' > "$SCRIPT_DIR"/github-body.md
+    echo "Github body written to $SCRIPT_DIR/github-body.md"
+
+    echo "Trying to create the release"
+    curl --data "@$SCRIPT_DIR"/github-body.md -H "Authorization: token $GITHUB_TOKEN" -X POST "https://api.github.com/repos/quantstamp/qsp-protocol-node/releases" >> $SCRIPT_DIR/response.json
+    RESPONSE=`cat $SCRIPT_DIR/response.json`
+    echo "Release created successfully"
+    
+    UPLOAD_URL=`echo $RESPONSE | jq .'upload_url' -r | cut -f1 -d"{"`
+    echo "$UPLOAD_URL"
+    echo "Trying to upload release bundle"
+    curl --data-binary "@$ZIP_DIR/$ZIP_FILENAME" -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/zip" -X POST "$UPLOAD_URL?name=$ZIP_FILENAME"
+    echo "Upload successful"
+  fi
+fi
+echo "Not on develop branch. Skipping release.."

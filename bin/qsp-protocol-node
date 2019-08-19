@@ -31,7 +31,7 @@ function usage() {
 
 # pulling usolc docker
 echo `date`
-docker pull qspprotocol/usolc-entry@sha256:92bd41d22e72c9cb7af28dfa2784ead798916c115f59f1191fe45d6e4fabec4b
+docker pull qspprotocol/usolc-entry@sha256:e8e05dbd657fc7fa69490fcc8669d8dc6218694d043ef5545b815d865d1b473b
 
 # Set auto restart to off by default
 AUTO_RESTART="0"

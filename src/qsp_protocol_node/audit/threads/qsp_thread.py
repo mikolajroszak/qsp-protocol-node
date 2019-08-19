@@ -101,10 +101,9 @@ class TimeIntervalPollingThread(QSPThread):
 
 class BlockMinedPollingThread(QSPThread):
 
-    def __init__(self, config, target_function, thread_name,
-                 start_with_call=True):
-        QSPThread.__init__(self, config, target_function, thread_name,
-                           start_with_call)
+    def __init__(self, config):
+        QSPThread.__init__(self, config, None, "block_mined_polling thread", False)
+        self.current_block = 0
 
     # This was previously named `run_when_block_mined`
     def run(self):
@@ -112,18 +111,30 @@ class BlockMinedPollingThread(QSPThread):
         Checks if a new block is mined. Reacting to a new block the handler is called.
         """
         self._exec = True
-        current_block = 0
         last_called = 0
         while self._exec:
             now = time()
             if now - last_called > self.config.block_mined_polling:
                 last_called = now
-                if current_block < self.config.web3_client.eth.blockNumber:
-                    current_block = self.config.web3_client.eth.blockNumber
-                    try:
-                        self._target_function(current_block)
-                    except Exception as e:
-                        self.__logger.exception(
-                            "Error in block mined thread handler: {0}".format(str(e)))
-                        raise e
+                remote_block_number = self.config.web3_client.eth.blockNumber
+                if self.current_block < remote_block_number:
+                    self.current_block = remote_block_number
+            sleep(self.sleep_time())
+
+
+class BlockMinedSubscriberThread(QSPThread):
+    def __init__(self, config, target_function, thread_name, block_mined_polling_thread):
+        QSPThread.__init__(self, config, target_function, thread_name, True)
+        self.__block_mined_polling_thread = block_mined_polling_thread
+
+    def run(self):
+        """
+        Checks if a new block is mined. Reacting to a new block the handler is called.
+        """
+        self._exec = True
+        last_block_number = 0
+        while self._exec:
+            if last_block_number != self.__block_mined_polling_thread.current_block:
+                last_block_number = self.__block_mined_polling_thread.current_block
+                self._target_function(last_block_number)
             sleep(self.sleep_time())
