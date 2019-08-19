@@ -10,7 +10,7 @@ import unittest
 
 from audit import VulnerabilitiesSet
 from audit.report_processing import ReportEncoder
-from helpers.resource import resource_uri
+from helpers.resource import resource_uri, fetch_config
 from utils.io import fetch_file, load_json
 
 
@@ -128,7 +128,7 @@ class TestVulnerabilitiesSet(unittest.TestCase):
             expected_set = VulnerabilitiesSet.from_uncompressed_report(uncompressed_report)
 
             request_id = uncompressed_report['request_id']
-
+            config = fetch_config(inject_contract=True)
             encoder = ReportEncoder()
             compressed_report = encoder.compress_report(uncompressed_report, request_id)
             decompressed_report = encoder.decode_report(compressed_report, request_id)

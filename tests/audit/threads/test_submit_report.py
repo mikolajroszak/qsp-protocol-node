@@ -148,7 +148,7 @@ class TestSubmitReportThread(QSPTest):
         full_report = self.__load_report(report_file_path)
         request_id = full_report['request_id']
 
-        encoder = ReportEncoder()
+        encoder = ReportEncoder(self.__config)
         return encoder.compress_report(full_report, request_id)
 
     def __load_report(self, report_file_path):
