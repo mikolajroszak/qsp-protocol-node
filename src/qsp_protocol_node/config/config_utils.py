@@ -54,8 +54,9 @@ class ConfigUtils:
         config_file = io_utils.load_yaml(config_file_path)
         return config_file[environment]
 
-    def __init__(self):
+    def __init__(self, node_version):
         self.__logger = get_logger(self.__class__.__qualname__)
+        self.__node_version = node_version
 
     def create_upload_provider(self, account, upload_provider_name,
         upload_provider_args, is_enabled):
