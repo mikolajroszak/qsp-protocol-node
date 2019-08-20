@@ -27,12 +27,6 @@ RUN apk add --no-cache python3 jq vim bash && \
   rm -r /root/.cache && \
   apk del .build-deps
 
-# Install usolc
-COPY .coveragerc .
-COPY ./bin ./bin
-COPY ./tests/ ./tests/
-COPY ./src/ ./src/
-COPY ./plugins/ ./plugins/
 COPY ./bin/solc /usr/bin/solc
 
 RUN mkdir -p /var/log/qsp-protocol/

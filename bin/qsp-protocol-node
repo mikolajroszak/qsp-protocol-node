@@ -20,13 +20,14 @@ trap kill_node SIGTERM SIGINT
 readonly SUCCESS="0"
 
 readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export QSP_HOME=`dirname "$SCRIPT_DIR"`
 
 function usage() {
     echo "usage: qsp-protocol-node [-t TEST_ENV] [-h] [-d] [-a AUTO_RESTART] [-f SOL_FILE]" &> /dev/stderr
     echo "                      environment config-yaml"                                    &> /dev/stderr
     exit 1
 }
+
+[[ "x$QSP_HOME" != "x" ]] || (echo "QSP_HOME is not set" ; exit 1)
 
 ################################################
 # Main flow
@@ -51,12 +52,12 @@ while getopts "t:d:f:ah" FLAG; do
             export QSP_LOGGING_LEVEL="DEBUG"
             case $OPTARG in
                 ci)
-                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
+                    PYTHONPATH="$QSP_HOME/tests:$QSP_HOME/src/qsp_protocol_node" pytest --cov=./src/qsp_protocol_node -s -v --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html "$QSP_HOME"/tests/
                     exit $?
                 ;;
 
                 local)
-                    PYTHONPATH=./tests:./src/qsp_protocol_node pytest --cov=./src/qsp_protocol_node -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
+                    PYTHONPATH="$QSP_HOME/tests:$QSP_HOME/src/qsp_protocol_node" pytest --cov=./src/qsp_protocol_node -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html "$QSP_HOME"/tests/
                     exit $?
                 ;;
 

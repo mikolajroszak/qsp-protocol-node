@@ -52,7 +52,7 @@ class TestClaimRewards(QSPTest):
         """
         self.__claim_rewards_thread._ClaimRewardsThread__claim_rewards()
 
-    def test_call_to_has_available_rewards_no_exception(self):
+    def test_call_to_has_available_rewards_no_exception_XXX(self):
         """
         Tests whether calling the smart contract to check for available rewards works without
         throwing an exception.

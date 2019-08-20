@@ -17,6 +17,7 @@ import time
 import json
 import copy
 import threading
+import subprocess
 
 from threading import Thread
 from evt import is_police_check

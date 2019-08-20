@@ -33,7 +33,7 @@ def project_root():
     """
     Returns the root folder of the audit node project.
     """
-    return os.path.abspath("{0}/../../".format(os.path.dirname(__file__)))
+    return os.path.abspath(os.getenv("QSP_HOME"))
 
 
 def remove(path):

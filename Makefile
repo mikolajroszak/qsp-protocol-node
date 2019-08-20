@@ -63,11 +63,14 @@ build:
 test: build
 	docker run -it \
 		-v /tmp:/tmp \
-		-v $(PWD)/tests/resources:/app/tests/resources:Z \
+		-v $(PWD):$(PWD) \
 		-v $(QSP_DOCKER_SOCKET):$(QSP_DOCKER_SOCKET) \
 		-v $(QSP_LOG_DIR):/var/log/qsp-protocol:Z \
-		-e $(QSP_DOCKER_SOCKET)="$(QSP_DOCKER_SOCKET)" \
- 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t local"
+		-e QSP_HOME="$(PWD)" \
+		-e QSP_HOST_USOLC="$(QSP_HOST_USOLC)" \
+		-e QSP_CONTAINER_USOLC="$(QSP_CONTAINER_USOLC)" \
+		-e QSP_DOCKER_SOCKET="$(QSP_DOCKER_SOCKET)" \
+ 		qsp-protocol-node sh -c "$(PWD)/bin/qsp-protocol-node -t local"
 
 
 interactive: build
@@ -84,11 +87,12 @@ interactive: build
 		-e AWS_DEFAULT_REGION="$(AWS_DEFAULT_REGION)" \
 		-e QSP_ETH_AUTH_TOKEN=$(QSP_ETH_AUTH_TOKEN) \
 		-e QSP_ETH_PASSPHRASE="$(QSP_ETH_PASSPHRASE)" \
+		-e QSP_HOME="$(PWD)" \
 		-e QSP_ENV="dev" \
         -e QSP_CONFIG="$(QSP_CONFIG)" \
 		-e QSP_HOST_USOLC="$(QSP_HOST_USOLC)" \
 		-e QSP_CONTAINER_USOLC="$(QSP_CONTAINER_USOLC)" \
-		-e $(QSP_DOCKER_SOCKET)="$(QSP_DOCKER_SOCKET)" \
+		-e QSP_DOCKER_SOCKET="$(QSP_DOCKER_SOCKET)" \
         qsp-protocol-node sh
 
 test-travis-ci: build
@@ -102,8 +106,9 @@ test-travis-ci: build
 		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
 		-e AWS_DEFAULT_REGION="$(AWS_DEFAULT_REGION)" \
 		-e QSP_ENV="$(QSP_ENV_CI)" \
+		-e QSP_HOME="$(PWD)" \
 		-e QSP_USOLC_BIN_DIR="$(QSP_USOLC_BIN_DIR)" \
-		-e $(QSP_DOCKER_SOCKET)="$(QSP_DOCKER_SOCKET)" \
+		-e QSP_DOCKER_SOCKET="$(QSP_DOCKER_SOCKET)" \
 		qsp-protocol-node sh -c "./bin/qsp-protocol-node -t ci"
 
 bundle:	
