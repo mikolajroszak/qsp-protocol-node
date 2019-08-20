@@ -71,7 +71,7 @@ class TestAnalyzerMythril(QSPTest):
         self.assertTrue(report['status'], 'error')
 
         self.assertTrue(len(report['errors']) > 0)
-        self.assertEquals(9, len(report['trace']))
+        self.assertTrue(len(report['trace']) >= 9)
         self.assertTrue("No such file or directory" in ''.join(err + '\n' for err in report['errors']))
 
     def test_old_pragma(self):
