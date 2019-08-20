@@ -20,6 +20,7 @@
       ],
       "analyzer": {
         "name": "mythril",
+        "experimental": false,
         "version": "c6ad3380cc251ed8c6f59a3e21aafbfb5ceb41a487dbb38e5dfb6beddd123913",
         "vulnerabilities_checked": {
           "Call data forwarded with delegatecall()": {

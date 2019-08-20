@@ -96,7 +96,7 @@ def fetch_config(inject_contract=False, version=None):
         config._Config__audit_contract_address = addr
         config._Config__audit_contract = contract
 
-        config_utils = ConfigUtils()
+        config_utils = ConfigUtils(version)
         config_utils.check_configuration_settings(config)
 
     return config
