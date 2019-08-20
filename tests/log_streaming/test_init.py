@@ -32,7 +32,7 @@ class TestLoggingInit(QSPTest):
 
     def test_initialize(self):
         config_file_uri = resource_uri("test_config.yaml")
-        config = ConfigFactory.create_from_file(config_file_uri, "dev",
+        config = ConfigFactory.create_from_file(config_file_uri, "dev", "10.0.1",
                                                 validate_contract_settings=False)
         log_streaming.initialize("account", config_value(config, "/logging/streaming", {}),
                                  force=True)

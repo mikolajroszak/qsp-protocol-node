@@ -882,7 +882,7 @@ class TestQSPAuditNode(QSPTest):
         test_config.py.
         """
         config = self.__audit_node.config
-        config_utils = ConfigUtils()
+        config_utils = ConfigUtils("10.0.1")
         try:
             temp = config.submission_timeout_limit_blocks
             config._Config__submission_timeout_limit_blocks = 2

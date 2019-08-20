@@ -57,7 +57,7 @@ while getopts "t:d:f:ah" FLAG; do
                 ;;
 
                 local)
-                    pytest --cov="$QSP_HOME/src/qsp_protocol_node" -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/
+                    pytest --cov="$QSP_HOME/src/qsp_protocol_node" -s -v -m "not ci" --disable-pytest-warnings --cov-config .coveragerc --cov-report term-missing --cov-report html tests/ -k test_successful_contract_audit_request_dockerhub_fail_multiple_analyzers
                     exit $?
                 ;;
 
