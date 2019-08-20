@@ -71,7 +71,7 @@ class TestAnalyzerSecurify(QSPTest):
         self.assertTrue(report['status'], 'error')
 
         self.assertTrue(len(report['errors']) > 0)
-        self.assertEquals(8, len(report['trace']))
+        self.assertTrue(len(report['trace']) >= 8)
         self.assertTrue(
             "No such file or directory" in ''.join(err + '\n' for err in report['errors']))
 
@@ -88,7 +88,7 @@ class TestAnalyzerSecurify(QSPTest):
         self.assertTrue(report['status'], 'error')
 
         self.assertTrue(len(report['errors']) > 0)
-        self.assertEquals(11, len(report['trace']))
+        self.assertTrue(len(report['trace']) >= 11)
         self.assertTrue("ch.securify.CompilationHelpers.compileContracts" in ''.join(
             err + '\n' for err in report['errors']))
 

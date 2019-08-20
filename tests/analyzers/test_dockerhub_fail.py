@@ -89,7 +89,7 @@ class TestAnalyzerDockerhubFail(QSPTest):
         self.assertTrue(report)
 
         self.assertTrue(report['status'], 'error')
-        self.assertEquals(9, len(report['trace']))
+        self.assertTrue(len(report['trace']) >= 9)
         self.assertEquals(3, len(report['errors']))
         msg = "docker: Error response from daemon: pull access denied for qspprotocol/" \
               "does-not-exist-0.4.25, repository does not exist or may require 'docker login'.\n"
