@@ -68,8 +68,8 @@ class TestAnalyzerDockerhubFail(QSPTest):
         self.assertTrue(len(report['trace']) > 0)
         self.assertEquals(1, len(report['errors']))
         msg = "Error response from daemon: pull access denied for qspprotocol/" \
-              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'\n"
-        self.assertEquals(msg, report['errors'][0])
+              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'"
+        self.assertTrue(msg in report['errors'][0])
 
     def test_report_creation_once(self):
         """
@@ -92,8 +92,8 @@ class TestAnalyzerDockerhubFail(QSPTest):
         self.assertTrue(len(report['trace']) > 0)
         self.assertEquals(3, len(report['errors']))
         msg = "docker: Error response from daemon: pull access denied for qspprotocol/" \
-              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'.\n"
-        self.assertEquals(msg, report['errors'][1])
+              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'"
+        self.assertTrue(msg in report['errors'][1])
 
     def test_file_not_found(self):
         """
@@ -112,8 +112,8 @@ class TestAnalyzerDockerhubFail(QSPTest):
         self.assertTrue(len(report['errors']) > 0)
         self.assertTrue(len(report['trace']) > 0)
         msg = "Error response from daemon: pull access denied for qspprotocol/" \
-              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'\n"
-        self.assertEquals(msg, report['errors'][0])
+              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'"
+        self.assertTrue(msg in report['errors'][0])
 
     def test_file_not_found_once(self):
         """
@@ -154,8 +154,8 @@ class TestAnalyzerDockerhubFail(QSPTest):
         self.assertTrue(len(report['trace']) > 0)
         self.assertEquals(1, len(report['errors']))
         msg = "Error response from daemon: pull access denied for qspprotocol/" \
-              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'\n"
-        self.assertEquals(msg, report['errors'][0])
+              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'"
+        self.assertTrue(msg in report['errors'][0])
 
     def test_old_pragma_with_caret(self):
         """
@@ -173,8 +173,8 @@ class TestAnalyzerDockerhubFail(QSPTest):
         self.assertTrue(len(report['trace']) > 0)
         self.assertEquals(1, len(report['errors']))
         msg = "Error response from daemon: pull access denied for qspprotocol/" \
-              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'\n"
-        self.assertEquals(msg, report['errors'][0])
+              "does-not-exist-0.4.25, repository does not exist or may require 'docker login'"
+        self.assertTrue(msg in report['errors'][0])
 
 
 if __name__ == '__main__':
