@@ -80,7 +80,7 @@ class ConfigStubForCheckSettings:
 class TestConfigUtil(QSPTest):
 
     def setUp(self):
-        self.config_utils = ConfigUtils()
+        self.config_utils = ConfigUtils("10.0.1")
 
     def test_create_upload_provider_ok(self):
         """
