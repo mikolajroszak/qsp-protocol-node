@@ -20,3 +20,4 @@ after_script:
 branches:
   only:
   - develop
+  - develop-v3
