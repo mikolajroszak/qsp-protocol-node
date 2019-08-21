@@ -90,12 +90,18 @@
                     "analyzer": {
                         "type":  "object",
                         "description": "Meta data concerning the underlying analyzer",
-                        "required": ["name"],
+                        "required": [
+                            "name"
+                        ],
                         "properties": {
                             "name": {
                                 "description": "Analyzer's name",
                                 "type": "string",
                                 "maxLength": 50
+                            },
+                            "experimental": {
+                                "description": "Whether the analyzer is considered stable (false) or experimental (true)",
+                                "type": "boolean"
                             },
                             "version": {
                                 "description": "Analyzer's version",

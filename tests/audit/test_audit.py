@@ -417,7 +417,7 @@ class TestQSPAuditNode(QSPTest):
         # Replace analyzers with a single dockerhub fail analyzer
         faulty_wrapper = Wrapper(
             wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
-            analyzer_name="dockerhub_fail",
+            analyzer_name="mythril",
             args="",
             storage_dir="/tmp/{}{}".format(time(), random()),
             timeout_sec=60,
@@ -427,7 +427,7 @@ class TestQSPAuditNode(QSPTest):
         original_analyzers = self.__audit_node.config._Config__analyzers
         original_analyzers_config = self.__audit_node.config._Config__analyzers_config
         self.__audit_node.config._Config__analyzers = [analyzer]
-        self.__audit_node.config._Config__analyzers_config = [{"dockerhub_fail": analyzer}]
+        self.__audit_node.config._Config__analyzers_config = [{"mythril": analyzer}]
 
         # Since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
@@ -475,20 +475,27 @@ class TestQSPAuditNode(QSPTest):
         """
         Tests that a report is generated when the dockerhub fails
         """
-        # Replace analyzers with a single dockerhub fail analyzer
-        faulty_wrapper = Wrapper(
+        # Replace both analyzers with a dockerhub fail analyzer
+        # This is named mythril since the report compression module requires a valid name.
+        faulty_wrapper_mythril = Wrapper(
             wrappers_dir="{0}/tests/resources/wrappers".format(project_root()),
-            analyzer_name="dockerhub_fail",
+            analyzer_name="mythril",
             args="",
             storage_dir="/tmp/{}{}".format(time(), random()),
             timeout_sec=60,
             prefetch=False
         )
-        analyzer = Analyzer(faulty_wrapper)
+        mythril_analyzer = Analyzer(faulty_wrapper_mythril)
+
         original_analyzers = self.__audit_node.config._Config__analyzers
         original_analyzers_config = self.__audit_node.config._Config__analyzers_config
-        self.__audit_node.config._Config__analyzers[1] = analyzer
-        self.__audit_node.config._Config__analyzers_config[1] = {"dockerhub_fail": analyzer}
+        self.__audit_node.config._Config__analyzers[0] = mythril_analyzer
+        self.__audit_node.config._Config__analyzers_config[0] = {"mythril": mythril_analyzer}
+        self.__audit_node.config._Config__analyzers[1] = mythril_analyzer
+        self.__audit_node.config._Config__analyzers_config[1] = {"mythril": mythril_analyzer}
+
+        # Need to re-configure ReportEncoder due to the updated analyzers
+        self.__audit_node.config._Config__report_encoder = ReportEncoder(self.__audit_node.config)
 
         # since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
@@ -498,13 +505,12 @@ class TestQSPAuditNode(QSPTest):
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__send_done_message(self.__REQUEST_ID)
-        self.__assert_audit_request_report(self.__REQUEST_ID,
-                                           report_file_path="reports/DockerhubFailAllAnalyzers.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
         # set the values back
         self.__audit_node.config._Config__analyzers = original_analyzers
         self.__audit_node.config._Config__analyzers_config = original_analyzers_config
+        self.__audit_node.config._Config_report_encoder = ReportEncoder(self.__audit_node.config)
 
         compressed_report = self.__compress_report("reports/DockerhubFailAllAnalyzers.json")
 
@@ -912,7 +918,7 @@ class TestQSPAuditNode(QSPTest):
     def __compress_report(self, report_path_uri):
         full_report = load_json(fetch_file(resource_uri(report_path_uri)))
         full_report['version'] = self.__config.node_version
-        encoder = ReportEncoder()
+        encoder = ReportEncoder(self.__config)
         return encoder.compress_report(full_report, full_report['request_id'])
 
     def __assert_audit_request_report(self, request_id, report_file_path=None, ignore_id=False):

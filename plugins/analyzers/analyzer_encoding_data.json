@@ -28,5 +28,10 @@
         "reentrancy_true_positive",
         "transaction_order_dependency_true_positive",
         "securify_bug"
+   ],
+   "statuses": [
+     "success",
+     "error",
+     "timeout"
    ]
 }

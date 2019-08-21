@@ -12,3 +12,4 @@ source "$WRAPPER_HOME"/../common/settings
 readonly ANALYZER_DOCKER_IMAGE="qspprotocol/oyente-0.4.25@sha256:f6b1697fd6607e4bb5c3104fb58d16e50e843254e983cd3735df510bb40b0ff8"
 readonly ANALYZER_VERSION=$(echo "$ANALYZER_DOCKER_IMAGE" | egrep -o '[0-9A-Za-z]+$' | cut -d ':' -f2)
 readonly ANALYZER_CMD="docker run --rm -v $TMP_FOLDER:/shared/ -i $ANALYZER_DOCKER_IMAGE $ANALYZER_ARGS -j -s /shared/$CONTRACT_FILE_NAME"
+readonly EXPERIMENTAL="false"

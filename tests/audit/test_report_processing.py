@@ -20,9 +20,22 @@ import audit.report_processing
 
 from audit.report_processing import ReportEncoder
 from audit.report_processing import ReportFormattingException
-from helpers.resource import resource_uri
+from helpers.resource import resource_uri, fetch_config
+
 from helpers.qsp_test import QSPTest
 from utils.io import load_json, fetch_file
+
+
+ANALYZERS = [
+    {
+        "name": "mythril",
+        "experimental": False,
+    },
+    {
+        "name": "securify",
+        "experimental": True,
+    }
+]
 
 
 class TestReportProcessing(QSPTest):
@@ -31,7 +44,8 @@ class TestReportProcessing(QSPTest):
     """
 
     def setUp(self):
-        self.__encoder = audit.report_processing.ReportEncoder()
+        self.__config = fetch_config(inject_contract=True)
+        self.__encoder = audit.report_processing.ReportEncoder(self.__config)
 
     def __compare_json(self, actual_json, expected_json):
         diff = DeepDiff(
@@ -49,7 +63,8 @@ class TestReportProcessing(QSPTest):
                     status=None,
                     contract_hash=None,
                     vulnerabilities=None,
-                    vulnerabilities_count=0):
+                    vulnerabilities_count=0,
+                    analyzers_count=1):
         """
         Creates a JSON-formatted report.
         vulnerabilities must be a list of tuples of the form: (type, start_line, end_line).
@@ -83,12 +98,15 @@ class TestReportProcessing(QSPTest):
                     ]
                 }
             )
-
-        analyzers_reports = [
-            {
-                "potential_vulnerabilities": potential_vulnerabilities
-            }
-        ]
+        analyzers_reports = []
+        for i in range(analyzers_count):
+            analyzers_reports.append(
+                {
+                    "analyzer": ANALYZERS[i],
+                    "status": "success",
+                    "potential_vulnerabilities": potential_vulnerabilities
+                }
+            )
 
         report["analyzers_reports"] = analyzers_reports
         return report
@@ -364,24 +382,32 @@ class TestReportProcessing(QSPTest):
 
     def test_vulnerabilities_compression_and_decoding(self):
         """
-        Ensures that a report with several vulnerabilities is compressed properly.
+        Ensures that a report with several vulnerabilities and analyzers is compressed properly.
         """
         vulnerabilities_count = [1, 5, 20]
+        analyzers_count = 2
         for count in vulnerabilities_count:
-            report = TestReportProcessing.mock_report(vulnerabilities_count=count)
+            report = TestReportProcessing.mock_report(
+                vulnerabilities_count=count,
+                analyzers_count=analyzers_count
+            )
             hexstring = self.compress_report(report)
             decoded_report = self.decode_report(hexstring)
-            vulnerabilities = decoded_report["analyzers_reports"][0]["potential_vulnerabilities"]
-            self.assertEqual(len(vulnerabilities[0]["instances"]), count)
-            for i in range(len(vulnerabilities[0]["instances"])):
-                # the encoded start_line numbers are correct
-                self.assertEqual(vulnerabilities[0]["instances"][i]["start_line"], i + 1)
+            for i in range(analyzers_count):
+                vulnerabilities = decoded_report["analyzers_reports"][i]["potential_vulnerabilities"]
+                analyzer = decoded_report["analyzers_reports"][i]["analyzer"]
+                self.assertEqual(analyzer, ANALYZERS[i])
+                # There is only one vulnerability type (at index 0) for each analyzer
+                self.assertEqual(len(vulnerabilities[0]["instances"]), count)
+                for j in range(len(vulnerabilities[0]["instances"])):
+                    # The encoded start_line numbers are correct
+                    self.assertEqual(vulnerabilities[0]["instances"][j]["start_line"], j + 1)
 
     def test_vulnerabilities_with_end_lines_compression_and_decoding(self):
         """
         Ensures that a report with vulnerability end_lines are compressed properly.
         """
-        # order does not matter here
+        # Order does not matter here
         type_names = list(self.__encoder._ReportEncoder__vulnerability_types)
         vulnerabilities = [(type_names[0], 1, 2),
                            (type_names[1], 3, 3),
@@ -393,11 +419,11 @@ class TestReportProcessing(QSPTest):
         decoded_vulnerabilities = decoded_report["analyzers_reports"][0]["potential_vulnerabilities"]
         self.assertEqual(len(vulnerabilities), len(decoded_vulnerabilities))
         for v1, v2 in zip(vulnerabilities, decoded_vulnerabilities):
-            # the encoded types are correct
+            # The encoded types are correct
             self.assertEqual(v1[0], v2["type"])
-            # the encoded start_line numbers are correct
+            # The encoded start_line numbers are correct
             self.assertEqual(v1[1], v2["instances"][0]["start_line"])
-            # the encoded end_line numbers are correct
+            # The encoded end_line numbers are correct
             self.assertEqual(v1[2], v2["instances"][0]["end_line"])
 
     def test_compress_and_decode_full_report(self):
@@ -407,7 +433,6 @@ class TestReportProcessing(QSPTest):
         report = load_json(fetch_file(resource_uri("reports/DAOBug.json")))
         hexstring = self.compress_report(report)
         decoded_report = self.decode_report(hexstring)
-
         expected_report = load_json(fetch_file(resource_uri("reports/DAOBugDecompressed.json")))
         self.__compare_json(decoded_report, expected_report)
 
@@ -477,7 +502,7 @@ class TestReportProcessing(QSPTest):
         Ensures that the vulnerability list matches vulnerabilities from all analyzers
         """
         script_path = os.path.realpath(__file__)
-        json_fstr = "{0}/../../plugins/analyzers/vulnerability_types.json"
+        json_fstr = "{0}/../../plugins/analyzers/analyzer_encoding_data.json"
         file_name = json_fstr.format(os.path.dirname(script_path))
 
         types_list = TestReportProcessing.__get_json(file_name, "vulnerabilities")

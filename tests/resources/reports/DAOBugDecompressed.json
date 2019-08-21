@@ -1,109 +1,51 @@
-{
-  "analyzers_reports": [
-    {
-      "analyzer": {
-        "name": "Unknown Analyzer"
-      },
-      "potential_vulnerabilities": [
-        {
-          "file": "Unknown File",
-          "instances": [
-            {
-              "end_line": 23,
-              "ref_id": 0,
-              "start_line": 23
-            }
-          ],
-          "type": "unprotected_ether_withdrawal"
-        },
-        {
-          "file": "Unknown File",
-          "instances": [
-            {
-              "end_line": 23,
-              "ref_id": 0,
-              "start_line": 23
-            }
-          ],
-          "type": "call_to_external_contract"
-        },
-        {
-          "file": "Unknown File",
-          "instances": [
-            {
-              "end_line": 27,
-              "ref_id": 0,
-              "start_line": 27
-            }
-          ],
-          "type": "reentrancy"
-        },
-        {
-          "file": "Unknown File",
-          "instances": [
-            {
-              "end_line": 23,
-              "ref_id": 0,
-              "start_line": 23
-            }
-          ],
-          "type": "transaction_order_dependency"
-        },
-        {
-          "file": "Unknown File",
-          "instances": [
-            {
-              "end_line": 23,
-              "ref_id": 0,
-              "start_line": 23
-            }
-          ],
-          "type": "unchecked_call_return_value"
-        },
-        {
-          "file": "Unknown File",
-          "instances": [
-            {
-              "end_line": 23,
-              "ref_id": 0,
-              "start_line": 23
-            }
-          ],
-          "type": "reentrancy_true_positive"
-        },
-        {
-          "file": "Unknown File",
-          "instances": [
-            {
-              "end_line": 14,
-              "ref_id": 0,
-              "start_line": 14
-            }
-          ],
-          "type": "missing_input_validation_true_positive"
-        },
-        {
-          "file": "Unknown File",
-          "instances": [
-            {
-              "end_line": 22,
-              "ref_id": 0,
-              "start_line": 22
-            },
-            {
-              "end_line": 18,
-              "ref_id": 1,
-              "start_line": 18
-            }
-          ],
-          "type": "missing_input_validation"
-        }
-      ],
-      "status": "success"
-    }
-  ],
-  "audit_state": 4,
-  "contract_hash": "DC996A1C50B01EA3EC370A45CE43394F22BC0DFDA4DD43990CEDCDC505E593BF",
-  "status": "success",
-  "version": "2.0.1"
-}
+{"analyzers_reports": [{"analyzer": {"experimental": false, "name": "mythril"},
+                        "potential_vulnerabilities": [{"file": "Unknown File",
+                                                       "instances": [{"end_line": 23,
+                                                                      "ref_id": 0,
+                                                                      "start_line": 23}],
+                                                       "type": "unprotected_ether_withdrawal"},
+                                                      {"file": "Unknown File",
+                                                       "instances": [{"end_line": 23,
+                                                                      "ref_id": 0,
+                                                                      "start_line": 23}],
+                                                       "type": "call_to_external_contract"},
+                                                      {"file": "Unknown File",
+                                                       "instances": [{"end_line": 27,
+                                                                      "ref_id": 0,
+                                                                      "start_line": 27}],
+                                                       "type": "reentrancy"}],
+                        "status": "success"},
+                       {"analyzer": {"experimental": true, "name": "securify"},
+                        "potential_vulnerabilities": [{"file": "Unknown File",
+                                                       "instances": [{"end_line": 23,
+                                                                      "ref_id": 0,
+                                                                      "start_line": 23}],
+                                                       "type": "transaction_order_dependency"},
+                                                      {"file": "Unknown File",
+                                                       "instances": [{"end_line": 23,
+                                                                      "ref_id": 0,
+                                                                      "start_line": 23}],
+                                                       "type": "unchecked_call_return_value"},
+                                                      {"file": "Unknown File",
+                                                       "instances": [{"end_line": 23,
+                                                                      "ref_id": 0,
+                                                                      "start_line": 23}],
+                                                       "type": "reentrancy_true_positive"},
+                                                      {"file": "Unknown File",
+                                                       "instances": [{"end_line": 14,
+                                                                      "ref_id": 0,
+                                                                      "start_line": 14}],
+                                                       "type": "missing_input_validation_true_positive"},
+                                                      {"file": "Unknown File",
+                                                       "instances": [{"end_line": 22,
+                                                                      "ref_id": 0,
+                                                                      "start_line": 22},
+                                                                     {"end_line": 18,
+                                                                      "ref_id": 1,
+                                                                      "start_line": 18}],
+                                                       "type": "missing_input_validation"}],
+                        "status": "success"}],
+ "audit_state": 4,
+ "contract_hash": "DC996A1C50B01EA3EC370A45CE43394F22BC0DFDA4DD43990CEDCDC505E593BF",
+ "status": "success",
+ "version": "3.0.0"}

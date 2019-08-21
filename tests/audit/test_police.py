@@ -54,7 +54,7 @@ class TestPoliceLogic(QSPTest):
         uncompressed_report = load_json(fetch_file(resource_uri("reports/DAOBug.json")))
         request_id = uncompressed_report['request_id']
 
-        encoder = ReportEncoder()
+        encoder = ReportEncoder(self.__config)
         compressed_report = encoder.compress_report(uncompressed_report, request_id)
 
         # Creates a mocked method for retrieving the audit result from the blockchain.
@@ -125,7 +125,7 @@ class TestPoliceLogic(QSPTest):
         uncompressed_report = load_json(fetch_file(resource_uri("reports/DAOBug.json")))
         request_id = uncompressed_report['request_id']
 
-        encoder = ReportEncoder()
+        encoder = ReportEncoder(self.__config)
         compressed_report = encoder.compress_report(uncompressed_report, request_id)
 
         # Sets the audit result to be retrieved from the blockchain (should cause

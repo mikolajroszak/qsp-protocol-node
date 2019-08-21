@@ -111,6 +111,7 @@ class TestAnalyzerMythril(QSPTest):
         self.assertTrue("version" in metadata.keys())
         self.assertTrue("vulnerabilities_checked" in metadata.keys())
         self.assertTrue("command" in metadata.keys())
+        self.assertTrue("experimental" in metadata.keys())
 
 
 if __name__ == '__main__':

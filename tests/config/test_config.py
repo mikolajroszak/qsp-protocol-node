@@ -329,7 +329,7 @@ class TestConfig(QSPTest):
         new_private_key = "abcdefg"
         account = "0x12345"
         analyzers_config = "config list"
-        created_analyzers = "analyzers"
+        created_analyzers = []
         upload_provider_name = "upload provider name"
         upload_provider_args = "upload provider arguments"
         upload_provider = "created upload provier"

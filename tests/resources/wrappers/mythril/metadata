@@ -13,6 +13,6 @@ source "$WRAPPER_HOME"/../common/settings
 
 readonly VULNERABILITIES_JSON_MAPPING=$(cat "$VULNERABILITY_MAPPING")
 
-printf '{"name": "%s", "version": "%s", "vulnerabilities_checked": %s, "command": "%s"}\n' \
-    "$ANALYZER_NAME" "$ANALYZER_VERSION" "$VULNERABILITIES_JSON_MAPPING" "$ANALYZER_CMD" | jq '.'
+printf '{"name": "%s", "version": "%s", "vulnerabilities_checked": %s, "command": "%s", "experimental": %s}\n' \
+    "$ANALYZER_NAME" "$ANALYZER_VERSION" "$VULNERABILITIES_JSON_MAPPING" "$ANALYZER_CMD" "$EXPERIMENTAL" | jq '.'
 
