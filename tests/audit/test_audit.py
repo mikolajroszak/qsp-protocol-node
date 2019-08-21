@@ -494,6 +494,9 @@ class TestQSPAuditNode(QSPTest):
         self.__audit_node.config._Config__analyzers[1] = mythril_analyzer
         self.__audit_node.config._Config__analyzers_config[1] = {"mythril": mythril_analyzer}
 
+        # Need to re-configure ReportEncoder due to the updated analyzers
+        self.__audit_node.config._Config__report_encoder = ReportEncoder(self.__audit_node.config)
+
         # since we're mocking the smart contract, we should explicitly call its internals
         buggy_contract = resource_uri("DAOBug.sol")
         self.__request_audit(buggy_contract, self.__PRICE)
@@ -502,13 +505,12 @@ class TestQSPAuditNode(QSPTest):
 
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__send_done_message(self.__REQUEST_ID)
-        self.__assert_audit_request_report(self.__REQUEST_ID,
-                                           report_file_path="reports/DockerhubFailAllAnalyzers.json")
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
         # set the values back
         self.__audit_node.config._Config__analyzers = original_analyzers
         self.__audit_node.config._Config__analyzers_config = original_analyzers_config
+        self.__audit_node.config._Config_report_encoder = ReportEncoder(self.__audit_node.config)
 
         compressed_report = self.__compress_report("reports/DockerhubFailAllAnalyzers.json")
 
