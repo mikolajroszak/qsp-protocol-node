@@ -18,6 +18,7 @@ from pprint import pprint
 from deepdiff import DeepDiff
 from utils.io import fetch_file, load_json
 
+
 class QSPTest(unittest.TestCase):
 
     @classmethod
@@ -61,7 +62,7 @@ class QSPTest(unittest.TestCase):
                          QSPTest.__find_difference(data, content))
 
     def compare_json(self, audit_file, report_file_path, json_loaded=False, ignore_id=False, ignore_error=False):
-        exclude_paths=[
+        exclude_paths = [
             "root['contract_uri']",
             "root['version']",
             # There is no keystore used for testing. Accounts
@@ -106,7 +107,7 @@ class QSPTest(unittest.TestCase):
         diff = DeepDiff(
             actual_json,
             expected_json,
-            exclude_paths = exclude_paths
+            exclude_paths=exclude_paths
         )
         pprint(diff)
         self.assertEqual(diff, {})
