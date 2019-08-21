@@ -438,7 +438,8 @@ class TestQSPAuditNode(QSPTest):
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__send_done_message(self.__REQUEST_ID)
         self.__assert_audit_request_report(self.__REQUEST_ID,
-                                           report_file_path="reports/DockerhubFail.json")
+                                           report_file_path="reports/DockerhubFail.json",
+                                           ignore_error=True)
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
         # Sets the values back.
@@ -499,7 +500,8 @@ class TestQSPAuditNode(QSPTest):
         # NOTE: if the audit node later requires the stubbed fields, this will have to change a bit
         self.__send_done_message(self.__REQUEST_ID)
         self.__assert_audit_request_report(self.__REQUEST_ID,
-                                           report_file_path="reports/DockerhubFailAllAnalyzers.json")
+                                           report_file_path="reports/DockerhubFailAllAnalyzers.json",
+                                           ignore_error=True)
         self.__assert_all_analyzers(self.__REQUEST_ID)
 
         # set the values back
@@ -915,12 +917,12 @@ class TestQSPAuditNode(QSPTest):
         encoder = ReportEncoder()
         return encoder.compress_report(full_report, full_report['request_id'])
 
-    def __assert_audit_request_report(self, request_id, report_file_path=None, ignore_id=False):
+    def __assert_audit_request_report(self, request_id, report_file_path=None, ignore_id=False, ignore_error=False):
         audit = self.__fetch_audit_from_db(request_id)
         if report_file_path is not None:
             audit_file = fetch_file(audit['audit_uri'])
             self.assertEqual(digest_file(audit_file), audit['audit_hash'])
-            self.compare_json(audit_file, report_file_path, ignore_id=ignore_id)
+            self.compare_json(audit_file, report_file_path, ignore_id=ignore_id, ignore_error=ignore_error)
 
     def __assert_all_analyzers(self, request_id):
         """
