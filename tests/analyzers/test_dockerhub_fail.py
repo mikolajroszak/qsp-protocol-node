@@ -12,7 +12,6 @@ import unittest
 
 from tempfile import TemporaryDirectory
 from random import random
-from time import time
 from helpers.resource import project_root
 from helpers.resource import resource_uri
 from helpers.qsp_test import QSPTest

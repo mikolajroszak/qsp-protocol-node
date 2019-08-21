@@ -112,7 +112,6 @@ class ReportEncoder:
         with open(json_file) as json_data:
             loaded_json = json.load(json_data)
 
-
             # Vulnerability data
             type_list = loaded_json["vulnerabilities"]
             vulnerability_count = 0
@@ -564,6 +563,7 @@ class ReportEncoder:
     @property
     def config(self):
         return self.__config
+
 
 def main():
     """
