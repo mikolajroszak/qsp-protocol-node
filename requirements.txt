@@ -9,7 +9,7 @@ eth-rlp==0.1.2
 eth-tester[py-evm]==0.1.0b33
 eth-utils==1.3.0
 ethereum==1.6.1
-pyyaml==4.2b1
+pyyaml==5.4
 dpath==1.4.2
 py-solc==2.1.0
 timeout-decorator==0.4.0
@@ -24,7 +24,7 @@ pytest==3.4.2
 pytest-cov==2.5.1
 rlp==1.0.3
 watchtower==0.5.3
-psutil==5.4.5
+psutil==5.6.7
 pycodestyle==2.4.0
 deepdiff==3.3.0
 jsonschema==2.6.0
@@ -36,3 +36,5 @@ trie==1.4.0
 py-evm==0.2.0a34
 pycodestyle==2.4.0
 flake8==3.6.0
+cryptography>=3.2 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=1.26.5 # not directly required, pinned by Snyk to avoid a vulnerability
