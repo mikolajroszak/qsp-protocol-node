@@ -1,6 +1,6 @@
 web3==4.2.0
 eth-abi==1.0.0
-eth-account==0.2.2
+eth-account==0.5.9
 eth-bloom==1.0.0
 eth-hash==0.1.2
 eth-keyfile==0.5.1
