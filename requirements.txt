@@ -3,7 +3,7 @@ eth-abi==1.0.0
 eth-account==0.2.2
 eth-bloom==1.0.0
 eth-hash==0.1.2
-eth-keyfile==0.5.1
+eth-keyfile==0.6.0
 eth-keys==0.2.0b3
 eth-rlp==0.1.2
 eth-tester[py-evm]==0.1.0b33
@@ -36,3 +36,4 @@ trie==1.4.0
 py-evm==0.2.0a34
 pycodestyle==2.4.0
 flake8==3.6.0
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
