@@ -5,7 +5,7 @@
 #                                                                                                  #
 ####################################################################################################
 
-FROM docker:dind
+FROM docker:29.1.1-dind-alpine3.22
 # for "Docker-in-Docker" support
  
 # the following steps are based on https://hub.docker.com/r/frolvlad/alpine-python3/
