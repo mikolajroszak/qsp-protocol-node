@@ -36,3 +36,4 @@ trie==1.4.0
 py-evm==0.2.0a34
 pycodestyle==2.4.0
 flake8==3.6.0
+cryptography>=46.0.5 # not directly required, pinned by Snyk to avoid a vulnerability
